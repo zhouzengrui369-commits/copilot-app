@@ -30,7 +30,7 @@
     "test:e2e": "vitest run tests/e2e.test.ts --reporter=verbose"
   },
   "dependencies": {
-    "better-sqlite3": "11.10.0",
+    "better-sqlite3": "12.11.1",
     "gray-matter": "4.0.3"
   },
   "devDependencies": {
