@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "name": "copilot-cloud",
+  "description": "Copilot Cloud - Fastify LLM proxy for Tencent CloudBase",
+  "framework": "container",
+  "build": {
+    "name": "copilot-cloud",
+    "dockerfilePath": "./Dockerfile",
+    "contextPath": "../..",
+    "args": {}
+  },
+  "deploy": {
+    "envId": "${env.CLOUDBASE_ENV_ID}",
+    "serviceName": "copilot-cloud",
+    "servicePath": "/",
+    "port": 8788,
+    "cpu": 0.5,
+    "mem": 1,
+    "minNum": 0,
+    "maxNum": 5,
+    "policyType": "cpu",
+    "policyThreshold": 60,
+    "envParams": {
+      "NODE_ENV": "production",
+      "PORT": "8788",
+      "HOST": "0.0.0.0",
+      "LOG_LEVEL": "info",
+      "LLM_BASE_URL": "${env.LLM_BASE_URL}",
+      "LLM_API_KEY": "${env.LLM_API_KEY}",
+      "LLM_CHAT_PATH": "${env.LLM_CHAT_PATH}",
+      "LLM_EMBEDDINGS_PATH": "${env.LLM_EMBEDDINGS_PATH}",
+      "CORS_ORIGINS": "${env.CORS_ORIGINS}",
+      "COPILOT_CLOUD_TOKENS": "${env.COPILOT_CLOUD_TOKENS}",
+      "RATE_LIMIT_MAX": "${env.RATE_LIMIT_MAX}",
+      "RATE_LIMIT_WINDOW_MS": "${env.RATE_LIMIT_WINDOW_MS}",
+      "CLOUDBASE_RELAY_ENABLED": "${env.CLOUDBASE_RELAY_ENABLED}",
+      "TRUST_PROXY_CIDRS": "${env.TRUST_PROXY_CIDRS}",
+      "BACKUP_ENABLED": "${env.BACKUP_ENABLED}",
+      "BACKUP_AUTH_BINDINGS": "${env.BACKUP_AUTH_BINDINGS}",
+      "COPILOT_BACKUP_COS_REGION": "${env.COPILOT_BACKUP_COS_REGION}",
+      "COPILOT_BACKUP_COS_BUCKET": "${env.COPILOT_BACKUP_COS_BUCKET}",
+      "COPILOT_BACKUP_COS_SECRET_ID": "${env.COPILOT_BACKUP_COS_SECRET_ID}",
+      "COPILOT_BACKUP_COS_SECRET_KEY": "${env.COPILOT_BACKUP_COS_SECRET_KEY}",
+      "COPILOT_BACKUP_COS_SECURITY_TOKEN": "${env.COPILOT_BACKUP_COS_SECURITY_TOKEN}",
+      "REMOTE_RELAY_ENABLED": "${env.REMOTE_RELAY_ENABLED}",
+      "REMOTE_PAIRING_ISSUER_KEY_PATH": "${env.REMOTE_PAIRING_ISSUER_KEY_PATH}",
+      "REMOTE_PAIRING_MAX_SESSIONS": "${env.REMOTE_PAIRING_MAX_SESSIONS}",
+      "REMOTE_PAIRING_MAX_USED_REQUESTS": "${env.REMOTE_PAIRING_MAX_USED_REQUESTS}",
+      "REMOTE_PAIRING_SESSION_TTL_MS": "${env.REMOTE_PAIRING_SESSION_TTL_MS}"
+    },
+    "customLogs": {
+      "logSetName": "copilot-cloud-logs",
+      "logTopicName": "copilot-cloud-app"
+    }
+  }
+}

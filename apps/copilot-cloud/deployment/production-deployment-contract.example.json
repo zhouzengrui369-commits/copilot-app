@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "profile": "production",
+  "serverRoles": [
+    "stateless-llm-proxy",
+    "optional-encrypted-backup-presign",
+    "optional-remote-relay"
+  ],
+  "envBindings": {
+    "TRUST_PROXY_CIDRS": "${env.TRUST_PROXY_CIDRS}",
+    "BACKUP_ENABLED": "${env.BACKUP_ENABLED}",
+    "BACKUP_AUTH_BINDINGS": "${env.BACKUP_AUTH_BINDINGS}",
+    "COPILOT_BACKUP_COS_REGION": "${env.COPILOT_BACKUP_COS_REGION}",
+    "COPILOT_BACKUP_COS_BUCKET": "${env.COPILOT_BACKUP_COS_BUCKET}",
+    "COPILOT_BACKUP_COS_SECRET_ID": "${env.COPILOT_BACKUP_COS_SECRET_ID}",
+    "COPILOT_BACKUP_COS_SECRET_KEY": "${env.COPILOT_BACKUP_COS_SECRET_KEY}",
+    "COPILOT_BACKUP_COS_SECURITY_TOKEN": "${env.COPILOT_BACKUP_COS_SECURITY_TOKEN}",
+    "REMOTE_RELAY_ENABLED": "${env.REMOTE_RELAY_ENABLED}",
+    "REMOTE_PAIRING_ISSUER_KEY_PATH": "${env.REMOTE_PAIRING_ISSUER_KEY_PATH}",
+    "REMOTE_PAIRING_MAX_SESSIONS": "${env.REMOTE_PAIRING_MAX_SESSIONS}",
+    "REMOTE_PAIRING_MAX_USED_REQUESTS": "${env.REMOTE_PAIRING_MAX_USED_REQUESTS}",
+    "REMOTE_PAIRING_SESSION_TTL_MS": "${env.REMOTE_PAIRING_SESSION_TTL_MS}"
+  },
+  "trustProxy": {
+    "strategy": "cidrs",
+    "cidrsEnv": "TRUST_PROXY_CIDRS",
+    "hopsEnv": null
+  },
+  "features": {
+    "backup": {
+      "defaultEnabled": false,
+      "enableEnv": "BACKUP_ENABLED",
+      "exactOptInValue": "1"
+    },
+    "remote": {
+      "defaultEnabled": false,
+      "enableEnv": "REMOTE_RELAY_ENABLED",
+      "exactOptInValue": "1",
+      "activationAllowed": false,
+      "readinessGate": "blocked-pending-remote-runtime-readiness",
+      "relayPath": "/v1/remote/ws",
+      "transport": "wss",
+      "defaultPort": 443,
+      "queryAllowed": false
+    }
+  },
+  "issuerMount": {
+    "provider": "external",
+    "targetPath": "/run/secrets/copilot/remote-pairing-issuer-ed25519.pkcs8",
+    "pathBinding": {
+      "envName": "REMOTE_PAIRING_ISSUER_KEY_PATH",
+      "envReference": "${env.REMOTE_PAIRING_ISSUER_KEY_PATH}",
+      "expectedValue": "/run/secrets/copilot/remote-pairing-issuer-ed25519.pkcs8"
+    },
+    "repoEmbedded": false,
+    "imageEmbedded": false,
+    "loggable": false,
+    "filePolicy": {
+      "format": "ed25519-pkcs8-pem",
+      "mode": "0600",
+      "ownership": "runtime-uid",
+      "regularFile": true,
+      "nlink": 1,
+      "allowSymlink": false,
+      "followSymlink": false,
+      "maxBytes": 65536
+    }
+  },
+  "backupBoundary": {
+    "ciphertextOnly": true,
+    "localAuthoritative": true,
+    "cloudSourceOfTruth": false,
+    "objectPrefix": "backup/v1/",
+    "allowedObjectVerbs": ["PUT", "GET", "HEAD", "DELETE"]
+  },
+  "activationGates": {
+    "backupCiphertextEndToEndRequired": true,
+    "remoteRuntimeReadinessRequired": true,
+    "remoteLiveMountTlsEvidenceRequired": true
+  }
+}

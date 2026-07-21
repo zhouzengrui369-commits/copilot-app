@@ -1,0 +1,1315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw_data/openclaw_workbench/design/agent-workbench-style-preview.html">
+  <meta name="source-hash" content="prototype-20260517-owner-operator-v1">
+  <meta name="rendered-at" content="2026-05-17T15:23:06+0800">
+  <title>OpenClaw Workbench 视觉方向预览</title>
+  <style>
+    :root {
+      --page: #edf1f5;
+      --canvas: #f7f9fc;
+      --surface: #ffffff;
+      --surface-2: #f0f4f7;
+      --sidebar: #101923;
+      --sidebar-text: #eaf1f7;
+      --ink: #101723;
+      --muted: #657284;
+      --line: #dce3ec;
+      --accent: #0f766e;
+      --accent-soft: #dff7f3;
+      --warn: #b45309;
+      --warn-soft: #fff2d8;
+      --danger: #b42318;
+      --danger-soft: #ffebe8;
+      --ok: #15803d;
+      --ok-soft: #e5f8ed;
+      --shadow: 0 16px 44px rgba(15, 23, 42, .09);
+      --radius: 16px;
+      --control: #334155;
+      --control-text: #ffffff;
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    body,
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    .theme-tab {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .prototype-page {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .doc-hero {
+      max-width: 1440px;
+      margin: 0 auto 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+    }
+
+    .doc-hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .doc-hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 920px;
+    }
+
+    .doc-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: var(--surface);
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .style-switch {
+      max-width: 1440px;
+      margin: 0 auto 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .style-switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .theme-tab {
+      display: grid;
+      gap: 5px;
+      min-height: 84px;
+      text-align: left;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .theme-tab strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .theme-tab span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    #style-a:checked ~ .style-switch label[for="style-a"],
+    #style-b:checked ~ .style-switch label[for="style-b"],
+    #style-c:checked ~ .style-switch label[for="style-c"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    #style-b:checked ~ .prototype {
+      --page: #f6f6f4;
+      --canvas: #fbfbf9;
+      --surface: #ffffff;
+      --surface-2: #f1f1ee;
+      --sidebar: #f7f7f4;
+      --sidebar-text: #161616;
+      --ink: #151515;
+      --muted: #6a6a64;
+      --line: #ddddda;
+      --accent: #161616;
+      --accent-soft: #eeeeeb;
+      --warn: #9a5b00;
+      --warn-soft: #fff4d7;
+      --danger: #a43b32;
+      --danger-soft: #fff0ee;
+      --ok: #276f42;
+      --ok-soft: #e9f5ed;
+      --shadow: 0 10px 28px rgba(0, 0, 0, .055);
+      --radius: 12px;
+      --control: #161616;
+      --control-text: #ffffff;
+    }
+
+    #style-c:checked ~ .prototype {
+      --page: #070b10;
+      --canvas: #0b1118;
+      --surface: #111923;
+      --surface-2: #172330;
+      --sidebar: #05080d;
+      --sidebar-text: #e6f8ff;
+      --ink: #ecf6ff;
+      --muted: #9fb0bf;
+      --line: #253445;
+      --accent: #22c7a8;
+      --accent-soft: rgba(34, 199, 168, .14);
+      --warn: #f2b84b;
+      --warn-soft: rgba(242, 184, 75, .16);
+      --danger: #ff6b6b;
+      --danger-soft: rgba(255, 107, 107, .15);
+      --ok: #5ee28c;
+      --ok-soft: rgba(94, 226, 140, .14);
+      --shadow: 0 18px 60px rgba(0, 0, 0, .35);
+      --radius: 16px;
+      --control: #22c7a8;
+      --control-text: #04100e;
+      color-scheme: dark;
+    }
+
+    .prototype {
+      max-width: 1440px;
+      margin: 0 auto;
+      color: var(--ink);
+    }
+
+    .decision-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .decision-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-height: 108px;
+    }
+
+    .decision-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .decision-card strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .decision-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: 880px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      background: var(--canvas);
+      box-shadow: var(--shadow);
+    }
+
+    .side-rail {
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      padding: 20px 14px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 22px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--control-text);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .brand strong,
+    .brand span {
+      display: block;
+    }
+
+    .brand span {
+      color: color-mix(in srgb, var(--sidebar-text), transparent 35%);
+      font-size: 12px;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+
+    .nav-item {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 12px;
+      color: color-mix(in srgb, var(--sidebar-text), transparent 12%);
+    }
+
+    .nav-item.active {
+      background: color-mix(in srgb, var(--accent), transparent 72%);
+      color: var(--sidebar-text);
+    }
+
+    .nav-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--sidebar-text), transparent 86%);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav-item strong,
+    .nav-item span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .nav-item span {
+      font-size: 12px;
+      opacity: .72;
+    }
+
+    .operator-mini {
+      border: 1px solid color-mix(in srgb, var(--sidebar-text), transparent 78%);
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      background: color-mix(in srgb, var(--sidebar), white 4%);
+    }
+
+    .operator-mini strong,
+    .operator-mini span {
+      display: block;
+    }
+
+    .operator-mini span {
+      color: color-mix(in srgb, var(--sidebar-text), transparent 35%);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .workbench {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface), transparent 5%);
+      backdrop-filter: blur(14px);
+    }
+
+    .search {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 10px 12px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .primary {
+      border: 0;
+      background: var(--control);
+      color: var(--control-text);
+      font-weight: 750;
+    }
+
+    .status-button {
+      background: var(--accent);
+      color: var(--control-text);
+      border-color: transparent;
+      font-weight: 750;
+    }
+
+    .content {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+      gap: 14px;
+    }
+
+    .attention-main,
+    .attention-list,
+    .panel,
+    .agent-card,
+    .task-focus,
+    .event-feed,
+    .config-preview {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .attention-main {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 84px minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .state-tile {
+      width: 70px;
+      height: 70px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      font-weight: 850;
+      background: var(--warn);
+    }
+
+    .attention-main h2,
+    .attention-main p,
+    .panel h3,
+    .panel p,
+    .task-focus h2,
+    .task-focus p,
+    .event-feed h3,
+    .event-feed p,
+    .config-preview h3,
+    .config-preview p {
+      margin: 0;
+    }
+
+    .attention-main h2 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .attention-main p,
+    .panel p,
+    .event-feed p,
+    .config-preview p {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .attention-list {
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      max-height: 230px;
+      overflow: auto;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .section-title strong {
+      font-size: 15px;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .attention-item {
+      border-left: 4px solid var(--warn);
+      border-radius: 10px;
+      background: var(--warn-soft);
+      padding: 10px;
+      display: grid;
+      gap: 3px;
+      color: var(--ink);
+    }
+
+    .attention-item strong {
+      overflow-wrap: anywhere;
+    }
+
+    .attention-item span {
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .agent-card {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      min-height: 292px;
+    }
+
+    .agent-card.needs-attention {
+      border-color: color-mix(in srgb, var(--danger), var(--line) 45%);
+      background: color-mix(in srgb, var(--danger-soft), var(--surface) 68%);
+    }
+
+    .agent-head {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .robot {
+      width: 78px;
+      height: 78px;
+      position: relative;
+    }
+
+    .robot .antenna {
+      position: absolute;
+      left: 36px;
+      top: 0;
+      width: 6px;
+      height: 14px;
+      border: 2px solid var(--ink);
+      border-bottom: 0;
+      border-radius: 7px 7px 0 0;
+    }
+
+    .robot .head {
+      position: absolute;
+      left: 10px;
+      top: 14px;
+      width: 58px;
+      height: 42px;
+      border: 3px solid var(--ink);
+      border-radius: 16px;
+      background: var(--surface-2);
+    }
+
+    .robot .eye {
+      position: absolute;
+      top: 32px;
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--accent);
+    }
+
+    .robot .eye.left { left: 28px; }
+    .robot .eye.right { right: 28px; }
+
+    .robot .ear {
+      position: absolute;
+      top: 28px;
+      width: 10px;
+      height: 18px;
+      border-radius: 4px;
+      background: var(--accent);
+    }
+
+    .robot .ear.left { left: 0; }
+    .robot .ear.right { right: 0; }
+
+    .robot .body {
+      position: absolute;
+      left: 22px;
+      top: 54px;
+      width: 34px;
+      height: 22px;
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--control-text);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .agent-title strong,
+    .agent-title span {
+      display: block;
+    }
+
+    .agent-title strong {
+      font-size: 20px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .agent-title span {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .status-dot::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px var(--ok-soft);
+    }
+
+    .needs-attention .status-dot::before {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px var(--danger-soft);
+    }
+
+    .work-summary {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-2);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .work-summary small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .work-summary strong {
+      overflow-wrap: anywhere;
+    }
+
+    .progress {
+      height: 7px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--line), transparent 18%);
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: var(--value, 45%);
+      background: var(--accent);
+      border-radius: inherit;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .agent-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .agent-actions button {
+      min-height: 34px;
+      padding: 7px 10px;
+    }
+
+    .work-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+      gap: 14px;
+    }
+
+    .task-focus {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .task-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .task-focus h2 {
+      font-size: 22px;
+      overflow-wrap: anywhere;
+    }
+
+    .task-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .fact {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-2);
+      padding: 12px;
+    }
+
+    .fact span,
+    .fact strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .fact span {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .artifact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .artifact {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: var(--surface);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .event-feed {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      max-height: 430px;
+      overflow: auto;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .event:last-child {
+      border-bottom: 0;
+    }
+
+    .event time {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .event strong,
+    .event span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .event span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .config-preview {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .config-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .config-tabs button:first-child {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .config-side,
+    .config-editor {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-2);
+      padding: 12px;
+    }
+
+    .config-side {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .file-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      padding: 9px;
+      overflow-wrap: anywhere;
+    }
+
+    .file-row.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .config-editor pre {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: var(--ink);
+      line-height: 1.55;
+      font-size: 13px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .design-notes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .design-notes .panel {
+      padding: 16px;
+    }
+
+    .design-notes h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .design-notes ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .mobile-note {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .status-dot::before {
+        animation: pulse 2.4s ease-in-out infinite;
+      }
+
+      .robot .eye {
+        animation: scan 2.8s ease-in-out infinite;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.18); opacity: .72; }
+    }
+
+    @keyframes scan {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(2px); }
+    }
+
+    @media (max-width: 1100px) {
+      .app-shell {
+        grid-template-columns: 76px minmax(0, 1fr);
+      }
+
+      .brand strong,
+      .brand span,
+      .nav-item strong,
+      .nav-item span,
+      .operator-mini {
+        display: none;
+      }
+
+      .nav-item {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .hero-row,
+      .work-layout,
+      .config-grid,
+      .decision-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .agent-grid,
+      .design-notes {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .prototype-page {
+        padding: 12px;
+      }
+
+      .doc-hero,
+      .style-switch,
+      .topbar,
+      .attention-main,
+      .task-head {
+        grid-template-columns: 1fr;
+      }
+
+      .doc-meta {
+        justify-content: flex-start;
+      }
+
+      .app-shell {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        border-radius: 18px;
+      }
+
+      .side-rail {
+        display: none;
+      }
+
+      .content,
+      .topbar {
+        padding: 12px;
+      }
+
+      .task-grid,
+      .decision-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-note {
+        display: block;
+      }
+    }
+
+    @media print {
+      .style-switch,
+      .topbar,
+      .agent-actions,
+      .config-tabs {
+        display: none;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .app-shell {
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="prototype-page">
+    <header class="doc-hero">
+      <div>
+        <h1>OpenClaw Workbench 视觉方向预览</h1>
+        <p>先确认风格与信息架构，再进入产品代码开发。本原型聚焦 Owner Operator：打开后 10 秒内判断谁在工作、卡在哪、下一步是否需要介入。</p>
+      </div>
+      <div class="doc-meta">
+        <span class="pill">只读 HTML 原型</span>
+        <span class="pill">source-hash: prototype-20260517-owner-operator-v1</span>
+        <span class="pill">rendered-at: 2026-05-17 15:23</span>
+      </div>
+    </header>
+
+    <input id="style-a" type="radio" name="visual-style" checked>
+    <input id="style-b" type="radio" name="visual-style">
+    <input id="style-c" type="radio" name="visual-style">
+
+    <section class="style-switch" aria-label="选择视觉方向">
+      <label class="theme-tab" for="style-a">
+        <strong>方案 A：Operator OS（推荐）</strong>
+        <span>高信息密度但降噪；状态优先，适合每日使用和真实运维。</span>
+      </label>
+      <label class="theme-tab" for="style-b">
+        <strong>方案 B：ChatGPT Minimal</strong>
+        <span>极简阅读体验；弱化机器人视觉，强调对话和当前任务。</span>
+      </label>
+      <label class="theme-tab" for="style-c">
+        <strong>方案 C：Mission Control</strong>
+        <span>深色驾驶舱；适合展示实时系统，但长期使用更强刺激。</span>
+      </label>
+    </section>
+
+    <section class="prototype">
+      <section class="decision-strip" aria-label="设计决策摘要">
+        <article class="decision-card">
+          <span>首屏唯一目标</span>
+          <strong>判断是否介入</strong>
+          <p>不再把配置、日志、任务全部摊开；默认只暴露 Attention、当前工作、下一步。</p>
+        </article>
+        <article class="decision-card">
+          <span>信息降噪</span>
+          <strong>4 层披露</strong>
+          <p>状态摘要、当前任务、详情抽屉、完整配置；用户主动下钻才看到长内容。</p>
+        </article>
+        <article class="decision-card">
+          <span>代理拟人化</span>
+          <strong>状态化机器人</strong>
+          <p>机器人不是装饰，只表达在线、工作、等待、阻塞和可交互动作。</p>
+        </article>
+        <article class="decision-card">
+          <span>验收标准</span>
+          <strong>无噪音主屏</strong>
+          <p>1440×900 首屏不能出现配置编辑器、长日志、旧 Kanban 或重复按钮堆叠。</p>
+        </article>
+      </section>
+
+      <section class="app-shell" aria-label="OpenClaw Workbench 目标界面预览">
+        <aside class="side-rail">
+          <div class="brand">
+            <div class="brand-mark">OC</div>
+            <div>
+              <strong>OpenClaw</strong>
+              <span>Workbench</span>
+            </div>
+          </div>
+          <nav class="nav-list" aria-label="主导航">
+            <div class="nav-item"><div class="nav-icon">C</div><div><strong>对话</strong><span>Chat</span></div></div>
+            <div class="nav-item active"><div class="nav-icon">A</div><div><strong>智能体工作台</strong><span>Agents</span></div></div>
+            <div class="nav-item"><div class="nav-icon">K</div><div><strong>知识库</strong><span>Knowledge</span></div></div>
+            <div class="nav-item"><div class="nav-icon">S</div><div><strong>系统设置</strong><span>System</span></div></div>
+          </nav>
+          <div class="operator-mini">
+            <strong>Owner Operator</strong>
+            <span>默认关注任务风险、系统健康和下一步动作，不展示后台噪音。</span>
+          </div>
+        </aside>
+
+        <section class="workbench">
+          <header class="topbar">
+            <div class="search">@all OpenClaw 搜索任务、知识、配置或输入指令</div>
+            <button class="primary" type="button">搜索</button>
+            <button class="status-button" type="button">SSE 在线</button>
+          </header>
+
+          <section class="content">
+            <section class="hero-row">
+              <article class="attention-main">
+                <div class="state-tile">待确认</div>
+                <div>
+                  <h2>现在最重要的事</h2>
+                  <p>1 个任务等待 PLAN 确认；Gateway 在线；main 正在跟进停滞任务。建议先确认 TASK_20260517_014 是否继续执行。</p>
+                </div>
+                <button class="primary" type="button">处理队列</button>
+              </article>
+
+              <aside class="attention-list" aria-label="Attention Queue">
+                <div class="section-title"><strong>Attention Queue</strong><span>13:23 更新</span></div>
+                <div class="attention-item">
+                  <strong>等待确认：TASK_20260517_014</strong>
+                  <span>main · 确认 PLAN · 25 分钟无更新</span>
+                </div>
+                <div class="attention-item">
+                  <strong>知识源：NAS unavailable</strong>
+                  <span>system · 查看系统 · 不阻塞当前任务</span>
+                </div>
+                <div class="attention-item">
+                  <strong>审批：9 项待处理</strong>
+                  <span>audit · 高风险动作必须人工确认</span>
+                </div>
+              </aside>
+            </section>
+
+            <section class="agent-grid" aria-label="三代理状态">
+              <article class="agent-card needs-attention">
+                <div class="agent-head">
+                  <div class="robot" aria-label="OpenClaw Main robot">
+                    <div class="antenna"></div><div class="ear left"></div><div class="ear right"></div><div class="head"></div><div class="eye left"></div><div class="eye right"></div><div class="body">M</div>
+                  </div>
+                  <div class="agent-title">
+                    <strong>OpenClaw Main</strong>
+                    <span>系统管理员</span>
+                    <div class="status-dot">需处理</div>
+                  </div>
+                </div>
+                <div class="work-summary">
+                  <small>当前工作</small>
+                  <strong>TASK_20260517_014</strong>
+                  <small>等待 Gateway 接收并开始处理</small>
+                  <div class="progress" aria-label="progress 35%"><span style="--value:35%"></span></div>
+                </div>
+                <div class="chip-row">
+                  <span class="chip">系统运维</span><span class="chip">安全审计</span><span class="chip">任务调度</span><span class="chip">最终验收</span>
+                </div>
+                <div class="agent-actions">
+                  <button class="primary" type="button">打开</button><button type="button">引导</button><button type="button">配置</button>
+                </div>
+              </article>
+
+              <article class="agent-card">
+                <div class="agent-head">
+                  <div class="robot" aria-label="AOG Boss robot">
+                    <div class="antenna"></div><div class="ear left"></div><div class="ear right"></div><div class="head"></div><div class="eye left"></div><div class="eye right"></div><div class="body">B</div>
+                  </div>
+                  <div class="agent-title">
+                    <strong>AOG Boss</strong>
+                    <span>战略决策者</span>
+                    <div class="status-dot">在线空闲</div>
+                  </div>
+                </div>
+                <div class="work-summary">
+                  <small>当前工作</small>
+                  <strong>等待指令</strong>
+                  <small>最近完成：任务拆解复盘</small>
+                  <div class="progress" aria-label="progress 0%"><span style="--value:0%"></span></div>
+                </div>
+                <div class="chip-row">
+                  <span class="chip">战略规划</span><span class="chip">项目拆解</span><span class="chip">价值审计</span>
+                </div>
+                <div class="agent-actions">
+                  <button class="primary" type="button">对话</button><button type="button">派单</button><button type="button">配置</button>
+                </div>
+              </article>
+
+              <article class="agent-card">
+                <div class="agent-head">
+                  <div class="robot" aria-label="AOG Worker robot">
+                    <div class="antenna"></div><div class="ear left"></div><div class="ear right"></div><div class="head"></div><div class="eye left"></div><div class="eye right"></div><div class="body">W</div>
+                  </div>
+                  <div class="agent-title">
+                    <strong>AOG Worker</strong>
+                    <span>执行代理</span>
+                    <div class="status-dot">工作中</div>
+                  </div>
+                </div>
+                <div class="work-summary">
+                  <small>当前工作</small>
+                  <strong>任务页代理卡即时可视化 smoke test</strong>
+                  <small>正在生成 RESULT 摘要</small>
+                  <div class="progress" aria-label="progress 72%"><span style="--value:72%"></span></div>
+                </div>
+                <div class="chip-row">
+                  <span class="chip">执行闭环</span><span class="chip">自动化</span><span class="chip">知识治理</span>
+                </div>
+                <div class="agent-actions">
+                  <button class="primary" type="button">查看</button><button type="button">暂停</button><button type="button">配置</button>
+                </div>
+              </article>
+            </section>
+
+            <section class="work-layout">
+              <article class="task-focus">
+                <div class="task-head">
+                  <div>
+                    <h2>当前工作详情：TASK_20260517_014</h2>
+                    <p>默认展示摘要，不直接展开长日志。点击 PLAN/RESULT/引用文件后在右侧预览。</p>
+                  </div>
+                  <button class="primary" type="button">确认 PLAN</button>
+                </div>
+                <div class="task-grid">
+                  <div class="fact"><span>谁在做</span><strong>main · MiniMax M2.7</strong></div>
+                  <div class="fact"><span>做到哪</span><strong>等待确认 · 35%</strong></div>
+                  <div class="fact"><span>卡在哪</span><strong>需要 Owner 确认是否继续执行</strong></div>
+                  <div class="fact"><span>下一步</span><strong>确认 PLAN 后派发 worker 执行</strong></div>
+                </div>
+                <div class="artifact-row">
+                  <a class="artifact" href="#">PLAN.md · 点击预览</a>
+                  <a class="artifact" href="#">RESULT.md · 未生成</a>
+                  <a class="artifact" href="#">原文件引用 · 3 个</a>
+                  <a class="artifact" href="#">Gateway session · 查看</a>
+                </div>
+              </article>
+
+              <aside class="event-feed" aria-label="实时事件账本">
+                <div>
+                  <h3>实时事件账本</h3>
+                  <p>只显示最近关键事件，完整日志二级展开。</p>
+                </div>
+                <div class="event"><time>13:23</time><div><strong>main 生成恢复提示</strong><span>低风险动作已审计记录，可复制给 Gateway 继续执行。</span></div></div>
+                <div class="event"><time>13:19</time><div><strong>task-executor 写入 PLAN.md</strong><span>等待人工确认；RESULT.md 尚未生成。</span></div></div>
+                <div class="event"><time>13:12</time><div><strong>Gateway 输出超时</strong><span>已转为后台运行，不再把 timeout 当失败暴露。</span></div></div>
+              </aside>
+            </section>
+
+            <section class="config-preview" aria-label="配置工作区预览">
+              <div class="section-title">
+                <div>
+                  <h3>配置工作区：独立全屏，而不是挤在侧栏</h3>
+                  <p>配置是深水区，必须完整高度、清晰分 tab、默认只读摘要，避免污染主屏。</p>
+                </div>
+                <span>Preview</span>
+              </div>
+              <div class="config-tabs">
+                <button type="button">配置文件</button>
+                <button type="button">技能工具</button>
+                <button type="button">Cron</button>
+                <button type="button">权限</button>
+                <button type="button">审计</button>
+              </div>
+              <div class="config-grid">
+                <div class="config-side">
+                  <div class="file-row active"><strong>soul.md</strong><span>ready</span></div>
+                  <div class="file-row"><strong>agents</strong><span>ready</span></div>
+                  <div class="file-row"><strong>memory</strong><span>ready</span></div>
+                  <div class="file-row"><strong>heartbeat</strong><span>ready</span></div>
+                </div>
+                <div class="config-editor">
+                  <pre># SOUL.md - OpenClaw Main
+
+角色：系统管理员 + Owner Operator 助理
+边界：低风险自动执行；高风险动作进入审批
+验收：所有配置变更写入 audit_logs 和 workbench_events</pre>
+                </div>
+              </div>
+            </section>
+          </section>
+        </section>
+      </section>
+
+      <section class="design-notes" aria-label="实施原则">
+        <article class="panel">
+          <h3>如果选 A</h3>
+          <ul>
+            <li>作为主线实现，保留状态密度。</li>
+            <li>收敛颜色，减少边框和重复按钮。</li>
+            <li>适合长期作为默认工作台。</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>如果选 B</h3>
+          <ul>
+            <li>更像 ChatGPT，首屏更安静。</li>
+            <li>三代理存在感降低，适合对话优先。</li>
+            <li>任务运营感弱一些。</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>如果选 C</h3>
+          <ul>
+            <li>视觉冲击强，适合大屏演示。</li>
+            <li>长期使用可能疲劳。</li>
+            <li>需要严格控制动画和高亮数量。</li>
+          </ul>
+        </article>
+      </section>
+
+      <p class="mobile-note">移动端策略：主屏先展示 Attention 和当前工作；三代理卡纵向堆叠；配置工作区进入全屏二级页面，不与主任务流混排。</p>
+    </section>
+  </main>
+</body>
+</html>

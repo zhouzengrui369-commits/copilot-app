@@ -1,0 +1,30 @@
+# Phase5-7 Codex/M3 controller direct execution — files actually touched in this task
+# 返工 v2 后：补 mirror_knowledge.py docstring、Mobile UI、styles.css 基线证据
+
+# repo (Phase5 patch + Phase6 closure + Phase7 docs)
+apps/server/src/index.ts                              # Phase5 patch + tags/related 类型修正
+apps/mobile/src/lib/types.ts                          # Phase5 类型扩展
+apps/mobile/src/lib/api.ts                            # Phase5 createCalendarEvent 透传
+apps/mobile/src/screens/CalendarScreen.tsx            # Phase6: DraftEvent + mutation + EventEditor quickNoteCard (Switch + rawContent/tags/related + 2 styles)
+apps/web/src/App.tsx                                  # Phase6: Assistant event state + addEvent + UI + quickNoteStatus
+apps/web/src/styles.css                               # Phase6: 末尾新增 6 行 (4 个 class)
+
+# task directory (Codex-direct execution evidence)
+tasks/openclaw/2026-07-02T02-40-njx-knowledge-add-note-v1/phase5-calendar-quick-note/RESULT.md
+tasks/openclaw/2026-07-02T02-40-njx-knowledge-add-note-v1/phase5-calendar-quick-note/EVIDENCE.md
+tasks/openclaw/2026-07-02T02-40-njx-knowledge-add-note-v1/phase5-calendar-quick-note/commands.log
+tasks/openclaw/2026-07-02T02-40-njx-knowledge-add-note-v1/phase5-calendar-quick-note/changed-files.txt
+
+# root deliverables (final Phase5-7 status, v2 返工后)
+RESULT.md
+EVIDENCE.md
+commands.log
+changed-files.txt
+
+# skill (outside workspace, written via require_escalated)
+~/.openclaw/skills/copilot-note-mirror/scripts/_common.py            # DEFAULT_SRC_ROOT 默认改 njx-knowledge
+~/.openclaw/skills/copilot-note-mirror/scripts/mirror_knowledge.py   # 返工: docstring 路径同步 (line 2)
+~/.openclaw/skills/copilot-note-mirror/SKILL.md                       # scope + 镜像范围示例 + 部署位置段
+# (stale .pyc cleared)
+~/.openclaw/skills/copilot-note-mirror/scripts/__pycache__/_common.cpython-314.pyc
+~/.openclaw/skills/copilot-note-mirror/scripts/__pycache__/mirror_knowledge.cpython-314.pyc

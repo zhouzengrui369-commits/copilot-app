@@ -1,0 +1,46 @@
+{
+  "name": "@openclaw-workbench/mobile",
+  "main": "index.js",
+  "version": "1.0.8",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "~2.2.0",
+    "@tanstack/react-query": "^5.90.12",
+    "expo": "~56.0.4",
+    "expo-audio": "~56.0.11",
+    "expo-constants": "~56.0.15",
+    "expo-device": "~56.0.4",
+    "expo-file-system": "~56.0.7",
+    "expo-linking": "~56.0.11",
+    "expo-secure-store": "~56.0.4",
+    "expo-updates": "~56.0.17",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-is": "^19.2.7",
+    "react-native": "0.85.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-sherpa-onnx": "^0.4.3",
+    "react-native-web": "~0.21.0",
+    "whisper.rn": "^0.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json --noEmit",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo run:android",
+    "android:preview": "npx --yes eas-cli@latest build --platform android --profile preview",
+    "android:preview:local": "npx --yes eas-cli@latest build --platform android --profile preview --local",
+    "ios:testflight": "npx --yes eas-cli@latest build --platform ios --profile testflight",
+    "ios:submit:testflight": "npx --yes eas-cli@latest submit --platform ios --profile testflight",
+    "ios:expo-go": "expo start --lan --go --port ${EXPO_GO_PORT:-8082}",
+    "ios": "expo run:ios",
+    "update:preview": "npx --yes eas-cli@latest update --channel preview --message \"OpenClaw Mobile preview update\" --environment preview",
+    "web": "expo start --web",
+    "lint": "expo lint"
+  },
+  "private": true
+}

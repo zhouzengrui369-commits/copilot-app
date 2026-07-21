@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:copilot:production-deployment-contract:v1",
+  "title": "Copilot Cloud production deployment contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "serverRoles",
+    "envBindings",
+    "trustProxy",
+    "features",
+    "issuerMount",
+    "backupBoundary",
+    "activationGates"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profile": { "const": "production" },
+    "serverRoles": {
+      "const": [
+        "stateless-llm-proxy",
+        "optional-encrypted-backup-presign",
+        "optional-remote-relay"
+      ]
+    },
+    "envBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "TRUST_PROXY_CIDRS",
+        "BACKUP_ENABLED",
+        "BACKUP_AUTH_BINDINGS",
+        "COPILOT_BACKUP_COS_REGION",
+        "COPILOT_BACKUP_COS_BUCKET",
+        "COPILOT_BACKUP_COS_SECRET_ID",
+        "COPILOT_BACKUP_COS_SECRET_KEY",
+        "COPILOT_BACKUP_COS_SECURITY_TOKEN",
+        "REMOTE_RELAY_ENABLED",
+        "REMOTE_PAIRING_ISSUER_KEY_PATH",
+        "REMOTE_PAIRING_MAX_SESSIONS",
+        "REMOTE_PAIRING_MAX_USED_REQUESTS",
+        "REMOTE_PAIRING_SESSION_TTL_MS"
+      ],
+      "properties": {
+        "TRUST_PROXY_CIDRS": { "const": "${env.TRUST_PROXY_CIDRS}" },
+        "BACKUP_ENABLED": { "const": "${env.BACKUP_ENABLED}" },
+        "BACKUP_AUTH_BINDINGS": { "const": "${env.BACKUP_AUTH_BINDINGS}" },
+        "COPILOT_BACKUP_COS_REGION": { "const": "${env.COPILOT_BACKUP_COS_REGION}" },
+        "COPILOT_BACKUP_COS_BUCKET": { "const": "${env.COPILOT_BACKUP_COS_BUCKET}" },
+        "COPILOT_BACKUP_COS_SECRET_ID": { "const": "${env.COPILOT_BACKUP_COS_SECRET_ID}" },
+        "COPILOT_BACKUP_COS_SECRET_KEY": { "const": "${env.COPILOT_BACKUP_COS_SECRET_KEY}" },
+        "COPILOT_BACKUP_COS_SECURITY_TOKEN": { "const": "${env.COPILOT_BACKUP_COS_SECURITY_TOKEN}" },
+        "REMOTE_RELAY_ENABLED": { "const": "${env.REMOTE_RELAY_ENABLED}" },
+        "REMOTE_PAIRING_ISSUER_KEY_PATH": { "const": "${env.REMOTE_PAIRING_ISSUER_KEY_PATH}" },
+        "REMOTE_PAIRING_MAX_SESSIONS": { "const": "${env.REMOTE_PAIRING_MAX_SESSIONS}" },
+        "REMOTE_PAIRING_MAX_USED_REQUESTS": { "const": "${env.REMOTE_PAIRING_MAX_USED_REQUESTS}" },
+        "REMOTE_PAIRING_SESSION_TTL_MS": { "const": "${env.REMOTE_PAIRING_SESSION_TTL_MS}" }
+      }
+    },
+    "trustProxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "cidrsEnv", "hopsEnv"],
+      "properties": {
+        "strategy": { "const": "cidrs" },
+        "cidrsEnv": { "const": "TRUST_PROXY_CIDRS" },
+        "hopsEnv": { "type": "null" }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backup", "remote"],
+      "properties": {
+        "backup": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["defaultEnabled", "enableEnv", "exactOptInValue"],
+          "properties": {
+            "defaultEnabled": { "const": false },
+            "enableEnv": { "const": "BACKUP_ENABLED" },
+            "exactOptInValue": { "const": "1" }
+          }
+        },
+        "remote": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "defaultEnabled",
+            "enableEnv",
+            "exactOptInValue",
+            "activationAllowed",
+            "readinessGate",
+            "relayPath",
+            "transport",
+            "defaultPort",
+            "queryAllowed"
+          ],
+          "properties": {
+            "defaultEnabled": { "const": false },
+            "enableEnv": { "const": "REMOTE_RELAY_ENABLED" },
+            "exactOptInValue": { "const": "1" },
+            "activationAllowed": { "const": false },
+            "readinessGate": { "const": "blocked-pending-remote-runtime-readiness" },
+            "relayPath": { "const": "/v1/remote/ws" },
+            "transport": { "const": "wss" },
+            "defaultPort": { "const": 443 },
+            "queryAllowed": { "const": false }
+          }
+        }
+      }
+    },
+    "issuerMount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "targetPath",
+        "pathBinding",
+        "repoEmbedded",
+        "imageEmbedded",
+        "loggable",
+        "filePolicy"
+      ],
+      "properties": {
+        "provider": { "const": "external" },
+        "targetPath": { "type": "string", "pattern": "^/" },
+        "pathBinding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["envName", "envReference", "expectedValue"],
+          "properties": {
+            "envName": { "const": "REMOTE_PAIRING_ISSUER_KEY_PATH" },
+            "envReference": { "const": "${env.REMOTE_PAIRING_ISSUER_KEY_PATH}" },
+            "expectedValue": { "type": "string", "pattern": "^/" }
+          }
+        },
+        "repoEmbedded": { "const": false },
+        "imageEmbedded": { "const": false },
+        "loggable": { "const": false },
+        "filePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "mode",
+            "ownership",
+            "regularFile",
+            "nlink",
+            "allowSymlink",
+            "followSymlink",
+            "maxBytes"
+          ],
+          "properties": {
+            "format": { "const": "ed25519-pkcs8-pem" },
+            "mode": { "const": "0600" },
+            "ownership": { "const": "runtime-uid" },
+            "regularFile": { "const": true },
+            "nlink": { "const": 1 },
+            "allowSymlink": { "const": false },
+            "followSymlink": { "const": false },
+            "maxBytes": { "const": 65536 }
+          }
+        }
+      }
+    },
+    "backupBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ciphertextOnly",
+        "localAuthoritative",
+        "cloudSourceOfTruth",
+        "objectPrefix",
+        "allowedObjectVerbs"
+      ],
+      "properties": {
+        "ciphertextOnly": { "const": true },
+        "localAuthoritative": { "const": true },
+        "cloudSourceOfTruth": { "const": false },
+        "objectPrefix": { "const": "backup/v1/" },
+        "allowedObjectVerbs": { "const": ["PUT", "GET", "HEAD", "DELETE"] }
+      }
+    },
+    "activationGates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "backupCiphertextEndToEndRequired",
+        "remoteRuntimeReadinessRequired",
+        "remoteLiveMountTlsEvidenceRequired"
+      ],
+      "properties": {
+        "backupCiphertextEndToEndRequired": { "const": true },
+        "remoteRuntimeReadinessRequired": { "const": true },
+        "remoteLiveMountTlsEvidenceRequired": { "const": true }
+      }
+    }
+  }
+}

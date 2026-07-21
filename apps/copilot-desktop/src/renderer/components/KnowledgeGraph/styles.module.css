@@ -1,0 +1,208 @@
+/* KnowledgeGraph — Sprint 1.2 / T-1.2.2 styles.
+ * Mirrors Sprint 1.1 settings panel: CSS variables for theme
+ * (light + dark via [data-theme="dark"] on <html>), 4px spacing
+ * scale, and primary-tinted interactive surfaces.
+ *
+ * Imported as a CSS Module — class names are referenced via the
+ * `styles` proxy (e.g. `styles.root`, `styles.toolbar`). Plain
+ * global rules (theme overrides) live at the bottom.
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text, #1a202c);
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbarMeta {
+  font-size: 12px;
+  color: var(--color-text-muted, #4a5568);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+}
+
+.filterPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-surface-alt, #f7fafc);
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.filterPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filterPanelTitle {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+  color: var(--color-text-muted, #4a5568);
+}
+
+.filterPanelClear {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid var(--color-border, #cbd5e0);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-muted, #4a5568);
+}
+
+.filterPanelClear:hover {
+  background: var(--color-surface-hover, #edf2f7);
+}
+
+.filterPanelChips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  background: transparent;
+  border: 1px solid var(--color-border, #cbd5e0);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--color-text, #1a202c);
+  transition: background 80ms ease, border-color 80ms ease;
+}
+
+.chip:hover {
+  background: var(--color-surface-hover, #edf2f7);
+}
+
+.chipActive {
+  background: var(--color-primary-soft, #ebf4ff);
+  border-color: var(--color-primary, #3182ce);
+  font-weight: 600;
+}
+
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chipLabel {
+  flex: 1;
+  text-align: left;
+}
+
+.chipCount {
+  font-size: 10px;
+  color: var(--color-text-muted, #4a5568);
+}
+
+.filterPanelSummary {
+  font-size: 11px;
+  color: var(--color-text-muted, #4a5568);
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  padding-top: 4px;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #cbd5e0);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text, #1a202c);
+  font-size: 13px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-primary, #3182ce);
+  box-shadow: 0 0 0 2px var(--color-primary-soft, rgba(49, 130, 206, 0.15));
+}
+
+.searchClear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-surface-hover, #edf2f7);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sigmaCanvas {
+  background: var(--color-surface-alt, #fafafa);
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.status {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--color-text-muted, #4a5568);
+}
+
+/* Dark theme overrides — applied at the html level so the .root class
+ * doesn't need to know. CSS modules will scope these but :global() is
+ * required because we target `html[data-theme='dark']` not a local
+ * class. */
+:global(html[data-theme='dark']) .root {
+  background: #1a202c;
+  color: #f7fafc;
+  border-color: #4a5568;
+}
+
+:global(html[data-theme='dark']) .filterPanel {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+:global(html[data-theme='dark']) .searchInput {
+  background: #1a202c;
+  color: #f7fafc;
+  border-color: #4a5568;
+}
+
+:global(html[data-theme='dark']) .sigmaCanvas {
+  background: #2d3748;
+  border-color: #4a5568;
+}

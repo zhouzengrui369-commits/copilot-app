@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw/copilot/design/openclaw-codex-parity-preview.html">
+  <meta name="source-hash" content="1c30856133ee0db3df936ccb7054f0635dd2fe4a68866ccf83d4756962c90ac7">
+  <meta name="rendered-at" content="2026-06-13T23:00:00+08:00">
+  <title>OpenClaw Workbench Codex Parity Preview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5f7;
+      --paper: #ffffff;
+      --soft: #f8fafc;
+      --ink: #101828;
+      --muted: #667085;
+      --faint: #98a2b3;
+      --line: #d8dde7;
+      --line-soft: #e8ecf2;
+      --accent: #2563eb;
+      --accent-soft: #eef4ff;
+      --ok: #0f766e;
+      --ok-soft: #ecfdf5;
+      --warn: #b45309;
+      --warn-soft: #fff7ed;
+      --danger: #b42318;
+      --danger-soft: #fff1f0;
+      --shadow: 0 1px 2px rgb(15 23 42 / .05);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    * { box-sizing: border-box; }
+    html { overflow-wrap:anywhere; word-break:break-word; }
+    html, body { min-width: 320px; margin: 0; background: var(--bg); color: var(--ink); }
+    body, button, input, textarea { font: inherit; }
+    button, input, textarea { border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+    button { min-height: 28px; padding: 5px 9px; font-size: 12px; font-weight: 750; cursor: pointer; }
+    button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+    button.subtle { background: var(--soft); color: #344054; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 18px; line-height: 1.2; }
+    h2 { font-size: 15px; line-height: 1.25; }
+    h3 { font-size: 13px; line-height: 1.25; }
+    p { color: #475467; font-size: 13px; line-height: 1.5; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .kicker {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .page {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .review-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .review-title {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .review-title h1,
+    .review-title p { overflow-wrap: anywhere; }
+
+    .review-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .chip.ok { border-color: #b7e4d6; background: var(--ok-soft); color: var(--ok); }
+    .chip.warn { border-color: #fed7aa; background: var(--warn-soft); color: var(--warn); }
+    .chip.blue { border-color: #bfdbfe; background: var(--accent-soft); color: #1d4ed8; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .decision-strip {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(4, minmax(130px, .5fr));
+      gap: 8px;
+    }
+    .decision-card {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .decision-card strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 16px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .decision-card small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .target-shell {
+      border: 1px solid #cfd6df;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 12px 32px rgb(15 23 42 / .08);
+    }
+
+    .target-topbar {
+      display: grid;
+      grid-template-columns: 178px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 42px;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: #101828;
+      color: #fff;
+      font-weight: 900;
+      font-size: 11px;
+    }
+    .brand strong,
+    .nav-item strong,
+    .task-row strong,
+    .file-row strong,
+    .timeline-row strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .brand small { color: var(--muted); font-size: 10px; font-weight: 800; }
+
+    .top-nav {
+      display: flex;
+      gap: 4px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .nav-item {
+      display: grid;
+      grid-template-columns: 22px minmax(0, auto);
+      align-items: center;
+      gap: 5px;
+      min-width: 84px;
+      max-width: 128px;
+      padding: 3px 6px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: #344054;
+      font-size: 11px;
+    }
+    .nav-item.active {
+      border-color: #c7d7fe;
+      background: var(--accent-soft);
+      color: #1849a9;
+    }
+    .nav-key {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: #eef2f7;
+      color: #475467;
+      font-weight: 900;
+      font-size: 10px;
+    }
+    .nav-item.active .nav-key { background: #dbeafe; color: #1d4ed8; }
+
+    .target-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 236px minmax(560px, 1fr) 332px;
+      min-height: 742px;
+      background: #fff;
+    }
+    .left, .center, .right {
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .left {
+      border-right: 1px solid var(--line);
+      background: #f7f8fa;
+    }
+    .center {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      border-right: 1px solid var(--line);
+      background: #fff;
+    }
+    .right {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      background: #fbfcfe;
+    }
+
+    .left-actions {
+      display: grid;
+      gap: 4px;
+      padding: 7px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .left-action {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      padding: 4px 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: #344054;
+    }
+    .left-action.primary { border-color: #c7d7fe; background: var(--accent-soft); color: #1849a9; }
+    .left-action span:first-child {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: #eef2f7;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .left-action strong { font-size: 12px; }
+    .left-action small { color: var(--muted); font-size: 10px; font-weight: 800; }
+
+    .task-stack {
+      margin: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .task-stack header {
+      display: grid;
+      gap: 3px;
+      padding: 8px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .task-stack header strong { font-size: 13px; }
+    .task-list {
+      display: grid;
+      gap: 2px;
+      padding: 6px;
+    }
+    .task-row {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 6px;
+      min-height: 29px;
+      padding: 4px 6px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      text-align: left;
+    }
+    .task-row.active {
+      border-color: #b6c6e3;
+      background: #f5f8ff;
+    }
+    .task-row .seq {
+      display: grid;
+      place-items: center;
+      min-width: 25px;
+      height: 20px;
+      border-radius: 5px;
+      background: #f2f4f7;
+      color: #475467;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .task-row strong { font-size: 12px; color: #1d2939; }
+    .task-row small { color: var(--muted); font-size: 10px; font-weight: 750; }
+
+    .fold-line {
+      margin: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .fold-line summary {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 6px 8px;
+      list-style: none;
+      cursor: pointer;
+    }
+    .fold-line summary::-webkit-details-marker { display: none; }
+    .fold-line summary::before {
+      content: ">";
+      color: var(--muted);
+      font: 850 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .fold-line[open] summary::before { content: "v"; }
+    .fold-line strong { font-size: 12px; }
+    .fold-line small { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .mini-projects { display: grid; gap: 2px; padding: 0 7px 7px; }
+
+    .center-agent {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .agent-avatar {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: #111827;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .center-agent strong { font-size: 13px; }
+    .center-agent small { color: var(--muted); font-size: 11px; font-weight: 700; }
+
+    .session-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 31px;
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--line-soft);
+      background: #fbfcfe;
+    }
+    .session-strip strong {
+      display: inline-block;
+      max-width: 100%;
+      margin-left: 8px;
+      font-size: 12px;
+      vertical-align: bottom;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .session-meta { display: flex; gap: 5px; }
+
+    .workflow-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .workflow-main {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .status-badge {
+      display: grid;
+      place-items: center;
+      min-height: 25px;
+      border: 1px solid #fed7aa;
+      border-radius: 6px;
+      background: var(--warn-soft);
+      color: var(--warn);
+      font-size: 10px;
+      font-weight: 850;
+    }
+    .workflow-main strong { display: block; font-size: 14px; }
+    .workflow-main p {
+      display: -webkit-box;
+      margin-top: 2px;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 12px;
+    }
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      gap: 5px;
+    }
+    .metric {
+      min-height: 42px;
+      padding: 5px 7px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #fbfcfe;
+    }
+    .metric span { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 2px; font-size: 12px; }
+    .workflow-actions { display: flex; gap: 5px; }
+
+    .command-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 7px;
+      padding: 7px 10px 0;
+    }
+    .command-bar textarea {
+      width: 100%;
+      min-height: 36px;
+      max-height: 42px;
+      padding: 8px 9px;
+      resize: none;
+      background: #fbfcfe;
+    }
+    .command-actions { display: flex; gap: 5px; }
+
+    .changes {
+      margin: 7px 10px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      overflow: hidden;
+    }
+    .changes header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .changes header strong { font-size: 12px; }
+    .file-list { display: grid; gap: 2px; padding: 6px; }
+    .file-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 29px;
+      padding: 4px 6px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+    }
+    .file-row span { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+    .file-row em { color: #16a34a; font-style: normal; font-weight: 850; }
+
+    .thread {
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 16px;
+    }
+    .message, .timeline-row {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .message {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .message header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .message header strong { font-size: 12px; }
+    .message header small { color: var(--muted); font-size: 11px; }
+    .timeline {
+      display: grid;
+      gap: 5px;
+    }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 8px;
+    }
+    .timeline-row span { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+    .timeline-row small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+    .composer {
+      padding: 8px 10px;
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .composer-box {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) 92px 30px;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .composer textarea {
+      width: 100%;
+      min-height: 30px;
+      padding: 6px 8px;
+      border-color: transparent;
+      resize: none;
+      background: #fff;
+    }
+
+    .status-line {
+      display: grid;
+      gap: 6px;
+      padding: 8px 9px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .status-line header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .status-line strong { font-size: 12px; text-transform: uppercase; }
+    .status-line time { color: var(--ok); font-size: 10px; font-weight: 850; }
+    .status-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .goal-kpi {
+      display: grid;
+      gap: 7px;
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .progress {
+      height: 6px;
+      border-radius: 999px;
+      background: #e5ebf2;
+      overflow: hidden;
+    }
+    .progress i {
+      display: block;
+      width: 37%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .kpi {
+      padding: 6px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #fbfcfe;
+    }
+    .kpi span { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+    .kpi strong { display: block; margin-top: 2px; font-size: 12px; }
+
+    .inspector-scroll {
+      min-height: 0;
+      overflow: auto;
+      padding: 7px;
+    }
+    .inspector-card,
+    .inspector-fold {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .inspector-card {
+      display: grid;
+      gap: 7px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+    .inspector-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .inspector-head strong { font-size: 12px; }
+    .inspector-card p {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 12px;
+    }
+    .inspector-fold { margin-bottom: 6px; }
+    .inspector-fold summary {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 7px 8px;
+      list-style: none;
+      cursor: pointer;
+    }
+    .inspector-fold summary::-webkit-details-marker { display: none; }
+    .inspector-fold summary::before {
+      content: ">";
+      color: var(--muted);
+      font: 850 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .inspector-fold[open] summary::before { content: "v"; }
+    .inspector-fold strong { font-size: 12px; }
+    .inspector-fold small { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+    .fold-body { display: grid; gap: 5px; padding: 0 8px 8px; }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+    }
+    .review-panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .review-panel header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line-soft);
+      background: #fbfcfe;
+    }
+    .review-panel header strong { font-size: 13px; }
+    .review-list {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+    }
+    .review-item {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr);
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: 7px;
+      background: #fff;
+    }
+    .review-item span { color: var(--muted); font-size: 11px; font-weight: 850; text-transform: uppercase; }
+    .review-item strong { display: block; font-size: 12px; }
+    .review-item p { margin-top: 2px; font-size: 12px; }
+
+    @media (max-width: 1180px) {
+      .decision-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workspace { grid-template-columns: 214px minmax(480px, 1fr) 300px; }
+      .workflow-head { grid-template-columns: 1fr; }
+      .metric-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 8px; }
+      .review-header, .target-topbar { grid-template-columns: 1fr; }
+      .review-meta, .target-top-actions { justify-content: flex-start; }
+      .decision-strip, .workspace { grid-template-columns: 1fr; }
+      .workspace { min-height: auto; }
+      .left, .center, .right { border-right: 0; border-bottom: 1px solid var(--line); }
+      .center { min-height: 720px; }
+      .right { min-height: 520px; }
+      .top-nav { flex-wrap: wrap; }
+      .command-bar, .composer-box { grid-template-columns: 1fr; }
+      .file-row, .timeline-row, .review-item { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .target-shell { box-shadow: none; }
+      button, input, textarea { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="review-header" aria-label="设计评审头部">
+      <div class="review-title">
+        <span class="kicker">OpenClaw Workbench / Codex Parity HTML Preview</span>
+        <h1>目标 UI 先验收，再回灌代码</h1>
+        <p>本页不是最终 app，也不伪装成已交付；它是用于压低返工成本的 UI 合同。通过后再改 React/Electron。</p>
+      </div>
+      <div class="review-meta">
+        <span class="chip warn"><i class="dot"></i> 当前阶段：设计验收</span>
+        <span class="chip blue">Repo /Users/njx/openclaw/copilot</span>
+        <span class="chip ok">无外部资源</span>
+      </div>
+    </header>
+
+    <section class="decision-strip" aria-label="首屏决策区">
+      <article class="decision-card">
+        <span class="kicker">问题重构</span>
+        <strong>OpenClaw 需要像 Codex 一样先呈现“当前任务执行”，而不是功能集合。</strong>
+        <small>真正需求：NJX 5 秒内判断当前任务、进度、token、下一步和产出位置。</small>
+      </article>
+      <article class="decision-card">
+        <span class="kicker">目标</span>
+        <strong>首屏一体化三栏</strong>
+        <small>左任务导航 / 中执行线程 / 右 inspector。</small>
+      </article>
+      <article class="decision-card">
+        <span class="kicker">风险</span>
+        <strong>旧面板过载</strong>
+        <small>Goal Ledger、日志、项目树默认展开会破坏 Codex 感。</small>
+      </article>
+      <article class="decision-card">
+        <span class="kicker">下一步</span>
+        <strong>按此页回灌代码</strong>
+        <small>先确认视觉和 IA，再打包 Electron app。</small>
+      </article>
+      <article class="decision-card">
+        <span class="kicker">验收</span>
+        <strong>5 秒读懂</strong>
+        <small>任务、进度、token、产出、下一步都在第一屏。</small>
+      </article>
+    </section>
+
+    <section class="target-shell" aria-label="OpenClaw Codex parity target preview">
+      <div class="target-topbar">
+        <div class="brand">
+          <div class="brand-mark">OC</div>
+          <div>
+            <strong>OpenClaw</strong>
+            <small>Workbench</small>
+          </div>
+        </div>
+        <nav class="top-nav" aria-label="模块导航">
+          <div class="nav-item"><span class="nav-key">C</span><strong>对话</strong></div>
+          <div class="nav-item"><span class="nav-key">A</span><strong>智能体</strong></div>
+          <div class="nav-item"><span class="nav-key">K</span><strong>知识库</strong></div>
+          <div class="nav-item active"><span class="nav-key">V</span><strong>开发台</strong></div>
+          <div class="nav-item"><span class="nav-key">P</span><strong>项目</strong></div>
+          <div class="nav-item"><span class="nav-key">S</span><strong>系统</strong></div>
+        </nav>
+        <div class="target-top-actions">
+          <span class="chip">Inbox 47</span>
+          <span class="chip ok"><i class="dot"></i> 实时检查中</span>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <aside class="left" aria-label="左侧任务导航">
+          <div class="left-actions">
+            <button class="left-action primary"><span>+</span><strong>新建任务</strong><small>NLU</small></button>
+            <button class="left-action"><span>◇</span><strong>新建技能</strong><small>Skill</small></button>
+            <button class="left-action"><span>⏱</span><strong>定时任务</strong><small>Cron</small></button>
+            <button class="left-action"><span>▣</span><strong>手机操控</strong><small>Mobile</small></button>
+            <button class="left-action"><span>AI</span><strong>多 agents</strong><small>6 online</small></button>
+          </div>
+
+          <section class="task-stack">
+            <header>
+              <span class="kicker">Task Stack</span>
+              <strong>001 定义目标和 PRD</strong>
+              <small>阻塞 · 0/75 baseline</small>
+            </header>
+            <div class="task-list">
+              <button class="task-row active"><span class="seq">001</span><strong>定义目标和 PRD</strong><small>阻塞</small></button>
+              <button class="task-row"><span class="seq">002</span><strong>收集对标证据</strong><small>待执行</small></button>
+              <button class="task-row"><span class="seq">003</span><strong>实现三栏工作流</strong><small>待执行</small></button>
+              <button class="task-row"><span class="seq">004</span><strong>Electron app 验收</strong><small>待执行</small></button>
+              <button class="task-row"><span class="seq">G</span><strong>Codex UI parity goal</strong><small>进行中</small></button>
+            </div>
+          </section>
+
+          <details class="fold-line">
+            <summary><strong>Project Browser</strong><small>二级</small></summary>
+            <div class="mini-projects">
+              <button class="task-row"><span class="seq">▾</span><strong>OpenClaw Workbench</strong><small>1 目标</small></button>
+              <button class="task-row"><span class="seq">◇</span><strong>项目任务基线 v1</strong><small>待生成</small></button>
+              <button class="task-row"><span class="seq">▸</span><strong>AOG Co-pilot</strong><small>归档</small></button>
+            </div>
+          </details>
+        </aside>
+
+        <section class="center" aria-label="中间任务执行线程">
+          <div class="center-agent">
+            <span class="agent-avatar">OC</span>
+            <div>
+              <strong>OpenClaw Main</strong>
+              <small>minimax-m3 · online · 6 background agents available</small>
+            </div>
+          </div>
+          <div class="session-strip">
+            <div><span class="kicker">Goal Session</span><strong>把开发台做到 Codex 同等开发水平</strong></div>
+            <div class="session-meta">
+              <span class="chip">TASK 001</span>
+              <span class="chip">0 turns</span>
+              <span class="chip warn">blocked</span>
+            </div>
+          </div>
+          <section class="workflow-head">
+            <div class="workflow-main">
+              <span class="status-badge">阻塞</span>
+              <div>
+                <strong>001 定义目标和 PRD</strong>
+                <p>对标 Codex 首屏任务执行流；先确认目标 UI，再回灌 React/Electron。</p>
+              </div>
+            </div>
+            <div class="metric-row">
+              <div class="metric"><span>progress</span><strong>37%</strong></div>
+              <div class="metric"><span>changes</span><strong>4</strong></div>
+              <div class="metric"><span>tokens</span><strong>91k</strong></div>
+            </div>
+            <div class="workflow-actions">
+              <button class="subtle">Shadow</button>
+              <button class="primary">Run</button>
+              <button class="subtle">Audit</button>
+            </div>
+          </section>
+
+          <div class="command-bar">
+            <textarea aria-label="任务命令输入">Command: 补齐 Codex 级首屏 UI，对照预览页实现。</textarea>
+            <div class="command-actions">
+              <button class="subtle">手动填写</button>
+              <button class="primary">AI 拆解并创建</button>
+            </div>
+          </div>
+
+          <section class="changes" aria-label="变更和产出摘要">
+            <header>
+              <div><span class="kicker">Changes</span><strong>已整理 4 个产出/文件</strong></div>
+              <small class="mono">+350 -39</small>
+            </header>
+            <div class="file-list">
+              <div class="file-row"><span>tsx</span><strong>apps/web/src/DeliveryCenterPane.tsx</strong><em>+96 -18</em><button>Review</button></div>
+              <div class="file-row"><span>tsx</span><strong>apps/web/src/DeliveryRightRail.tsx</strong><em>+82 -12</em><button>Review</button></div>
+              <div class="file-row"><span>css</span><strong>apps/web/src/styles.css</strong><em>+144 -9</em><button>Review</button></div>
+              <div class="file-row"><span>html</span><strong>design/openclaw-codex-parity-preview.html</strong><em>+28 -0</em><button>Open</button></div>
+            </div>
+          </section>
+
+          <div class="thread" aria-label="任务执行线程">
+            <article class="message">
+              <header><strong>用户 · OpenClaw UI parity</strong><small>2026/6/13 23:00</small></header>
+              <p>不要先反复打包 app。先做 HTML UI 预览页，对标 Codex 找差距，确认满足要求后再动代码。</p>
+            </article>
+            <div class="timeline">
+              <div class="timeline-row"><span>decision</span><strong>采用 preview-first 流程</strong><small>PM gate</small></div>
+              <div class="timeline-row"><span>evidence</span><strong>当前 app 仍有旧项目总览和右栏过载</strong><small>UI review</small></div>
+              <div class="timeline-row"><span>next</span><strong>按此目标 UI 回灌代码，再 Electron 验收</strong><small>ready</small></div>
+            </div>
+          </div>
+
+          <footer class="composer" aria-label="底部 composer">
+            <div class="composer-box">
+              <button>+</button>
+              <textarea>输入“同意执行”运行当前子任务，或提交验收反馈。</textarea>
+              <button class="subtle">自动审查</button>
+              <button class="primary">↑</button>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="right" aria-label="右侧 inspector">
+          <section class="status-line">
+            <header><strong>Status</strong><time>2026/6/13 23:00:00</time></header>
+            <div class="status-chips">
+              <span class="chip ok"><i class="dot"></i> 实时在线</span>
+              <span class="chip ok"><i class="dot"></i> Gateway connected</span>
+            </div>
+          </section>
+
+          <section class="goal-kpi">
+            <div>
+              <span class="kicker">目标进度</span>
+              <h3>Codex UI parity / 开发台任务执行流</h3>
+            </div>
+            <div class="progress"><i></i></div>
+            <div class="kpi-grid">
+              <div class="kpi"><span>progress</span><strong>37%</strong></div>
+              <div class="kpi"><span>token</span><strong>91k</strong></div>
+              <div class="kpi"><span>subtasks</span><strong>0/75</strong></div>
+            </div>
+          </section>
+
+          <div class="inspector-scroll">
+            <section class="inspector-card">
+              <div class="inspector-head">
+                <div><span class="kicker">Current Task Evidence</span><strong>001 定义目标和 PRD</strong></div>
+                <span class="chip warn">阻塞</span>
+              </div>
+              <p>阻塞点：真实代码应只默认展开当前任务证据；Goal Ledger、Timeline、项目看板全部折叠。</p>
+              <div class="kpi-grid">
+                <div class="kpi"><span>变更</span><strong>4</strong></div>
+                <div class="kpi"><span>证据</span><strong>3</strong></div>
+                <div class="kpi"><span>下一步</span><strong>Run</strong></div>
+              </div>
+            </section>
+
+            <details class="inspector-fold">
+              <summary><strong>Goal Ledger</strong><small>collapsed</small></summary>
+              <div class="fold-body">
+                <p>长期目标、跑道、时间线、续跑、证据包仍保留，但不抢第一屏。</p>
+              </div>
+            </details>
+            <details class="inspector-fold">
+              <summary><strong>Timeline</strong><small>collapsed</small></summary>
+              <div class="fold-body">
+                <div class="timeline-row"><span>event</span><strong>preview-first decision</strong><small>23:00</small></div>
+                <div class="timeline-row"><span>event</span><strong>code backfill pending</strong><small>next</small></div>
+              </div>
+            </details>
+            <details class="inspector-fold">
+              <summary><strong>Verify</strong><small>collapsed</small></summary>
+              <div class="fold-body">
+                <p>验收：Electron app 首屏必须同时看到左任务栈、中执行线程、底部 composer、右状态/token/进度。</p>
+              </div>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="compare-grid" aria-label="Codex 对标差距清单">
+      <article class="review-panel">
+        <header><strong>当前 app 主要差距</strong><span class="chip warn">需要回灌</span></header>
+        <div class="review-list">
+          <div class="review-item"><span>左栏</span><div><strong>项目树仍过重</strong><p>默认应该是 Task Stack，项目浏览只作为折叠二级区。</p></div></div>
+          <div class="review-item"><span>中栏</span><div><strong>旧目标/项目总览不应占首屏</strong><p>它们只能进入 Project Context 折叠区；线程和 composer 必须同屏。</p></div></div>
+          <div class="review-item"><span>右栏</span><div><strong>Inspector 不是项目看板</strong><p>只默认展开 Status、目标 KPI、Current Task Evidence；其他全部折叠。</p></div></div>
+          <div class="review-item"><span>视觉</span><div><strong>少色彩、少卡片、强分隔线</strong><p>保留一个蓝色主操作；绿色/青色大按钮不应满屏出现。</p></div></div>
+        </div>
+      </article>
+
+      <article class="review-panel">
+        <header><strong>代码回灌规则</strong><span class="chip blue">Implementation contract</span></header>
+        <div class="review-list">
+          <div class="review-item"><span>1</span><div><strong>先按本页做默认态</strong><p>不要新增后端 schema；先复用 artifacts/documents/events 推导 Changes。</p></div></div>
+          <div class="review-item"><span>2</span><div><strong>折叠是产品决策，不是 CSS 补丁</strong><p>DeliveryRightRail JSX 应用 details/summary，不只靠 max-height 压住。</p></div></div>
+          <div class="review-item"><span>3</span><div><strong>Electron 验收前不替换 app</strong><p>check/build 通过后再打包，再打开 `/Users/njx/Applications/njx-copilot.app` 验收。</p></div></div>
+          <div class="review-item"><span>4</span><div><strong>5 秒测试不过就不交付</strong><p>必须能说清当前任务、进度、token、下一步、产出位置。</p></div></div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

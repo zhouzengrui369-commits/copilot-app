@@ -1,0 +1,2908 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw/copilot/design/njx-copilot-policy-lens-preview.html">
+  <meta name="source-hash" content="cab397373274b89ed00a2338cdbb8d0e321f95927b1a28b4ddfb47b951dfc39a">
+  <meta name="rendered-at" content="2026-06-14T14:16:20+08:00">
+  <title>NJX Copilot Knowledge Atlas 3D Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0f;
+      --bg-strong: #0a1018;
+      --surface: #0f1722;
+      --surface-2: #121d2a;
+      --surface-3: #162332;
+      --ink: #eef6fb;
+      --text: #d7e5ee;
+      --muted: #94a7b8;
+      --faint: #667789;
+      --line: rgba(142, 166, 184, 0.22);
+      --line-strong: rgba(151, 186, 205, 0.34);
+      --teal: #2dd4bf;
+      --teal-soft: rgba(45, 212, 191, 0.14);
+      --cyan: #38bdf8;
+      --cyan-soft: rgba(56, 189, 248, 0.13);
+      --amber: #fbbf24;
+      --amber-soft: rgba(251, 191, 36, 0.14);
+      --red: #fb7185;
+      --red-soft: rgba(251, 113, 133, 0.14);
+      --violet: #a78bfa;
+      --violet-soft: rgba(167, 139, 250, 0.14);
+      --ok: #34d399;
+      --ok-soft: rgba(52, 211, 153, 0.14);
+      --radius: 8px;
+      --shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 82% 12%, rgba(45, 212, 191, 0.12), transparent 30%),
+        radial-gradient(circle at 10% 34%, rgba(251, 191, 36, 0.08), transparent 28%),
+        var(--bg);
+      background-size: 44px 44px, 44px 44px, auto, auto, auto;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    body, button { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      min-height: 32px;
+      padding: 6px 10px;
+      font-weight: 750;
+      cursor: default;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 24px; line-height: 1.18; }
+    h2 { font-size: 18px; line-height: 1.25; }
+    h3 { font-size: 14px; line-height: 1.3; }
+    p { color: var(--muted); }
+    small { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+    td { color: var(--text); font-size: 13px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .page {
+      display: grid;
+      gap: 14px;
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(8, 13, 20, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(45, 212, 191, 0.45);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(56, 189, 248, 0.12));
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .brand-text { min-width: 0; }
+    .brand-text strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .brand-text span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+    }
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .chip.ok { border-color: rgba(52, 211, 153, 0.35); background: var(--ok-soft); color: #a7f3d0; }
+    .chip.warn { border-color: rgba(251, 191, 36, 0.35); background: var(--amber-soft); color: #fde68a; }
+    .chip.info { border-color: rgba(56, 189, 248, 0.35); background: var(--cyan-soft); color: #bae6fd; }
+    .chip.danger { border-color: rgba(251, 113, 133, 0.35); background: var(--red-soft); color: #fecdd3; }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(130px, 0.55fr));
+      gap: 10px;
+    }
+    .decision-main,
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(18, 29, 42, 0.94), rgba(11, 17, 26, 0.96));
+      box-shadow: var(--shadow);
+    }
+    .decision-main {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+    .eyebrow {
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .decision-main p { max-width: 900px; }
+    .verdict-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .metric {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+    .metric strong {
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.1;
+    }
+    .metric small { line-height: 1.35; }
+
+    .prototype {
+      display: grid;
+      gap: 0;
+      overflow: hidden;
+      min-height: 720px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: rgba(10, 16, 24, 0.88);
+      box-shadow: var(--shadow);
+    }
+    .proto-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(8, 13, 20, 0.92);
+    }
+    .proto-title { min-width: 0; }
+    .proto-title strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 15px;
+    }
+    .proto-title small {
+      display: block;
+      font-size: 11px;
+    }
+    .proto-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .proto-grid {
+      display: grid;
+      grid-template-columns: 260px minmax(520px, 1fr) 336px;
+      min-height: 668px;
+    }
+    .rail,
+    .workspace,
+    .inspector {
+      min-width: 0;
+      min-height: 0;
+    }
+    .rail {
+      border-right: 1px solid var(--line);
+      background: rgba(12, 19, 29, 0.78);
+    }
+    .inspector {
+      border-left: 1px solid var(--line);
+      background: rgba(12, 19, 29, 0.78);
+    }
+    .rail-section,
+    .inspector-section {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+    }
+    .section-head strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .policy-list {
+      display: grid;
+      gap: 7px;
+    }
+    .policy-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 46px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .policy-row.active {
+      border-color: rgba(45, 212, 191, 0.45);
+      background: var(--teal-soft);
+    }
+    .policy-key {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .policy-row:nth-child(2) .policy-key { color: var(--cyan); }
+    .policy-row:nth-child(3) .policy-key { color: var(--amber); }
+    .policy-row:nth-child(4) .policy-key { color: var(--red); }
+    .policy-row:nth-child(5) .policy-key { color: var(--violet); }
+    .policy-body { min-width: 0; }
+    .policy-body strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .policy-body small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
+    }
+    .status-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .status-pill.ok { border-color: rgba(52, 211, 153, 0.35); color: #a7f3d0; }
+    .status-pill.warn { border-color: rgba(251, 191, 36, 0.35); color: #fde68a; }
+    .status-pill.danger { border-color: rgba(251, 113, 133, 0.35); color: #fecdd3; }
+    .route-card {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .route-card strong { font-size: 13px; }
+    .route-card small { line-height: 1.35; }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto minmax(380px, 1fr) auto;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.04) 1px, transparent 1px),
+        rgba(9, 14, 22, 0.76);
+      background-size: 32px 32px;
+    }
+    .workspace-head {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(10, 16, 24, 0.74);
+    }
+    .task-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .task-strip h2 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .signal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .signal {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .signal span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+    .signal strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .map-zone {
+      position: relative;
+      overflow: hidden;
+      min-height: 390px;
+      padding: 16px;
+    }
+    .flow-line {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.65), rgba(56, 189, 248, 0.65), rgba(251, 191, 36, 0.55), transparent);
+      opacity: 0.72;
+    }
+    .flow-line::after {
+      content: "";
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 72px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(238, 246, 251, 0.76);
+      filter: blur(4px);
+      animation: scan 5s linear infinite;
+    }
+    @keyframes scan {
+      0% { transform: translateX(0); opacity: 0; }
+      10% { opacity: 0.9; }
+      90% { opacity: 0.9; }
+      100% { transform: translateX(760px); opacity: 0; }
+    }
+    .node-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(130px, 1fr));
+      gap: 14px;
+      min-height: 360px;
+      align-items: center;
+    }
+    .node {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+      min-height: 124px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 26, 38, 0.82);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .node.primary {
+      border-color: rgba(45, 212, 191, 0.46);
+      background: linear-gradient(180deg, rgba(45, 212, 191, 0.15), rgba(16, 26, 38, 0.86));
+    }
+    .node.warn {
+      border-color: rgba(251, 191, 36, 0.46);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.13), rgba(16, 26, 38, 0.86));
+    }
+    .node.danger {
+      border-color: rgba(251, 113, 133, 0.46);
+      background: linear-gradient(180deg, rgba(251, 113, 133, 0.13), rgba(16, 26, 38, 0.86));
+    }
+    .node-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .node strong { font-size: 14px; }
+    .node small { line-height: 1.35; }
+    .workspace-foot {
+      display: grid;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      background: rgba(8, 13, 20, 0.82);
+    }
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .composer-box {
+      min-height: 38px;
+      padding: 9px 11px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .primary-button {
+      border-color: rgba(45, 212, 191, 0.5);
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.28), rgba(56, 189, 248, 0.16));
+      color: var(--ink);
+    }
+    .danger-button {
+      border-color: rgba(251, 113, 133, 0.38);
+      background: var(--red-soft);
+      color: #fecdd3;
+    }
+
+    .acceptance {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .acceptance-item {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      min-height: 74px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .acceptance-item span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+    .acceptance-item strong { font-size: 16px; }
+    .audit-list {
+      display: grid;
+      gap: 7px;
+    }
+    .audit-row {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .audit-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--ok-soft);
+      color: #a7f3d0;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .audit-icon.warn { background: var(--amber-soft); color: #fde68a; }
+    .evidence-stack {
+      display: grid;
+      gap: 8px;
+    }
+    .evidence {
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .evidence strong {
+      display: block;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .evidence small {
+      display: block;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 14px;
+      align-items: start;
+    }
+    .section {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(13, 20, 30, 0.86);
+      box-shadow: var(--shadow);
+    }
+    .section > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section > header div { min-width: 0; }
+    .section > header strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 15px;
+    }
+    .section > header small {
+      display: block;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .section-body {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .statement {
+      display: grid;
+      gap: 6px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .statement strong { color: var(--text); }
+    .statement p { font-size: 13px; }
+    .score-row {
+      display: grid;
+      grid-template-columns: 148px minmax(0, 1fr) 52px;
+      gap: 10px;
+      align-items: center;
+      min-height: 36px;
+    }
+    .score-row span { color: var(--muted); font-size: 12px; font-weight: 750; }
+    .bar {
+      overflow: hidden;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--cyan));
+    }
+    .score-row strong {
+      text-align: right;
+      font-size: 12px;
+    }
+    .checklist {
+      display: grid;
+      gap: 8px;
+    }
+    .check {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .check-mark {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--ok-soft);
+      color: #a7f3d0;
+      font-weight: 900;
+    }
+    .check strong { display: block; font-size: 13px; }
+    .check small { display: block; margin-top: 2px; line-height: 1.35; }
+    .list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .list li {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      gap: 10px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .timeline-item time {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .timeline-item strong { display: block; font-size: 13px; }
+    .timeline-item small { display: block; margin-top: 2px; line-height: 1.35; }
+    .xhs-copy {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px dashed rgba(45, 212, 191, 0.36);
+      border-radius: 8px;
+      background: rgba(45, 212, 191, 0.08);
+    }
+    .xhs-copy strong { color: var(--ink); }
+    .xhs-copy code {
+      display: block;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(0, 0, 0, 0.22);
+      color: #d1fae5;
+      white-space: pre-wrap;
+    }
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 12px 14px;
+      color: var(--faint);
+      font-size: 11px;
+    }
+
+    .decision,
+    .focus-stage { display: none; }
+
+    .focus-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 118px);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(45, 212, 191, 0.14), transparent 20%, transparent 80%, rgba(56, 189, 248, 0.12)),
+        radial-gradient(circle at 50% 45%, rgba(45, 212, 191, 0.18), transparent 34%),
+        radial-gradient(circle at 52% 54%, rgba(56, 189, 248, 0.12), transparent 44%),
+        rgba(5, 9, 14, 0.94);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.46);
+    }
+    .focus-stage::before,
+    .focus-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .focus-stage::before {
+      background:
+        linear-gradient(rgba(45, 212, 191, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.075) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.92), transparent 92%);
+    }
+    .focus-stage::after {
+      background: linear-gradient(115deg, transparent 0%, transparent 42%, rgba(45, 212, 191, 0.16) 48%, transparent 54%, transparent 100%);
+      transform: translateX(-100%);
+      animation: stageSweep 5.8s linear infinite;
+    }
+    @keyframes stageSweep {
+      to { transform: translateX(100%); }
+    }
+    .focus-shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 310px minmax(420px, 1fr) 330px;
+      grid-template-rows: auto minmax(420px, 1fr);
+      gap: 12px;
+      min-height: calc(100vh - 118px);
+      padding: 14px;
+    }
+    .focus-banner {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid rgba(45, 212, 191, 0.24);
+      border-radius: 10px;
+      background: rgba(8, 13, 20, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .focus-kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .focus-kicker span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      padding: 4px 8px;
+      border: 1px solid rgba(45, 212, 191, 0.32);
+      border-radius: 999px;
+      background: rgba(45, 212, 191, 0.1);
+      color: #99f6e4;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .focus-banner h1 {
+      max-width: 980px;
+      font-size: 34px;
+      line-height: 1.08;
+    }
+    .focus-banner p {
+      max-width: 840px;
+      margin-top: 8px;
+      color: #adc2d2;
+      font-size: 14px;
+    }
+    .focus-proofline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .focus-proofline b {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 8px;
+      border: 1px solid rgba(142, 166, 184, 0.22);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.045);
+      color: #cfe5f0;
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .focus-verdict {
+      display: grid;
+      place-items: center;
+      width: 176px;
+      min-height: 122px;
+      border: 1px solid rgba(251, 191, 36, 0.42);
+      border-radius: 12px;
+      background:
+        radial-gradient(circle, rgba(251, 191, 36, 0.24), transparent 66%),
+        rgba(251, 191, 36, 0.08);
+      text-align: center;
+    }
+    .focus-verdict strong {
+      color: #fef3c7;
+      font-size: 36px;
+      line-height: 1;
+    }
+    .focus-verdict span {
+      margin-top: 8px;
+      color: #fde68a;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .focus-panel {
+      min-width: 0;
+      border: 1px solid rgba(142, 166, 184, 0.2);
+      border-radius: 10px;
+      background: rgba(10, 16, 24, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .focus-panel header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid rgba(142, 166, 184, 0.18);
+    }
+    .focus-panel header strong {
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .focus-panel header span {
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .priority-stack {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .priority {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 78px;
+      padding: 10px;
+      border: 1px solid rgba(142, 166, 184, 0.18);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .priority.hot {
+      border-color: rgba(251, 191, 36, 0.46);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.16), rgba(255, 255, 255, 0.035));
+    }
+    .priority.ok {
+      border-color: rgba(45, 212, 191, 0.42);
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(255, 255, 255, 0.035));
+    }
+    .priority-id {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #99f6e4;
+      font-weight: 950;
+    }
+    .priority.hot .priority-id { color: #fde68a; }
+    .priority strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+    }
+    .priority small {
+      display: block;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .micro-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid rgba(142, 166, 184, 0.18);
+    }
+    .micro {
+      min-height: 78px;
+      padding: 10px;
+      border: 1px solid rgba(142, 166, 184, 0.18);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+    .micro span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .micro strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1;
+    }
+    .radar-core {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(360px, 1fr) auto;
+      min-width: 0;
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.22), transparent 30%),
+        radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1), transparent 52%),
+        rgba(5, 9, 14, 0.62);
+      box-shadow: inset 0 0 60px rgba(45, 212, 191, 0.08), 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+    .radar-top {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(142, 166, 184, 0.16);
+    }
+    .radar-stat {
+      padding: 10px;
+      border: 1px solid rgba(142, 166, 184, 0.18);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .radar-stat span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .radar-stat strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.1;
+    }
+    .radar-map {
+      position: relative;
+      min-height: 390px;
+    }
+    .radar-rings {
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(circle, transparent 0 44px, rgba(45, 212, 191, 0.18) 45px 47px),
+        conic-gradient(from 0deg, rgba(45, 212, 191, 0.34), transparent 16%, transparent 34%, rgba(56, 189, 248, 0.24), transparent 52%, rgba(251, 191, 36, 0.25), transparent 72%, transparent);
+      mask-image: radial-gradient(circle, transparent 0 15%, #000 16% 72%, transparent 73%);
+      animation: rotateRadar 12s linear infinite;
+    }
+    @keyframes rotateRadar {
+      to { transform: rotate(360deg); }
+    }
+    .radar-axis {
+      position: absolute;
+      inset: 14%;
+      border-radius: 50%;
+      border: 1px solid rgba(45, 212, 191, 0.2);
+    }
+    .radar-axis::before,
+    .radar-axis::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(56, 189, 248, 0.14);
+    }
+    .radar-axis::after {
+      transform: rotate(90deg);
+      transform-origin: center;
+    }
+    .core-card {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      display: grid;
+      place-items: center;
+      width: 184px;
+      height: 184px;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(45, 212, 191, 0.54);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(45, 212, 191, 0.28), rgba(12, 19, 29, 0.92) 66%);
+      box-shadow: 0 0 42px rgba(45, 212, 191, 0.2), inset 0 0 28px rgba(45, 212, 191, 0.18);
+      text-align: center;
+    }
+    .core-card strong {
+      color: var(--ink);
+      font-size: 42px;
+      line-height: 1;
+    }
+    .core-card span {
+      margin-top: 8px;
+      color: #99f6e4;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .orbit-node {
+      position: absolute;
+      display: grid;
+      gap: 2px;
+      width: 138px;
+      padding: 9px;
+      border: 1px solid rgba(142, 166, 184, 0.24);
+      border-radius: 9px;
+      background: rgba(12, 19, 29, 0.86);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    }
+    .orbit-node strong {
+      color: var(--ink);
+      font-size: 12px;
+    }
+    .orbit-node small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
+    }
+    .orbit-node.ok { border-color: rgba(45, 212, 191, 0.48); }
+    .orbit-node.warn { border-color: rgba(251, 191, 36, 0.5); }
+    .orbit-node.danger { border-color: rgba(251, 113, 133, 0.5); }
+    .orbit-node.n1 { left: 10%; top: 12%; }
+    .orbit-node.n2 { right: 8%; top: 16%; }
+    .orbit-node.n3 { left: 8%; bottom: 18%; }
+    .orbit-node.n4 { right: 11%; bottom: 12%; }
+    .orbit-node.n5 { left: 50%; top: 5%; transform: translateX(-50%); }
+    .radar-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 12px;
+      border-top: 1px solid rgba(142, 166, 184, 0.16);
+      background: rgba(8, 13, 20, 0.72);
+    }
+    .command-line {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid rgba(142, 166, 184, 0.24);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #b6c8d8;
+      font-size: 13px;
+    }
+    .action-queue {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .action-list {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .action-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 52px;
+      gap: 10px;
+      align-items: center;
+      min-height: 94px;
+      padding: 12px;
+      border: 1px solid rgba(142, 166, 184, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .action-card.primary {
+      border-color: rgba(45, 212, 191, 0.48);
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.16), rgba(255, 255, 255, 0.035));
+    }
+    .action-card.warn {
+      border-color: rgba(251, 191, 36, 0.48);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 255, 255, 0.035));
+    }
+    .action-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 15px;
+    }
+    .action-card small {
+      display: block;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+    .action-score {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(45, 212, 191, 0.42);
+      color: #99f6e4;
+      font-weight: 950;
+    }
+    .action-card.warn .action-score {
+      border-color: rgba(251, 191, 36, 0.42);
+      color: #fde68a;
+    }
+    .evidence-strip {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid rgba(142, 166, 184, 0.18);
+    }
+    .evidence-mini {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .evidence-mini i {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 12px var(--teal);
+    }
+
+    .knowledge-3d-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 118px);
+      border: 1px solid rgba(56, 189, 248, 0.32);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(45, 212, 191, 0.18), transparent 30%),
+        radial-gradient(circle at 78% 18%, rgba(167, 139, 250, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(5, 10, 18, 0.98), rgba(2, 6, 12, 0.98));
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
+      perspective: 1300px;
+    }
+    .knowledge-3d-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.06) 1px, transparent 1px);
+      background-size: 42px 42px;
+      transform: rotateX(62deg) translateY(160px) scale(1.45);
+      transform-origin: 50% 100%;
+      opacity: 0.58;
+      pointer-events: none;
+    }
+    .knowledge-3d-stage::after {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      bottom: 8%;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(45, 212, 191, 0.18), transparent 68%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+    .knowledge-3d-shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 290px minmax(480px, 1fr) 330px;
+      grid-template-rows: auto minmax(460px, 1fr);
+      gap: 14px;
+      min-height: calc(100vh - 118px);
+      padding: 14px;
+    }
+    .knowledge-3d-hero {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 16px 18px;
+      border: 1px solid rgba(45, 212, 191, 0.32);
+      border-radius: 12px;
+      background: rgba(8, 13, 20, 0.78);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .knowledge-3d-hero h1 {
+      max-width: 980px;
+      font-size: 34px;
+      line-height: 1.08;
+    }
+    .knowledge-3d-hero p {
+      max-width: 920px;
+      margin-top: 8px;
+      color: #adc2d2;
+      font-size: 14px;
+    }
+    .knowledge-state {
+      display: grid;
+      grid-template-columns: repeat(3, 82px);
+      gap: 8px;
+    }
+    .knowledge-state div {
+      min-height: 82px;
+      padding: 10px;
+      border: 1px solid rgba(142, 166, 184, 0.22);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.045);
+      text-align: center;
+    }
+    .knowledge-state span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .knowledge-state strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+    }
+    .knowledge-panel-3d {
+      min-width: 0;
+      border: 1px solid rgba(142, 166, 184, 0.2);
+      border-radius: 12px;
+      background: rgba(10, 16, 24, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .knowledge-panel-3d header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(142, 166, 184, 0.18);
+    }
+    .knowledge-panel-3d header strong { font-size: 13px; }
+    .knowledge-panel-3d header span {
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .source-tower {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      transform-style: preserve-3d;
+    }
+    .source-slab {
+      position: relative;
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.12), rgba(255, 255, 255, 0.035));
+      box-shadow: 12px 14px 0 rgba(2, 6, 12, 0.42), 0 18px 38px rgba(0, 0, 0, 0.26);
+      transform: rotateY(-12deg) rotateX(4deg);
+    }
+    .source-slab:nth-child(2) { transform: translateX(12px) rotateY(-12deg) rotateX(4deg); border-color: rgba(251, 191, 36, 0.34); }
+    .source-slab:nth-child(3) { transform: translateX(24px) rotateY(-12deg) rotateX(4deg); border-color: rgba(56, 189, 248, 0.34); }
+    .source-slab:nth-child(4) { transform: translateX(36px) rotateY(-12deg) rotateX(4deg); border-color: rgba(167, 139, 250, 0.34); }
+    .source-cube {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #99f6e4;
+      font-size: 12px;
+      font-weight: 950;
+      box-shadow: inset -8px -8px 14px rgba(0, 0, 0, 0.22), inset 6px 6px 12px rgba(255, 255, 255, 0.08);
+    }
+    .source-slab strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .source-slab small {
+      display: block;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .source-badge {
+      border: 1px solid rgba(45, 212, 191, 0.38);
+      border-radius: 999px;
+      padding: 4px 8px;
+      color: #99f6e4;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .atlas-3d-core {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(430px, 1fr) auto;
+      min-width: 0;
+      border: 1px solid rgba(45, 212, 191, 0.36);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(45, 212, 191, 0.18), transparent 34%),
+        rgba(5, 9, 14, 0.68);
+      box-shadow: inset 0 0 70px rgba(45, 212, 191, 0.08), 0 24px 70px rgba(0, 0, 0, 0.38);
+      transform-style: preserve-3d;
+    }
+    .atlas-toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(142, 166, 184, 0.18);
+    }
+    .atlas-stat {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid rgba(142, 166, 184, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+    .atlas-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .atlas-stat strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1;
+    }
+    .atlas-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 470px;
+      transform-style: preserve-3d;
+      perspective: 1200px;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(45, 212, 191, 0.13), transparent 34%),
+        radial-gradient(circle at 26% 24%, rgba(56, 189, 248, 0.1), transparent 24%),
+        radial-gradient(circle at 72% 68%, rgba(167, 139, 250, 0.09), transparent 26%);
+    }
+    .atlas-stage::before {
+      content: "";
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      bottom: -22%;
+      height: 62%;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.08) 1px, transparent 1px);
+      background-size: 34px 34px;
+      transform: rotateX(68deg);
+      transform-origin: 50% 100%;
+      opacity: 0.52;
+      pointer-events: none;
+    }
+    .atlas-stage::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: 9%;
+      height: 110px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(45, 212, 191, 0.22), transparent 70%);
+      filter: blur(14px);
+      opacity: 0.76;
+      pointer-events: none;
+    }
+    .moc-brain {
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      z-index: 2;
+      width: min(720px, 96%);
+      height: 450px;
+      transform: translate(-50%, -50%) rotateX(18deg) rotateY(-16deg) rotateZ(-2deg);
+      transform-style: preserve-3d;
+      filter: drop-shadow(0 36px 48px rgba(0, 0, 0, 0.46));
+      animation: brainFloat 7s ease-in-out infinite;
+    }
+    @keyframes brainFloat {
+      0%, 100% { transform: translate(-50%, -50%) rotateX(18deg) rotateY(-16deg) rotateZ(-2deg) translateY(0); }
+      50% { transform: translate(-50%, -50%) rotateX(22deg) rotateY(-10deg) rotateZ(1deg) translateY(-8px); }
+    }
+    .moc-brain::before,
+    .moc-brain::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .moc-brain::before {
+      width: 56%;
+      height: 48%;
+      transform: translate(-50%, -50%) translateZ(40px);
+      background:
+        radial-gradient(circle at 36% 34%, rgba(56, 189, 248, 0.2), transparent 30%),
+        radial-gradient(circle at 68% 58%, rgba(167, 139, 250, 0.16), transparent 30%),
+        radial-gradient(ellipse, rgba(45, 212, 191, 0.16), transparent 70%);
+      box-shadow: inset 0 0 74px rgba(45, 212, 191, 0.14);
+    }
+    .moc-brain::after {
+      width: 74%;
+      height: 62%;
+      transform: translate(-50%, -50%) translateZ(-118px);
+      background: radial-gradient(ellipse, rgba(3, 7, 13, 0.04), rgba(45, 212, 191, 0.08), transparent 70%);
+      filter: blur(4px);
+    }
+    .brain-halo {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 82%;
+      height: 72%;
+      transform: translate(-50%, -50%) translateZ(-130px);
+      border: 1px solid rgba(45, 212, 191, 0.22);
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse, rgba(45, 212, 191, 0.13), transparent 70%),
+        conic-gradient(from 30deg, rgba(45, 212, 191, 0.22), transparent 18%, rgba(56, 189, 248, 0.18), transparent 44%, rgba(251, 191, 36, 0.14), transparent 72%, rgba(45, 212, 191, 0.2));
+      box-shadow: 0 0 92px rgba(45, 212, 191, 0.2);
+      animation: neuralSpin 14s linear infinite;
+    }
+    @keyframes neuralSpin {
+      to { transform: translate(-50%, -50%) translateZ(-130px) rotateZ(360deg); }
+    }
+    .neural-shell {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--w);
+      height: var(--h);
+      transform: translate(-50%, -50%) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) translateZ(var(--z));
+      border: 1px solid var(--stroke);
+      border-radius: 50%;
+      box-shadow: 0 0 36px var(--glow), inset 0 0 28px rgba(255, 255, 255, 0.03);
+      opacity: var(--o);
+      pointer-events: none;
+    }
+    .neural-shell.sagittal {
+      --w: 64%;
+      --h: 78%;
+      --rx: 0deg;
+      --ry: 76deg;
+      --rz: -10deg;
+      --z: 18px;
+      --stroke: rgba(56, 189, 248, 0.34);
+      --glow: rgba(56, 189, 248, 0.18);
+      --o: 0.82;
+    }
+    .neural-shell.coronal {
+      --w: 82%;
+      --h: 58%;
+      --rx: 72deg;
+      --ry: 0deg;
+      --rz: 6deg;
+      --z: 4px;
+      --stroke: rgba(45, 212, 191, 0.34);
+      --glow: rgba(45, 212, 191, 0.18);
+      --o: 0.9;
+    }
+    .neural-shell.diagonal {
+      --w: 70%;
+      --h: 66%;
+      --rx: 42deg;
+      --ry: 42deg;
+      --rz: -28deg;
+      --z: 66px;
+      --stroke: rgba(251, 191, 36, 0.28);
+      --glow: rgba(251, 191, 36, 0.14);
+      --o: 0.7;
+    }
+    .brain-lobe {
+      position: absolute;
+      top: 16%;
+      width: 43%;
+      height: 66%;
+      border: 1px solid rgba(45, 212, 191, 0.3);
+      background:
+        radial-gradient(circle at 28% 26%, rgba(56, 189, 248, 0.26), transparent 26%),
+        radial-gradient(circle at 68% 66%, rgba(167, 139, 250, 0.22), transparent 30%),
+        repeating-radial-gradient(circle at 54% 44%, rgba(45, 212, 191, 0.08) 0 1px, transparent 2px 16px),
+        linear-gradient(135deg, rgba(45, 212, 191, 0.12), rgba(8, 13, 20, 0.32));
+      box-shadow: inset 0 0 58px rgba(45, 212, 191, 0.16), 0 28px 64px rgba(0, 0, 0, 0.34);
+      transform-style: preserve-3d;
+      opacity: 0.86;
+      backdrop-filter: blur(1px);
+    }
+    .brain-lobe.left {
+      left: 8%;
+      border-radius: 56% 44% 48% 58% / 48% 52% 46% 54%;
+      transform: translateZ(24px) rotateY(-16deg) rotateZ(-8deg);
+    }
+    .brain-lobe.right {
+      right: 8%;
+      border-radius: 44% 56% 58% 48% / 52% 48% 54% 46%;
+      transform: translateZ(70px) rotateY(18deg) rotateZ(8deg);
+      border-color: rgba(56, 189, 248, 0.34);
+    }
+    .brain-bridge {
+      position: absolute;
+      left: 33%;
+      top: 42%;
+      width: 34%;
+      height: 20%;
+      border: 1px solid rgba(251, 191, 36, 0.34);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, rgba(45, 212, 191, 0.2), rgba(251, 191, 36, 0.18), rgba(56, 189, 248, 0.18)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px 15px);
+      transform: translateZ(98px);
+      box-shadow: 0 0 46px rgba(251, 191, 36, 0.18);
+    }
+    .brain-paths {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+      filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.34));
+      pointer-events: none;
+    }
+    .brain-paths.back {
+      transform: translateZ(-68px);
+      opacity: 0.46;
+      filter: blur(0.6px) drop-shadow(0 0 8px rgba(56, 189, 248, 0.24));
+    }
+    .brain-paths.mid {
+      transform: translateZ(82px);
+      opacity: 0.72;
+    }
+    .brain-paths.front {
+      transform: translateZ(178px);
+      opacity: 0.96;
+      filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.22));
+    }
+    .brain-paths path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-width: 1.55;
+      stroke: rgba(45, 212, 191, 0.55);
+      stroke-dasharray: 4 14;
+      animation: neuralFlow 3.8s linear infinite;
+    }
+    .brain-paths path.hot { stroke: rgba(251, 191, 36, 0.74); stroke-width: 2.1; animation-duration: 3.1s; }
+    .brain-paths path.cool { stroke: rgba(56, 189, 248, 0.62); animation-duration: 4.4s; }
+    @keyframes neuralFlow {
+      to { stroke-dashoffset: -72; }
+    }
+    .neural-pulse {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 84px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(238, 246, 251, 0.9), transparent);
+      box-shadow: 0 0 18px rgba(45, 212, 191, 0.56);
+      transform: translate(-50%, -50%) rotate(var(--r)) translateZ(var(--z));
+      animation: pulseTravel 2.9s linear infinite;
+      animation-delay: var(--delay);
+      opacity: 0;
+      pointer-events: none;
+    }
+    @keyframes pulseTravel {
+      0% { opacity: 0; translate: -90px 0; }
+      16% { opacity: 0.9; }
+      84% { opacity: 0.9; }
+      100% { opacity: 0; translate: 92px 0; }
+    }
+    .neural-pulse.p1 { --x: 33%; --y: 33%; --r: 25deg; --z: 194px; --delay: -0.5s; }
+    .neural-pulse.p2 { --x: 60%; --y: 38%; --r: -18deg; --z: 132px; --delay: -1.5s; }
+    .neural-pulse.p3 { --x: 47%; --y: 61%; --r: 154deg; --z: 80px; --delay: -2.2s; }
+    .synapse {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      left: var(--x);
+      top: var(--y);
+      width: calc(16px * var(--s));
+      height: calc(16px * var(--s));
+      border: 1px solid rgba(238, 246, 251, 0.62);
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 0 18%, var(--c) 22% 62%, rgba(8, 13, 20, 0.8) 66%);
+      box-shadow: 0 0 calc(20px * var(--s)) var(--c), 0 0 calc(42px * var(--s)) rgba(45, 212, 191, 0.18);
+      transform: translate(-50%, -50%) translateZ(var(--z)) scale(var(--s));
+      filter: blur(var(--blur, 0));
+      opacity: var(--o, 1);
+      animation: synapseBeat 2.8s ease-in-out infinite;
+      animation-delay: var(--delay);
+      pointer-events: none;
+    }
+    .synapse::after {
+      content: "";
+      position: absolute;
+      inset: -8px;
+      border: 1px solid var(--c);
+      border-radius: inherit;
+      opacity: 0.28;
+      animation: synapseRing 2.8s ease-out infinite;
+      animation-delay: var(--delay);
+    }
+    @keyframes synapseBeat {
+      0%, 100% { opacity: var(--o, 1); }
+      50% { opacity: 0.62; box-shadow: 0 0 calc(32px * var(--s)) var(--c), 0 0 calc(64px * var(--s)) rgba(238, 246, 251, 0.16); }
+    }
+    @keyframes synapseRing {
+      0% { transform: scale(0.62); opacity: 0.32; }
+      100% { transform: scale(1.75); opacity: 0; }
+    }
+    .synapse.hot { --c: #fbbf24; }
+    .synapse.cool { --c: #38bdf8; }
+    .synapse.violet { --c: #a78bfa; }
+    .synapse.s1 { --x: 15%; --y: 34%; --z: -118px; --s: 0.62; --c: #38bdf8; --o: 0.62; --blur: 0.5px; --delay: -0.1s; }
+    .synapse.s2 { --x: 24%; --y: 20%; --z: -42px; --s: 0.8; --c: #2dd4bf; --o: 0.75; --delay: -0.6s; }
+    .synapse.s3 { --x: 31%; --y: 55%; --z: 42px; --s: 1.02; --c: #fbbf24; --delay: -1.1s; }
+    .synapse.s4 { --x: 44%; --y: 42%; --z: 142px; --s: 1.12; --c: #2dd4bf; --delay: -1.6s; }
+    .synapse.s5 { --x: 62%; --y: 22%; --z: 92px; --s: 1.0; --c: #38bdf8; --delay: -2.1s; }
+    .synapse.s6 { --x: 78%; --y: 39%; --z: 164px; --s: 1.18; --c: #2dd4bf; --delay: -0.3s; }
+    .synapse.s7 { --x: 71%; --y: 69%; --z: 118px; --s: 1.08; --c: #fbbf24; --delay: -0.8s; }
+    .synapse.s8 { --x: 52%; --y: 76%; --z: -28px; --s: 0.82; --c: #a78bfa; --o: 0.76; --delay: -1.3s; }
+    .synapse.s9 { --x: 19%; --y: 66%; --z: -86px; --s: 0.68; --c: #a78bfa; --o: 0.7; --blur: 0.4px; --delay: -1.8s; }
+    .synapse.s10 { --x: 38%; --y: 24%; --z: 184px; --s: 1.22; --c: #38bdf8; --delay: -2.3s; }
+    .synapse.s11 { --x: 55%; --y: 34%; --z: -126px; --s: 0.58; --c: #2dd4bf; --o: 0.58; --blur: 0.6px; --delay: -2.7s; }
+    .synapse.s12 { --x: 83%; --y: 58%; --z: -54px; --s: 0.76; --c: #38bdf8; --o: 0.74; --delay: -0.9s; }
+    .synapse.s13 { --x: 30%; --y: 75%; --z: 82px; --s: 0.95; --c: #2dd4bf; --delay: -1.9s; }
+    .synapse.s14 { --x: 66%; --y: 52%; --z: 218px; --s: 1.28; --c: #fbbf24; --delay: -2.9s; }
+    .synapse.s15 { --x: 48%; --y: 18%; --z: -92px; --s: 0.66; --c: #a78bfa; --o: 0.66; --blur: 0.5px; --delay: -0.4s; }
+    .synapse.s16 { --x: 74%; --y: 23%; --z: 22px; --s: 0.88; --c: #38bdf8; --delay: -1.4s; }
+    .synapse.s17 { --x: 13%; --y: 50%; --z: 104px; --s: 0.96; --c: #2dd4bf; --delay: -2.4s; }
+    .synapse.s18 { --x: 58%; --y: 64%; --z: -116px; --s: 0.6; --c: #38bdf8; --o: 0.58; --blur: 0.6px; --delay: -1.2s; }
+    .synapse.s19 { --x: 88%; --y: 45%; --z: 118px; --s: 1.02; --c: #a78bfa; --delay: -2.2s; }
+    .synapse.s20 { --x: 41%; --y: 66%; --z: 168px; --s: 1.15; --c: #2dd4bf; --delay: -0.2s; }
+    .moc-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      display: grid;
+      place-items: center;
+      width: 138px;
+      height: 138px;
+      transform: translate(-50%, -50%) translateZ(238px) rotateZ(2deg) rotateY(16deg) rotateX(-18deg);
+      border: 1px solid rgba(251, 191, 36, 0.62);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.62), transparent 18%),
+        radial-gradient(circle, rgba(251, 191, 36, 0.36), rgba(45, 212, 191, 0.18) 48%, rgba(8, 13, 20, 0.94) 74%);
+      box-shadow: 0 0 52px rgba(251, 191, 36, 0.3), 0 0 104px rgba(45, 212, 191, 0.16), inset 0 0 26px rgba(45, 212, 191, 0.22);
+      text-align: center;
+      animation: coreBreath 3.6s ease-in-out infinite;
+    }
+    .moc-core::before,
+    .moc-core::after {
+      content: "";
+      position: absolute;
+      inset: -14px;
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      border-radius: inherit;
+      animation: coreRing 3.6s ease-out infinite;
+      pointer-events: none;
+    }
+    .moc-core::after {
+      inset: -27px;
+      border-color: rgba(45, 212, 191, 0.2);
+      animation-delay: -1.8s;
+    }
+    @keyframes coreBreath {
+      50% { box-shadow: 0 0 72px rgba(251, 191, 36, 0.42), 0 0 128px rgba(45, 212, 191, 0.22), inset 0 0 34px rgba(45, 212, 191, 0.28); }
+    }
+    @keyframes coreRing {
+      0% { transform: scale(0.84); opacity: 0.52; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+    .moc-core strong {
+      display: block;
+      color: #fef3c7;
+      font-size: 29px;
+      line-height: 1;
+    }
+    .moc-core span {
+      display: block;
+      margin-top: 6px;
+      color: #99f6e4;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .brain-label {
+      position: absolute;
+      display: grid;
+      gap: 2px;
+      width: 132px;
+      padding: 9px;
+      border: 1px solid rgba(142, 166, 184, 0.24);
+      border-radius: 10px;
+      background: rgba(12, 19, 29, 0.92);
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.36), 0 0 22px rgba(45, 212, 191, 0.08);
+      transform: translateZ(226px) rotateZ(2deg) rotateY(16deg) rotateX(-18deg);
+    }
+    .brain-label strong { font-size: 12px; }
+    .brain-label small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
+    }
+    .brain-label.l-memory { left: 5%; top: 7%; border-color: rgba(45, 212, 191, 0.46); }
+    .brain-label.l-source { left: 4%; bottom: 12%; border-color: rgba(251, 191, 36, 0.46); }
+    .brain-label.l-relation { right: 5%; top: 10%; border-color: rgba(56, 189, 248, 0.46); }
+    .brain-label.l-insight { right: 7%; bottom: 12%; border-color: rgba(167, 139, 250, 0.46); }
+    .orbit-ring-3d {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      width: 540px;
+      height: 540px;
+      border: 1px solid rgba(45, 212, 191, 0.18);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotateX(68deg);
+      box-shadow: 0 0 40px rgba(45, 212, 191, 0.1);
+      animation: ringDrift 11s linear infinite;
+    }
+    .orbit-ring-3d::before,
+    .orbit-ring-3d::after {
+      content: "";
+      position: absolute;
+      inset: 11%;
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 50%;
+    }
+    .orbit-ring-3d::after {
+      inset: 26%;
+      border-color: rgba(251, 191, 36, 0.18);
+    }
+    @keyframes ringDrift {
+      to { transform: translate(-50%, -50%) rotateX(68deg) rotateZ(360deg); }
+    }
+    .atlas-node {
+      position: absolute;
+      display: grid;
+      gap: 2px;
+      width: 128px;
+      padding: 9px;
+      border: 1px solid rgba(142, 166, 184, 0.24);
+      border-radius: 10px;
+      background: rgba(12, 19, 29, 0.88);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    }
+    .atlas-node strong { font-size: 12px; }
+    .atlas-node small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
+    }
+    .atlas-node.a { left: 8%; top: 13%; border-color: rgba(45, 212, 191, 0.46); }
+    .atlas-node.b { right: 8%; top: 18%; border-color: rgba(56, 189, 248, 0.46); }
+    .atlas-node.c { left: 11%; bottom: 16%; border-color: rgba(251, 191, 36, 0.46); }
+    .atlas-node.d { right: 10%; bottom: 13%; border-color: rgba(167, 139, 250, 0.46); }
+    .atlas-node.e { left: 50%; top: 4%; transform: translateX(-50%); border-color: rgba(52, 211, 153, 0.46); }
+    .atlas-command {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 12px;
+      border-top: 1px solid rgba(142, 166, 184, 0.18);
+      background: rgba(8, 13, 20, 0.74);
+    }
+    .atlas-command-line {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid rgba(142, 166, 184, 0.24);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.045);
+      color: #bdd0de;
+      font-size: 13px;
+    }
+    .governance-list {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .governance-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 54px;
+      gap: 10px;
+      align-items: center;
+      min-height: 92px;
+      padding: 12px;
+      border: 1px solid rgba(142, 166, 184, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .governance-card.hot {
+      border-color: rgba(251, 191, 36, 0.48);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 255, 255, 0.035));
+    }
+    .governance-card.ok {
+      border-color: rgba(45, 212, 191, 0.48);
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(255, 255, 255, 0.035));
+    }
+    .governance-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+    }
+    .governance-card small {
+      display: block;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+    .governance-score {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      border-radius: 50%;
+      color: #99f6e4;
+      font-weight: 950;
+    }
+    .governance-card.hot .governance-score {
+      border-color: rgba(251, 191, 36, 0.44);
+      color: #fde68a;
+    }
+
+    @media (max-width: 1180px) {
+      .decision { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .decision-main { grid-column: 1 / -1; }
+      .knowledge-3d-shell {
+        grid-template-columns: 280px minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+      }
+      .knowledge-3d-hero,
+      .knowledge-panel-3d:last-child {
+        grid-column: 1 / -1;
+      }
+      .knowledge-3d-hero h1 { font-size: 28px; }
+      .focus-shell {
+        grid-template-columns: 280px minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+      }
+      .focus-banner,
+      .action-queue {
+        grid-column: 1 / -1;
+      }
+      .focus-banner h1 { font-size: 28px; }
+      .proto-grid { grid-template-columns: 220px minmax(0, 1fr); }
+      .inspector { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+      .content-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .page { padding: 10px; }
+      .topbar,
+      .proto-header,
+      .task-strip,
+      .composer,
+      .focus-banner,
+      .knowledge-3d-hero,
+      .atlas-command,
+      .radar-actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .knowledge-3d-shell {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: auto;
+        padding: 10px;
+      }
+      .knowledge-3d-hero { order: 0; }
+      .atlas-3d-core { order: 1; }
+      .knowledge-panel-3d { order: 2; }
+      .knowledge-panel-3d:last-child { order: 3; }
+      .knowledge-3d-stage {
+        min-height: auto;
+        border-radius: 10px;
+      }
+      .knowledge-3d-hero h1 {
+        font-size: 22px;
+        line-height: 1.12;
+      }
+      .knowledge-3d-hero {
+        padding: 14px;
+        gap: 10px;
+      }
+      .knowledge-3d-hero p,
+      .knowledge-3d-hero .focus-proofline {
+        display: none;
+      }
+      .knowledge-state,
+      .atlas-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .knowledge-state {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .knowledge-state div {
+        min-height: 56px;
+        padding: 7px;
+      }
+      .knowledge-state strong {
+        margin-top: 4px;
+        font-size: 18px;
+      }
+      .knowledge-state small {
+        display: none;
+      }
+      .atlas-toolbar {
+        display: none;
+      }
+      .source-slab,
+      .source-slab:nth-child(2),
+      .source-slab:nth-child(3),
+      .source-slab:nth-child(4) {
+        transform: none;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      }
+      .atlas-stage {
+        min-height: 430px;
+      }
+      .moc-brain {
+        width: min(430px, 106%);
+        height: 430px;
+        top: 44%;
+        transform: translate(-50%, -50%) rotateX(20deg) rotateY(-8deg) rotateZ(-1deg) scale(0.88);
+      }
+      .brain-lobe {
+        top: 24%;
+        width: 46%;
+        height: 48%;
+      }
+      .brain-lobe.left { left: 4%; }
+      .brain-lobe.right { right: 4%; }
+      .brain-bridge {
+        left: 30%;
+        top: 45%;
+        width: 40%;
+      }
+      .moc-core {
+        width: 112px;
+        height: 112px;
+        transform: translate(-50%, -50%) translateZ(210px) rotateZ(1deg) rotateY(8deg) rotateX(-20deg);
+      }
+      .moc-core strong {
+        font-size: 22px;
+      }
+      .brain-label {
+        width: 108px;
+        padding: 8px;
+        transform: translateZ(212px) rotateZ(1deg) rotateY(8deg) rotateX(-20deg);
+      }
+      .brain-label small {
+        display: none;
+      }
+      .brain-label.l-memory { left: 0; top: 5%; }
+      .brain-label.l-source { left: 0; bottom: 8%; }
+      .brain-label.l-relation { right: 0; top: 8%; }
+      .brain-label.l-insight { right: 0; bottom: 8%; }
+      .synapse { width: calc(13px * var(--s)); height: calc(13px * var(--s)); }
+      .neural-pulse { width: 58px; }
+      .orbit-ring-3d {
+        width: 350px;
+        height: 350px;
+      }
+      .atlas-node {
+        width: 126px;
+      }
+      .atlas-node.a { left: 2%; top: 12%; }
+      .atlas-node.b { right: 2%; top: 15%; }
+      .atlas-node.c { left: 2%; bottom: 15%; }
+      .atlas-node.d { right: 2%; bottom: 12%; }
+      .atlas-node.e { top: 3%; }
+      .focus-shell {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: auto;
+        padding: 10px;
+      }
+      .focus-stage {
+        min-height: auto;
+        border-radius: 10px;
+      }
+      .focus-banner h1 {
+        font-size: 24px;
+        line-height: 1.12;
+      }
+      .focus-verdict {
+        width: 100%;
+        min-height: 92px;
+      }
+      .radar-top,
+      .micro-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .radar-map {
+        min-height: 520px;
+      }
+      .radar-rings,
+      .radar-axis {
+        inset: 18%;
+      }
+      .core-card {
+        width: 146px;
+        height: 146px;
+      }
+      .core-card strong { font-size: 32px; }
+      .orbit-node {
+        width: 128px;
+      }
+      .orbit-node.n1 { left: 2%; top: 7%; }
+      .orbit-node.n2 { right: 2%; top: 10%; }
+      .orbit-node.n3 { left: 2%; bottom: 14%; }
+      .orbit-node.n4 { right: 2%; bottom: 12%; }
+      .orbit-node.n5 { top: 1%; }
+      .top-actions,
+      .proto-actions,
+      .task-meta {
+        justify-content: flex-start;
+      }
+      .decision,
+      .signal-grid,
+      .two-col {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .proto-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .rail,
+      .inspector {
+        border: 0;
+        border-top: 1px solid var(--line);
+      }
+      .node-grid {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: auto;
+      }
+      .flow-line { display: none; }
+      .map-zone { min-height: auto; }
+      .score-row { grid-template-columns: minmax(0, 1fr); }
+      .score-row strong { text-align: left; }
+      .timeline-item { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    @media print {
+      body { background: #fff; color: #111827; }
+      .topbar { position: static; box-shadow: none; }
+      .prototype,
+      .section,
+      .decision-main,
+      .metric {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">NJX</div>
+        <div class="brand-text">
+          <strong>NJX Copilot · 3D Neural Knowledge Atlas</strong>
+          <span>以知识库管理页为主展示：MOC 是 3D 神经云，突触连接来源、图谱、Studio 和证据治理。</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="chip ok"><span class="dot"></span>主角：知识库管理</span>
+        <span class="chip warn"><span class="dot"></span>3D 只服务定位和治理</span>
+        <a class="chip info" href="#pm-review">查看 PM 评审</a>
+      </div>
+    </header>
+
+    <section class="knowledge-3d-stage" aria-label="3D 知识库管理展示页">
+      <div class="knowledge-3d-shell">
+        <header class="knowledge-3d-hero">
+          <div>
+            <div class="focus-kicker">
+              <span><span class="dot"></span>3D Neural Atlas</span>
+              <span>Sources → MOC → Graph → Studio</span>
+              <span>突触能量流</span>
+            </div>
+            <h1>把 MOC 做成 3D 神经云：来源、概念、项目、证据在同一个知识大脑里实时放电。</h1>
+            <p>首屏不讲概念，只回答：哪些神经簇已连接、哪些内容可搜索、哪些突触可信、下一步该修哪个知识断点。</p>
+            <div class="focus-proofline" aria-label="知识库首屏证据风险下一步">
+              <b>证据：/knowledge 已验收基线 / MASTER MOC / source filters</b>
+              <b>风险：浏览可见 ≠ 已索引可搜</b>
+              <b>下一步：把 daily / NAS / Wiki 显示成索引层状态</b>
+            </div>
+          </div>
+          <div class="knowledge-state" aria-label="知识库状态">
+            <div><span>Index</span><strong>86%</strong><small>可搜覆盖</small></div>
+            <div><span>NAS</span><strong>ON</strong><small>挂载可读</small></div>
+            <div><span>Hold</span><strong>2</strong><small>索引断点</small></div>
+          </div>
+        </header>
+
+        <aside class="knowledge-panel-3d" aria-label="来源立体塔">
+          <header>
+            <strong>Source Tower</strong>
+            <span>4 lanes</span>
+          </header>
+          <div class="source-tower">
+            <div class="source-slab">
+              <div class="source-cube">MEM</div>
+              <div><strong>Memory Knowledge</strong><small>本地 notes / MOC / calendar sidecars</small></div>
+              <span class="source-badge">ready</span>
+            </div>
+            <div class="source-slab">
+              <div class="source-cube">NAS</div>
+              <div><strong>南极熊 NAS</strong><small>/Volumes/南极熊 · 04我的笔记 · 09_Wiki</small></div>
+              <span class="source-badge">mount</span>
+            </div>
+            <div class="source-slab">
+              <div class="source-cube">IMA</div>
+              <div><strong>IMA / External</strong><small>外部知识入口，只读引用和来源追踪</small></div>
+              <span class="source-badge">link</span>
+            </div>
+            <div class="source-slab">
+              <div class="source-cube">RAW</div>
+              <div><strong>Raw Inbox</strong><small>待整理、待去重、待编译为 Wiki</small></div>
+              <span class="source-badge">queue</span>
+            </div>
+          </div>
+        </aside>
+
+        <section class="atlas-3d-core" aria-label="3D 知识库中枢">
+          <div class="atlas-toolbar">
+            <div class="atlas-stat"><span>Documents</span><strong>1.2k</strong><small>管理视图样本</small></div>
+            <div class="atlas-stat"><span>MOC Core</span><strong>MASTER</strong><small>全库神经中枢</small></div>
+            <div class="atlas-stat"><span>Graph</span><strong>3D net</strong><small>关系像突触一样可见</small></div>
+            <div class="atlas-stat"><span>Studio</span><strong>ready</strong><small>整理 / 问答 / 归档</small></div>
+          </div>
+          <div class="atlas-stage">
+            <div class="orbit-ring-3d" aria-hidden="true"></div>
+            <div class="moc-brain" aria-label="3D MOC 大脑神经网络">
+              <div class="brain-halo" aria-hidden="true"></div>
+              <div class="neural-shell sagittal" aria-hidden="true"></div>
+              <div class="neural-shell coronal" aria-hidden="true"></div>
+              <div class="neural-shell diagonal" aria-hidden="true"></div>
+              <div class="brain-lobe left" aria-hidden="true"></div>
+              <div class="brain-lobe right" aria-hidden="true"></div>
+              <div class="brain-bridge" aria-hidden="true"></div>
+              <svg class="brain-paths back" viewBox="0 0 720 450" role="img" aria-label="MOC 知识图谱远景神经连接">
+                <path class="cool" d="M104 152 C178 64 288 92 360 172 C442 262 548 118 632 172" />
+                <path d="M134 300 C220 246 234 148 338 192 C454 238 490 326 606 280" />
+                <path class="cool" d="M174 92 C258 132 282 236 354 220 C450 198 512 90 602 118" />
+                <path d="M94 220 C190 204 238 280 338 230 C448 174 520 198 646 222" />
+              </svg>
+              <svg class="brain-paths mid" viewBox="0 0 720 450" aria-hidden="true">
+                <path d="M142 172 C236 92 308 138 362 214 C432 314 538 142 620 206" />
+                <path class="hot" d="M188 336 C260 260 330 334 408 254 C480 184 548 230 628 320" />
+                <path class="cool" d="M242 80 C292 168 236 234 360 260 C482 286 474 360 558 374" />
+                <path d="M86 268 C172 286 246 190 342 214 C444 242 520 162 644 180" />
+              </svg>
+              <svg class="brain-paths front" viewBox="0 0 720 450" aria-hidden="true">
+                <path class="hot" d="M116 226 C204 168 256 284 350 224 C452 158 514 170 650 238" />
+                <path class="cool" d="M212 122 C294 198 286 292 370 248 C462 202 500 102 604 92" />
+                <path d="M198 360 C286 300 342 356 430 286 C512 222 570 260 648 346" />
+                <path class="hot" d="M112 116 C190 214 246 124 350 190 C452 254 542 96 640 146" />
+              </svg>
+              <span class="neural-pulse p1" aria-hidden="true"></span>
+              <span class="neural-pulse p2" aria-hidden="true"></span>
+              <span class="neural-pulse p3" aria-hidden="true"></span>
+              <span class="synapse s1"></span>
+              <span class="synapse cool s2"></span>
+              <span class="synapse hot s3"></span>
+              <span class="synapse s4"></span>
+              <span class="synapse cool s5"></span>
+              <span class="synapse s6"></span>
+              <span class="synapse hot s7"></span>
+              <span class="synapse violet s8"></span>
+              <span class="synapse violet s9"></span>
+              <span class="synapse cool s10"></span>
+              <span class="synapse s11"></span>
+              <span class="synapse cool s12"></span>
+              <span class="synapse s13"></span>
+              <span class="synapse hot s14"></span>
+              <span class="synapse violet s15"></span>
+              <span class="synapse cool s16"></span>
+              <span class="synapse s17"></span>
+              <span class="synapse cool s18"></span>
+              <span class="synapse violet s19"></span>
+              <span class="synapse s20"></span>
+              <div class="moc-core">
+                <div><strong>MOC</strong><span>知识中枢</span></div>
+              </div>
+              <div class="brain-label l-memory"><strong>记忆脑区</strong><small>notes / calendar / decisions</small></div>
+              <div class="brain-label l-source"><strong>来源脑区</strong><small>NAS / IMA / Raw Inbox</small></div>
+              <div class="brain-label l-relation"><strong>关系脑区</strong><small>entities / concepts / projects</small></div>
+              <div class="brain-label l-insight"><strong>洞察脑区</strong><small>Studio / Chat / summaries</small></div>
+            </div>
+            <div class="atlas-node a"><strong>全库 Wiki</strong><small>MASTER MOC 作为大脑皮层入口</small></div>
+            <div class="atlas-node b"><strong>局部图谱</strong><small>节点 / 关系 / 证据突触</small></div>
+            <div class="atlas-node c"><strong>来源预览</strong><small>HTML / Markdown / 文件树输入</small></div>
+            <div class="atlas-node d"><strong>ima Chat</strong><small>沿神经路径引用问答</small></div>
+            <div class="atlas-node e"><strong>治理状态</strong><small>indexed / missing / conflict</small></div>
+          </div>
+          <footer class="atlas-command">
+            <div class="atlas-command-line">Command: 沿 MOC 神经路径检查 daily 文件夹是否只是可浏览，还是已经进入 searchKnowledge 索引。</div>
+            <button>查看断点</button>
+            <button class="primary-button">打开 3D Atlas</button>
+          </footer>
+        </section>
+
+        <aside class="knowledge-panel-3d" aria-label="知识治理动作">
+          <header>
+            <strong>Governance Queue</strong>
+            <span>next</span>
+          </header>
+          <div class="governance-list">
+            <div class="governance-card hot">
+              <div><strong>浏览可见 ≠ 搜索可用</strong><small>daily 在树里可见，但 searchKnowledge 可能未索引。</small></div>
+              <div class="governance-score">P0</div>
+            </div>
+            <div class="governance-card ok">
+              <div><strong>保留已验收布局</strong><small>真实 /knowledge 基线不乱改；这里只做展示页方案。</small></div>
+              <div class="governance-score">OK</div>
+            </div>
+            <div class="governance-card">
+              <div><strong>Studio 右栏收口</strong><small>整理、问答、引用治理合并为当前文档 inspector。</small></div>
+              <div class="governance-score">D1</div>
+            </div>
+            <div class="governance-card">
+              <div><strong>冲突待审</strong><small>重复文件、隐藏 organized folder、NAS/wiki drift 明确标红。</small></div>
+              <div class="governance-score">2</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="focus-stage" aria-label="Policy Lens 首屏控制台">
+      <div class="focus-shell">
+        <header class="focus-banner">
+          <div>
+            <div class="focus-kicker">
+              <span><span class="dot"></span>Policy Command Core</span>
+              <span>不是文档页</span>
+              <span>一屏决策</span>
+            </div>
+            <h1>别做“政策说明书”。做一个能拦截、放行、解释下一步的 AI 策略导航引擎。</h1>
+            <p>用户打开第一眼只看三件事：当前能不能继续、卡在哪里、下一步点什么。所有长解释下沉，首屏只保留会改变行动的信号。</p>
+            <div class="focus-proofline" aria-label="首屏证据风险下一步">
+              <b>证据：DeliveryRightRail / 三栏契约 / 当前 HTML</b>
+              <b>风险：外部来源不可读</b>
+              <b>下一步：接真实右栏 tab</b>
+            </div>
+          </div>
+          <div class="focus-verdict" aria-label="当前设计结论">
+            <strong>HOLD</strong>
+            <span>1 个审批缺口</span>
+          </div>
+        </header>
+
+        <aside class="focus-panel" aria-label="左侧优先级">
+          <header>
+            <strong>Priority Stack</strong>
+            <span>Now</span>
+          </header>
+          <div class="priority-stack">
+            <div class="priority hot">
+              <div class="priority-id">P0</div>
+              <div>
+                <strong>不要全站暗黑化</strong>
+                <small>只做 /delivery 的策略层；主工作流仍是任务执行控制台。</small>
+              </div>
+            </div>
+            <div class="priority ok">
+              <div class="priority-id">P1</div>
+              <div>
+                <strong>策略命中可视化</strong>
+                <small>权限、数据源、验收、成本、安全五域即时显示。</small>
+              </div>
+            </div>
+            <div class="priority">
+              <div class="priority-id">P2</div>
+              <div>
+                <strong>证据先于解释</strong>
+                <small>无截图、无接口、无路径时不能显示成功。</small>
+              </div>
+            </div>
+          </div>
+          <div class="micro-metrics">
+            <div class="micro"><span>决策时间</span><strong>10s</strong><small>目标首屏判断</small></div>
+            <div class="micro"><span>LLM 默认调用</span><strong>0</strong><small>规则先行</small></div>
+            <div class="micro"><span>高风险放行</span><strong>0</strong><small>必须审批</small></div>
+            <div class="micro"><span>适配评分</span><strong>92</strong><small>嵌入式策略层</small></div>
+          </div>
+        </aside>
+
+        <section class="radar-core" aria-label="中央策略雷达">
+          <div class="radar-top">
+            <div class="radar-stat"><span>策略命中</span><strong>7</strong><small>2 条需确认</small></div>
+            <div class="radar-stat"><span>证据源</span><strong>4</strong><small>repo / memory / browser / xhs</small></div>
+            <div class="radar-stat"><span>延迟目标</span><strong>&lt;500ms</strong><small>规则聚合</small></div>
+            <div class="radar-stat"><span>当前动作</span><strong>暂停</strong><small>等审批补齐</small></div>
+          </div>
+          <div class="radar-map">
+            <div class="radar-rings" aria-hidden="true"></div>
+            <div class="radar-axis" aria-hidden="true"></div>
+            <div class="core-card">
+              <div>
+                <strong>GO?</strong>
+                <span>看策略和证据</span>
+              </div>
+            </div>
+            <div class="orbit-node ok n1"><strong>Agent 权限</strong><small>main 可评审 / worker 待审批</small></div>
+            <div class="orbit-node warn n2"><strong>数据源</strong><small>小红书正文不可读</small></div>
+            <div class="orbit-node ok n3"><strong>验收</strong><small>HTML + 截图 + 无溢出</small></div>
+            <div class="orbit-node danger n4"><strong>安全</strong><small>高风险动作 hold</small></div>
+            <div class="orbit-node ok n5"><strong>成本</strong><small>默认不用 LLM</small></div>
+          </div>
+          <footer class="radar-actions">
+            <div class="command-line">Command: 先补证据，再继续执行。不要生成更多解释文字。</div>
+            <button>只看阻塞</button>
+            <button class="primary-button">生成验收包</button>
+          </footer>
+        </section>
+
+        <aside class="focus-panel action-queue" aria-label="右侧行动队列">
+          <header>
+            <strong>Action Queue</strong>
+            <span>3 moves</span>
+          </header>
+          <div class="action-list">
+            <div class="action-card primary">
+              <div>
+                <strong>做 Policy Lens 抽屉</strong>
+                <small>接 /api/development、/api/agents、system review、audit logs。</small>
+              </div>
+              <div class="action-score">92</div>
+            </div>
+            <div class="action-card warn">
+              <div>
+                <strong>保留来源限制</strong>
+                <small>短链未抓正文，不复刻未知原帖，只保留口令入口。</small>
+              </div>
+              <div class="action-score">!</div>
+            </div>
+            <div class="action-card">
+              <div>
+                <strong>三样本验收</strong>
+                <small>UI 交付、知识保存、高风险执行，各跑一次真实链路。</small>
+              </div>
+              <div class="action-score">D1</div>
+            </div>
+          </div>
+          <div class="evidence-strip">
+            <div class="evidence-mini"><i></i><span>证据入口：DeliveryRightRail / 三栏设计契约 / 当前 HTML。</span></div>
+            <div class="evidence-mini"><i></i><span>风险入口：外部来源不可读、无真实 API 时禁止装成功。</span></div>
+            <div class="evidence-mini"><i></i><span>下一步：把雷达接成真实右栏 tab，而不是继续堆文字。</span></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="decision" aria-label="首屏决策摘要">
+      <div class="decision-main">
+        <span class="eyebrow">Product decision</span>
+        <h1>把“政策导航”改造成任务执行中的策略/证据导航，而不是给 njx copilot 换一层炫酷皮肤。</h1>
+        <p>njx copilot 的核心价值是让用户判断当前任务能否继续、由哪个 agent 执行、依据是什么、风险是否需要人工确认。深色动态视觉适合做“Policy Lens”焦点层：展示权限、成本、数据源、验收、失败兜底和证据路径；不适合替代现有三栏任务控制台。</p>
+        <div class="verdict-row">
+          <span class="chip ok">适合度 90/100：作为右栏/抽屉研究预览版</span>
+          <span class="chip warn">照搬大屏适合度 62/100：会遮蔽工作流</span>
+          <span class="chip info">首发范围：开发台 /delivery 的策略导航视图</span>
+        </div>
+      </div>
+      <div class="metric">
+        <span>用户价值</span>
+        <strong>高</strong>
+        <small>减少“AI 为什么这么做”的解释成本，提升任务继续/暂停判断速度。</small>
+      </div>
+      <div class="metric">
+        <span>实现成本</span>
+        <strong>中</strong>
+        <small>先接现有任务、agent、system review、audit 数据；LLM 摘要后置。</small>
+      </div>
+      <div class="metric">
+        <span>体验风险</span>
+        <strong>中</strong>
+        <small>暗色和动画只能服务状态识别，不能变成装饰噪声。</small>
+      </div>
+      <div class="metric">
+        <span>下一步</span>
+        <strong>1 天</strong>
+        <small>用 3 个真实任务样本验证：策略命中、证据路径、人工确认。</small>
+      </div>
+    </section>
+
+    <section class="prototype" aria-label="Policy Lens HTML 预览">
+      <header class="proto-header">
+        <div class="proto-title">
+          <strong>Policy Lens · 当前任务策略导航</strong>
+          <small>Preview mock：用于评审交互方向，非当前线上数据；上线时必须替换为 /api/development、/api/agents、/api/system-review、audit logs。</small>
+        </div>
+        <div class="proto-actions">
+          <span class="chip ok"><span class="dot"></span>Evidence routed</span>
+          <span class="chip warn"><span class="dot"></span>1 approval required</span>
+          <button class="primary-button">生成验收包</button>
+        </div>
+      </header>
+
+      <div class="proto-grid">
+        <aside class="rail" aria-label="策略地图左栏">
+          <section class="rail-section">
+            <div class="section-head">
+              <strong>Policy Map</strong>
+              <span class="status-pill ok">5 domains</span>
+            </div>
+            <div class="policy-list">
+              <div class="policy-row active">
+                <div class="policy-key">A</div>
+                <div class="policy-body">
+                  <strong>Agent 权限</strong>
+                  <small>main / boss / worker 能做什么</small>
+                </div>
+                <span class="status-pill ok">pass</span>
+              </div>
+              <div class="policy-row">
+                <div class="policy-key">D</div>
+                <div class="policy-body">
+                  <strong>数据源边界</strong>
+                  <small>memory / NAS / IMA / web</small>
+                </div>
+                <span class="status-pill warn">1 gap</span>
+              </div>
+              <div class="policy-row">
+                <div class="policy-key">Q</div>
+                <div class="policy-body">
+                  <strong>验收门槛</strong>
+                  <small>浏览器截图 / API / 产物路径</small>
+                </div>
+                <span class="status-pill ok">ready</span>
+              </div>
+              <div class="policy-row">
+                <div class="policy-key">S</div>
+                <div class="policy-body">
+                  <strong>安全审批</strong>
+                  <small>写文件 / 启服务 / 高风险动作</small>
+                </div>
+                <span class="status-pill danger">hold</span>
+              </div>
+              <div class="policy-row">
+                <div class="policy-key">C</div>
+                <div class="policy-body">
+                  <strong>成本预算</strong>
+                  <small>LLM token / agent loop / cron</small>
+                </div>
+                <span class="status-pill ok">cap</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="rail-section">
+            <div class="section-head">
+              <strong>当前命中策略</strong>
+              <span class="status-pill warn">人工确认</span>
+            </div>
+            <div class="route-card">
+              <strong>写入知识库前必须显示证据来源</strong>
+              <small>触发条件：任务产出要进入 Knowledge、NAS 或长期记忆。要求：来源路径、摘要、失败原因和回滚路径可见。</small>
+            </div>
+            <div class="route-card">
+              <strong>浏览器验收优先于终端成功</strong>
+              <small>触发条件：UI/体验相关交付。要求：打开真实页面并检查首屏，不接受空壳看板。</small>
+            </div>
+          </section>
+        </aside>
+
+        <section class="workspace" aria-label="策略导航中栏">
+          <header class="workspace-head">
+            <div class="task-strip">
+              <div>
+                <span class="eyebrow">Active task</span>
+                <h2>把政策导航灵感转成 njx copilot 的可执行策略层</h2>
+                <p>目标不是展示“政策目录”，而是让每个 agent 行动前知道依据、边界、兜底和验收证据。</p>
+              </div>
+              <div class="task-meta">
+                <span class="chip ok">main agent</span>
+                <span class="chip info">/delivery</span>
+                <span class="chip warn">Research preview</span>
+              </div>
+            </div>
+            <div class="signal-grid">
+              <div class="signal"><span>命中策略</span><strong>7</strong><small>2 条需要确认</small></div>
+              <div class="signal"><span>证据源</span><strong>4</strong><small>repo / memory / live app / xhs title</small></div>
+              <div class="signal"><span>预计延迟</span><strong>&lt; 500ms</strong><small>规则层优先，无 LLM 阻塞</small></div>
+              <div class="signal"><span>AI 摘要成本</span><strong>可选</strong><small>仅在证据过长时调用</small></div>
+            </div>
+          </header>
+
+          <div class="map-zone">
+            <div class="flow-line" aria-hidden="true"></div>
+            <div class="node-grid">
+              <article class="node primary">
+                <span class="node-icon">01</span>
+                <strong>用户目标</strong>
+                <small>“给 HTML 预览并评估是否适合 njx copilot”被归类为产品评审 + 原型交付。</small>
+              </article>
+              <article class="node">
+                <span class="node-icon">02</span>
+                <strong>上下文检索</strong>
+                <small>读取现有三栏契约、DeliveryLeft/Center/RightRail、过往验收记忆。</small>
+              </article>
+              <article class="node warn">
+                <span class="node-icon">03</span>
+                <strong>策略命中</strong>
+                <small>UI 类任务必须给浏览器/HTML 证据；外部短链无法抓正文时必须标注来源限制。</small>
+              </article>
+              <article class="node">
+                <span class="node-icon">04</span>
+                <strong>方案取舍</strong>
+                <small>拒绝全站暗黑大屏化；保留暗色动态作为策略/证据焦点层。</small>
+              </article>
+              <article class="node danger">
+                <span class="node-icon">05</span>
+                <strong>风险阻塞</strong>
+                <small>原帖正文/图片不可访问，不能声称复刻；上线前需真实接口和截图验收。</small>
+              </article>
+              <article class="node primary">
+                <span class="node-icon">06</span>
+                <strong>交付回写</strong>
+                <small>输出 HTML 评审页、保留口令、标注 next action 和 acceptance script。</small>
+              </article>
+            </div>
+          </div>
+
+          <footer class="workspace-foot">
+            <div class="composer">
+              <div class="composer-box">Command: 解释这个 agent 动作为什么被允许，并列出证据、成本、风险和回滚路径。</div>
+              <button>只看风险</button>
+              <button class="primary-button">继续执行</button>
+            </div>
+            <small>交互原则：AI 出现在当前任务对象上；每个回答都带策略命中、证据入口、失败兜底，不做外挂聊天框。</small>
+          </footer>
+        </section>
+
+        <aside class="inspector" aria-label="右侧验收栏">
+          <section class="inspector-section">
+            <div class="section-head">
+              <strong>Acceptance Rail</strong>
+              <span class="status-pill ok">design pass</span>
+            </div>
+            <div class="acceptance">
+              <div class="acceptance-item"><span>推荐路线</span><strong>Policy Lens</strong><small>作为右栏/抽屉/Command view。</small></div>
+              <div class="acceptance-item"><span>首屏必须回答</span><strong>5 件事</strong><small>状态、优先级、风险、下一步、来源。</small></div>
+              <div class="acceptance-item"><span>上线门槛</span><strong>3 样本</strong><small>真实任务、真实证据、真实截图。</small></div>
+              <div class="acceptance-item"><span>禁止项</span><strong>空壳大屏</strong><small>无来源数字、无行动闭环直接失败。</small></div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="section-head">
+              <strong>100 分自检</strong>
+              <span class="status-pill ok">preview</span>
+            </div>
+            <div class="audit-list">
+              <div class="audit-row"><span class="audit-icon">✓</span><span>用户价值：把“能不能继续”从猜测变成可解释判断。</span></div>
+              <div class="audit-row"><span class="audit-icon">✓</span><span>LLM 边界：默认规则/检索优先，LLM 只做摘要和解释。</span></div>
+              <div class="audit-row"><span class="audit-icon">✓</span><span>失败兜底：无证据、链路失败、超预算、需审批都显示 hold 原因。</span></div>
+              <div class="audit-row"><span class="audit-icon warn">!</span><span>外部来源限制：小红书短链未抓取正文，不能复刻原帖细节。</span></div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="section-head">
+              <strong>Evidence</strong>
+              <span class="status-pill warn">mixed</span>
+            </div>
+            <div class="evidence-stack">
+              <div class="evidence"><strong>Repo context</strong><small class="mono">/Users/njx/openclaw/copilot/apps/web/src/DeliveryRightRail.tsx</small></div>
+              <div class="evidence"><strong>Design contract</strong><small class="mono">design/openclaw-codex-ui-architecture.md</small></div>
+              <div class="evidence"><strong>XHS visible source</strong><small>标题与短链可见；正文/截图未在当前环境抓取成功。</small></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section id="pm-review" class="content-grid">
+      <div class="section">
+        <header>
+          <div>
+            <strong>PM 方案评审</strong>
+            <small>按照“问题重构 → 用户场景 → 产品方案 → 技术对比 → 验收”的合同输出。</small>
+          </div>
+          <span class="chip ok">适合做研究预览版</span>
+        </header>
+        <div class="section-body">
+          <div class="two-col">
+            <div class="statement">
+              <span class="eyebrow">1. 问题重构</span>
+              <strong>用户真正困境</strong>
+              <p>不是“想要一个炫酷政策导航系统”，而是在多 agent、知识库、NAS、Gateway、任务验收交织时，用户无法快速判断：当前行动是否被允许、依据是否可信、失败后怎么回滚。</p>
+            </div>
+            <div class="statement">
+              <span class="eyebrow">2. 目标用户和场景</span>
+              <strong>NJX / OpenClaw 操作员</strong>
+              <p>在开发台推进任务、保存知识、开启 cron、派发 sub-agent、处理高风险动作前，需要 10 秒内看清策略命中、证据源、人工审批和下一步。</p>
+            </div>
+          </div>
+
+          <div class="statement">
+            <span class="eyebrow">3. 产品方案</span>
+            <strong>Policy Lens：任务执行控制台的深色策略导航层</strong>
+            <p>核心交互是“左侧策略域、中间决策路径、右侧验收栏”。用户选中一个任务或 agent 动作后，系统展示命中的权限、数据源、验收、成本和安全策略；若通过，给出继续执行按钮；若不通过，显示 hold 原因、证据缺口和回滚路径。</p>
+          </div>
+
+          <div class="section">
+            <header>
+              <div>
+                <strong>4. 技术方案对比</strong>
+                <small>不为 AI 而 AI：规则层先行，LLM 只在高价值解释处介入。</small>
+              </div>
+            </header>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>Latency</th>
+                  <th>Accuracy</th>
+                  <th>Cost</th>
+                  <th>判断</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>规则 + 现有 API 聚合：development、agents、system review、audit logs</td>
+                  <td>低，目标 &lt; 500ms</td>
+                  <td>高，适合权限/状态/证据路径</td>
+                  <td>低，无默认 token 成本</td>
+                  <td>推荐作为 v0 研究预览版主路径</td>
+                </tr>
+                <tr>
+                  <td>RAG + LLM 策略解释：读取 AGENTS、PRD、memory、知识库文档后生成解释</td>
+                  <td>中高，2-8s</td>
+                  <td>中高，取决于引用质量</td>
+                  <td>中，需要 token 预算与缓存</td>
+                  <td>仅用于“为什么这么判定”的长解释，不阻塞主流程</td>
+                </tr>
+                <tr>
+                  <td>Agent 自动决策并执行策略修复</td>
+                  <td>高，不稳定</td>
+                  <td>风险高，容易越权</td>
+                  <td>高，循环成本不可控</td>
+                  <td>当前不做，只允许生成建议和待审批任务</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <header>
+              <div>
+                <strong>5. 100 分自检</strong>
+                <small>这是设计预览自检；上线验收必须用真实接口、截图和任务样本复核。</small>
+              </div>
+            </header>
+            <div class="section-body checklist">
+              <div class="check"><span class="check-mark">✓</span><div><strong>用户价值</strong><small>预计把任务风险判断从 2-5 分钟缩短到 10-20 秒。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>场景真实</strong><small>匹配现有 OpenClaw 多代理、Knowledge、Gateway、right rail、验收证据工作流。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>LLM 边界</strong><small>规则和检索做判定，LLM 做解释，不让生成式模型决定高风险动作。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>失败兜底</strong><small>无证据、短链不可读、接口失败、审批缺失时显示 hold，不伪装成功。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>成本可控</strong><small>默认无 LLM 调用；长解释需 token budget、缓存和手动触发。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>可解释性</strong><small>每条策略命中带来源、更新时间、动作建议和不可用原因。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>可评测</strong><small>用三类任务样本：UI 交付、知识保存、高风险执行；评测判断正确率和处理时长。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>安全合规</strong><small>离线 HTML 不写凭据；产品内高风险动作必须走审批和 audit log。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>可维护</strong><small>策略域可配置，先接现有 API，后续再接 RAG policy docs。</small></div></div>
+              <div class="check"><span class="check-mark">✓</span><div><strong>零返工承诺</strong><small>不改全站设计语言，先做可独立关闭的 Policy Lens，降低返工面。</small></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="section">
+        <header>
+          <div>
+            <strong>品味打分</strong>
+            <small>按 njx copilot 的任务控制台标准，不按视觉大屏标准。</small>
+          </div>
+        </header>
+        <div class="section-body">
+          <div class="score-row"><span>信息架构</span><div class="bar"><i style="width: 92%"></i></div><strong>92</strong></div>
+          <div class="score-row"><span>首屏优先级</span><div class="bar"><i style="width: 90%"></i></div><strong>90</strong></div>
+          <div class="score-row"><span>状态真实性</span><div class="bar"><i style="width: 88%"></i></div><strong>88</strong></div>
+          <div class="score-row"><span>工作流闭环</span><div class="bar"><i style="width: 91%"></i></div><strong>91</strong></div>
+          <div class="score-row"><span>视觉层级</span><div class="bar"><i style="width: 86%"></i></div><strong>86</strong></div>
+          <div class="score-row"><span>学习闭环</span><div class="bar"><i style="width: 84%"></i></div><strong>84</strong></div>
+          <p>结论：作为“可开关的策略导航层”达到上线研究预览门槛；作为全站主视觉则不过关。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <section class="section">
+        <header>
+          <div>
+            <strong>成功指标、不做的事、风险兜底</strong>
+            <small>这些是开发前的验收合同，不是事后解释。</small>
+          </div>
+        </header>
+        <div class="section-body two-col">
+          <div class="statement">
+            <span class="eyebrow">6. 成功指标</span>
+            <ul class="list">
+              <li>首次判断“继续 / 暂停 / 需审批”的时间从 2-5 分钟降到 20 秒内。</li>
+              <li>策略判定可解释率达到 95%：每个结论至少有 1 个来源和 1 个下一步。</li>
+              <li>高风险动作误放行率为 0；无证据时必须 hold。</li>
+              <li>研究预览版 3 个真实任务样本全部通过桌面 1440、平板 1024、手机 390 视口检查。</li>
+            </ul>
+          </div>
+          <div class="statement">
+            <span class="eyebrow">7. 不做的事</span>
+            <ul class="list">
+              <li>不把 njx copilot 全站改成暗黑政策大屏。</li>
+              <li>不做没有证据来源的炫酷数字、热力图或动态图谱。</li>
+              <li>不让 LLM 直接决定权限、审批、删除、外发、写入长期记忆。</li>
+              <li>不复刻小红书原帖未验证的图片、布局或文案细节。</li>
+            </ul>
+          </div>
+          <div class="statement">
+            <span class="eyebrow">8. 风险与兜底</span>
+            <ul class="list">
+              <li>外部链接不可读：只使用可见标题做灵感，不伪造原帖内容。</li>
+              <li>状态数据缺失：显示 unavailable reason，而不是填假数据。</li>
+              <li>动画干扰阅读：默认只用于扫描线和状态脉冲，支持 reduced motion。</li>
+              <li>接口延迟：规则判定先返回，LLM 解释异步生成。</li>
+            </ul>
+          </div>
+          <div class="statement">
+            <span class="eyebrow">9. 下一步行动</span>
+            <div class="timeline">
+              <div class="timeline-item"><time>D0</time><div><strong>确认范围</strong><small>只做 /delivery 的 Policy Lens 抽屉或右栏 tab，不动 Knowledge 基线布局。</small></div></div>
+              <div class="timeline-item"><time>D1</time><div><strong>接真实数据</strong><small>接 /api/development/projects、/api/agents、system review、audit logs，完成 3 个任务样本。</small></div></div>
+              <div class="timeline-item"><time>D2</time><div><strong>浏览器验收</strong><small>桌面/平板/手机截图，检查首屏状态、风险、下一步、证据来源和无横向溢出。</small></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="section">
+        <header>
+          <div>
+            <strong>小红书口令保留</strong>
+            <small>作为灵感入口，不作为可复刻素材源。</small>
+          </div>
+        </header>
+        <div class="section-body">
+          <div class="xhs-copy">
+            <strong>保留口令，直达【小红书】围观</strong>
+            <code>设计灵感｜深色炫酷动态ai政策导航系统
+http://xhslink.com/o/8wZU6F1Gmkj</code>
+            <small>当前环境未抓取到短链正文/截图；本预览基于可见标题、njx copilot 现有三栏开发台语境和产品验收标准设计。</small>
+          </div>
+          <div class="statement">
+            <strong>给开发者的一句话</strong>
+            <p>先做一个可关闭、可验证、可解释的 Policy Lens。它必须让用户更快决定下一步，而不是让页面看起来更像发布会大屏。</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer">
+      <span>source-hash: cab397373274b89ed00a2338cdbb8d0e321f95927b1a28b4ddfb47b951dfc39a</span>
+      <span>rendered-at: 2026-06-14T14:16:20+08:00</span>
+    </footer>
+  </main>
+</body>
+</html>

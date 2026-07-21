@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "openclaw-development-gates/v3",
+  "updatedAt": "2026-06-16T00:00:00.000Z",
+  "environments": ["dev", "staging", "prod"],
+  "gates": [
+    {
+      "key": "prd_required",
+      "label": "PRD 必须存在",
+      "category": "product",
+      "required": true,
+      "command": "read development_documents.PRD",
+      "description": "无 PRD 不进入 build。"
+    },
+    {
+      "key": "prototype_required",
+      "label": "原型验收必须存在",
+      "category": "product",
+      "required": true,
+      "command": "verify prototype screenshot or browser evidence",
+      "description": "核心 UI 改动必须先有人工确认原型或截图证据。"
+    },
+    {
+      "key": "test_evidence_required",
+      "label": "测试证据必须存在",
+      "category": "engineering",
+      "required": true,
+      "command": "npm run test:env && npm run check && npm run build && npm run test:prd:staging && npm run test:e2e:staging",
+      "description": "无环境隔离、类型检查、构建和 staging 测试证据不进入 release。"
+    },
+    {
+      "key": "security_scan",
+      "label": "安全扫描必须通过",
+      "category": "security",
+      "required": true,
+      "command": "npm run security:scan",
+      "description": "外部通知、文件访问和发布动作必须经过安全边界检查。"
+    },
+    {
+      "key": "env_isolation",
+      "label": "环境隔离必须强制",
+      "category": "engineering",
+      "required": true,
+      "command": "assert OPENCLAW_WORKBENCH_ENV in dev|staging|prod and assert port/data_dir match env",
+      "description": "禁止跨环境直接改动：dev/staging/prod 必须使用独立端口和数据目录，生产写入必须显式授权。"
+    },
+    {
+      "key": "staging_acceptance_required",
+      "label": "Staging 验收必须通过",
+      "category": "release",
+      "required": true,
+      "command": "assert staging evidence pack exists and user_review=ACCEPTED before prod promotion",
+      "description": "Promote 到 prod 前，staging 必须跑通自动化 smoke/e2e，并由 NJX 在真实页面或截图证据上 ACCEPT。"
+    },
+    {
+      "key": "no_fake_ok",
+      "label": "禁止 fake OK",
+      "category": "autonomy",
+      "required": true,
+      "command": "assert degraded dependencies stay visible",
+      "description": "web_search、NAS、MiniMax、gateway 任一不可用时必须显示 DEGRADED 或 BLOCKED。"
+    }
+  ]
+}

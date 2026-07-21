@@ -1,0 +1,107 @@
+name: release-win
+
+# Build Windows .exe / .msi via electron-builder. Uses Ubuntu runner + Wine
+# so we don't burn Windows-hosted minutes during the open-source / hobby tier.
+# For signed releases, swap the runner to `windows-latest` and add the signing
+# secrets — workflow structure stays identical.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner (linux+wine or windows)"
+        required: false
+        default: "linux"
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  build-win:
+    name: build · Windows (${{ inputs.runner || 'linux+wine' }})
+    runs-on: ${{ inputs.runner == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/copilot-desktop
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            **/node_modules
+          key: ${{ runner.os }}-win-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-win-deps-
+
+      - name: Install
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Install Wine (Linux runner only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends wine64 wine32 xvfb
+          wine --version
+
+      - name: Build desktop (Windows targets)
+        run: |
+          if [ -f package.json ]; then
+            npx electron-builder --win --x64 --ia32 --publish=never
+          else
+            echo "::warning::apps/copilot-desktop not merged yet; skipping Windows build"
+            mkdir -p dist
+            echo "placeholder" > dist/.skip
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-desktop-win
+          path: |
+            apps/copilot-desktop/dist/*.exe
+            apps/copilot-desktop/dist/*.msi
+            apps/copilot-desktop/dist/*.blockmap
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    name: publish release
+    needs: build-win
+    if: startsWith(github.ref, 'refs/tags/v') && (github.event_name != 'workflow_dispatch' || github.event.inputs.runner == 'windows')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.msi
+            artifacts/**/*.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,48 @@
+{
+  "metrics": [
+    {
+      "id": "tokens",
+      "label": "Token 消耗",
+      "enabled": true,
+      "order": 10,
+      "unit": "tokens",
+      "tone": "cost",
+      "source": "events_artifacts_estimate",
+      "rateWindowMinutes": 1440,
+      "liveWindowMinutes": 5
+    },
+    {
+      "id": "text",
+      "label": "文字产出",
+      "enabled": true,
+      "order": 20,
+      "unit": "chars",
+      "tone": "text",
+      "source": "events_items",
+      "rateWindowMinutes": 1440,
+      "liveWindowMinutes": 5
+    },
+    {
+      "id": "code",
+      "label": "代码产出",
+      "enabled": true,
+      "order": 30,
+      "unit": "lines",
+      "tone": "code",
+      "source": "artifacts_estimate",
+      "rateWindowMinutes": 1440,
+      "liveWindowMinutes": 5
+    },
+    {
+      "id": "docs",
+      "label": "文档交付",
+      "enabled": true,
+      "order": 40,
+      "unit": "files",
+      "tone": "doc",
+      "source": "artifacts",
+      "rateWindowMinutes": 1440,
+      "liveWindowMinutes": 5
+    }
+  ]
+}

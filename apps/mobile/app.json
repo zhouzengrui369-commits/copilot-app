@@ -1,0 +1,120 @@
+{
+  "expo": {
+    "name": "OpenClaw 随身分身",
+    "slug": "openclaw-mobile",
+    "version": "1.0.8",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "openclaw",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F766E",
+      "dark": {
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0D5C56"
+      }
+    },
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.zhouzengrui2015.openclawmobile",
+      "buildNumber": "4",
+      "infoPlist": {
+        "CFBundleDisplayName": "OpenClaw 随身分身",
+        "CFBundleDevelopmentRegion": "zh_CN",
+        "CFBundleAllowMixedLocalizations": true,
+        "NSLocalNetworkUsageDescription": "OpenClaw 需要在同一无线网络下连接你的 Mac 工作台，用于移动端配对和同步。",
+        "NSMicrophoneUsageDescription": "OpenClaw 需要使用麦克风记录你的语音笔记，并把转写结果保存到 Mac 工作台。",
+        "NSBonjourServices": [
+          "_http._tcp"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSExceptionDomains": {
+            "127.0.0.1": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": false
+            },
+            "localhost": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": false
+            }
+          }
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.openclaw.mobile",
+      "versionCode": 9,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "openclaw",
+              "host": "pair"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/1cf237b9-cfe9-4d2c-a8f4-3f9cf7728a19"
+    },
+    "extra": {
+      "openclaw": {
+        "distribution": "ios-simulator-first",
+        "updateChannel": "preview",
+        "syncModel": "mac_primary_online_write_offline_readonly",
+        "androidFirst": false,
+        "iosFirst": true,
+        "iosTestFlight": true,
+        "voiceRecordingNative": true,
+        "mate60SafeMode": false,
+        "targetDevice": "iPhone 11 first, Huawei Mate60 after iOS acceptance",
+        "targetOsVersion": "iOS simulator / iPhone 11, then HarmonyOS 4.2.0.210",
+        "publicBrokerUrl": "https://njx-copilot-d6gs7642f8fa17122.service.tcloudbase.com/openclaw-relay"
+      },
+      "eas": {
+        "projectId": "1cf237b9-cfe9-4d2c-a8f4-3f9cf7728a19"
+      },
+      "r19QaAudioAction": true
+    },
+    "plugins": [
+      "./plugins/with-openclaw-android.js",
+      "./plugins/with-openclaw-ios-model.js",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "OpenClaw 需要使用麦克风记录你的语音笔记，并把转写结果保存到 Mac 工作台。",
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
+        }
+      ]
+    ],
+    "owner": "nanjixiong"
+  }
+}

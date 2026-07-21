@@ -1,0 +1,159 @@
+/* VoiceInput styles — module-scoped CSS for the voice panel. */
+
+.voice-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--voice-border, rgba(127, 127, 127, 0.25));
+  border-radius: 12px;
+  background: var(--voice-bg, rgba(0, 0, 0, 0.02));
+}
+
+.voice-input__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.voice-input__header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.voice-input__badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+}
+
+.voice-input__controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.voice-input__banner {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--voice-banner-fg, #b45309);
+  background: var(--voice-banner-bg, rgba(245, 158, 11, 0.12));
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.voice-input__transcript {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--voice-transcript-bg, rgba(34, 211, 238, 0.08));
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.voice-waveform {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.06);
+  display: block;
+}
+
+.voice-btn-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+  background: white;
+  color: #111;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.voice-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.voice-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.voice-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.voice-btn__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #9ca3af;
+}
+
+.voice-btn--recording {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #991b1b;
+}
+
+.voice-btn--recording .voice-btn__dot {
+  background: #ef4444;
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+
+.voice-btn--processing {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #1e40af;
+}
+
+.voice-btn--processing .voice-btn__dot {
+  background: #3b82f6;
+  animation: voice-spin 1.2s linear infinite;
+}
+
+.voice-btn--error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #991b1b;
+}
+
+.voice-btn--unsupported {
+  background: rgba(127, 127, 127, 0.1);
+  border-color: rgba(127, 127, 127, 0.3);
+  color: #4b5563;
+}
+
+.voice-btn__cancel {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+@keyframes voice-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+@keyframes voice-spin {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.5); }
+  100% { transform: scale(1); }
+}

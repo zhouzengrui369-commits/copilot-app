@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw_data/openclaw_workbench/design/agent-office-animation-preview.html">
+  <meta name="source-hash" content="4391f6aec65c218fbaf9b7a41d881b7b1cf2e4d79d53ee6e03bb7e5db288a0b8">
+  <meta name="rendered-at" content="2026-05-23T22:34:07+0800">
+  <title>OpenClaw Pixel Agent Office Preview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #667085;
+      --paper: #f4f7fb;
+      --line: #d7e0ea;
+      --pixel: #1f2937;
+      --green: #0f766e;
+      --green-soft: #e0f8f2;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --amber: #b45309;
+      --amber-soft: #fff4dc;
+      --red: #b42318;
+      --red-soft: #fff0ec;
+      --violet: #7c3aed;
+      --screen: #07111f;
+      --desk: #8ea3b7;
+      --desk-dark: #5f7488;
+      --shadow: 0 18px 50px rgb(16 24 40 / .08);
+      --radius: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgb(23 32 51 / .035) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(180deg, rgb(23 32 51 / .035) 1px, transparent 1px) 0 0 / 28px 28px,
+        var(--paper);
+      color: var(--ink);
+      letter-spacing: 0;
+      overflow-wrap:anywhere;
+      word-break: break-word;
+    }
+
+    body,
+    button { font: inherit; }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 13px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: #075f56;
+      background: var(--green);
+      color: #fff;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero,
+    .office-shell,
+    .value-screen,
+    .status-card,
+    .legend-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgb(255 255 255 / .96);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, .56fr);
+      gap: 18px;
+      padding: 22px;
+    }
+
+    .eyebrow,
+    .source,
+    .config-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .eyebrow {
+      border: 0;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin: 0; }
+
+    h1 {
+      margin-top: 12px;
+      max-width: 980px;
+      font-size: clamp(32px, 4.2vw, 58px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 17px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.72;
+      font-size: 15px;
+    }
+
+    .hero p {
+      margin-top: 12px;
+      max-width: 940px;
+      font-size: 16px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .decision-stack {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .decision-card,
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .decision-card.hot {
+      border-color: #f0b4ac;
+      background: var(--red-soft);
+    }
+
+    .decision-card strong,
+    .decision-card span { display: block; }
+
+    .decision-card span {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      color: var(--green);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .metric.blue strong { color: var(--blue); }
+    .metric.violet strong { color: var(--violet); }
+    .metric.amber strong { color: var(--amber); }
+
+    .office-shell {
+      padding: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    .section-head p {
+      margin-top: 5px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgb(15 118 110 / .12);
+    }
+
+    .dot.blue { background: var(--blue); box-shadow: 0 0 0 3px rgb(37 99 235 / .12); }
+    .dot.amber { background: var(--amber); box-shadow: 0 0 0 3px rgb(180 83 9 / .12); }
+    .dot.red { background: var(--red); box-shadow: 0 0 0 3px rgb(180 35 24 / .12); }
+
+    .office-stage {
+      display: grid;
+      gap: 14px;
+    }
+
+    .value-screen {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      border: 4px solid var(--pixel);
+      border-radius: 10px;
+      background:
+        linear-gradient(90deg, rgb(255 255 255 / .06) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(180deg, rgb(255 255 255 / .06) 1px, transparent 1px) 0 0 / 24px 24px,
+        var(--screen);
+      color: #dffcf5;
+      box-shadow: inset 0 0 0 7px rgb(255 255 255 / .04), 7px 7px 0 rgb(31 41 55 / .12);
+    }
+
+    .value-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent, rgb(45 212 191 / .08), transparent);
+      animation: screenScan 4s steps(8, end) infinite;
+      pointer-events: none;
+    }
+
+    .value-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .value-head h2 { color: #f8fafc; }
+
+    .value-head p {
+      max-width: 760px;
+      margin-top: 4px;
+      color: #a7f3d0;
+      font-size: 13px;
+    }
+
+    .config-pill {
+      border-color: rgb(167 243 208 / .35);
+      background: rgb(15 118 110 / .24);
+      color: #dffcf5;
+      white-space: nowrap;
+    }
+
+    .value-metrics {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .value-tile {
+      min-width: 0;
+      border: 4px solid #cbd5e1;
+      background: #f8fafc;
+      color: var(--ink);
+      padding: 12px;
+      box-shadow: 5px 5px 0 rgb(0 0 0 / .22);
+    }
+
+    .value-tile header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .value-tile header span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .value-tile header code {
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .digit-window {
+      position: relative;
+      height: 34px;
+      overflow: hidden;
+      font: 950 28px/34px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .digit-reel {
+      display: grid;
+      animation: numberRoll 3.6s steps(4, end) infinite;
+    }
+
+    .value-tile.token .digit-window { color: var(--amber); }
+    .value-tile.text .digit-window { color: var(--green); }
+    .value-tile.code .digit-window { color: var(--blue); }
+    .value-tile.doc .digit-window { color: var(--violet); }
+
+    .value-tile footer {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .unified-office-map {
+      position: relative;
+      min-height: 820px;
+      border: 4px solid var(--pixel);
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 49%, rgb(15 118 110 / .07) 0 12%, transparent 12.5%),
+        linear-gradient(90deg, transparent 0 31.5%, rgb(31 41 55 / .075) 31.5% 32%, transparent 32% 66.8%, rgb(31 41 55 / .075) 66.8% 67.3%, transparent 67.3%),
+        linear-gradient(180deg, transparent 0 47.5%, rgb(31 41 55 / .075) 47.5% 48%, transparent 48%),
+        linear-gradient(90deg, rgb(31 41 55 / .05) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(180deg, rgb(31 41 55 / .05) 1px, transparent 1px) 0 0 / 24px 24px,
+        #f8fafc;
+      box-shadow: inset 0 0 0 7px rgb(255 255 255 / .5), 7px 7px 0 rgb(31 41 55 / .1);
+      image-rendering: pixelated;
+    }
+
+    .map-head {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 16px;
+      z-index: 9;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      border: 1px solid rgb(31 41 55 / .18);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgb(255 255 255 / .84);
+      box-shadow: 0 10px 26px rgb(31 41 55 / .06);
+    }
+
+    .map-head span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .map-head code {
+      border: 1px solid rgb(31 41 55 / .22);
+      border-radius: 10px;
+      padding: 5px 8px;
+      background: #fff;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .floor-hub {
+      position: absolute;
+      left: 33%;
+      right: 33%;
+      top: 412px;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      min-height: 62px;
+      border: 2px solid rgb(31 41 55 / .28);
+      border-radius: 16px;
+      background: rgb(255 255 255 / .88);
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 850;
+      box-shadow: 0 14px 36px rgb(31 41 55 / .08);
+    }
+
+    .floor-hub strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .map-zone {
+      position: absolute;
+      min-width: 0;
+      border: 0;
+      border-radius: 14px;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .map-zone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border: 1px dashed rgb(31 41 55 / .14);
+      border-radius: 18px;
+      background:
+        linear-gradient(90deg, rgb(31 41 55 / .035) 1px, transparent 1px) 0 0 / 22px 22px,
+        linear-gradient(180deg, rgb(31 41 55 / .035) 1px, transparent 1px) 0 0 / 22px 22px,
+        rgb(255 255 255 / .38);
+      box-shadow: inset 0 0 0 5px rgb(255 255 255 / .24);
+    }
+
+    .zone-main { left: 2%; top: 112px; width: 31%; height: 278px; --zone-wash: rgb(240 253 250 / .64); }
+    .zone-boss { left: 34.5%; top: 112px; width: 31%; height: 278px; --zone-wash: rgb(255 248 233 / .64); }
+    .zone-worker { right: 2%; top: 112px; width: 31%; height: 278px; --zone-wash: rgb(238 244 255 / .64); }
+    .zone-gm { left: 2%; bottom: 28px; width: 31%; height: 300px; --zone-wash: rgb(255 241 238 / .64); }
+    .zone-tea { left: 34.5%; bottom: 28px; width: 31%; height: 300px; --zone-wash: rgb(255 248 233 / .64); }
+    .zone-ops { right: 2%; bottom: 28px; width: 31%; height: 300px; --zone-wash: rgb(238 244 255 / .64); }
+
+    .map-zone::before {
+      background:
+        linear-gradient(90deg, rgb(31 41 55 / .035) 1px, transparent 1px) 0 0 / 22px 22px,
+        linear-gradient(180deg, rgb(31 41 55 / .035) 1px, transparent 1px) 0 0 / 22px 22px,
+        var(--zone-wash, rgb(255 255 255 / .42));
+    }
+
+    .zone-title {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid rgb(31 41 55 / .12);
+      border-radius: 12px;
+      margin: 7px 8px 0;
+      padding: 8px 10px;
+      background: rgb(255 255 255 / .76);
+      box-shadow: none;
+    }
+
+    .zone-title span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .zone-link {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border: 2px solid rgb(31 41 55 / .68);
+      padding: 3px 7px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 950;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 3px 3px 0 rgb(31 41 55 / .14);
+    }
+
+    .zone-main .zone-link { color: var(--green); }
+    .zone-boss .zone-link,
+    .zone-tea .zone-link { color: var(--amber); }
+    .zone-worker .zone-link,
+    .zone-ops .zone-link { color: var(--blue); }
+    .zone-gm .zone-link { color: var(--red); }
+
+    .zone-screen {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 58px;
+      z-index: 2;
+      height: 28px;
+      border: 3px solid var(--pixel);
+      background: var(--screen);
+      overflow: hidden;
+    }
+
+    .zone-screen span {
+      position: absolute;
+      left: -125%;
+      top: 6px;
+      color: #9ff9e8;
+      white-space: nowrap;
+      font: 850 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      animation: streamLine 8.5s linear infinite;
+    }
+
+    .zone-boss .zone-screen span { color: #fde68a; animation-duration: 9.5s; }
+    .zone-worker .zone-screen span { color: #bfdbfe; animation-duration: 7.5s; }
+    .zone-gm .zone-screen span { color: #fecaca; }
+    .zone-tea .zone-screen span { color: #fde68a; }
+    .zone-ops .zone-screen span { color: #bfdbfe; }
+
+    .desk,
+    .prop {
+      position: absolute;
+      z-index: 2;
+      border: 4px solid var(--pixel);
+      box-shadow: 5px 5px 0 rgb(31 41 55 / .13);
+    }
+
+    .desk {
+      left: calc(50% - 76px);
+      top: 150px;
+      width: 152px;
+      height: 82px;
+      background: var(--desk);
+      box-shadow: inset 0 -16px 0 var(--desk-dark), 5px 5px 0 rgb(31 41 55 / .13);
+    }
+
+    .monitor {
+      position: absolute;
+      left: 32px;
+      top: -48px;
+      width: 88px;
+      height: 54px;
+      border: 5px solid var(--pixel);
+      background: var(--screen);
+    }
+
+    .monitor::before,
+    .monitor::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      height: 5px;
+      background: #2dd4bf;
+      animation: monitorValue 1.3s steps(5, end) infinite;
+    }
+
+    .monitor::before { top: 13px; width: 58px; }
+    .monitor::after { top: 30px; width: 36px; background: #93c5fd; animation-delay: .35s; }
+
+    .prop.board {
+      left: 20px;
+      top: 112px;
+      width: 74px;
+      height: 48px;
+      background: #fff;
+    }
+
+    .prop.board::before,
+    .prop.board::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      height: 5px;
+      background: currentColor;
+      opacity: .8;
+      animation: boardPulse 2s steps(3, end) infinite;
+    }
+
+    .prop.board::before { top: 12px; width: 38px; }
+    .prop.board::after { top: 28px; width: 52px; animation-delay: .5s; }
+
+    .zone-main .board { color: var(--green); }
+    .zone-boss .board,
+    .zone-tea .board { color: var(--amber); }
+    .zone-worker .board,
+    .zone-ops .board { color: var(--blue); }
+    .zone-gm .board { color: var(--red); }
+
+    .prop.files {
+      right: 20px;
+      top: 106px;
+      width: 54px;
+      height: 92px;
+      background:
+        linear-gradient(180deg, #fff 0 24%, #dbeafe 24% 48%, #fff 48% 72%, #dcfce7 72%);
+    }
+
+    .approval-desk {
+      left: calc(50% - 88px);
+      top: 142px;
+      width: 176px;
+      height: 92px;
+      background: #a85a4f;
+      box-shadow: inset 0 -18px 0 #7f3c35, 5px 5px 0 rgb(31 41 55 / .13);
+    }
+
+    .approval-desk::before {
+      content: "APPROVE";
+      position: absolute;
+      left: 20px;
+      top: -42px;
+      border: 4px solid var(--pixel);
+      padding: 6px 8px;
+      background: #fff;
+      color: var(--red);
+      font: 950 12px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .tea-counter {
+      left: calc(50% - 92px);
+      top: 142px;
+      width: 184px;
+      height: 86px;
+      background: #d4a373;
+      box-shadow: inset 0 -16px 0 #b27a4a, 5px 5px 0 rgb(31 41 55 / .13);
+    }
+
+    .tea-counter::before,
+    .tea-counter::after {
+      content: "";
+      position: absolute;
+      top: -28px;
+      width: 30px;
+      height: 24px;
+      border: 4px solid var(--pixel);
+      background: #fff;
+    }
+
+    .tea-counter::before { left: 42px; }
+    .tea-counter::after { right: 42px; }
+
+    .ops-console {
+      left: calc(50% - 100px);
+      top: 136px;
+      width: 200px;
+      height: 104px;
+      background: #475569;
+      box-shadow: inset 0 -18px 0 #334155, 5px 5px 0 rgb(31 41 55 / .13);
+    }
+
+    .ops-console::before,
+    .ops-console::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      height: 7px;
+      background: #93c5fd;
+      animation: monitorValue 1.4s steps(5, end) infinite;
+    }
+
+    .ops-console::before { top: 22px; width: 72px; }
+    .ops-console::after { top: 48px; width: 124px; background: #2dd4bf; animation-delay: .35s; }
+
+    .zone-caption {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 4;
+      border: 1px solid rgb(31 41 55 / .28);
+      border-radius: 10px;
+      padding: 7px 8px;
+      background: rgb(255 255 255 / .86);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 950;
+      box-shadow: 0 8px 20px rgb(31 41 55 / .06);
+    }
+
+    .zone-caption span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .map-route {
+      position: absolute;
+      z-index: 1;
+      border: 5px dashed rgb(31 41 55 / .22);
+      pointer-events: none;
+    }
+
+    .route-top { left: 16%; right: 16%; top: 248px; height: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+    .route-bottom { left: 16%; right: 16%; bottom: 172px; height: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+    .route-main-gm { left: 17%; top: 322px; height: 270px; border-top: 0; border-right: 0; border-bottom: 0; }
+    .route-boss-tea { left: 50%; top: 322px; height: 270px; border-top: 0; border-right: 0; border-bottom: 0; }
+    .route-worker-ops { right: 17%; top: 322px; height: 270px; border-top: 0; border-left: 0; border-bottom: 0; }
+
+    .map-bot {
+      --bot: var(--green);
+      position: absolute;
+      left: 16%;
+      top: 256px;
+      z-index: 8;
+      width: 46px;
+      height: 76px;
+      transform: translate(-50%, -50%);
+      image-rendering: pixelated;
+      animation: mainMapRoute 12s steps(12, end) infinite;
+    }
+
+    .map-bot.boss {
+      --bot: var(--amber);
+      animation-name: bossMapRoute;
+      animation-delay: -2.4s;
+    }
+
+    .map-bot.worker {
+      --bot: var(--blue);
+      animation-name: workerMapRoute;
+      animation-delay: -4.8s;
+    }
+
+    .map-bot::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      width: 30px;
+      height: 24px;
+      border: 4px solid var(--pixel);
+      background: #f8fafc;
+      box-shadow:
+        8px 10px 0 -5px var(--pixel),
+        19px 10px 0 -5px var(--pixel);
+    }
+
+    .map-bot::after {
+      content: attr(data-id);
+      position: absolute;
+      left: 4px;
+      top: 24px;
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 4px solid var(--pixel);
+      background: var(--bot);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 950;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      box-shadow: inset 0 9px 0 rgb(255 255 255 / .18);
+    }
+
+    .map-bot .leg {
+      position: absolute;
+      bottom: 0;
+      width: 12px;
+      height: 18px;
+      background: var(--pixel);
+    }
+
+    .map-bot .leg.left { left: 10px; animation: walkLegA .5s steps(2, end) infinite; }
+    .map-bot .leg.right { right: 10px; animation: walkLegB .5s steps(2, end) infinite; }
+
+    .map-bot .signal {
+      position: absolute;
+      left: 14px;
+      top: -18px;
+      width: 18px;
+      height: 10px;
+      border: 3px solid var(--pixel);
+      background: #2dd4bf;
+      animation: signalBlink .8s steps(2, end) infinite;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .status-card {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+      padding: 14px;
+    }
+
+    .status-card.green { border-color: #9fdacb; background: linear-gradient(180deg, #f0fdfa, #fff); }
+    .status-card.amber { border-color: #f3cb7d; background: linear-gradient(180deg, #fff8e7, #fff); }
+    .status-card.blue { border-color: #aac3ff; background: linear-gradient(180deg, #eef4ff, #fff); }
+
+    .status-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .status-top strong { display: block; font-size: 17px; }
+    .status-top span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .status-card p {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr .72fr;
+      gap: 14px;
+    }
+
+    .legend-card {
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .mapping {
+      display: grid;
+      gap: 9px;
+    }
+
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 130px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .mapping-row strong { font-size: 13px; }
+    .mapping-row span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .score-table th,
+    .score-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    .score-table th { color: var(--muted); font-size: 12px; }
+
+    @keyframes numberRoll {
+      0%, 20% { transform: translateY(0); }
+      25%, 45% { transform: translateY(-34px); }
+      50%, 70% { transform: translateY(-68px); }
+      75%, 95% { transform: translateY(-102px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes screenScan {
+      from { transform: translateY(-70%); }
+      to { transform: translateY(70%); }
+    }
+
+    @keyframes monitorValue {
+      0% { width: 18px; opacity: .5; }
+      50% { width: 68px; opacity: 1; }
+      100% { width: 42px; opacity: .8; }
+    }
+
+    @keyframes boardPulse {
+      0%, 100% { opacity: .35; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes streamLine {
+      from { left: -125%; }
+      to { left: 108%; }
+    }
+
+    @keyframes signalBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .25; }
+    }
+
+    @keyframes mainMapRoute {
+      0%, 12% { left: 16%; top: 256px; }
+      22%, 32% { left: 50%; top: 256px; }
+      42%, 52% { left: 50%; top: 616px; }
+      62%, 72% { left: 16%; top: 616px; }
+      84%, 100% { left: 16%; top: 256px; }
+    }
+
+    @keyframes bossMapRoute {
+      0%, 14% { left: 50%; top: 256px; }
+      25%, 38% { left: 84%; top: 256px; }
+      48%, 60% { left: 16%; top: 616px; }
+      70%, 84% { left: 50%; top: 616px; }
+      100% { left: 50%; top: 256px; }
+    }
+
+    @keyframes workerMapRoute {
+      0%, 16% { left: 84%; top: 256px; }
+      26%, 38% { left: 50%; top: 256px; }
+      48%, 60% { left: 16%; top: 256px; }
+      70%, 82% { left: 84%; top: 616px; }
+      100% { left: 84%; top: 256px; }
+    }
+
+    @keyframes walkLegA {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(5px); }
+    }
+
+    @keyframes walkLegB {
+      0%, 100% { transform: translateY(5px); }
+      50% { transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width: 1160px) {
+      .hero,
+      .legend-grid { grid-template-columns: 1fr; }
+
+      .unified-office-map {
+        min-height: 990px;
+      }
+
+      .map-head {
+        flex-direction: column;
+      }
+
+      .map-zone {
+        width: calc(50% - 34px) !important;
+        height: 250px;
+      }
+
+      .zone-main { left: 22px !important; right: auto !important; top: 128px; bottom: auto; }
+      .zone-boss { left: auto !important; right: 22px !important; top: 128px; bottom: auto; }
+      .zone-worker { left: 22px !important; right: auto !important; top: 398px; bottom: auto; }
+      .zone-gm { left: auto !important; right: 22px !important; top: 398px; bottom: auto; }
+      .zone-tea { left: 22px !important; right: auto !important; top: 668px; bottom: auto; }
+      .zone-ops { left: auto !important; right: 22px !important; top: 668px; bottom: auto; }
+
+      .map-route {
+        border-color: rgb(31 41 55 / .18);
+      }
+
+      .route-top { left: 25% !important; right: 25% !important; top: 252px !important; }
+      .route-bottom { left: 25% !important; right: 25% !important; bottom: 178px !important; }
+      .route-main-gm {
+        left: 50% !important;
+        top: 252px !important;
+        height: 558px !important;
+        border-top: 0;
+        border-right: 0;
+        border-bottom: 0;
+      }
+
+      .route-boss-tea,
+      .route-worker-ops { display: none; }
+
+      .floor-hub {
+        left: 28%;
+        right: 28%;
+        top: 384px;
+        min-height: 44px;
+      }
+
+      .map-bot {
+        animation-name: mainMapRouteTablet;
+      }
+
+      .map-bot.boss { animation-name: bossMapRouteTablet; }
+      .map-bot.worker { animation-name: workerMapRouteTablet; }
+
+      .status-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 820px) {
+      .value-metrics,
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-head,
+      .value-head {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page { padding: 12px; }
+      h1 { font-size: 30px; }
+
+      .hero,
+      .office-shell,
+      .legend-card,
+      .value-screen {
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .value-metrics,
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .unified-office-map {
+        min-height: 1840px;
+      }
+
+      .map-zone {
+        left: 22px !important;
+        right: 22px !important;
+        width: auto !important;
+        height: 256px;
+      }
+
+      .zone-main { top: 154px; }
+      .zone-boss { top: 426px; }
+      .zone-worker { top: 698px; }
+      .zone-gm { top: 970px; }
+      .zone-tea { top: 1242px; }
+      .zone-ops { top: 1514px; }
+
+      .desk,
+      .approval-desk,
+      .tea-counter,
+      .ops-console {
+        left: calc(50% - 72px);
+        width: 144px;
+      }
+
+      .monitor {
+        left: 20px;
+      }
+
+      .prop.board { left: 16px; width: 66px; }
+      .prop.files { right: 16px; width: 46px; }
+      .map-route {
+        left: 50% !important;
+        right: auto !important;
+        top: 240px !important;
+        bottom: 160px !important;
+        height: auto !important;
+        border-top: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 5px dashed rgb(31 41 55 / .22);
+      }
+
+      .route-bottom,
+      .route-main-gm,
+      .route-boss-tea,
+      .route-worker-ops { display: none; }
+
+      .floor-hub { display: none; }
+
+      .map-bot {
+        width: 42px;
+        height: 70px;
+        animation-name: mainMapRouteMobile;
+      }
+
+      .map-bot.boss { animation-name: bossMapRouteMobile; }
+      .map-bot.worker { animation-name: workerMapRouteMobile; }
+
+      .mapping-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @keyframes mainMapRouteTablet {
+      0%, 12% { left: 25%; top: 255px; }
+      22%, 34% { left: 75%; top: 255px; }
+      44%, 56% { left: 75%; top: 525px; }
+      66%, 78% { left: 75%; top: 795px; }
+      88%, 100% { left: 25%; top: 255px; }
+    }
+
+    @keyframes bossMapRouteTablet {
+      0%, 12% { left: 75%; top: 255px; }
+      22%, 34% { left: 25%; top: 525px; }
+      44%, 56% { left: 75%; top: 525px; }
+      66%, 78% { left: 25%; top: 795px; }
+      88%, 100% { left: 75%; top: 255px; }
+    }
+
+    @keyframes workerMapRouteTablet {
+      0%, 12% { left: 25%; top: 525px; }
+      22%, 34% { left: 25%; top: 255px; }
+      44%, 56% { left: 75%; top: 795px; }
+      66%, 78% { left: 25%; top: 795px; }
+      88%, 100% { left: 25%; top: 525px; }
+    }
+
+    @keyframes mainMapRouteMobile {
+      0%, 10% { left: 50%; top: 242px; }
+      20%, 30% { left: 50%; top: 500px; }
+      40%, 50% { left: 50%; top: 1016px; }
+      60%, 72% { left: 50%; top: 1532px; }
+      84%, 100% { left: 50%; top: 242px; }
+    }
+
+    @keyframes bossMapRouteMobile {
+      0%, 12% { left: 50%; top: 500px; }
+      24%, 36% { left: 50%; top: 758px; }
+      48%, 60% { left: 50%; top: 1016px; }
+      72%, 84% { left: 50%; top: 1274px; }
+      100% { left: 50%; top: 500px; }
+    }
+
+    @keyframes workerMapRouteMobile {
+      0%, 12% { left: 50%; top: 758px; }
+      24%, 36% { left: 50%; top: 500px; }
+      48%, 60% { left: 50%; top: 242px; }
+      72%, 84% { left: 50%; top: 1532px; }
+      100% { left: 50%; top: 758px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .hero,
+      .office-shell,
+      .status-card,
+      .legend-card,
+      .value-screen {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main class="shell">
+      <section class="hero" aria-label="原型结论">
+        <div>
+          <span class="eyebrow">Pixel Agent Office · prototype sample</span>
+          <h1>统一开放办公室：代理在功能区之间按需移动</h1>
+          <p>这一版把三代理工位、总经理办公室、茶歇区、系统运维放进同一个开放楼层。区域只表达任务目的地，不再像六个割裂页面；Main、Boss、Worker 机器人按任务流、人工确认、待命和故障诊断需要，在办公室里移动。</p>
+          <div class="hero-actions">
+            <a href="#office"><button class="primary" type="button">查看统一办公室</button></a>
+            <a href="#meaning"><button type="button">查看状态语义</button></a>
+            <a href="#score"><button type="button">查看落地评分</button></a>
+          </div>
+        </div>
+        <aside class="decision-stack">
+          <div class="decision-card hot">
+            <strong>这版修正的核心</strong>
+            <span>所有区域共处一个开放楼层，不再拆成硬隔间。机器人移动路径跨越全办公室，能表达工作协作、人工确认、待命和故障诊断的真实去向。</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric"><strong>6</strong><span>同一开放楼层的功能区</span></div>
+            <div class="metric blue"><strong>3</strong><span>跨区移动机器人</span></div>
+            <div class="metric violet"><strong>4</strong><span>可配置价值指标</span></div>
+            <div class="metric amber"><strong>1</strong><span>统一状态地图</span></div>
+          </div>
+          <div class="decision-card">
+            <strong>正式落地边界</strong>
+            <span>动画仍只表达真实状态。正式产品必须由 `automationTrust`、任务状态和审批/Gateway 事件决定机器人进入哪个功能区。</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="office-shell" id="office" aria-label="统一代理办公室">
+        <div class="section-head">
+          <div>
+            <h2>代理办公室运行层</h2>
+            <p>上方保留价值输出屏；下方是一个统一大办公室，包含三代理工位、总经理办公室、茶歇区和系统运维六个功能区。</p>
+          </div>
+          <span class="source"><span class="dot"></span>source: prototype sample · offline HTML</span>
+        </div>
+
+        <div class="office-stage">
+          <section class="value-screen" aria-label="全局价值输出屏">
+            <div class="value-head">
+              <div>
+                <h2>价值输出屏</h2>
+                <p>置顶展示自动化经营价值。正式实现中由后台配置 `valueMetrics[]`，可替换为 Token、文档、代码、任务、收入线索、风险减少等指标。</p>
+              </div>
+              <span class="config-pill">backend configurable · valueMetrics[]</span>
+            </div>
+            <div class="value-metrics">
+              <article class="value-tile token" data-config-key="token_cost">
+                <header><span>Token 消耗</span><code>token_cost</code></header>
+                <div class="digit-window"><div class="digit-reel"><span>-1.2k</span><span>-1.4k</span><span>-1.1k</span><span>-1.6k</span></div></div>
+                <footer>成本侧指标，用于 ROI 判断</footer>
+              </article>
+              <article class="value-tile text" data-config-key="words_output">
+                <header><span>产出文字</span><code>words_output</code></header>
+                <div class="digit-window"><div class="digit-reel"><span>+2.4k</span><span>+2.9k</span><span>+3.2k</span><span>+3.8k</span></div></div>
+                <footer>日报、摘要、分析、回复草稿</footer>
+              </article>
+              <article class="value-tile code" data-config-key="code_lines">
+                <header><span>代码产出</span><code>code_lines</code></header>
+                <div class="digit-window"><div class="digit-reel"><span>+186</span><span>+214</span><span>+238</span><span>+271</span></div></div>
+                <footer>可审查的 patch 与验证记录</footer>
+              </article>
+              <article class="value-tile doc" data-config-key="docs_done">
+                <header><span>文档交付</span><code>docs_done</code></header>
+                <div class="digit-window"><div class="digit-reel"><span>+3</span><span>+4</span><span>+5</span><span>+6</span></div></div>
+                <footer>PLAN / RESULT / 侧边预览</footer>
+              </article>
+            </div>
+          </section>
+
+          <section class="unified-office-map" aria-label="统一大办公室地图">
+            <div class="map-head">
+              <div>
+                <h2>统一大办公室地图</h2>
+                <span>所有功能区在同一个开放楼层内。机器人不是切换页面，而是在办公室里按需移动。</span>
+              </div>
+              <code>Main / Boss / Worker / GM / Tea / Ops</code>
+            </div>
+
+            <span class="map-route route-top"></span>
+            <span class="map-route route-bottom"></span>
+            <span class="map-route route-main-gm"></span>
+            <span class="map-route route-boss-tea"></span>
+            <span class="map-route route-worker-ops"></span>
+            <div class="floor-hub" aria-label="开放办公室共享动线">
+              <strong>开放动线</strong>
+              机器人按真实状态在工位、审批、待命、恢复之间移动
+            </div>
+
+            <article class="map-zone zone-main" aria-label="Main 工位">
+              <div class="zone-title"><div><h3>OpenClaw Main</h3><span>系统运维 · 调度 · 审计 · Codex 调用</span></div><a class="zone-link" href="#office">Main 工位</a></div>
+              <div class="zone-screen"><span>health check → route task → audit permission → sync status → </span></div>
+              <span class="prop board"></span>
+              <span class="prop files"></span>
+              <div class="desk"><span class="monitor"></span></div>
+              <div class="zone-caption">Main 工位：处理调度和审计<span>机器人可去 Boss/Worker 协作，也可去系统运维恢复。</span></div>
+            </article>
+
+            <article class="map-zone zone-boss" aria-label="Boss 工位">
+              <div class="zone-title"><div><h3>Boss</h3><span>战略判断 · 方案评审 · 价值审计</span></div><a class="zone-link" href="#office">Boss 工位</a></div>
+              <div class="zone-screen"><span>review plan → compare options → score value → approve boundary → </span></div>
+              <span class="prop board"></span>
+              <span class="prop files"></span>
+              <div class="desk"><span class="monitor"></span></div>
+              <div class="zone-caption">Boss 工位：评审方案和风险<span>需要人工确认时进入总经理办公室接审批台。</span></div>
+            </article>
+
+            <article class="map-zone zone-worker" aria-label="Worker 工位">
+              <div class="zone-title"><div><h3>Worker</h3><span>任务执行 · 代码/文档 · 结果交付</span></div><a class="zone-link" href="#office">Worker 工位</a></div>
+              <div class="zone-screen"><span>read PLAN → edit files → run check → write RESULT → </span></div>
+              <span class="prop board"></span>
+              <span class="prop files"></span>
+              <div class="desk"><span class="monitor"></span></div>
+              <div class="zone-caption">Worker 工位：交付代码和文档<span>需要评审时去 Boss，需要调度时回 Main。</span></div>
+            </article>
+
+            <article class="map-zone zone-gm" id="approval-desk" aria-label="总经理办公室">
+              <div class="zone-title"><div><h3>总经理办公室</h3><span>需要审批 · 高风险动作 · 人工停机点</span></div><a class="zone-link" href="#approval-desk">接审批台</a></div>
+              <div class="zone-screen"><span>approval required → explain risk → wait decision → </span></div>
+              <span class="prop board"></span>
+              <span class="approval-desk prop"></span>
+              <div class="zone-caption">总经理办公室：人工确认和风险复核<span>预算、删除、配置变更、外部影响动作必须审批。</span></div>
+            </article>
+
+            <article class="map-zone zone-tea" id="dev-console" aria-label="茶歇区">
+              <div class="zone-title"><div><h3>茶歇区</h3><span>在线待机 · 无自动化运行 · 等新任务</span></div><a class="zone-link" href="#dev-console">接开发台</a></div>
+              <div class="zone-screen"><span>standby → ready for input → context prepared → </span></div>
+              <span class="prop board"></span>
+              <span class="tea-counter prop"></span>
+              <div class="zone-caption">茶歇区：在线待命和上下文准备<span>接新任务、上下文准备、可用能力和开发台入口。</span></div>
+            </article>
+
+            <article class="map-zone zone-ops" id="system-settings" aria-label="系统运维">
+              <div class="zone-title"><div><h3>系统运维</h3><span>故障中断 · Gateway 异常 · 配置恢复</span></div><a class="zone-link" href="#system-settings">接系统设置</a></div>
+              <div class="zone-screen"><span>diagnose gateway → retry → recover config → </span></div>
+              <span class="prop board"></span>
+              <span class="ops-console prop"></span>
+              <div class="zone-caption">系统运维：故障诊断和恢复处理<span>接系统设置、Gateway 状态、重试/恢复/诊断。</span></div>
+            </article>
+
+            <div class="map-bot main" data-id="M" aria-label="Main 机器人在统一大办公室的功能区之间按需移动"><span class="leg left"></span><span class="leg right"></span><span class="signal"></span></div>
+            <div class="map-bot boss" data-id="B" aria-label="Boss 机器人在统一大办公室的功能区之间按需移动"><span class="leg left"></span><span class="leg right"></span><span class="signal"></span></div>
+            <div class="map-bot worker" data-id="W" aria-label="Worker 机器人在统一大办公室的功能区之间按需移动"><span class="leg left"></span><span class="leg right"></span><span class="signal"></span></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="status-grid" aria-label="状态去向卡">
+        <article class="status-card green">
+          <div class="status-top">
+            <div><strong>工作协作 · 在三代理工位之间移动</strong><span>Main 调度、Boss 评审、Worker 交付</span></div>
+            <span class="pill"><span class="dot"></span>working</span>
+          </div>
+          <p>正常自动化时机器人在 Main/Boss/Worker 工位之间移动，表达任务流转和协作。</p>
+        </article>
+        <article class="status-card amber">
+          <div class="status-top">
+            <div><strong>待机/审批 · 去茶歇区或总经理办公室</strong><span>等待新任务或等待人工确认</span></div>
+            <span class="pill"><span class="dot amber"></span>standby / approval</span>
+          </div>
+          <p>待机进入茶歇区接开发台；审批进入总经理办公室接审批台，二者都不显示产出增长。</p>
+        </article>
+        <article class="status-card blue">
+          <div class="status-top">
+            <div><strong>故障中断 · 去系统运维</strong><span>Gateway 超时、配置异常、任务 stale、运行阻塞</span></div>
+            <span class="pill"><span class="dot blue"></span>repair</span>
+          </div>
+          <p>故障态进入系统运维，重点展示诊断、恢复、重试和系统设置入口。</p>
+        </article>
+      </section>
+
+      <section class="legend-grid" id="meaning">
+        <div class="legend-card">
+          <div class="section-head">
+            <div>
+              <h2>状态与地图语义</h2>
+              <p>正式落地时仍然使用真实事件决定机器人路线，原型只定义视觉语言。</p>
+            </div>
+          </div>
+          <div class="mapping">
+            <div class="mapping-row"><strong>unified map</strong><span>代理工位、总经理办公室、茶歇区、系统运维都在同一个开放办公室，不再上下拆分。</span></div>
+            <div class="mapping-row"><strong>work route</strong><span>自动化工作中，机器人在 Main、Boss、Worker 三个工位之间移动，表示调度、评审、交付。</span></div>
+            <div class="mapping-row"><strong>approval route</strong><span>需要审批时进入总经理办公室，接审批台；审批期间禁止产出动画。</span></div>
+            <div class="mapping-row"><strong>standby route</strong><span>待机时进入茶歇区，接开发台；表示在线可用但无自动化运行。</span></div>
+            <div class="mapping-row"><strong>repair route</strong><span>故障或中断时进入系统运维，接系统设置；显示诊断、恢复和 Gateway 状态。</span></div>
+            <div class="mapping-row"><strong>valueMetrics[]</strong><span>后台配置价值指标：名称、key、单位、方向、时间窗口、数据来源、证据链接。</span></div>
+          </div>
+        </div>
+        <aside class="legend-card" id="score">
+          <h2>落地评分</h2>
+          <table class="score-table">
+            <thead><tr><th>维度</th><th>判断</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>空间语义</td><td><strong>更完整</strong></td><td>六个功能区在同一开放办公室，符合“机器人在办公室内移动”的直觉。</td></tr>
+              <tr><td>状态真实性</td><td><strong>更清晰</strong></td><td>工作、审批、待机、故障都有不同目的地，不混作工作态。</td></tr>
+              <tr><td>可接产品入口</td><td><strong>明确</strong></td><td>总经理办公室接审批台，茶歇区接开发台，系统运维接系统设置。</td></tr>
+              <tr><td>正式落地建议</td><td><strong>采用此结构继续细化</strong></td><td>下一步再接真实 WorkItem、approval、Gateway、valueMetrics 数据。</td></tr>
+            </tbody>
+          </table>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

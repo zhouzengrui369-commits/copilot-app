@@ -1,0 +1,57 @@
+{
+  "name": "@copilot/llm-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LLM client wrapper for MiniMax-M3 (OpenAI-compatible) with retry, token limiting, streaming and provider factory for future OpenAI/Claude support.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./errors": {
+      "types": "./dist/util/errors.d.ts",
+      "import": "./dist/util/errors.js"
+    },
+    "./providers/minimax": {
+      "types": "./dist/providers/minimax.d.ts",
+      "import": "./dist/providers/minimax.js"
+    },
+    "./providers/types": {
+      "types": "./dist/providers/types.d.ts",
+      "import": "./dist/providers/types.js"
+    }
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:global": "vitest run --coverage --config vitest.config.ts",
+    "test:coverage:critical": "vitest run --coverage --config vitest.critical.config.ts",
+    "test:integration": "vitest run tests/integration",
+    "test:retry": "vitest run tests/retry.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "keywords": [
+    "llm",
+    "openai-compatible",
+    "minimax",
+    "retry",
+    "streaming",
+    "sse"
+  ],
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "playwright": "^1.61.1",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.8"
+  }
+}

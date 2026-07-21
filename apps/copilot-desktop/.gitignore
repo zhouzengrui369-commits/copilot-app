@@ -1,0 +1,13 @@
+# Dev cert (never commit) - T-1.5.1
+build/dev-cert.pfx
+build/dev-cert.key
+build/dev-cert.crt
+*.pfx
+*.key
+
+# Real env values (placeholder in .env.example)
+.env
+.env.local
+
+# electron-builder output
+release/

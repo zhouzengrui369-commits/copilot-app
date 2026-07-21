@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw Workbench 项目全景 · Vibe Coding 入门指南</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #111733;
+    --panel: #161d3d;
+    --panel-2: #1c2554;
+    --line: #2a3470;
+    --text: #e8ecf8;
+    --text-dim: #9aa6cf;
+    --accent: #6ea8ff;
+    --accent-2: #82e6c8;
+    --warn: #ffb86b;
+    --danger: #ff7a90;
+    --ok: #7be0a3;
+    --code-bg: #0a0f24;
+    --code-text: #d5e1ff;
+    --tag-bg: #243068;
+    --tag-text: #b8c5ee;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #1a2350 0%, #2a1d5a 100%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 40px 36px;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 380px; height: 380px;
+    background: radial-gradient(circle, rgba(110,168,255,0.25), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(110,168,255,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(110,168,255,0.35);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    margin: 0 0 12px;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  .hero .sub {
+    color: var(--text-dim);
+    font-size: 16px;
+    margin: 0 0 20px;
+    max-width: 720px;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .meta {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  /* TOC */
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  .toc h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-2);
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 20px;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc li { margin-bottom: 6px; break-inside: avoid; }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    transition: all .15s;
+  }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* SECTIONS */
+  section {
+    margin-bottom: 56px;
+  }
+  h2 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2 .num {
+    background: var(--accent);
+    color: #0b1020;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-size: 19px;
+    margin: 28px 0 10px;
+    color: var(--accent-2);
+  }
+  h4 {
+    font-size: 15px;
+    margin: 20px 0 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  p { margin: 8px 0 14px; }
+  .lead {
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* CARDS / PANELS */
+  .grid {
+    display: grid;
+    gap: 16px;
+  }
+  .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card.accent { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(110,168,255,0.15); }
+  .card-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .card h4 {
+    margin: 0 0 10px;
+    color: var(--text);
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .card p { font-size: 14px; color: var(--text-dim); margin: 6px 0; }
+
+  /* CALLOUTS */
+  .callout {
+    background: rgba(110,168,255,0.08);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  .callout.warn { background: rgba(255,184,107,0.08); border-left-color: var(--warn); }
+  .callout.danger { background: rgba(255,122,144,0.08); border-left-color: var(--danger); }
+  .callout.ok { background: rgba(123,224,163,0.08); border-left-color: var(--ok); }
+  .callout strong { color: var(--text); }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    background: var(--panel);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    font-size: 14px;
+  }
+  th {
+    background: var(--panel-2);
+    color: var(--accent-2);
+    text-align: left;
+    padding: 12px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+    vertical-align: top;
+  }
+  tr:first-child td { border-top: none; }
+  td code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+  th code, td code { font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  /* CODE */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    margin: 12px 0 18px;
+  }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .inline-code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  /* TAGS */
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 0 2px;
+  }
+  .tag.ok { background: rgba(123,224,163,0.18); color: var(--ok); }
+  .tag.warn { background: rgba(255,184,107,0.18); color: var(--warn); }
+  .tag.danger { background: rgba(255,122,144,0.18); color: var(--danger); }
+  .tag.accent { background: rgba(110,168,255,0.18); color: var(--accent); }
+
+  /* LISTS */
+  ul, ol { padding-left: 22px; }
+  ul li, ol li { margin-bottom: 6px; }
+
+  /* ASCII DIAGRAM */
+  .ascii {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--code-text);
+    white-space: pre;
+    overflow-x: auto;
+    margin: 14px 0 20px;
+  }
+
+  /* CHECKLIST */
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+  .checklist li {
+    padding: 8px 12px 8px 36px;
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .checklist li::before {
+    content: "□";
+    position: absolute;
+    left: 12px;
+    top: 8px;
+    color: var(--accent);
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 24px 16px 64px; }
+    .hero { padding: 28px 22px; }
+    .hero h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    .toc ol { columns: 1; }
+    pre { font-size: 12px; }
+    .ascii { font-size: 11px; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<header class="hero">
+  <span class="hero-tag">📘 VIBE CODING 入门 · 给非程序员的深度解读</span>
+  <h1>OpenClaw Workbench 项目全景 <span style="font-size:18px; color:var(--accent-2); font-weight:400;">· v1.2</span></h1>
+  <p class="sub">
+    你正在看的这个项目，是一个"用户说一句话，Workbench 把这件事做完整，并在桌面端给出可验收证据"的自主开发智能体工作台。本文用大白话讲清楚：它是怎么搭起来的、数据存在哪里、代码怎么组织、网页/App 端怎么工作——以及你作为非程序员，怎么用 Vibe Coding 跟它协作。
+  </p>
+  <div class="meta-row">
+    <span class="meta"><b>位置</b> /Users/njx/openclaw_data/openclaw_workbench</span>
+    <span class="meta"><b>版本</b> v1.2（2026-06-16）</span>
+    <span class="meta"><b>阶段</b> Sprint 1 ✓ → Sprint 2 进行中</span>
+    <span class="meta"><b>代码量</b> Server 23,117 行 · Web 20,658 行 · 85 张表</span>
+    <span class="meta"><b>目标用户</b> 独立创业者（OPC）</span>
+  </div>
+  <div class="callout ok" style="margin-top: 16px;">
+    <strong>v1.2 相对 v1.1 的增量</strong>：精确行数 / DB 双套（dev vs packaged）/ 三条 calendar_notes 流水线 / Mobile 完整目录结构 / Desktop 真实安装位置 / 4 类高频任务模板更具体 / 术语增补。
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#big-picture">一句话看明白 — 这个项目到底是什么</a></li>
+    <li><a href="#rules">开发铁律（6 条 gate）</a></li>
+    <li><a href="#data">数据存在哪里 — SQLite + 85 张表（dev vs packaged 两套）</a></li>
+    <li><a href="#code">代码组织 — 4 个子应用</a></li>
+    <li><a href="#server">后端 Fastify Server（大脑）</a></li>
+    <li><a href="#web">Web 端 — 你最常用的界面</a></li>
+    <li><a href="#desktop">Desktop 端 — Electron 桌面壳</a></li>
+    <li><a href="#mobile">Mobile 端 — iPhone 配套 App</a></li>
+    <li><a href="#pipeline">一条命令跑起来 — 启动链路</a></li>
+    <li><a href="#vibe">Vibe Coding 怎么用它 — 实战指南</a></li>
+    <li><a href="#safety">安全边界 — 哪些事我不能干</a></li>
+    <li><a href="#glossary">术语速查表</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="big-picture">
+  <h2><span class="num">1</span> 一句话看明白</h2>
+  <p class="lead">
+    OpenClaw Workbench = 你说一句话，Workbench 把这件事做完整，并在桌面端给出可验收的证据。
+  </p>
+
+  <h3>它对标什么</h3>
+  <p>对标 <span class="tag accent">OpenAI Codex CLI</span>，但走更严格的路线：</p>
+  <table>
+    <tr><th>维度</th><th>Codex CLI</th><th>Workbench</th></tr>
+    <tr><td>用户入口</td><td>命令行 sandbox</td><td><b>自然语言一句话</b>（比如"修复笔记生成慢"）</td></tr>
+    <tr><td>运行环境</td><td>云端 sandbox</td><td><b>Mac mini 桌面端真实操作</b>（真打开 Chrome / 真截图）</td></tr>
+    <tr><td>验收方式</td><td>命令行输出</td><td><b>截图证据链 + 人类拍板 ACCEPT / REJECT</b></td></tr>
+    <tr><td>失败恢复</td><td>整段重试</td><td><b>局部 patch + recovery packet（用户决策）</b></td></tr>
+    <tr><td>自我演进</td><td>无</td><td><b>agent 自己反思 → propose 改进 → 用户决策</b></td></tr>
+  </table>
+
+  <h3>产品骨架（一张图看懂）</h3>
+  <div class="ascii">┌─────────────────────────────────────────────────────────────┐
+│ 用户界面层 (web/desktop/mobile 三端统一 → localhost:38888) │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 1. 自然语言目标入口 "Goal 输入框"                      │ │
+│  │    "修复笔记生成慢" → NLU拆解 → 自动建 Goal + 子任务   │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 2. Goal 详情页 (Owner session视图)                    │ │
+│  │    Plan / Result / Timeline / Heartbeat               │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 3. 桌面验收面板 (Workbench 比 Codex 强的地方)         │ │
+│  │    agent 操作桌面 → 截图 → 证据链 → 用户拍板           │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 4. 失败恢复视图  Recovery Packet → 用户决策 → patch    │ │
+│  └──────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ 5. 自我复盘  completion_audit + learning_review       │ │
+│  └──────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+           ↕ HTTP API
+┌─────────────────────────────────────────────────────────────┐
+│ Workbench Server (Fastify @ 38888)                          │
+│ - /api/development/goals/*  (Goal CRUD + Scheduler)        │
+│ - /api/computer-use/*        (桌面控制 + 验收)              │
+│ - /api/agent-workbench/*     (Operator Console v3/v4)      │
+│ - /api/knowledge/*           (笔记生成 v3)                  │
+│ - /api/research/*            (Deep Research)               │
+└─────────────────────────────────────────────────────────────┘
+           ↕
+┌─────────────────────────────────────────────────────────────┐
+│ 三代理 + autonomy + cron                                    │
+│ - main / boss / worker 三个 agent                            │
+│ - autonomy loop (12h 持续跑，126 metrics + 56 screenshots)  │
+│ - mavis cron 调度 (knowledge sync / vault curate / dev)     │
+└─────────────────────────────────────────────────────────────┘</div>
+
+  <h3>它跟其他 AI 产品的关键区别</h3>
+  <div class="callout ok">
+    <strong>不是聊天界面</strong> — Workbench 是 Owner Operator 控制台（你来指挥，agent 执行 + 给证据）。<br>
+    <strong>不做"假装 OK"</strong> — 某个依赖坏了，永远显示 DEGRADED / BLOCKED，不会包装成 Working。<br>
+    <strong>不做"假证据"</strong> — 验收截图必须真实桌面操作，不允许 mock。<br>
+    <strong>不无审计自动决策</strong> — 高风险动作（删数据 / 发版 / 对外发通知）走 approvals 表，等你拍板。
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="rules">
+  <h2><span class="num">2</span> 开发铁律（6 条 gate）</h2>
+  <p class="lead">
+    写在 <code class="inline-code">development-gates.json</code> 里，是所有开发动作必须过的关卡。每一道都不可绕过。
+  </p>
+
+  <table>
+    <tr>
+      <th style="width: 30px;">#</th>
+      <th>Gate 名称</th>
+      <th>类别</th>
+      <th>具体规则</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><span class="tag danger">必过</span> PRD 必须存在</td>
+      <td>产品</td>
+      <td><b>无 PRD 不进入 build。</b>任何功能动工前必须有产品需求文档。</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><span class="tag danger">必过</span> 原型验收必须存在</td>
+      <td>产品</td>
+      <td><b>核心 UI 改动必须先有人工确认原型或截图证据。</b>不能闷头写代码。</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><span class="tag danger">必过</span> 测试证据必须存在</td>
+      <td>工程</td>
+      <td>必须依次跑通：<code>npm run check && npm run build && npm run test:prd && npm run test:e2e</code>。无测试证据不进入 release。</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><span class="tag danger">必过</span> 安全扫描必须通过</td>
+      <td>安全</td>
+      <td><code>npm run security:scan</code> — 外部通知、文件访问、发布动作必须经过安全边界检查。</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><span class="tag danger">必过</span> 正式发布必须审批</td>
+      <td>发布</td>
+      <td><b>人工审批关</b>：gateway 重启、外部通知、生产发布、删受保护文档、付费资源 — 必须你点头。</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><span class="tag danger">必过</span> 禁止 fake OK</td>
+      <td>自治</td>
+      <td>web_search / NAS / MiniMax / gateway 任一不可用时，<b>必须显示 DEGRADED 或 BLOCKED</b>，不允许包装成正常。</td>
+    </tr>
+  </table>
+
+  <h3>对 Vibe Coding 的含义</h3>
+  <ul>
+    <li>你给一句话，agent 会自动去查 PRD、看原型、跑测试、出安全扫描报告。</li>
+    <li>任何一个 gate 没过，它会停下来告诉你为什么，不会假装通过。</li>
+    <li><b>Gate 5（发布审批）永远要你点头</b> — 这是设计上故意的，不让 agent 越权。</li>
+  </ul>
+</section>
+
+<!-- 3 -->
+<section id="data">
+  <h2><span class="num">3</span> 数据存在哪里</h2>
+  <p class="lead">
+    所有数据存一个 SQLite 文件，路径 <code class="inline-code">data/workbench.sqlite</code>（22 MB），用 WAL 模式（写不阻塞读）。
+  </p>
+
+  <h3>关键事实</h3>
+  <ul>
+    <li><b>数据库类型</b>：SQLite（单文件、零运维、内嵌式）</li>
+    <li><b>并发模式</b>：WAL（Write-Ahead Logging）+ busy_timeout 5s</li>
+    <li><b>外键约束</b>：开启</li>
+    <li><b>迁移机制</b>：应用启动时跑 <code class="inline-code">db.ts:migrate()</code>，所有表都是 <code>CREATE TABLE IF NOT EXISTS</code>（幂等）</li>
+    <li><b>备份</b>：每天执行 <code class="inline-code">npm run backup:db</code>（脚本在 <code>scripts/backup-db.mjs</code>）</li>
+  </ul>
+
+  <h3>表结构分 8 大块（85 张表 — 实测）</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="card-title">用户与认证</div>
+      <p><code>users</code> / <code>sessions</code> / <code>audit_logs</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">单用户密码登录 + token 会话 + 全量操作审计。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">任务编排</div>
+      <p><code>tasks</code> / <code>task_dependencies</code> / <code>task_events</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">任务中心：创建 / 依赖 / DAG / 审批式暂停重试终止。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">开发流水线 (核心)</div>
+      <p><code>development_goals</code> / <code>development_subtasks</code> / <code>development_runs</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">Goal → 子任务 → 执行 run → 验收 — 整套自主开发状态机。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">知识库</div>
+      <p><code>knowledge_entries</code> / <code>knowledge_links</code> / <code>knowledge_wiki_*</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">笔记生成 v3 的产物入库和反向链接。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">OPC 业务（主业延伸）</div>
+      <p><code>opc_orders</code> / <code>opc_shipments</code> / <code>opc_kpis</code> / <code>opc_cashflows</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">航材 / 维修订单、发货、KPI、现金流 — 真实业务飞轮数据。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">移动端</div>
+      <p><code>mobile_devices</code> / <code>mobile_pairing_challenges</code> / <code>mobile_voice_notes</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">iPhone 配对、设备注册、语音笔记。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">项目与里程碑</div>
+      <p><code>projects</code> / <code>project_milestones</code> / <code>project_deliverables</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">项目管理、里程碑、可交付物。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">研究 & 报告</div>
+      <p><code>research_jobs</code> / <code>reports</code> / <code>skill_catalog</code></p>
+      <p style="font-size:12px; color: var(--text-dim);">Deep Research 任务、报表、技能目录。</p>
+    </div>
+  </div>
+
+  <h3>一条表结构示例（看一眼就好）</h3>
+  <pre><code>-- 核心表：开发目标（用户输入一句话 → 落地成一行）
+CREATE TABLE development_goals (
+  id              TEXT PRIMARY KEY,        -- UUID
+  title           TEXT NOT NULL,
+  objective       TEXT NOT NULL,
+  success_criteria TEXT NOT NULL,           -- JSON 数组
+  status          TEXT NOT NULL,           -- init / running / done / failed
+  owner_session_id TEXT,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL
+);</code></pre>
+
+<h3>对 Vibe Coding 的含义</h3>
+    <div class="callout">
+      <strong>SQLite = 单文件 = 易备份易迁移。</strong>你想"重置到某个时间点"，直接拷贝 <code>workbench.sqlite</code> 备份即可。所有数据 <b>不出本机</b>，符合"前端不直接访问 <code>~/.openclaw/</code>"的安全边界。
+    </div>
+  </section>
+
+  <!-- 3.5 NEW: dev vs packaged + 三条流水线 -->
+  <section id="data-flow">
+    <h2><span class="num">3A</span> 数据库有两套 · 三条流水线同时在写</h2>
+    <p class="lead">
+      这是非程序员最容易踩坑的地方。Workbench 的数据库不是"一份"——<b>dev 模式和 packaged 模式各有一份</b>，<b>绝对不能混</b>。
+    </p>
+
+    <h3>dev vs packaged · 两套 DB</h3>
+    <table>
+      <tr><th>模式</th><th>DB 路径</th><th>谁在用</th><th>改源码生效方式</th></tr>
+      <tr>
+        <td><span class="tag accent">dev</span></td>
+        <td><code>/Users/njx/openclaw_data/openclaw_workbench/data/workbench.sqlite</code></td>
+        <td>开发期（npm run dev:server / dev:all）</td>
+        <td>改 <code>apps/server/src/*.ts</code> → <code>npm run build</code> → 重启 server</td>
+      </tr>
+      <tr>
+        <td><span class="tag warn">packaged</span></td>
+        <td><code>/Users/njx/openclaw_data/copilot/data/workbench.sqlite</code></td>
+        <td>桌面 app（<code>~/Applications/njx-copilot.app</code>）</td>
+        <td>改源码 → 推 dist → 等下次重启桌面 app 加载</td>
+      </tr>
+    </table>
+    <div class="callout danger">
+      <strong>绝对不要切 dev 接管 38888 来"修复" packaged 问题</strong>——会丢 packaged 模式独有的数据（用户、配置、笔记）。任何 DB 迁移前先 <code>cp</code> 备份到 <code>~/Desktop/</code>。
+    </div>
+
+    <h3>knowledge_sidecars · 13 个子目录各管一段</h3>
+    <p>除了 SQLite 之外，<code>knowledge_sidecars/</code> 是另一个<b>文件型存储层</b>——笔记生成、报告、聊天导出、录音附件都落在文件系统上：</p>
+    <table>
+      <tr><th>目录</th><th>存什么</th><th>谁在写</th></tr>
+      <tr><td><code>attachments/</code></td><td>聊天附件（图片/PDF）</td><td>前端上传</td></tr>
+      <tr><td><code>calendar_notes/</code></td><td>日历笔记 .md 双产物（每日整理）</td><td>3 条 pipeline（见下）</td></tr>
+      <tr><td><code>chat_exports/</code></td><td>聊天导出 JSON</td><td>前端导出按钮</td></tr>
+      <tr><td><code>html_docs/</code></td><td>笔记生成的 HTML 渲染产物</td><td>Knowledge Note v3 pipeline</td></tr>
+      <tr><td><code>ingest/</code></td><td>知识库 ingest 入库原始材料</td><td>NAS sync / embed cron</td></tr>
+      <tr><td><code>outputs/</code></td><td>Deep Research / Knowledge Note 中间产物</td><td>server 端</td></tr>
+      <tr><td><code>reports/</code></td><td>日报 / 周报 / 审计报告</td><td>scheduled jobs</td></tr>
+      <tr><td><code>research/</code></td><td>Deep Research 检索结果</td><td>research.ts</td></tr>
+      <tr><td><code>system_reviews/</code></td><td>系统评审快照</td><td>systemReview.ts</td></tr>
+      <tr><td><code>test_artifacts/</code></td><td>测试产物（保留 tracked）</td><td>test scripts</td></tr>
+      <tr><td><code>uploads/</code></td><td>用户上传文件</td><td>前端上传</td></tr>
+      <tr><td><code>debug/</code></td><td>调试日志</td><td>server 端（调试时）</td></tr>
+    </table>
+
+    <h3>三条流水线同时在写 calendar_notes 表</h3>
+    <p>这是非程序员最需要理解的数据流——同一张表，三个源头：</p>
+    <div class="ascii">┌──────────────────────────────────────────────────────────────────┐
+│ 来源 1: cron com.openclaw.knowledge_*（02:00 / 03:00）           │
+│   从 /Volumes/南极熊/04我的笔记/daily/*.md 复制到                  │
+│   /Users/njx/openclaw_data/memory/knowledge/notes/calendar/       │
+│   ↓ 自动 sync                                                      │
+│   calendar_notes 表                                                │
+├──────────────────────────────────────────────────────────────────┤
+│ 来源 2: mavis cron "笔记整理"（每天 00:08）                       │
+│   在 daily/ 顶层产 obsidian 整理笔记 + HTML                       │
+│   （不走入库，只产文件）                                            │
+├──────────────────────────────────────────────────────────────────┤
+│ 来源 3: 前端 syncCalendarKnowledgeFolderNotes（/api/calendar/range）│
+│   扫 memory/knowledge/notes/calendar/<YYYY-MM>/ md → calendar_notes│
+│   自动 upsert（不删手工 INSERT 记录）                                │
+└──────────────────────────────────────────────────────────────────┘</div>
+    <p><b>对 vibe coding 的含义</b>：你说"把今天的笔记整理一下"——agent 会自动选对路径，不需要你告诉它走哪条流水线。</p>
+  </section>
+
+<!-- 4 -->
+<section id="code">
+  <h2><span class="num">4</span> 代码组织 — 4 个子应用</h2>
+  <p class="lead">
+    项目用 npm workspaces 管理，4 个子包共享一份代码风格、统一的 npm 脚本，互不耦合但能一起跑。
+  </p>
+
+  <div class="ascii">openclaw_workbench/                 ← 你看到的文件夹（根）
+├── apps/
+│   ├── server/                      ← 后端大脑 (Fastify · 23,117 行 · 20 模块)
+│   ├── web/                         ← 网页端 (Vite + React · 20,658 行 App.tsx)
+│   ├── desktop/                     ← 桌面壳 (Electron · 4 文件)
+│   └── mobile/                      ← 手机端 (Expo + RN · 25+ 文件)
+├── data/                            ← 数据库、备份、缓存（workbench.sqlite 22 MB）
+├── design/                          ← 设计稿（HTML 原型 + 截图，10+ 文件）
+├── knowledge_sidecars/              ← 笔记副件、附件、报告、聊天导出（13 子目录）
+├── reports/                         ← 每日开发报告（2026-06-12 ~ 至今）
+├── scripts/                         ← 40+ 运维 + smoke 测试脚本
+├── tests/                           ← Playwright E2E 测试
+├── tasks/                           ← 任务执行记录（autonomy 持续写）
+├── .brand-candidates/               ← 品牌候选资源（icon / logo）
+├── .cu-screenshots/                 ← 桌面验收截图（autonomy 桌面操作存档）
+├── .opencode/                       ← OpenCode 工作区元数据
+├── development-gates.json           ← 6 条硬规则
+├── package.json                     ← 根 package.json（4 workspaces）
+├── SUMMARY_V3.3_FINAL.md            ← 当前 pipeline 状态（v3.4 锁修复完成）
+├── SPRINT_1_PLAN.md / SPRINT_2_PLAN_v0.2_DRAFT.md ← 迭代计划
+└── PRODUCT_VISION_v1.0.md           ← 1-2 个月 Codex 五件套纲领</div>
+
+  <h3>各目录一句话职责</h3>
+  <table>
+    <tr><th>目录</th><th>作用</th><th>你会不会碰</th></tr>
+    <tr><td><code>apps/server/</code></td><td>Fastify 后端，监听 <code>127.0.0.1:38888</code></td><td>不会直接碰，agent 改</td></tr>
+    <tr><td><code>apps/web/</code></td><td>Vite + React 网页端，主操作界面</td><td>偶尔看 UI 是否符合预期</td></tr>
+    <tr><td><code>apps/desktop/</code></td><td>Electron 桌面壳（包装 web 端）</td><td>几乎不碰</td></tr>
+    <tr><td><code>apps/mobile/</code></td><td>Expo + RN，iPhone 配套 app</td><td>装到手机上配对用</td></tr>
+    <tr><td><code>data/</code></td><td>SQLite 数据库 + 备份</td><td>备份时接触</td></tr>
+    <tr><td><code>design/</code></td><td>HTML 原型、视觉稿</td><td>评审 UI 时看</td></tr>
+    <tr><td><code>scripts/</code></td><td>运维 + smoke 测试（<code>.mjs</code>/<code>.cjs</code>）</td><td>通过 npm 脚本触发</td></tr>
+  </table>
+
+  <h3>.gitignore 故意排除的东西</h3>
+  <pre><code>node_modules/              # 依赖包（巨大）
+dist/                      # 编译产物
+data/*.sqlite              # 数据库（含业务数据）
+data/backups/              # 数据库备份
+.env                       # 环境变量（含密钥）
+coverage/, test-results/   # 测试报告
+playwright-report/         # E2E 测试报告
+*.log, *.err, *.out        # 日志</code></pre>
+  <p>意思是：<b>git 只跟踪源代码和文档</b>，不跟踪数据库和编译产物。每次 pull 都是干净的源码。</p>
+</section>
+
+<!-- 5 -->
+<section id="server">
+  <h2><span class="num">5</span> 后端 Fastify Server（大脑）</h2>
+  <p class="lead">
+    整个系统的"中枢神经"，监听 <code class="inline-code">127.0.0.1:38888</code>。所有前端调用、所有 agent 调度都从这里过。
+  </p>
+
+  <h3>技术栈</h3>
+  <ul>
+    <li><b>运行时</b>：Node.js ≥ 24（原生支持 <code>node:sqlite</code>）</li>
+    <li><b>框架</b>：Fastify ^5.2.0（比 Express 快 2-3 倍，原生 TypeScript 友好）</li>
+    <li><b>数据库</b>：<code>node:sqlite</code> 内嵌模块（<code>--experimental-sqlite</code> flag 启动）</li>
+    <li><b>语言</b>：TypeScript ^5.7（编译时类型检查）</li>
+  </ul>
+
+  <h3>入口文件：<code>apps/server/src/index.ts</code></h3>
+  <p>这个文件 <b>实测 23,117 行</b>，包含所有 HTTP 路由定义。从名字可以看出模块划分：</p>
+  <table>
+    <tr><th>模块文件</th><th>职责</th></tr>
+    <tr><td><code>index.ts</code></td><td>主入口，HTTP 路由注册（23,117 行——核心在这里）</td></tr>
+    <tr><td><code>auth.ts</code></td><td>单用户登录 + token 会话（pbkdf2 sha256 21 万次）</td></tr>
+    <tr><td><code>db.ts</code></td><td>SQLite 连接 + 迁移（所有表结构都在这）</td></tr>
+    <tr><td><code>config.ts</code></td><td>路径、token、配置常量</td></tr>
+    <tr><td><code>goalNlu.ts</code></td><td>自然语言 → Goal 解析（NLU 核心，Sprint1 引入）</td></tr>
+    <tr><td><code>workbenchV11.ts</code></td><td>Workbench v1.1 PRD 对应接口</td></tr>
+    <tr><td><code>computerUse.ts</code></td><td>桌面控制 + 验收截图（微信 + 通用 verify）</td></tr>
+    <tr><td><code>evidencePack.ts</code></td><td>证据包（截图 + 命令输出）打包</td></tr>
+    <tr><td><code>evidencePackLifecycle.ts</code></td><td>证据包生命周期管理（生成 → 验收 → 归档）</td></tr>
+    <tr><td><code>research.ts</code></td><td>Deep Research 调度</td></tr>
+    <tr><td><code>systemReview.ts</code></td><td>系统评审（OpenClaw 配置 / 资源）</td></tr>
+    <tr><td><code>mobileTranscription.ts</code></td><td>手机语音笔记转写</td></tr>
+    <tr><td><code>truth.ts</code></td><td>真实性校验（避免假数据）</td></tr>
+    <tr><td><code>macosSync.ts</code></td><td>macOS 系统集成（提醒 / 通知）</td></tr>
+    <tr><td><code>reminderSync.ts</code></td><td>提醒事项同步</td></tr>
+    <tr><td><code>docRenderer.ts</code></td><td>文档渲染（Markdown / HTML / PPT）</td></tr>
+    <tr><td><code>connectors/gateway.ts</code></td><td>OpenClaw Gateway 适配（最坑的模块——CLI 协议 + PATH 注入）</td></tr>
+    <tr><td><code>connectors/knowledge.ts</code></td><td>知识库链接 / 反向链接</td></tr>
+    <tr><td><code>connectors/nasRoot.ts</code></td><td>NAS 路径（南极熊 Obsidian vault）</td></tr>
+    <tr><td><code>connectors/dictCheck.ts</code></td><td>字典 / 别名校验（6 条 R 规则）</td></tr>
+  </table>
+
+  <h3>关键 API 端点（你不用记）</h3>
+  <pre><code>POST /api/auth/login                    # 单用户密码登录
+POST /api/development/goals              # 结构化创建 Goal
+POST /api/development/goals/from-natural-language  # NLU 自然语言入口
+POST /api/agent-workbench/...             # 三代理调用
+POST /api/computer-use/verify             # 桌面验收截图
+GET  /api/knowledge/search?q=...          # 知识库搜索
+GET  /api/research/jobs                   # Deep Research 任务列表
+GET  /api/system/review                   # 系统评审（只读）</code></pre>
+
+  <h3>启动一行命令</h3>
+  <pre><code>OPENCLAW_WORKBENCH_PASSWORD='change-me' npm start
+
+# 默认地址：
+#   本机：http://127.0.0.1:38888
+#   局域网：http://&lt;Mac-mini-IP&gt;:38888</code></pre>
+  <div class="callout warn">
+    <strong>Mac mini 上部署建议</strong>：用 launchd 守护进程，每日 <code>npm run backup:db</code>。如需公网访问，<b>优先 Tailscale 或反向代理</b>，不要直接暴露 38888 端口。
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="web">
+  <h2><span class="num">6</span> Web 端 — 你最常用的界面</h2>
+  <p class="lead">
+    这是你日常主要打交道的界面。Vite + React + TypeScript，单页应用（SPA），所有数据通过 HTTP API 拉。
+  </p>
+
+  <h3>技术栈</h3>
+  <ul>
+    <li><b>构建工具</b>：Vite（开发秒级热更新）</li>
+    <li><b>框架</b>：React 18 + TypeScript</li>
+    <li><b>样式</b>：原生 CSS（一个 <code>styles.css</code>，约 15000 行 — UI 视觉资产集中地）</li>
+    <li><b>入口</b>：<code>apps/web/index.html</code> → <code>src/main.tsx</code> → <code>src/App.tsx</code></li>
+  </ul>
+
+  <h3>核心组件（5 个）</h3>
+  <table>
+    <tr><th>文件</th><th>作用</th></tr>
+    <tr><td><code>App.tsx</code></td><td>主应用，路由 + 全局布局（<b>实测 20,658 行</b>——绝大多数 UI 在这）</td></tr>
+    <tr><td><code>GoalInputBox.tsx</code></td><td><b>自然语言 Goal 输入框</b>（你在 Sprint1+2 用得最多的组件）</td></tr>
+    <tr><td><code>GoalProgressDashboard.tsx</code></td><td>Goal 详情页：Plan / Result / Timeline / Heartbeat</td></tr>
+    <tr><td><code>GoalVerifyTab.tsx</code></td><td>桌面验收面板：嵌入截图序列 + ACCEPT/REJECT 按钮</td></tr>
+    <tr><td><code>main.tsx</code></td><td>React 挂载入口</td></tr>
+    <tr><td><code>styles.css</code></td><td>全部视觉样式（实测约 21,000 行，UI 迭代主要改这里——超大单文件）</td></tr>
+  </table>
+
+  <h3>UI 风格</h3>
+  <div class="callout">
+    <strong>深色主题、玻璃拟态、神经驾驶舱</strong>（Neon / Glassmorphism / Cockpit 风格）。参考设计稿在 <code>design/agent-operator-console-v4.html</code> 和 <code>design/copilot-hub-neural-cockpit-preview.html</code>。
+  </div>
+
+  <h3>开发 / 调试命令</h3>
+  <pre><code>npm run dev:web         # 起 web 端 dev server (热更新)
+npm run verify:dev      # 跑 web 端 smoke 校验
+npm run build           # 打包到 apps/web/dist/</code></pre>
+</section>
+
+<!-- 7 -->
+<section id="desktop">
+  <h2><span class="num">7</span> Desktop 端 — Electron 桌面壳</h2>
+  <p class="lead">
+    把 web 端包成 macOS 原生应用，让你能像打开 App 一样用 Workbench，而不是开浏览器。
+  </p>
+
+  <h3>技术栈</h3>
+  <ul>
+    <li><b>框架</b>：Electron（Chromium + Node.js 双进程）</li>
+    <li><b>配置</b>：<code>electron-builder.yml</code>（打包成 <code>.dmg</code>）</li>
+    <li><b>源码</b>：<code>apps/desktop/src/</code>（4 个文件）</li>
+  </ul>
+
+  <h3>4 个核心文件</h3>
+  <table>
+    <tr><th>文件</th><th>作用</th></tr>
+    <tr><td><code>main.ts</code></td><td>主进程（创建窗口 + 菜单 + 系统集成）</td></tr>
+    <tr><td><code>preload.ts</code></td><td>预加载脚本（暴露安全 API 给渲染进程）</td></tr>
+    <tr><td><code>server-runner.ts</code></td><td>启动并管理内嵌的 Workbench Server（子进程）</td></tr>
+    <tr><td><code>auth-manager.ts</code></td><td>桌面端单用户密码 + token 持久化</td></tr>
+  </table>
+
+  <h3>工作方式</h3>
+  <div class="ascii">┌─────────────────────────────────────────────┐
+│  Electron App (macOS)                       │
+│  ┌───────────────────────────────────────┐  │
+│  │ Chromium 渲染进程                     │  │
+│  │ 加载 file://.../apps/web/dist/...     │  │
+│  │ （= 跟浏览器看到的 web 端一模一样）    │  │
+│  └───────────────────────────────────────┘  │
+│           ↕ preload (安全 IPC)              │
+│  ┌───────────────────────────────────────┐  │
+│  │ Node.js 主进程                        │  │
+│  │ - 创建 BrowserWindow                  │  │
+│  │ - 启动子进程：node dist/index.js      │  │
+│  │   （Workbench Server @ 38888）         │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘</div>
+
+  <h3>真实安装位置 vs 仓内 staging</h3>
+  <div class="callout warn">
+    <strong>桌面 app 的真实安装路径是 <code>~/Applications/njx-copilot.app</code></strong>——不是 <code>apps/desktop/release/mac-arm64/njx-copilot.app/</code>（那只是 <code>electron-builder dist:mac</code> 的输出目录）。
+  </div>
+  <p>改源码后要让桌面 app 生效，必须做资源同步：</p>
+  <pre><code># server 端 dist 推到 packaged app（不删独有文件）
+rsync -a --exclude='*.map' apps/server/dist/ \
+  ~/Applications/njx-copilot.app/Contents/Resources/resources/server/
+
+# web 端 dist 同样推
+rsync -a apps/web/dist/ \
+  ~/Applications/njx-copilot.app/Contents/Resources/resources/web/
+
+# 验证：stat -f "%Sm %N" <packaged dist>/connectors/gateway.js
+# 不一定要重启——下次重启桌面 app 自动加载新 dist</code></pre>
+
+  <h3>打包发布</h3>
+  <pre><code>npm run build:desktop    # 编译 web + 桌面资源
+npm run dist:mac         # 打 .dmg 到 apps/desktop/release/mac-arm64/
+open apps/desktop/release/mac-arm64/njx-copilot-0.1.0-arm64.dmg  # 安装</code></pre>
+</section>
+
+<!-- 8 -->
+<section id="mobile">
+  <h2><span class="num">8</span> Mobile 端 — iPhone 配套 App</h2>
+  <p class="lead">
+    iPhone-first 的语音笔记 + 控制台，跟 Workbench 配对后可以在手机上录音、组织当日想法、查日程。
+  </p>
+
+  <h3>技术栈</h3>
+  <ul>
+    <li><b>框架</b>：Expo SDK 56 + React Native 0.85.3</li>
+    <li><b>目标平台</b>：iOS-first（iPhone）+ Android（暂停）</li>
+    <li><b>版本</b>：1.0.7，iOS buildNumber 3，Android versionCode 6</li>
+    <li><b>Bundle ID</b>：<code>com.openclaw.mobile</code></li>
+    <li><b>展示名</b>：OpenClaw 随身分身</li>
+    <li><b>路径</b>：<code>apps/mobile/</code></li>
+  </ul>
+
+  <h3>核心能力</h3>
+  <table>
+    <tr><th>能力</th><th>说明</th></tr>
+    <tr><td><b>语音笔记</b></td><td>手机录音（<code>expo-audio</code> v56，<b>不是 expo-av</b>）→ 上传 Workbench → 入知识库</td></tr>
+    <tr><td><b>配对机制</b></td><td>Workbench 后台生成 6 位配对码（15 分钟有效）→ 手机输入 → 绑定设备 + 发 token</td></tr>
+    <tr><td><b>认证</b></td><td><code>mobile_devices</code> + <code>mobile_device_tokens</code>（带过期 + 吊销），token 存 <code>SecureStore</code>（fallback <code>AsyncStorage</code>）</td></tr>
+    <tr><td><b>端点</b></td><td>Workbench Server 的 <code>/api/mobile/*</code> 路由组（pairing / bootstrap / today / voice-notes / chat / approvals）</td></tr>
+    <tr><td><b>2 tab UI</b></td><td>Today Console（执行台）+ Device（设备列表/撤销/中文验收）</td></tr>
+  </table>
+
+  <h3>源码结构（实测）</h3>
+  <pre><code>apps/mobile/src/
+├── App.tsx                    # 主壳（执行台 / 设备 2 tab 切换）
+├── screens/
+│   ├── TodayConsoleScreen.tsx # 1404 行（pairing + today + voice + chat + approvals + cache）
+│   └── DeviceScreen.tsx       # 383 行（设备列表/撤销/中文交互验收）
+├── lib/
+│   ├── api.ts                 # 15K 字节（fetch 包装 + 错误人化 + 25+ 移动端错误码中文映射）
+│   ├── storage.ts             # SecureStore + AsyncStorage fallback
+│   ├── haptics.ts             # 触觉反馈
+│   └── types.ts               # 类型定义
+├── components/
+│   ├── Button.tsx / EmptyState.tsx / RecordingPulse.tsx / Skeleton.tsx
+├── constants/
+│   └── design.ts              # 主题（Color/Radius/Space/Type/Motion/Shadow/Size）
+├── hooks/
+│   └── use-color-scheme.web.ts # web 模式实现
+├── types/ assets.d.ts
+└── global.css</code></pre>
+
+  <h3>同步模型 · Mac 唯一数据真相源</h3>
+  <div class="callout">
+    <strong><code>syncModel: "mac_primary_online_write_offline_readonly"</code></strong>
+  </div>
+  <ul>
+    <li><b>Mac → Mobile</b>：app 启动 / 前台 / pull-to-refresh / 成功操作后 refetch bootstrap/today</li>
+    <li><b>Mobile → Mac</b>：chat / approvals / device revoke（写 workbench）</li>
+    <li><b>离线</b>：last today cache 仍可读，但 send 和 approval <b>disabled 直到 server 可达</b></li>
+  </ul>
+
+  <h3>配对流程（用户视角）</h3>
+  <ol>
+    <li>Mac mini 的 Workbench 后台打开 <code>/mobile</code> 路由 → 点"生成配对码" → 显示 6 位数字</li>
+    <li>手机 App 启动 → 配对页（"连接 Mac，马上接管今天" hero）→ 输 Mac URL（同 Wi-Fi 用 LAN IP，外网用 tunnel）</li>
+    <li>输 6 位码 → POST <code>/api/mobile/pairing/claim</code> → 拿 <code>accessToken + refreshToken + device</code></li>
+    <li>Token 存 SecureStore → 后续请求带 <code>Authorization: Bearer ${accessToken}</code></li>
+    <li>录音 / 发消息 / 审批都走 Mac 工作台 → Mac 整理入库</li>
+  </ol>
+
+  <h3>三种发布路径（按代价排序）</h3>
+  <table>
+    <tr><th>路径</th><th>适用</th><th>速度</th><th>体验</th></tr>
+    <tr>
+      <td><span class="tag accent">Expo Go</span></td>
+      <td>开发预览</td>
+      <td>30 秒</td>
+      <td>JS bundle 实时刷新，<b>不是真 app</b>（受限）</td>
+    </tr>
+    <tr>
+      <td><span class="tag warn">iOS Simulator</span></td>
+      <td>开发 + 离线试</td>
+      <td>5-10 分钟首 build</td>
+      <td>iPhone 17/Air 模拟，<b>RN 真原生</b>，<b>无录音权限</b></td>
+    </tr>
+    <tr>
+      <td><span class="tag ok">TestFlight</span></td>
+      <td>上外部分发</td>
+      <td>30+ 分钟（EAS 云 build）</td>
+      <td>真实 iPhone 安装，<b>真录音</b></td>
+    </tr>
+  </table>
+  <pre><code>npm run mobile:ios:expo-go           # Expo Go（同 Wi-Fi 配对，最快）
+npm run mobile:ios:testflight        # TestFlight（需 Apple Developer $99/年）
+npm run mobile:android:preview       # Android preview APK（暂停中）</code></pre>
+</section>
+
+<!-- 9 -->
+<section id="pipeline">
+  <h2><span class="num">9</span> 一条命令跑起来</h2>
+  <p class="lead">
+    整个项目的启动链路 — 从源码到你能用的界面。
+  </p>
+
+  <h3>完整启动流程（prod）</h3>
+  <div class="ascii">① npm install
+   │  安装 4 个 workspaces 的所有依赖
+   │
+② npm run build
+   │  tsc 把 server / web / mobile / desktop 都编译成 JS
+   │  server → apps/server/dist/
+   │  web    → apps/web/dist/
+   │
+③ OPENCLAW_WORKBENCH_PASSWORD='xxx' npm start
+   │ 启动 server：node --experimental-sqlite dist/index.js
+   │   - 打开 SQLite 连接（DB 在 data/workbench.sqlite）
+   │   - 跑 db.ts:migrate() 建表（85 张表，幂等）
+   │   - 启动 Fastify 监听 127.0.0.1:38888
+   │
+④ 浏览器打开 http://127.0.0.1:38888
+   │  - 输入密码登录
+   │  - 进入 Dashboard
+   │
+⑤ (可选) Mac mini 上用 launchd 守护
+   │  每天 npm run backup:db
+   │  公网访问走 Tailscale 或反向代理</div>
+
+  <h3>开发模式（推荐）</h3>
+  <p>改代码时不用每次 <code>npm run build</code>，用 dev:all 一次启三端：</p>
+  <pre><code>npm run dev:all          # 一次性启 server (:38888) + vite (:38889) + Electron
+                         # (env NJX_COPILOT_LOAD_VITE=1 让 electron 加载 vite HMR)
+npm run dev:server       # 只起 server
+npm run dev:web          # 只起 vite（热更新）
+npm run dev:desktop      # 只起 electron</code></pre>
+  <div class="ascii">┌─────────────────────────────────────────────┐
+│ dev:all 启动顺序（脚本：scripts/dev-all.mjs）│
+├─────────────────────────────────────────────┤
+│ 1. probe vite :38889（已在跑就复用）        │
+│ 2. spawn npm run dev:server                 │
+│ 3. 等 server :38888 health probe OK          │
+│ 4. spawn npm run dev:desktop（带 vite 标志）│
+│ 5. electron 退出时 kill vite + server       │
+└─────────────────────────────────────────────┘</div>
+
+  <h3>健康检查 + 备份</h3>
+  <pre><code>npm run health            # 一次性 health check
+npm run backup:db         # 备份 SQLite 到 data/backups/（每天 1 次）
+npm run security:scan     # 安全扫描
+npm run verify            # 跑所有 verify（dev + desktop packaged 两套）
+npm run test:truth        # 真实性校验
+npm run test:prd          # PRD v1.1 API smoke
+npm run test:mobile-api   # mobile 端点 smoke</code></pre>
+</section>
+
+<!-- 10 -->
+<section id="vibe">
+  <h2><span class="num">10</span> Vibe Coding 怎么用它 — 实战指南</h2>
+  <p class="lead">
+    你不需要写代码，但你要会"用自然语言驱动 agent"。这是 Vibe Coding 的核心。
+  </p>
+
+  <h3>一句话原则</h3>
+  <div class="callout ok">
+    <strong>你描述目标 → agent 拆解 → 执行 → 给你证据 → 你验收</strong>。不需要懂代码细节，只需要懂"你要达成什么 + 怎么验收"。
+  </div>
+
+  <h3>4 类高频任务模板</h3>
+
+  <h4>① 修 bug / 改功能</h4>
+  <pre><code>❌ 不好：帮我改一下那个 prompt 文件
+✅ 好：在 Chrome 里打开 Workbench 演示笔记生成，重点修复 LLM 调用慢的问题
+   （agent 会自动拆解：先查 LLM 慢在哪一步 → 定位行号 → patch → 出截图验证）
+
+   关键：<b>说现象 + 验收标准</b>，不要让 agent 猜你说的是哪个文件。</code></pre>
+
+  <h4>② 加新功能</h4>
+  <pre><code>❌ 不好：加一个报表
+✅ 好：在 Dashboard 加一张"本月航材订单金额"卡片，
+      数据从 opc_orders 表聚合，要求支持按客户筛选，
+      验收：截图 Dashboard 新卡片 + 点筛选后数据变化
+      → 必须经过 gate 1（PRD）+ gate 2（原型）+ gate 3（测试）</code></pre>
+
+  <h4>③ 整理 / 调研</h4>
+  <pre><code>❌ 不好：把笔记整理一下
+✅ 好：把知识库里 02_MOC 主题重复的笔记合并，
+      每组保留最新版本，其余归档到 .vault_quarantine，
+      验收：列出每组保留了哪个、归档了哪几个
+      → agent 会先 grep 看哪些真重复（不凭印象）
+      → 改 skill 的规则（不是凭感觉填 alias）</code></pre>
+
+  <h4>④ 系统级操作</h4>
+  <pre><code>❌ 不好：重启一下 server
+✅ 好：现在 OpenClaw Gateway 显示 DEGRADED，请帮我看一下原因，
+      如果是进程挂了请先告诉我再 kill（按 gate 5 走审批）
+
+   关键：<b>破坏性操作</b>（kill / restart / 改配置 / 删数据）
+   永远先看 → 报 → 等审批 → 才动手。</code></pre>
+
+  <h4>⑤ 日常运营（vibe coding 最常碰的）</h4>
+  <pre><code>✅ 好："今天 04:05 NAS sync 失败了，帮我看 log 找原因，
+        修好后跑一次校验确认数据全"
+   ✅ 好："voice note 最近转写质量差，先看一下 server 端
+        mobileTranscription.ts 用的哪个 provider，能换吗"
+   ✅ 好："今天日报整理的 cron 报告写得太啰嗦，
+        把 SUMMARY 控制在 5 段以内"</code></pre>
+
+  <h3>Vibe Coding 黄金 4 步</h3>
+  <ol>
+    <li><b>给方向 + 验收标准</b>（不要说怎么实现，说你要看到什么）</li>
+    <li><b>让 agent 自己决定实施</b>（agent 会拆任务、写代码、跑测试、出截图）</li>
+    <li><b>看证据拍板</b>（截图 + 命令输出 + 测试结果，不要只看"已完成"）</li>
+    <li><b>不通过就反馈</b>（一句话指出来，不要自己动手改 — 那是 agent 的活）</li>
+  </ol>
+
+  <h3>验收的"金标准"（必看证据）</h3>
+  <table>
+    <tr><th>任务类型</th><th>必看的证据</th></tr>
+    <tr><td>UI 改动</td><td>① 在 Workbench 内真实浏览器打开看 ② 截图（不是 cu 截桌面 app，<b>是 Chrome 地址栏 127.0.0.1:38888 的 tab</b>）</td></tr>
+    <tr><td>后端 API</td><td>① curl 看 status code + JSON body ② npm run test:prd / test:mobile-api 全过</td></tr>
+    <tr><td>知识库 / 笔记</td><td>① 生成 HTML 在浏览器打开看视觉 ② DB 里查行（<code>sqlite3 workbench.sqlite</code>）</td></tr>
+    <tr><td>系统级 ops</td><td>① <code>ps aux | grep xxx</code> 看进程在跑 ② <code>curl http://127.0.0.1:38888/health</code> 看响应 ③ log 末尾 20 行</td></tr>
+    <tr><td>桌面 app 改动</td><td>① desktop-packaged-verify.cjs 全过 ② packaged app 内真实浏览器 tab 截图</td></tr>
+  </table>
+
+  <h3>不要做的事</h3>
+  <div class="callout danger">
+    <strong>不要绕过 agent 自己改代码</strong> — 改完 agent 不知道，下一轮还会按旧版重做。<br>
+    <strong>不要直接动数据库</strong> — agent 会从代码层读 schema，手改 DB 会跟代码不一致。<br>
+    <strong>不要删 <code>data/backups/</code></strong> — 那是唯一恢复手段，删了就回不去了。<br>
+    <strong>不要 push 到公网</strong> — 这是 <b>local-only</b> 项目，不推远程仓库（用 git bundle 备份）。<br>
+    <strong>不要凭印象列接入点</strong> — 让 agent 先 grep / find 验证真实存在。<br>
+    <strong>不要把 dev DB 路径当 packaged 用</strong> — 两条路径完全不同，混了会丢数据。
+  </div>
+
+  <h3>Vibe Coding 的反馈循环</h3>
+  <div class="ascii">你说一句话
+   ↓
+agent 拆任务 + 跑代码 + 出截图证据
+   ↓
+你看截图（不看代码）+ 判断是否满足验收
+   ↓
+  满足 → ACCEPT（归档证据） → 下一个任务
+  不满足 → 反馈一句话 → agent 重做或局部 patch</div>
+</section>
+
+<!-- 11 -->
+<section id="safety">
+  <h2><span class="num">11</span> 安全边界 — 哪些事我不能干</h2>
+  <p class="lead">
+    项目设计上有几道硬边界，agent（和你）都不能越过。
+  </p>
+
+  <table>
+    <tr><th>边界</th><th>含义</th></tr>
+    <tr>
+      <td><span class="tag danger">不能动</span></td>
+      <td>前端 <b>不能直接访问</b> <code>~/.openclaw/</code>（必须走后端代理）</td>
+    </tr>
+    <tr>
+      <td><span class="tag danger">不能动</span></td>
+      <td>Gateway token / IMA key / OpenClaw credentials <b>只由服务端读取</b>，前端永远拿不到</td>
+    </tr>
+    <tr>
+      <td><span class="tag danger">不能动</span></td>
+      <td>OpenClaw Gateway 保持 <code>127.0.0.1:18789</code>（不暴露 0.0.0.0）</td>
+    </tr>
+    <tr>
+      <td><span class="tag danger">不能动</span></td>
+      <td>配置评审对 token / secret / password / credential / API key / session <b>自动脱敏</b></td>
+    </tr>
+    <tr>
+      <td><span class="tag danger">审批</span></td>
+      <td>高风险动作走 <code>approvals</code> 表 + <code>audit_logs</code> 留痕（删数据 / 发版 / 对外发通知）</td>
+    </tr>
+    <tr>
+      <td><span class="tag danger">备份</span></td>
+      <td><code>npm run backup:db</code> 每天跑（数据丢失的最后防线）</td>
+    </tr>
+  </table>
+
+  <h3>4 道人工把关的"硬节点"</h3>
+  <div class="callout warn">
+    <b>1. 战略转向</b> — 换赛道、砍业务、改产品定位<br>
+    <b>2. 外部承诺</b> — 发版、合作、合同、付款<br>
+    <b>3. 破坏性操作</b> — 删数据、付费、对外可见<br>
+    <b>4. 安全边界</b> — 改 token、密钥、网络配置<br>
+    <br>
+    <strong>其他 95% 的事</strong>，agent 自主推进，不打断你（auto-decay 兜底）。
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="glossary">
+  <h2><span class="num">12</span> 术语速查表</h2>
+  <p class="lead">看到不懂的词回来查。</p>
+
+  <table>
+    <tr><th>术语</th><th>一句话解释</th></tr>
+    <tr><td><b>Goal</b></td><td>用户输入的一句话目标（比如"修复笔记生成慢"），是整个开发流水线的根</td></tr>
+    <tr><td><b>Subtask</b></td><td>Goal 拆出来的子任务（Plan / Implement / Test / Verify）</td></tr>
+    <tr><td><b>Run</b></td><td>一次具体执行 attempt（含 retry 计数、duration、状态）</td></tr>
+    <tr><td><b>Evidence Pack</b></td><td>验收证据包：截图 + 命令输出 + 测试结果</td></tr>
+    <tr><td><b>Recovery Packet</b></td><td>失败时的恢复方案（局部 patch vs 整段重试）</td></tr>
+    <tr><td><b>NLU</b></td><td>Natural Language Understanding — 把人话解析成结构化数据</td></tr>
+    <tr><td><b>Computer Use</b></td><td>agent 真实控制桌面（鼠标 / 键盘 / 截图）</td></tr>
+    <tr><td><b>Gate</b></td><td>开发铁律（6 条 hard rule），不过不让过</td></tr>
+    <tr><td><b>PRD</b></td><td>Product Requirements Document — 产品需求文档</td></tr>
+    <tr><td><b>Autonomy Loop</b></td><td>agent 自主循环（12h 心跳，不停写 working tree）</td></tr>
+    <tr><td><b>Sidecar</b></td><td>知识库笔记生成的 Markdown 副件</td></tr>
+    <tr><td><b>Sprint</b></td><td>2 周一个迭代周期（Sprint1 = 6/10-6/15，已完成）</td></tr>
+    <tr><td><b>Quarantine</b></td><td>隔离区 — 重复 / 待删的文件先放这，恢复可能</td></tr>
+    <tr><td><b>WAL</b></td><td>Write-Ahead Logging — SQLite 并发模式</td></tr>
+    <tr><td><b>SSE</b></td><td>Server-Sent Events — 实时推送（Dashboard 状态栏用）</td></tr>
+    <tr><td><b>Fastify</b></td><td>Node.js 后端框架（比 Express 快）</td></tr>
+    <tr><td><b>Vite</b></td><td>前端构建工具（秒级热更新）</td></tr>
+    <tr><td><b>Electron</b></td><td>桌面应用壳（Chromium + Node.js）</td></tr>
+    <tr><td><b>Expo</b></td><td>React Native 开发框架（手机端用）</td></tr>
+    <tr><td><b>dev:all</b></td><td>一次性启 server + vite + electron 的开发脚本（scripts/dev-all.mjs）</td></tr>
+    <tr><td><b>Packaged</b></td><td>桌面 app 模式（~/Applications/njx-copilot.app），DB 在 ~/openclaw_data/copilot/data/</td></tr>
+    <tr><td><b>DEV DB vs Packaged DB</b></td><td>两套完全独立的 SQLite，路径不同、用户不同、不会自动同步</td></tr>
+    <tr><td><b>Knowledge Note v3</b></td><td>笔记生成的当前 pipeline（m3-html-v3 + prompt-20260605a + server_sanitize），3-8 分钟出 HTML</td></tr>
+    <tr><td><b>Computer Use (cu)</b></td><td>agent 真实控制桌面（cu MCP 提供 desktop_screenshot / desktop_click 等 25 个工具）</td></tr>
+    <tr><td><b>Three-agent</b></td><td>main / boss / worker 三 agent 分工——main 拍板、boss 分发、worker 执行</td></tr>
+    <tr><td><b>Heartbeat</b><td>12h 心跳 cron，扫系统状态，无异常不打扰你</td></tr>
+    <tr><td><b>Codex 五件套</b><td>NLU 入口 + Owner Session + 桌面验收 + 失败恢复 + 自我演进（1-2 个月路线图）</td></tr>
+  </table>
+</section>
+
+<footer>
+  <p>
+    OpenClaw Workbench 项目全景 · 由 Mavis 自动整理<br>
+    路径 <code class="inline-code">/Users/njx/openclaw_data/openclaw_workbench</code><br>
+    版本 v1.2 · 2026-06-16（基于 v1.1 精准增补：精确行数 / DB 双套 / 三条流水线 / Mobile 完整结构 / Desktop 真实路径 / 4 类高频任务更具体）<br>
+    <br>
+    <span style="color: var(--text-dim);">
+      本文档面向非程序员的 Vibe Coding 协作场景。看完后你应该能回答：项目是什么、数据怎么存、代码怎么分、4 端怎么工作、怎么用它做 Vibe Coding、什么不要碰。
+    </span>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

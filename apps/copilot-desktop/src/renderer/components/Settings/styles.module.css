@@ -1,0 +1,191 @@
+/* Settings panel — modular component styles (Sprint 1.2 T-1.2.6). */
+
+.panel {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--copilot-space-4);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--copilot-danger);
+  padding: var(--copilot-space-2) var(--copilot-space-3);
+  border-radius: var(--copilot-radius-sm);
+  font-size: 13px;
+}
+
+.group {
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-md);
+  padding: var(--copilot-space-4);
+  margin: 0;
+  background: var(--copilot-bg-elev);
+  display: flex;
+  flex-direction: column;
+  gap: var(--copilot-space-3);
+}
+
+.legend {
+  padding: 0 var(--copilot-space-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--copilot-fg-muted);
+}
+
+.hint {
+  margin: 0;
+  font-family: var(--copilot-font-mono);
+  font-size: 12px;
+  color: var(--copilot-fg-muted);
+}
+
+.hint code {
+  background: var(--copilot-bg);
+  border: 1px solid var(--copilot-border);
+  padding: 1px 6px;
+  border-radius: var(--copilot-radius-sm);
+}
+
+/* ThemeSelector — three radio tiles. */
+.themeOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--copilot-space-3);
+}
+
+.themeOption {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--copilot-space-3);
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-sm);
+  padding: var(--copilot-space-3);
+  background: var(--copilot-bg);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.themeOption[data-active='true'] {
+  border-color: var(--copilot-accent);
+  background: var(--copilot-bg-elev);
+}
+
+.themeOption:hover {
+  border-color: var(--copilot-accent);
+}
+
+.themeRadio {
+  margin-top: 2px;
+  accent-color: var(--copilot-accent);
+}
+
+.themeLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.themeLabel small {
+  color: var(--copilot-fg-muted);
+  font-size: 12px;
+}
+
+/* ModelApiConfig — form fields. */
+.select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--copilot-space-1);
+  font-size: 13px;
+}
+
+.select select {
+  appearance: none;
+  background: var(--copilot-bg);
+  color: var(--copilot-fg);
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-sm);
+  padding: var(--copilot-space-2) var(--copilot-space-3);
+  font: inherit;
+  cursor: pointer;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--copilot-space-1);
+  font-size: 13px;
+}
+
+.field input {
+  background: var(--copilot-bg);
+  color: var(--copilot-fg);
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-sm);
+  padding: var(--copilot-space-2) var(--copilot-space-3);
+  font: inherit;
+  font-family: var(--copilot-font-mono);
+  font-size: 13px;
+}
+
+.field input:focus {
+  border-color: var(--copilot-accent);
+  outline: none;
+}
+
+/* ResetButton — armed state flashes. */
+.resetButton {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--copilot-border);
+  color: var(--copilot-fg-muted);
+  padding: var(--copilot-space-1) var(--copilot-space-3);
+  border-radius: var(--copilot-radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.resetButton:hover {
+  color: var(--copilot-fg);
+  border-color: var(--copilot-accent);
+}
+
+.resetButtonArmed {
+  color: var(--copilot-danger);
+  border-color: var(--copilot-danger);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.footer {
+  margin-top: var(--copilot-space-4);
+  padding-top: var(--copilot-space-3);
+  border-top: 1px dashed var(--copilot-border);
+}
+
+.footerHint {
+  color: var(--copilot-fg-muted);
+  font-size: 12px;
+}
+
+.footerHint code {
+  background: var(--copilot-bg);
+  border: 1px solid var(--copilot-border);
+  padding: 1px 6px;
+  border-radius: var(--copilot-radius-sm);
+}

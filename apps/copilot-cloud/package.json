@@ -1,0 +1,40 @@
+{
+  "name": "@copilot/cloud",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Copilot Cloud - Tencent Cloud server (Fastify + CloudBase relay + LLM proxy)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:backup": "vitest run tests/backup-a-presign.test.ts tests/integration/backup-a-stateless-boundary.integration.test.ts",
+    "test:integration": "vitest run tests/integration",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:global": "vitest run --coverage --config vitest.config.ts",
+    "test:coverage:critical": "vitest run --coverage --config vitest.critical.config.ts",
+    "validate:deployment-config": "node scripts/validate-production-deployment-config.mjs",
+    "docker:build": "docker build -t copilot-cloud:dev -f Dockerfile ../..",
+    "docker:run": "docker run --rm -p 8788:8788 --env-file .env copilot-cloud:dev"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/rate-limit": "^10.1.0",
+    "fastify": "^5.2.0",
+    "ws": "8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^2.1.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.5"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

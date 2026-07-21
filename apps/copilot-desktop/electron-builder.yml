@@ -1,0 +1,108 @@
+appId: ai.njx.copilot.v6
+productName: njx-copilot-v6
+copyright: Copyright © 2026 njx
+asar: true
+directories:
+  output: release
+  buildResources: build
+files:
+  - "dist/**/*"
+  - "package.json"
+  - "!**/*.map"
+  - "!**/__tests__/**"
+  - "!**/*.test.*"
+  - "!**/coverage/**"
+# Pin electron version — electron-builder refuses to compute it from
+# semver ranges like ^33.2.0 (see electron-userland/electron-builder#3984).
+# Bump this when bumping the electron devDependency.
+electronVersion: 38.8.6
+# The copilot-desktop workspace is part of an npm workspaces repo. Letting
+# electron-builder run its production install here prunes the shared root
+# node_modules while the builder is still running, so app-builder-bin can
+# disappear mid-package. Native binaries are staged/verified by the canonical
+# release lane; npmRebuild here must not mutate the shared workspace install.
+npmRebuild: false
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  # Sprint 1.1 ships unsigned local builds (T-1.4.1 will wire signing).
+  # Following v5 desktop's identity-null pattern to avoid the auto-sign
+  # rejection that hits njx's machine.
+  identity: null
+  extendInfo:
+    CFBundleName: njx-copilot-v6
+    CFBundleDisplayName: njx-copilot-v6
+    LSApplicationCategoryType: public.app-category.productivity
+    NSHumanReadableCopyright: "Copilot App v6.1 — njx-copilot-v6 © 2026"
+    NSMicrophoneUsageDescription: "用于用户主动发起的语音录入，并仅在设备上生成本地证据。"
+    NSSpeechRecognitionUsageDescription: "用于在设备明确支持时执行严格本地语音识别，不会自动上传音频。"
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+dmg:
+  writeUpdateInfo: false
+  icon: null
+# ────────────────────────────────────────────────────────────────────────
+# Sprint 1.3 T-1.3.2 · Windows packaging (worker γ, 2026-07-10)
+# Adds Win10/11 targets alongside the existing Mac targets above.
+# Code-signing is intentionally deferred to Sprint 1.4 (T-1.4.x) — for now
+# we ship unsigned builds with the self-signed certificatePlaceholder
+# pattern that njx's v5 desktop already uses on macOS.
+# NSIS + portable targets require Wine on macOS to run makensis / 7z SFX.
+# T-1.3.2 verifies the unpacked `--dir` target on macOS (no Wine needed);
+# NSIS + portable will be exercised on a Win runner in Sprint 1.4.
+# ────────────────────────────────────────────────────────────────────────
+win:
+  # Publisher name shows up in the NSIS installer + Windows Add/Remove Programs.
+  publisherName: njx
+  # Use the multi-resolution icon we generate in scripts/gen-icon.cjs.
+  icon: build/icon.ico
+  # T-1.5.1 (Sprint 1.5) — dev signing wire. Self-signed .pfx generated
+  # by openssl on macOS host (see build/dev-cert.*), gitignored, never
+  # committed. Real prod cert arrives in Sprint 1.6+ (S1.4 deferred).
+  # SmartScreen "Unknown Publisher" is expected for self-signed cert.
+  # NOTE 1: requires USE_SYSTEM_SIGNCODE=true env var (macOS host).
+  # The bundled osslsigncode in winCodeSign-2.6.0/darwin/10.12/ is
+  # linked against libcrypto.1.0.0.dylib which is missing on macOS 13+;
+  # `brew install osslsigncode` provides 2.13 that works.
+  # NOTE 2: do NOT set certificatePassword in yml — electron-builder
+  # checks yml first (priority over env). If you set the literal
+  # "${CSC_KEY_PASSWORD}" string, it is used as-is and PFX parse fails.
+  # Set CSC_KEY_PASSWORD env var instead; electron-builder reads it
+  # via getCscPassword() when yml field is null.
+  certificateFile: build/dev-cert.pfx
+  certificatePassword: null
+  certificateSubjectName: null
+  signingHashAlgorithms:
+    - sha256
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+    - target: portable
+      arch:
+        - x64
+        - arm64
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: njx-copilot-v6
+  artifactName: "${productName}-${version}-${arch}-setup.${ext}"
+portable:
+  artifactName: "${productName}-${version}-${arch}-portable.${ext}"
+# T-1.4.x will wire auto-update publishing. Leave null until then so
+# electron-builder does not try to reach a non-existent update feed.
+publish: null

@@ -1,0 +1,19 @@
+{
+  "name": "@openclaw-workbench/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build && OPENCLAW_WORKBENCH_NOTE_GATEWAY_AGENT=main node --experimental-sqlite dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "start": "OPENCLAW_WORKBENCH_NOTE_GATEWAY_AGENT=main node --experimental-sqlite dist/index.js",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0"
+  }
+}

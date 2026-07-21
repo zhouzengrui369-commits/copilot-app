@@ -1,0 +1,42 @@
+{
+  "name": "@copilot/kg",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Knowledge Graph builder for Copilot app (Sprint 1.2 T-1.2.1). Consumes @copilot/kb notes/kg_pending, drives @copilot/llm-client for entity/relation/tag/summary extraction. KG is 100% local — no cloud compute (decision red line #2, goal.md v6.2).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "SCHEMA-FROZEN-1.2.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --reporter=verbose",
+    "test:integration": "vitest run tests/kg-builder.integration.test.ts",
+    "test:coverage": "vitest run --coverage --reporter=verbose",
+    "test:coverage:global": "vitest run --coverage --config vitest.config.ts --reporter=verbose",
+    "test:coverage:critical": "vitest run --coverage --config vitest.critical-coverage.config.ts --reporter=verbose",
+    "test:perf": "vitest run tests/perf.test.ts --reporter=verbose"
+  },
+  "dependencies": {
+    "@copilot/kb": "0.1.0",
+    "@copilot/llm-client": "0.1.0",
+    "better-sqlite3": "11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "24.0.0",
+    "@vitest/coverage-v8": "2.1.9",
+    "typescript": "5.7.3",
+    "vitest": "2.1.9"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "language": "zh-CN",
+  "description": "ASR test samples — 12 zh-CN utterances with both web-speech and cloud hypothesised transcripts. Used by the accuracy.test.ts probe to enforce the ≥ 0.9 PM bar.",
+  "samples": [
+    {
+      "id": "zh-01-standup",
+      "expected": "今天的站会重点讨论 sprint 1.2 的语音录入模块",
+      "web": "今天的站会重点讨论 sprint 1.2 的语音录入模块",
+      "cloud": "今天的站会重点讨论sprint 1.2的语音录入模块"
+    },
+    {
+      "id": "zh-02-schedule",
+      "expected": "明天下午三点和客户开会讨论方案",
+      "web": "明天下午三点和客户开会讨论方案",
+      "cloud": "明天下午 3 点和客户开会讨论方案"
+    },
+    {
+      "id": "zh-03-feature",
+      "expected": "我们需要在桌面端添加语音转文字功能",
+      "web": "我们需要在桌面端添加语音转文字功能",
+      "cloud": "我们需要在桌面端添加语音转文字功能"
+    },
+    {
+      "id": "zh-04-action",
+      "expected": "请把这段话保存为新的笔记",
+      "web": "请把这段话保存为新的笔记",
+      "cloud": "请把这段话保存为新的笔记"
+    },
+    {
+      "id": "zh-05-review",
+      "expected": "代码评审需要覆盖 provider hook 和 IPC 通道",
+      "web": "代码评审需要覆盖 provider hook 和 IPC 通道",
+      "cloud": "代码评审需要覆盖 provider hook 和IPC通道"
+    },
+    {
+      "id": "zh-06-deploy",
+      "expected": "测试通过之后就可以发布到 staging 环境",
+      "web": "测试通过之后就可以发布到 staging 环境",
+      "cloud": "测试通过之后就可以发布到staging环境"
+    },
+    {
+      "id": "zh-07-bug",
+      "expected": "波形显示在某些高 DPI 屏幕上偏小",
+      "web": "波形显示在某些高 DPI 屏幕上偏小",
+      "cloud": "波形显示在某些高DPI屏幕上偏小"
+    },
+    {
+      "id": "zh-08-spec",
+      "expected": "端侧识别失败时自动回退到云端 ASR",
+      "web": "端侧识别失败时自动回退到云端 ASR",
+      "cloud": "端侧识别失败时自动回退到云端ASR"
+    },
+    {
+      "id": "zh-09-sprint",
+      "expected": "本次 sprint 目标是把所有工作台功能跑通",
+      "web": "本次 sprint 目标是把所有工作台功能跑通",
+      "cloud": "本次sprint目标是把所有工作台功能跑通"
+    },
+    {
+      "id": "zh-10-tag",
+      "expected": "给这条笔记打上 standup 和 review 两个标签",
+      "web": "给这条笔记打上 standup 和 review 两个标签",
+      "cloud": "给这条笔记打上standup和review两个标签"
+    },
+    {
+      "id": "zh-11-customer",
+      "expected": "客户希望我们支持离线语音输入",
+      "web": "客户希望我们支持离线语音输入",
+      "cloud": "客户希望我们支持离线语音输入"
+    },
+    {
+      "id": "zh-12-summary",
+      "expected": "今天的会议总结已经发到群里了",
+      "web": "今天的会议总结已经发到群里了",
+      "cloud": "今天的会议总结已经发到群里了"
+    }
+  ]
+}

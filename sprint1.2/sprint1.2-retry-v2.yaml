@@ -1,0 +1,338 @@
+version: 1
+# Sprint 1.2 RETRY v2 · 起点: 2026-07-10 06:38 (UTC+8) plan_e8fc9264 cycle 3 cancelled 后 zombie 收尾
+# 3 真 PASS (T-1.2.4/5/6) + 1 WIP (T-1.2.1) 不 merge,由 NJX "新 plan 直接 retry" 拍板抛掉,全 6 worker 重做
+# 关键加固: 钉子 #14 加 early-exit + commit cadence 5min, 防 cycle 3 zombie 重演
+# lesson source: sprint1.2/audit/cycle-3-audit.md §Adversarial probes
+plan:
+  name: 'Sprint 1.2 · Retry v2 · Copilot App Features (6 worker + 1 verifier)'
+  max_concurrency: 6
+  max_consecutive_failures: 2
+  max_cycles: 12
+  auto_reject_retries: 1
+  # 钉子 #15 v2 (T-1.1.8 verifier c30333ea 落地 · 2026-07-09 14:38): 4 字段 schema
+  metadata:
+    author_role: PM
+    dispatched_by: Mavis (PM session mvs_144239070a21476dae746d1cff6af16b)
+    pm_spot_checked_by: None (待 verifier spot-check 5 follow-up commit)
+    spot_check_at: None
+    approved_by: NJX (NJX 7/10 06:38 拍板 "新 plan 直接 retry",沿用 plan.md v6.2 §2.2 已批 scope)
+    baseline: Sprint 1.1 收口 (6 PM salvage commits @ main 9c7a3d67) + T-1.1.8 v6.2 派生 (c30333ea) + Sprint 1.2 cycle 3 lessons (zombie retry v2)
+    contract_freeze_in: packages/kg/SCHEMA-FROZEN-1.2.md
+    next_sprint: Sprint 1.3 (W3 · 7/24-7/30) — T-1.3.1 RAG + T-1.3.2 Windows 打包
+    retired_sprint_reference: /tmp/openclaw_sprint2_retired_20260709/  # 黑名单 worker session mvs_6e26ed6d89664045b2eb179058b9fafc
+    # NEW: Sprint 1.2 cycle 3 zombie 教训 ledger · 加固钉子 #14 v2
+    cycle3_lesson_ledger: |
+      - Worker session mvs_bf4a.../mvs_10f7.../mvs_8121.../mvs_105a.../mvs_f480... 在 plan_e8fc9264 cycle 3 中 zombie 29min 0 commit
+      - Root cause: dispatch path throttle OR LLM silent failure OR prompt not delivered
+      - Mitigation retry v2: 5min scaffold commit + 2min deliverable.md stub + 10min FAIL-START early exit
+  verifier_config:
+    default_verifiers: [verifier]
+    audit_sample_rate: 0.3
+    cycle_close_audit: T-1.2.7
+    pm_cycle_close_cron: 'mavis cron self sprint1.2-cycle-close --every 6h --prompt "..."'
+tasks:
+  # ========== T-1.2.1 — KG 构建器（retry v2 · 3 wave 拆） ==========
+  - id: 'T-1.2.1'
+    title: 'Knowledge Graph 构建器（LLM 实体/关系/标签/摘要 + 增量更新）'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: []
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker α（KG builder）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.1-KG-builder.md` 完整合同（goal / scope / forbidden / commands / deliverable / verify / wave 拆分）。
+
+      必读基础文档（10 分钟不可省）：
+      - /Users/njx/openclaw/copilot/goal.md v6.2（整份）
+      - /Users/njx/openclaw/copilot/plan.md v6.2 §2.2 T-1.2.1
+      - /Users/njx/openclaw/copilot/rules.md v6.2（整份 — 钉子 #14 §2.6 Done 硬条件必看）
+      - /Users/njx/openclaw/copilot/delivery.md v6.2
+      - /Users/njx/openclaw/copilot/sprint1.1/T-1.1.4-Local-KB-SQLite-MD.md（KB schema 基础）
+      - /Users/njx/openclaw/copilot/packages/kb/SCHEMA-FROZEN-1.1.md（已冻 contract）
+
+      ## ⚠️ RETRY v2 · 工作位置变化（避免与 v1 zombie branches 冲突）
+      - 自己 worktree: `git worktree add ../copilot.wt-T121v2/wt-T121v2 -b sp1.2-T-1.2.1-v2 main`
+      - **不重用** v1 worktree `copilot.wt-T121/wt-T121` 或 branch `sp1.2-T-1.2.1`(PM 保留作为 archive,任何 worker 不动)
+      - 写：packages/kg/ 整目录、apps/copilot-desktop/src/kg/ 集成、tests、SELF-VERIFY-T-1.2.1.md、screenshots/T-1.2.1/*.png
+      - 不写：apps/web/、apps/server/、其他 sub-agent worktree (含 v1)、4 docs
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（cycle 3 zombie 教训）
+      cycle 3 中 5 worker zombie 29min 0 commit (mvs_bf4a... 等)。retry v2 改 4 件额外硬约束:
+
+      **Pre-work setup (≤2 min)** — 不做 = 视为未开始:
+      1. worktree 已建 (`copilot.wt-T121v2/wt-T121v2`)
+      2. `outputs/T-1.2.1/deliverable.md` 占位 stub（仅 VERDICT=PENDING + task_id + start_time,不写 VERDICT=FAIL/PASS）
+      3. board.md append "in_progress" entry (含 author_role=worker, task_id, start_time, retry=v2)
+
+      **Commit cadence (≤30min 硬 cap 内)**:
+      - ≤5 min: 第一 git commit = scaffold (含 .gitignore + package.json + src/index.ts 占位 + tests/ 空 directory)
+      - ≤10 min: 第一真实代码 commit (wave 1 part 1) — **如无,FAIL-START exit**
+      - ≤20 min: wave 1 完整 commit
+      - ≤25 min: wave 1 交付 + deliverable.md 必含最终 VERDICT 行 (PASS/PARTIAL/FAIL-START)
+
+      **FAIL-START 早退** — 这是新增的关键保护:
+      - 如果 ≤10 min 无任何代码 commit,主动写 deliverable.md VERDICT=FAIL-START (注明 reason: dispatch path throttle / LLM silent fail / prompt 未送达 / 其他)
+      - 加 board.md FAIL-START entry → exit
+      - 不静默 thrash 让 30min 走完 → 这正是 cycle 3 教训
+
+      **波次节奏**：
+      - wave 1 (≤25min): entity 抽取 — 从 KB 笔记抽 entity + 类型 + 置信度
+      - wave 2 (≤25min): relation 抽取 + 标签 + 摘要
+      - wave 3 (≤25min): 增量更新 + 性能 baseline (20 笔记 ≥ 30 节点 ≥ 50 边)
+      - 任何 wave 超 25min → 立即 commit 当前进度 + 写 deliverable.md PARTIAL + 列剩余 todo
+
+      **决策红线（plan.md §1 决策 2）**：
+      - KG **100% 本地**（app 内存 + 本地 SQLite 持久化）
+      - **严禁**在 cloud server 跑 LLM 抽 entity
+      - 增量更新基于 KB 的 `kg_pending` 表（Sprint 1.1 T-1.1.4 schema 已包含）
+
+      7*24h AI 提示：worker 可用 LLM 多次 verify/重试/深推理 — token 暂不考虑。
+
+      ## Done 硬条件 — 钉子 #14 v2 (Mavis 7/10 06:38 拍板 retry v2 增订)
+      报 done 前 4 件齐，缺一 = 视为未完成：
+      1. `git add && git commit` （含新增文件 + tests + screenshots + deliverable.md + board entry）— commit cadence 满足
+      2. `outputs/T-1.2.1/deliverable.md` 写入（VERDICT 行 + 已跑命令 + 截图清单 + known limitations）— stub 必先写
+      3. `board.md` append in_progress → done 行 + retry=v2 标记
+      4. **新增**：≤10 min 无 commit 必 FAIL-START 主动 exit,不可沉默 zombie
+
+      完成：commit + push + 写 SELF-VERIFY-T-1.2.1.md + 截图 ≥ 4 张（KG 节点图 / 边关系 / 增量更新 / 性能 baseline）→ exit。
+    verify_prompt: |
+      你是 Sprint 1.2 RETRY v2 的独立 verifier α，验证 worker α (KG builder) 的产出。
+
+      必跑：
+      1. cd /Users/njx/openclaw/copilot.wt-T121v2/wt-T121v2 && git log --oneline -5 (看到 sp1.2-T-1.2.1-v2 分支新 commit) — 含 5min scaffold commit
+      2. cat outputs/T-1.2.1/deliverable.md (存在, 含 VERDICT 行, retry=v2 标记)
+      3. cat SELF-VERIFY-T-1.2.1.md (存在，含 4 验收信号 + 截图路径)
+      4. ls screenshots/T-1.2.1/*.png | wc -l (≥ 4)
+      5. cd packages/kg && npm install (exit 0)
+      6. npm run check (exit 0, typescript 无错)
+      7. npm run test (exit 0, coverage ≥ 70%)
+      8. 跑性能 baseline：seed 20 条 KB 笔记 → 跑 KG builder → 验证 ≥ 30 节点 ≥ 50 边
+      9. 跑增量更新：新增 1 条笔记 → 验证 KG 增量 < 2s
+      10. grep -r "TODO\|FIXME\|XXX" packages/kg/src/ (避免明显未完工)
+      11. **钉子 #14 v2 verify**: 
+          - git status --porcelain 应为空
+          - outputs/T-1.2.1/deliverable.md 存在 + 含 retry=v2
+          - board.md 含 done 行
+          - commit cadence log: git log --format='%ai %s' | awk '$1 < start+5min...$1 > start+10min' 必须有 ≥1 commit
+          - 没有 v1 worktree / branch 被改 (`git diff main..sp1.2-T-1.2.1` 与 v1 branch 不混)
+
+      PASS 标准：
+      - 所有 4 个验收信号（20 笔记 ≥ 30 节点 / ≥ 50 边 / 增量 < 2s / 性能 baseline）截图肉眼可见工作
+      - npm run check + test 全过
+      - 3 wave 拆分清晰（每 wave 单独 commit）
+      - 没有 forbidden 文件被改 (git status 干净)
+      - 钉子 #14 v2 4 件齐
+
+      FAIL 反馈要具体：哪个验收信号缺哪张证据 + 哪个命令失败 + exit code + 钉子 #14 v2 哪件缺。
+
+  # ========== T-1.2.2 — 知识图谱 2D 渲染（依赖 T-1.2.1） ==========
+  - id: 'T-1.2.2'
+    title: '知识图谱 2D 渲染（sigma.js + 节点交互 + 筛选/搜索）'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: ['T-1.2.1']
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker β（KG 2D renderer）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.2-KG-2D-render.md` 完整合同。
+
+      必读基础文档：goal.md v6.2 / plan.md v6.2 §2.2 T-1.2.2 / rules.md v6.2 / delivery.md v6.2。
+
+      ## ⚠️ RETRY v2 · 工作位置
+      - 自己 worktree: `git worktree add ../copilot.wt-T122v2/wt-T122v2 -b sp1.2-T-1.2.2-v2 main`
+      - **不重用** v1 (`copilot.wt-T122/` 因 T-1.2.1 v1 blocked never created, 但仍只用 v2 路径避免将来冲突)
+      - 写：apps/copilot-desktop/src/components/KnowledgeGraph/、tests、SELF-VERIFY、screenshots
+      - **重要**：依赖 T-1.2.1,等 T-1.2.1 v2 PASS 后才开始。如果 T-1.2.1 v2 PARTIAL → 报 BLOCKED-waiting-on-T-1.2.1
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（同 T-1.2.1 4 件齐 + FAIL-START）
+
+      **30min cap 拆 wave**：
+      - wave 1 (≤25min): sigma.js 基础渲染（节点 + 边 + 100 节点 30 FPS）
+      - wave 2 (≤25min): 交互（点击/拖拽/缩放/筛选/搜索）
+      - 超 25min → PARTIAL + 写剩余 todo
+
+      验收：100 节点流畅渲染 ≥ 30 FPS；点击/拖拽/缩放正常；筛选/搜索可用。
+
+      ## Done 硬条件 — 钉子 #14 v2 (同 T-1.2.1,4 件齐)
+    verify_prompt: |
+      验证 worker β 的 2D 渲染产出。
+      必跑：git log sp1.2-T-1.2.2-v2 + deliverable.md + screenshots ≥ 3 + npm run check + test + 跑 cu MCP desktop_screenshot 验证主窗口含 KG 渲染 + 钉子 #14 v2 4 件齐。
+      PASS：100 节点 30 FPS + 交互全工作 + 钉子 #14 v2 全。
+
+  # ========== T-1.2.3 — 知识详情预览（独立 · 单 wave） ==========
+  - id: 'T-1.2.3'
+    title: '知识详情预览（Markdown / HTML 渲染 + 双链 + 反向引用）'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: []
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker γ（note detail preview）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.3-note-detail-preview.md`。
+
+      ## ⚠️ RETRY v2 · 工作位置
+      - worktree: `git worktree add ../copilot.wt-T123v2/wt-T123v2 -b sp1.2-T-1.2.3-v2 main`
+      - **不复用** v1 (`copilot.wt-T123/wt-T123` zombie 0 工作, 留着做 archive)
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（同 T-1.2.1 4 件齐 + FAIL-START）
+
+      30min cap：单 wave 即可（1-2h 估时 ≤ 25min 实际 worker 可一次完成；若超 → PARTIAL）。
+
+      验收：点击图谱节点 → 弹出详情面板显示原文 + 反向链接；MD 渲染正确；双链可点跳转。
+
+      ## Done 硬条件 — 钉子 #14 v2
+    verify_prompt: |
+      验证 worker γ 的详情预览。git log + deliverable.md + screenshots ≥ 2 + npm check + test + cu MCP 点节点验证面板弹出 + 钉子 #14 v2 4 件齐。
+
+  # ========== T-1.2.4 — 语音录入（独立 · 2-wave） ==========
+  - id: 'T-1.2.4'
+    title: '语音录入（WebSpeech API 端侧 + ASR 云端兜底）+ 笔记转写'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: []
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker δ（voice input）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.4-voice-input.md`。
+
+      ## ⚠️ RETRY v2 · 工作位置
+      - worktree: `git worktree add ../copilot.wt-T124v2/wt-T124v2 -b sp1.2-T-1.2.4-v2 main`
+      - **不复用** v1 (v1 PASS 在 c54b13fc, 但 NJX 拍板 retry v2 抛掉, branch 留 archive 不动)
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（同 T-1.2.1 4 件齐 + FAIL-START）
+
+      **30min cap 拆 wave**：
+      - wave 1 (≤25min): WebSpeech API 端侧（macOS 原生支持） + UI 录音按钮 + 波形显示
+      - wave 2 (≤25min): 云端 ASR 兜底（v5 已有 ASR 链路，复用）+ 端侧失败自动 fallback
+      - 超 25min → PARTIAL
+
+      验收：macOS 录音 → 转写文字入库；失败 fallback 提示；中文识别 ≥ 90%（端侧 + 云端综合）。
+
+      ## Done 硬条件 — 钉子 #14 v2
+    verify_prompt: |
+      验证 worker δ 的语音录入。git log + deliverable.md + screenshots ≥ 3 (录音 UI / 波形 / 转写结果) + npm check + test + cu MCP 录音 + 转写 + 入库验证 + 钉子 #14 v2。
+
+  # ========== T-1.2.5 — 智能日程（独立 · 2-wave） ==========
+  - id: 'T-1.2.5'
+    title: '智能日程（CRUD + 提醒 + 与笔记关联 + 日历视图）'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: []
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker ε（smart schedule）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.5-smart-schedule.md`。
+
+      ## ⚠️ RETRY v2 · 工作位置
+      - worktree: `git worktree add ../copilot.wt-T125v2/wt-T125v2 -b sp1.2-T-1.2.5-v2 main`
+      - **不复用** v1 (v1 PARTIAL_PASS 在 8b92840f, archive)
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（同 T-1.2.1 4 件齐 + FAIL-START）
+
+      **30min cap 拆 wave**：
+      - wave 1 (≤25min): CRUD API + 列表视图 + 日历视图（月/周/日）
+      - wave 2 (≤25min): 提醒机制（系统通知 + 权限优雅降级）+ 笔记关联（点击待办跳关联笔记）
+      - 超 25min → PARTIAL
+
+      验收：添加 1 个待办 → 1 分钟后提醒；列表/日历视图；关联笔记跳转；权限拒绝不静默。
+
+      ## Done 硬条件 — 钉子 #14 v2
+    verify_prompt: |
+      验证 worker ε 的智能日程。git log + deliverable.md + screenshots ≥ 3 (列表/日历/提醒) + npm check + test + cu MCP 加待办 + 收提醒 + 跳笔记 + 钉子 #14 v2。
+
+  # ========== T-1.2.6 — 设置面板 + 主题 + 模型 API（独立 · 单 wave） ==========
+  - id: 'T-1.2.6'
+    title: '设置面板 + 主题（深/浅/自动）+ 模型 API 配置（minimax/OpenAI/Claude/自托管）'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    depends_on: []
+    author_role: worker
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 worker ζ（settings panel）。读 `/Users/njx/openclaw/copilot/sprint1.2/T-1.2.6-settings-panel-theme.md`。
+
+      ## ⚠️ RETRY v2 · 工作位置
+      - worktree: `git worktree add ../copilot.wt-T126v2/wt-T126v2 -b sp1.2-T-1.2.6-v2 main`
+      - **不复用** v1 (v1 PASS 在 f4cb2cca, archive)
+
+      ## ⚠️ RETRY v2 · 钉子 #14 加固（同 T-1.2.1 4 件齐 + FAIL-START）
+
+      30min cap：单 wave 即可（1-2h 估时，UI 改动为主 ≤ 25min 实际 worker 可完成；超 → PARTIAL）。
+
+      **继承 Sprint 1.1 T-1.1.1 设置面板基础**：云备份开关已在，本次主要扩展主题 + 模型 API 配置。
+
+      验收：所有设置项可保存可重置；主题切换实时生效（深/浅/自动）；模型 API 切换可工作（config 写入 + LLM client 重连）。
+
+      ## Done 硬条件 — 钉子 #14 v2
+    verify_prompt: |
+      验证 worker ζ 的设置面板。git log + deliverable.md + screenshots ≥ 3 (深/浅/自动 + 模型 API) + npm check + test + cu MCP 切主题 + 切模型 + 钉子 #14 v2。
+
+  # ========== T-1.2.7 — Verifier cycle-close audit（钉子 #15 落地） ==========
+  - id: 'T-1.2.7'
+    title: 'Verifier cycle-close audit（每 cycle 跑 · spot-check 30% + 关键决策审计 + retry v2 监督）'
+    assigned_to: verifier
+    verified_by: PM
+    max_retries: 1
+    depends_on: []
+    author_role: verifier
+    dispatched_by: mvs_144239070a21476dae746d1cff6af16b (PM Mavis)
+    pm_spot_checked_by: None
+    spot_check_at: None
+    is_cycle_close_audit: true
+    prompt: |
+      你是 Sprint 1.2 RETRY v2 的 cycle-close verifier。每 cycle 结束自动触发（plan.yaml `cycle_close_audit: T-1.2.7`）。
+
+      工作内容（5-10min/cycle）：
+      1. **spot-check 30%**：本 cycle 内完成的 worker 任务，随机抽 30% 跑 6 件套 verify
+         - git log <branch> --oneline -3 (commit 真实)
+         - cat outputs/<task_id>/deliverable.md (VERDICT 行存在, retry=v2 标记)
+         - file <screenshot> (PNG header 真实，非 fabricated)
+         - jest --listTests (suite 数对得上 deliverable 声明)
+         - npm run check --workspaces (typecheck clean)
+         - ls outputs/<task_id>/ (deliverable 文件齐)
+      2. **钉子 #14 v2 加强 verify**:
+         - retry=v2 标识贯穿 (worker prompt / deliverable / board)
+         - commit cadence: git log --format='%ai' 与 task start time 比, 5min ≤ 第一次 commit ≤ 10min
+         - FAIL-START 检测: outputs/<task_id>/deliverable.md 含 "FAIL-START" 则标记退出原因,不算 worker zombie 静默死
+         - v1 branch / worktree 没被改 (`git diff main..sp1.2-T-1.2.X` v1 archive 不动)
+      3. **关键决策审计**:
+         - 钉子 #14 v2 4 件齐 verify
+         - 钉子 #15 author_role 标识 verify
+         - 决策红线 verify (KG 本地 / 云备份默认关 / 不污染 v5 W27)
+         - cross-doc 一致性 (Sprint 1.1 SCHEMA-FROZEN-1.1.md 没被破坏)
+      4. **写 audit 报告**:
+         - 路径：sprint1.2/audit/retry-v2-cycle-<N>-audit.md (v2 命名空间隔离)
+         - 格式：抽查 task list + 每 task 6 件套结果 + 钉子 #14 v2/15 audit + overall verdict (PASS/PARTIAL/FAIL) + 异常 list
+         - VERDICT 行必填
+
+      30min cap：单 wave（5-10min 估时），超 15min → PARTIAL。
+
+      ## Done 硬条件 — 钉子 #14 v2 (verifier 版)
+      1. git add audit/retry-v2-cycle-<N>-audit.md && git commit
+      2. outputs/T-1.2.7/retry-v2-cycle-<N>-deliverable.md (含 VERDICT)
+      3. board.md append audit done 行 (retry=v2 marker)
+      4. **新增**：钉子 #14 v2 4 件齐 + retry=v2 标记贯穿验证
+    verify_prompt: |
+      PM 验证 verifier 的 audit 报告。
+      必跑：git log audit/ + audit 文件存在 (retry-v2-cycle-<N>-audit.md) + 抽查 task 列表与 plan 实际完成 task 一致 + 6 件套 verify 真跑了 + 钉子 #14 v2 4 件齐 + VERDICT 行存在。
+      PASS：audit 报告完整 + 抽查与实际一致 + 关键决策有审计 + 钉子 #14 v2 全。
+      FAIL：audit 走过场 / 抽查与实际不符 / 关键决策漏审 / retry=v2 标记漏一处。

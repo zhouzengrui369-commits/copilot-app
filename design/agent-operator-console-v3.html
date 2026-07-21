@@ -1,0 +1,1843 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw_data/openclaw_workbench/design/agent-operator-console-v3.html">
+  <meta name="source-hash" content="prototype-20260601-owner-operator-console-v3">
+  <meta name="rendered-at" content="2026-06-01T00:00:00+0800">
+  <title>OpenClaw 智能体运营台 v3</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f7;
+      --panel: #ffffff;
+      --panel-soft: #fafafa;
+      --ink: #111827;
+      --muted: #667085;
+      --line: #e1e5ea;
+      --line-strong: #cad1d9;
+      --green: #0f766e;
+      --green-soft: #e4f7f3;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --amber: #b45309;
+      --amber-soft: #fff4dc;
+      --red: #b42318;
+      --red-soft: #fff0ec;
+      --violet: #6d28d9;
+      --violet-soft: #f0e9ff;
+      --slate: #1f2937;
+      --screen: #07111f;
+      --shadow: 0 18px 44px rgb(15 23 42 / .08);
+      --radius: 16px;
+      --sidebar: 300px;
+      --evidence: 380px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    body,
+    button,
+    input,
+    textarea,
+    select { font: inherit; }
+
+    button,
+    input,
+    select {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      padding: 8px 12px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: #0b675f;
+      background: var(--green);
+      color: #fff;
+    }
+
+    button.danger {
+      border-color: #d59089;
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    button.dark {
+      border-color: #111827;
+      background: #111827;
+      color: #fff;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin: 0; }
+
+    .prototype {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: auto minmax(220px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+      background: rgb(255 255 255 / .92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .brand strong,
+    .brand span {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .command {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .command input {
+      width: 100%;
+      padding: 8px 12px;
+    }
+
+    .status-pills {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--green);
+    }
+
+    .dot.warn { background: var(--amber); }
+    .dot.danger { background: var(--red); }
+    .dot.blue { background: var(--blue); }
+
+    .operator-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar) minmax(700px, 1fr) var(--evidence);
+      gap: 14px;
+      padding: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 26px rgb(15 23 42 / .045);
+      min-width: 0;
+    }
+
+    .sidebar,
+    .evidence {
+      position: sticky;
+      top: 78px;
+      height: calc(100vh - 92px);
+      overflow: auto;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-head h2 {
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .panel-head span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .sidebar-body,
+    .evidence-body {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--panel-soft);
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .summary-card span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .quick-task {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: linear-gradient(180deg, #fff, #f7faf9);
+    }
+
+    .quick-task textarea {
+      min-height: 76px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      color: var(--ink);
+    }
+
+    .quick-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+    }
+
+    .queue-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .task-card {
+      width: 100%;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      border-radius: 14px;
+      padding: 11px;
+      background: #fff;
+      border: 1px solid var(--line);
+      transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+    }
+
+    .task-card:hover,
+    .task-card.active {
+      border-color: var(--green);
+      box-shadow: 0 10px 22px rgb(15 118 110 / .12);
+      transform: translateY(-1px);
+    }
+
+    .task-card.recover {
+      border-color: #f1b8b1;
+      background: #fff8f7;
+    }
+
+    .task-card.human {
+      border-color: #f3d68f;
+      background: #fffaf0;
+    }
+
+    .task-card.working {
+      border-color: #9edbd4;
+      background: #f4fffc;
+    }
+
+    .task-meta,
+    .task-card small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .task-card strong {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .center {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .value-board {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(260px, .9fr) minmax(0, 1.5fr);
+      gap: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 18% 0%, rgb(45 212 191 / .16), transparent 34%),
+        linear-gradient(135deg, #101827, #07111f 62%, #111827);
+      color: #eaf2ff;
+      box-shadow: var(--shadow);
+    }
+
+    .value-board::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green), #60a5fa, #c084fc, var(--green));
+      background-size: 200% 100%;
+      animation: valueFlow 5s linear infinite;
+    }
+
+    .value-copy {
+      display: grid;
+      align-content: space-between;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .value-copy h1 {
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .value-copy p {
+      color: #adbbcc;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .value-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .value-actions button {
+      min-height: 34px;
+      color: #dbeafe;
+      border-color: rgb(255 255 255 / .16);
+      background: rgb(255 255 255 / .07);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric-card {
+      display: grid;
+      gap: 7px;
+      min-height: 118px;
+      padding: 12px;
+      border: 1px solid rgb(255 255 255 / .12);
+      border-radius: 14px;
+      background: rgb(255 255 255 / .045);
+    }
+
+    .metric-card strong {
+      font-size: 24px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-card span,
+    .metric-card small {
+      color: #a8b6c7;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-card em {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 7px;
+      background: rgb(20 184 166 / .16);
+      color: #99f6e4;
+      font-style: normal;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .office-panel {
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .office-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .office-head h2 {
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .office-head p {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .scenario-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .scenario-tabs button {
+      min-height: 34px;
+      font-size: 12px;
+    }
+
+    .scenario-tabs button.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .office-stage {
+      position: relative;
+      min-height: 610px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 24%, rgb(15 118 110 / .07), transparent 30%),
+        linear-gradient(90deg, rgb(17 24 39 / .035) 1px, transparent 1px) 0 0 / 42px 42px,
+        linear-gradient(180deg, rgb(17 24 39 / .035) 1px, transparent 1px) 0 0 / 42px 42px,
+        #fbfcfd;
+    }
+
+    .office-zone {
+      position: absolute;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgb(255 255 255 / .88);
+      box-shadow: 0 12px 22px rgb(15 23 42 / .05);
+      overflow: hidden;
+    }
+
+    .zone-label {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      z-index: 3;
+    }
+
+    .zone-label strong { color: var(--ink); }
+
+    .desks-zone {
+      inset: 18px 250px 150px 18px;
+      background: linear-gradient(180deg, rgb(255 255 255 / .9), rgb(247 250 252 / .9));
+    }
+
+    .tools-zone {
+      right: 18px;
+      top: 18px;
+      width: 214px;
+      height: 442px;
+      background: #fcfcfd;
+    }
+
+    .tea-zone {
+      left: 18px;
+      bottom: 18px;
+      width: 32%;
+      height: 116px;
+      background: #fffaf1;
+    }
+
+    .gm-zone {
+      left: calc(34% + 18px);
+      bottom: 18px;
+      width: 28%;
+      height: 116px;
+      background: #fff5f3;
+    }
+
+    .ops-zone {
+      right: 18px;
+      bottom: 18px;
+      width: 32%;
+      height: 116px;
+      background: #f1f6ff;
+    }
+
+    .desk-grid {
+      position: absolute;
+      inset: 58px 18px 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .desk {
+      position: relative;
+      display: grid;
+      align-content: end;
+      min-width: 0;
+      min-height: 236px;
+      padding: 10px;
+      border: 1px solid #d9e1eb;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgb(255 255 255 / .74), rgb(239 246 255 / .62));
+      overflow: hidden;
+    }
+
+    .desk.main { background: linear-gradient(180deg, rgb(236 253 245 / .72), rgb(241 245 249 / .78)); }
+    .desk.boss { background: linear-gradient(180deg, rgb(255 251 235 / .78), rgb(248 250 252 / .78)); }
+    .desk.worker { background: linear-gradient(180deg, rgb(239 246 255 / .78), rgb(248 250 252 / .78)); }
+
+    .desk h3 {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      right: 82px;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .desk .role {
+      position: absolute;
+      top: 34px;
+      left: 14px;
+      right: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .desk .desk-chip {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .desk-visual {
+      position: relative;
+      height: 118px;
+      margin-top: 44px;
+    }
+
+    .table {
+      position: absolute;
+      left: 16%;
+      right: 7%;
+      bottom: 16px;
+      height: 54px;
+      border-radius: 6px 6px 12px 12px;
+      background: linear-gradient(180deg, #edf2f7, #d7dee7);
+      box-shadow: 0 18px 25px rgb(15 23 42 / .14);
+    }
+
+    .monitor {
+      position: absolute;
+      left: 29%;
+      top: 8px;
+      width: 82px;
+      height: 56px;
+      border-radius: 4px;
+      background: var(--screen);
+      border: 7px solid #e8edf3;
+      box-shadow: 0 12px 20px rgb(15 23 42 / .16);
+    }
+
+    .monitor::before,
+    .monitor::after {
+      content: "";
+      position: absolute;
+      left: 13px;
+      height: 4px;
+      border-radius: 99px;
+      background: #8bd3ff;
+    }
+
+    .monitor::before {
+      top: 15px;
+      width: 52px;
+    }
+
+    .monitor::after {
+      top: 32px;
+      width: 34px;
+      background: #2dd4bf;
+    }
+
+    .desk.working .monitor::before,
+    .desk.working .monitor::after {
+      animation: screenWrite 1.7s ease-in-out infinite;
+    }
+
+    .chair {
+      position: absolute;
+      left: 40%;
+      bottom: 0;
+      width: 52px;
+      height: 38px;
+      border-radius: 10px 10px 6px 6px;
+      background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+      box-shadow: 0 13px 18px rgb(15 23 42 / .08);
+    }
+
+    .agent {
+      position: absolute;
+      width: 48px;
+      height: 68px;
+      z-index: 4;
+      transform-origin: center bottom;
+      transition: left .7s ease, top .7s ease, transform .7s ease;
+    }
+
+    .agent .head {
+      position: absolute;
+      left: 8px;
+      top: 0;
+      width: 34px;
+      height: 28px;
+      border-radius: 12px;
+      background: #111827;
+      box-shadow: inset 0 -5px 0 rgb(255 255 255 / .08);
+    }
+
+    .agent .head::before,
+    .agent .head::after {
+      content: "";
+      position: absolute;
+      top: 11px;
+      width: 6px;
+      height: 6px;
+      border-radius: 99px;
+      background: #c7f9ff;
+    }
+
+    .agent .head::before { left: 9px; }
+    .agent .head::after { right: 9px; }
+
+    .agent .body {
+      position: absolute;
+      left: 10px;
+      top: 30px;
+      width: 30px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--green);
+      border: 3px solid #111827;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 1000;
+      font-size: 14px;
+    }
+
+    .agent.boss .body { background: #c45f12; }
+    .agent.worker .body { background: #2563eb; }
+    .agent.tool .body { background: #475569; }
+
+    .agent .badge {
+      position: absolute;
+      left: 50%;
+      top: -17px;
+      translate: -50% 0;
+      white-space: nowrap;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 3px 7px;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .agent.working {
+      animation: workBreath 2.4s ease-in-out infinite;
+    }
+
+    .agent.walking {
+      animation: walking 1.1s ease-in-out infinite;
+    }
+
+    .agent.recover .body { background: var(--red); }
+    .agent.human .body { background: var(--amber); }
+    .agent.idle .body { background: #64748b; }
+
+    .agent-at-desk {
+      left: 30%;
+      top: 76px;
+    }
+
+    .agent-at-tea {
+      left: 17%;
+      top: 22px;
+    }
+
+    .agent-at-gm {
+      left: 45%;
+      top: 22px;
+    }
+
+    .agent-at-ops {
+      left: 70%;
+      top: 22px;
+    }
+
+    .desk-summary {
+      display: grid;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px;
+      background: rgb(255 255 255 / .86);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .desk-summary strong {
+      font-size: 12px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .desk-summary > span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .progress {
+      height: 7px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: var(--p, 0%);
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .progress.recover span { background: var(--red); }
+    .progress.human span { background: var(--amber); }
+
+    .desk-actions,
+    .service-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .desk-actions button,
+    .service-actions button {
+      min-height: 28px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .tool-grid {
+      position: absolute;
+      inset: 58px 12px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .tool-desk {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px;
+      background: #fff;
+      min-height: 100px;
+      overflow: hidden;
+    }
+
+    .tool-desk strong,
+    .tool-desk span {
+      display: block;
+      position: relative;
+      z-index: 2;
+    }
+
+    .tool-desk span {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .tool-desk::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      width: 58px;
+      height: 36px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #0f172a, #1f2937);
+      opacity: .85;
+    }
+
+    .service-inner {
+      position: absolute;
+      inset: 42px 14px 14px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .service-icon {
+      width: 74px;
+      height: 48px;
+      border-radius: 9px 9px 15px 15px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 1000;
+      color: var(--muted);
+      box-shadow: 0 12px 18px rgb(15 23 42 / .08);
+    }
+
+    .gm-zone .service-icon { color: var(--red); }
+    .ops-zone .service-icon { color: var(--blue); }
+    .tea-zone .service-icon { color: var(--amber); }
+
+    .service-copy {
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    .service-copy strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .service-copy span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .service-actions {
+      justify-content: flex-end;
+    }
+
+    .evidence {
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .context-card {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .context-card.hot {
+      border-color: #f1b8b1;
+      background: #fff8f7;
+    }
+
+    .context-card h3 {
+      font-size: 16px;
+    }
+
+    .context-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tabbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .tabbar button {
+      min-height: 32px;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    .tabbar button.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .evidence-section {
+      display: none;
+      gap: 9px;
+    }
+
+    .evidence-section.active {
+      display: grid;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      font-size: 12px;
+    }
+
+    .kv span {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .log-item,
+    .artifact,
+    .preview-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .log-item {
+      display: grid;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    .log-item strong {
+      font-size: 13px;
+    }
+
+    .log-item span {
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .artifact {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: center;
+      text-align: left;
+      width: 100%;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .file-icon {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .artifact strong,
+    .artifact span {
+      display: block;
+    }
+
+    .artifact span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .preview-box {
+      min-height: 190px;
+      background: #fafafa;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .preview-box h4 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .preview-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      background: #fff;
+    }
+
+    .preview-box th,
+    .preview-box td {
+      border: 1px solid var(--line);
+      padding: 6px;
+      text-align: left;
+    }
+
+    .settings-sheet {
+      position: fixed;
+      inset: auto 18px 18px auto;
+      z-index: 40;
+      display: none;
+      width: min(440px, calc(100vw - 36px));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgb(15 23 42 / .2);
+      padding: 16px;
+    }
+
+    .settings-sheet.open {
+      display: grid;
+      gap: 12px;
+    }
+
+    .settings-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .settings-row strong,
+    .settings-row span {
+      display: block;
+      font-size: 13px;
+    }
+
+    .settings-row span {
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    @keyframes valueFlow {
+      from { background-position: 0% 50%; }
+      to { background-position: 200% 50%; }
+    }
+
+    @keyframes screenWrite {
+      0%, 100% { transform: scaleX(.55); opacity: .55; }
+      50% { transform: scaleX(1); opacity: 1; }
+    }
+
+    @keyframes workBreath {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes walking {
+      0%, 100% { transform: translateX(0) rotate(-2deg); }
+      50% { transform: translateX(4px) rotate(2deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width: 1400px) {
+      :root {
+        --sidebar: 280px;
+        --evidence: 340px;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .office-stage {
+        min-height: 660px;
+      }
+
+      .desks-zone {
+        right: 18px;
+        bottom: 228px;
+      }
+
+      .tools-zone {
+        display: none;
+      }
+
+      .tea-zone,
+      .gm-zone,
+      .ops-zone {
+        width: calc((100% - 60px) / 3);
+        height: 176px;
+      }
+
+      .gm-zone { left: calc((100% - 60px) / 3 + 30px); }
+      .ops-zone { right: 18px; }
+    }
+
+    @media (max-width: 1180px) {
+      .operator-grid {
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .evidence {
+        position: static;
+        grid-column: 1 / -1;
+        height: auto;
+      }
+
+      .value-board {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .command {
+        grid-template-columns: 1fr auto;
+      }
+
+      .command .dark {
+        display: none;
+      }
+
+      .operator-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+
+      .center {
+        order: -1;
+      }
+
+      .sidebar {
+        order: 0;
+      }
+
+      .evidence {
+        order: 1;
+      }
+
+      .sidebar,
+      .evidence {
+        position: static;
+        height: auto;
+      }
+
+      .metric-grid,
+      .summary-grid,
+      .desk-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .value-board {
+        padding: 14px;
+      }
+
+      .value-board .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .value-board .metric-card {
+        min-height: 96px;
+        padding: 10px;
+      }
+
+      .value-board .metric-card strong {
+        font-size: 19px;
+      }
+
+      .value-board .metric-card small {
+        display: none;
+      }
+
+      .office-head {
+        grid-template-columns: 1fr;
+      }
+
+      .office-head h2 {
+        white-space: normal;
+      }
+
+      .scenario-tabs {
+        justify-content: flex-start;
+      }
+
+      .office-stage {
+        min-height: 1180px;
+      }
+
+      .desks-zone,
+      .tea-zone,
+      .gm-zone,
+      .ops-zone {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        width: auto;
+      }
+
+      .desks-zone {
+        top: 12px;
+        bottom: 372px;
+      }
+
+      .desk-grid {
+        inset: 54px 12px 18px;
+      }
+
+      .tea-zone { bottom: 252px; height: 110px; }
+      .gm-zone { bottom: 132px; height: 110px; }
+      .ops-zone { bottom: 12px; height: 110px; }
+      .tools-zone { display: none; }
+      .service-inner { grid-template-columns: auto minmax(0, 1fr); }
+      .service-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="prototype">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">OC</div>
+        <div>
+          <strong>OpenClaw Agent OS</strong>
+          <span>Owner Operator Console · prototype sample</span>
+        </div>
+      </div>
+      <div class="command">
+        <input value="@all 布置任务、查询状态、打开产出物" aria-label="全局命令">
+        <button class="primary">搜索</button>
+        <button class="dark">新任务</button>
+      </div>
+      <div class="status-pills">
+        <span class="pill"><i class="dot"></i>SSE 在线</span>
+        <span class="pill"><i class="dot danger"></i>Gateway 需恢复</span>
+        <span class="pill"><i class="dot warn"></i>44 待人工</span>
+      </div>
+    </header>
+
+    <section class="operator-grid" aria-label="智能体运营台三栏布局">
+      <aside class="panel sidebar" aria-label="任务与停机队列">
+        <div class="panel-head">
+          <div>
+            <h2>任务与停机队列</h2>
+            <span>优先显示需要处置的停机点</span>
+          </div>
+          <span>04:42</span>
+        </div>
+        <div class="sidebar-body">
+          <div class="summary-grid" aria-label="运行摘要">
+            <div class="summary-card"><strong>3</strong><span>自动化中</span></div>
+            <div class="summary-card"><strong>44</strong><span>待人工</span></div>
+            <div class="summary-card"><strong>36</strong><span>需恢复</span></div>
+          </div>
+
+          <section class="quick-task" aria-label="快速布置任务">
+            <div class="section-title"><span>快速布置任务</span><span>1s 可见</span></div>
+            <textarea aria-label="输入任务目标">检查 Gateway 故障并恢复 Worker 自动化执行</textarea>
+            <div class="quick-row">
+              <select aria-label="选择代理"><option>Worker</option><option>Main</option><option>Boss</option></select>
+              <select aria-label="选择优先级"><option>P1</option><option>P2</option><option>P3</option></select>
+              <button class="primary">布置</button>
+            </div>
+          </section>
+
+          <section class="queue-section" aria-label="待处理停机点">
+            <div class="section-title"><span>待处理停机点</span><span>44</span></div>
+            <button class="task-card human" data-context="approval">
+              <small>审批停机 · system</small>
+              <strong>15 项高风险动作等待确认</strong>
+              <span class="task-meta">下一步：处理审批 / 查看风险</span>
+            </button>
+            <button class="task-card recover active" data-context="main">
+              <small>Main · TASK_20260531_007</small>
+              <strong>Gateway 接收停滞，已 438 分钟无更新</strong>
+              <span class="task-meta">下一步：恢复自动化 / 生成恢复提示</span>
+            </button>
+            <button class="task-card recover" data-context="worker">
+              <small>Worker · system ops</small>
+              <strong>系统运维台 API 验证任务需要恢复</strong>
+              <span class="task-meta">下一步：诊断 / 打开系统设置</span>
+            </button>
+          </section>
+
+          <section class="queue-section" aria-label="运行中任务">
+            <div class="section-title"><span>运行中任务</span><span>3</span></div>
+            <button class="task-card working" data-context="demo-working">
+              <small>Worker · executing</small>
+              <strong>生成 RESULT 并验证前端构建</strong>
+              <span class="task-meta">真实事件小于 5 分钟时才显示工作态</span>
+            </button>
+          </section>
+
+          <section class="queue-section" aria-label="最近完成">
+            <div class="section-title"><span>最近完成</span><span>122</span></div>
+            <button class="task-card" data-context="result">
+              <small>Main · completed</small>
+              <strong>Workbench Chat Markdown 表格和引用预览修复</strong>
+              <span class="task-meta">查看 RESULT / 产出物</span>
+            </button>
+          </section>
+        </div>
+      </aside>
+
+      <section class="center" aria-label="价值输出和办公室">
+        <section class="value-board" aria-label="自动化价值输出屏">
+          <div class="value-copy">
+            <div>
+              <span class="pill"><i class="dot blue"></i>Value Board · configurable</span>
+              <h1>自动化价值输出</h1>
+              <p>只展示能证明代理正在创造价值的指标。窗口遵循 value-metrics.json：当前为近 1 天 / 24h。</p>
+            </div>
+            <div class="value-actions">
+              <button id="openSettings">设置指标</button>
+              <button data-context="value">查看计算来源</button>
+            </div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span>Token 消耗</span>
+              <strong><span data-live="-30400">-30.4k</span></strong>
+              <em>近 1 天 / 24h</em>
+              <small>source: local event estimate</small>
+            </div>
+            <div class="metric-card">
+              <span>文字产出</span>
+              <strong><span data-live="54700">54.7k</span></strong>
+              <em>+18.9k / day</em>
+              <small>Markdown / RESULT / chat</small>
+            </div>
+            <div class="metric-card">
+              <span>代码行</span>
+              <strong><span data-live="1400">1.4k</span></strong>
+              <em>360 / day</em>
+              <small>git diff + artifacts</small>
+            </div>
+            <div class="metric-card">
+              <span>文档产出</span>
+              <strong><span data-live="251">251</span></strong>
+              <em>38 / day</em>
+              <small>PLAN / RESULT / reports</small>
+            </div>
+            <div class="metric-card">
+              <span>完成任务</span>
+              <strong><span data-live="122">122</span></strong>
+              <em>近 1 天统计</em>
+              <small>filesystem + sqlite</small>
+            </div>
+            <div class="metric-card">
+              <span>实时窗口</span>
+              <strong><span data-live="5">5m</span></strong>
+              <em>近 5 分钟变化</em>
+              <small>若 SSE 断开则降级轮询</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel office-panel" aria-label="开放办公室">
+          <div class="office-head">
+            <div>
+              <h2>统一开放办公室</h2>
+              <p>三代理固定工位是主舞台；茶歇、总经理审批、系统运维是状态去向。只有真实 running / tool / thinking 事件才显示工作动画。</p>
+            </div>
+            <div class="scenario-tabs" aria-label="场景切换">
+              <button class="active" data-scenario="current">当前真实</button>
+              <button data-scenario="working">自动化运行</button>
+              <button data-scenario="approval">待审批</button>
+              <button data-scenario="recover">故障恢复</button>
+            </div>
+          </div>
+
+          <div class="office-stage" id="officeStage">
+            <section class="office-zone desks-zone" aria-label="三代理固定工位">
+              <div class="zone-label"><strong>三代理工位</strong><span>Main / Boss / Worker</span></div>
+              <div class="desk-grid">
+                <article class="desk main recover" data-agent="main">
+                  <h3>OpenClaw Main</h3>
+                  <span class="role">系统管理员 · 调度 · 审计 · Codex 调用</span>
+                  <span class="desk-chip">Main 工位</span>
+                  <div class="desk-visual">
+                    <div class="table"></div><div class="monitor"></div><div class="chair"></div>
+                    <div class="agent main recover agent-at-desk"><span class="badge">M · Main</span><div class="head"></div><div class="body">M</div></div>
+                  </div>
+                  <div class="desk-summary">
+                    <strong>Main 已离开工位前往系统运维</strong>
+                    <span>证据：TASK_20260531_007 · Gateway 接收停滞</span>
+                    <div class="progress recover" style="--p: 5%"><span></span></div>
+                    <div class="desk-actions">
+                      <button class="danger" data-context="main">处理恢复</button>
+                      <button data-context="main">查看电脑</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="desk boss idle" data-agent="boss">
+                  <h3>Boss</h3>
+                  <span class="role">战略判断 · 方案评审 · 价值审计</span>
+                  <span class="desk-chip">Boss 工位</span>
+                  <div class="desk-visual">
+                    <div class="table"></div><div class="monitor"></div><div class="chair"></div>
+                    <div class="agent boss idle agent-at-desk"><span class="badge">B · Boss</span><div class="head"></div><div class="body">B</div></div>
+                  </div>
+                  <div class="desk-summary">
+                    <strong>Boss 在线待命</strong>
+                    <span>当前无自动化运行，适合布置评审或规划任务</span>
+                    <div class="progress" style="--p: 0%"><span></span></div>
+                    <div class="desk-actions">
+                      <button class="primary" data-context="boss">布置任务</button>
+                      <button data-context="boss">查看技能</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="desk worker recover" data-agent="worker">
+                  <h3>Worker</h3>
+                  <span class="role">任务执行 · 代码/文档 · 结果交付</span>
+                  <span class="desk-chip">Worker 工位</span>
+                  <div class="desk-visual">
+                    <div class="table"></div><div class="monitor"></div><div class="chair"></div>
+                    <div class="agent worker recover agent-at-desk"><span class="badge">W · Worker</span><div class="head"></div><div class="body">W</div></div>
+                  </div>
+                  <div class="desk-summary">
+                    <strong>Worker 需要系统运维</strong>
+                    <span>证据：API 验证任务无新日志，需恢复 Gateway</span>
+                    <div class="progress recover" style="--p: 55%"><span></span></div>
+                    <div class="desk-actions">
+                      <button class="danger" data-context="worker">处理恢复</button>
+                      <button data-context="worker">查看电脑</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section class="office-zone tools-zone" aria-label="辅助能力工位">
+              <div class="zone-label"><strong>能力工位</strong><span>按需调用</span></div>
+              <div class="tool-grid">
+                <button class="tool-desk" data-context="browser"><strong>Browser Agent</strong><span>网页核验 / 截图 / 操作浏览器</span></button>
+                <button class="tool-desk" data-context="knowledge"><strong>Knowledge Agent</strong><span>知识引用 / 文件检索 / 原文预览</span></button>
+                <button class="tool-desk" data-context="review"><strong>Review Agent</strong><span>验收复核 / 风险审计 / 交付证据</span></button>
+              </div>
+            </section>
+
+            <section class="office-zone tea-zone" aria-label="茶歇区">
+              <div class="zone-label"><strong>茶歇区</strong><span>在线待命</span></div>
+              <div class="service-inner">
+                <div class="service-icon">READY</div>
+                <div class="service-copy"><strong>待机代理来到这里</strong><span>无自动化运行，不显示工作动画；下一步接开发台或布置任务。</span></div>
+                <div class="service-actions"><button data-context="boss">布置任务</button></div>
+              </div>
+            </section>
+
+            <section class="office-zone gm-zone" aria-label="总经理办公室">
+              <div class="zone-label"><strong>总经理办公室</strong><span>人工审批</span></div>
+              <div class="service-inner">
+                <div class="service-icon">APPROVE</div>
+                <div class="service-copy"><strong>待审批代理必须停机</strong><span>预算、外发、删除、配置写入等高风险动作进入审批台。</span></div>
+                <div class="service-actions"><button data-context="approval">处理审批</button></div>
+              </div>
+            </section>
+
+            <section class="office-zone ops-zone" aria-label="系统运维">
+              <div class="zone-label"><strong>系统运维</strong><span>恢复自动化</span></div>
+              <div class="service-inner">
+                <div class="service-icon">DIAG</div>
+                <div class="service-copy"><strong>Main / Worker 正在这里待处理</strong><span>Gateway 异常、超时、配置错误必须优先恢复。</span></div>
+                <div class="service-actions"><button class="danger" data-context="worker">处理恢复</button><button data-context="main">生成提示</button></div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <aside class="panel evidence" aria-label="日志、产出物和预览">
+        <div class="panel-head">
+          <div>
+            <h2>证据和处置</h2>
+            <span id="contextSubtitle">Main · TASK_20260531_007</span>
+          </div>
+          <span>右栏不离开办公室</span>
+        </div>
+        <div class="evidence-body">
+          <section class="context-card hot" id="contextCard">
+            <span class="pill"><i class="dot danger"></i><span id="contextStatus">需恢复</span></span>
+            <h3 id="contextTitle">TASK_20260531_007</h3>
+            <p id="contextSummary">等待 Gateway 接收并开始处理，已长时间无更新。优先恢复自动化，再继续执行。</p>
+            <div class="desk-actions" id="contextActions">
+              <button class="danger">处理恢复</button>
+              <button>诊断</button>
+              <button>生成恢复提示</button>
+            </div>
+          </section>
+
+          <div class="tabbar" role="tablist" aria-label="证据面板标签">
+            <button class="active" data-tab="state">状态</button>
+            <button data-tab="log">日志</button>
+            <button data-tab="artifacts">产出物</button>
+            <button data-tab="preview">预览</button>
+          </div>
+
+          <section class="evidence-section active" data-section="state">
+            <div class="kv"><span>当前代理</span><strong id="kvAgent">Main</strong></div>
+            <div class="kv"><span>任务</span><strong id="kvTask">TASK_20260531_007</strong></div>
+            <div class="kv"><span>证据来源</span><strong>filesystem + sqlite + gateway events</strong></div>
+            <div class="kv"><span>下一步</span><strong id="kvNext">处理恢复，生成恢复提示，确认 Gateway 状态</strong></div>
+          </section>
+
+          <section class="evidence-section" data-section="log">
+            <article class="log-item"><strong>04:41 · system</strong><span>Gateway 状态异常，SSE 在线但 agent session 无最终输出。</span></article>
+            <article class="log-item"><strong>04:37 · main</strong><span>任务进入 created，等待 Gateway 接收。</span></article>
+            <article class="log-item"><strong>04:30 · auditor</strong><span>发现 36 个需恢复任务，建议优先处理 Worker 运维链路。</span></article>
+          </section>
+
+          <section class="evidence-section" data-section="artifacts">
+            <button class="artifact" data-preview="plan"><span class="file-icon">MD</span><span><strong>PLAN.md</strong><span>/Users/njx/openclaw_data/tasks/TASK_20260531_007/PLAN.md</span></span><span>预览</span></button>
+            <button class="artifact" data-preview="result"><span class="file-icon">MD</span><span><strong>RESULT.md</strong><span>/Users/njx/openclaw_data/tasks/TASK_20260531_007/RESULT.md</span></span><span>预览</span></button>
+            <button class="artifact" data-preview="report"><span class="file-icon">HTML</span><span><strong>验收报告</strong><span>browser screenshot + visual gate</span></span><span>预览</span></button>
+          </section>
+
+          <section class="evidence-section" data-section="preview">
+            <div class="preview-box" id="previewBox">
+              <h4>PLAN.md 预览</h4>
+              <p>目标：恢复 Gateway 接收能力，并让 Worker 任务从 created/stale 回到可执行状态。</p>
+              <table>
+                <thead><tr><th>步骤</th><th>证据</th><th>人工点</th></tr></thead>
+                <tbody>
+                  <tr><td>诊断 Gateway</td><td>health / events</td><td>否</td></tr>
+                  <tr><td>生成恢复提示</td><td>session key</td><td>否</td></tr>
+                  <tr><td>重启或写配置</td><td>system setting</td><td>是</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <section class="settings-sheet" id="settingsSheet" aria-label="价值指标设置">
+    <div class="panel-head" style="padding:0 0 10px;border-bottom:1px solid var(--line)">
+      <div>
+        <h2>设置价值指标</h2>
+        <span>保存到 value-metrics.json，刷新后继续生效</span>
+      </div>
+      <button id="closeSettings">关闭</button>
+    </div>
+    <div class="settings-row"><input type="checkbox" checked><div><strong>Token 消耗</strong><span>窗口：近 1 天 / 24h；来源：本地估算</span></div><select><option>/day</option><option>/h</option></select></div>
+    <div class="settings-row"><input type="checkbox" checked><div><strong>文字产出</strong><span>窗口：近 1 天；来源：RESULT / chat</span></div><select><option>字/day</option><option>字/h</option></select></div>
+    <div class="settings-row"><input type="checkbox" checked><div><strong>代码行</strong><span>窗口：近 1 天；来源：git diff</span></div><select><option>line/day</option><option>line/h</option></select></div>
+    <button class="primary" id="saveSettings">保存并刷新屏幕</button>
+  </section>
+
+  <script>
+    const contexts = {
+      main: {
+        status: "需恢复",
+        title: "TASK_20260531_007",
+        subtitle: "Main · TASK_20260531_007",
+        summary: "Gateway 接收停滞，Main 已离开工位进入系统运维。下一步先恢复自动化，再继续任务。",
+        agent: "Main",
+        task: "TASK_20260531_007",
+        next: "处理恢复，生成恢复提示，确认 Gateway 状态",
+        actions: ["处理恢复", "诊断", "生成恢复提示"],
+        hot: true
+      },
+      worker: {
+        status: "需恢复",
+        title: "系统运维台 API 验证任务",
+        subtitle: "Worker · ops recovery",
+        summary: "Worker 负责执行闭环，但当前无新日志。需要打开系统运维并恢复 Gateway / API。",
+        agent: "Worker",
+        task: "system-ops-api-check",
+        next: "处理恢复，查看事件，必要时进入系统设置",
+        actions: ["处理恢复", "查看事件", "系统设置"],
+        hot: true
+      },
+      boss: {
+        status: "待命",
+        title: "Boss 在线待命",
+        subtitle: "Boss · ready",
+        summary: "Boss 当前没有自动化运行。适合布置方案评审、价值审计或审批风险说明。",
+        agent: "Boss",
+        task: "none",
+        next: "布置任务或查看可用技能",
+        actions: ["布置任务", "查看技能", "打开开发台"],
+        hot: false
+      },
+      approval: {
+        status: "待人工",
+        title: "15 项审批停机点",
+        subtitle: "GM Office · approvals",
+        summary: "高风险动作正在等待确认。这里代表自动化暂停，不允许显示工作动画。",
+        agent: "system",
+        task: "approval-queue",
+        next: "处理审批，查看风险，补充说明",
+        actions: ["处理审批", "查看风险", "补充说明"],
+        hot: true
+      },
+      value: {
+        status: "数据来源",
+        title: "价值指标计算来源",
+        subtitle: "Value Board · events + artifacts",
+        summary: "当前 Token 未接官方用量 API，所有数值必须标注本地估算。窗口配置来自 value-metrics.json。",
+        agent: "system",
+        task: "value-metrics",
+        next: "接入真实 token API 后替换估算源",
+        actions: ["设置指标", "查看配置", "导出审计"],
+        hot: false
+      },
+      "demo-working": {
+        status: "自动化中",
+        title: "Worker 正在生成 RESULT",
+        subtitle: "Worker · executing",
+        summary: "演示态：只有最近 5 分钟有 running/tool/thinking 事件时，才允许显示键盘和屏幕输出动画。",
+        agent: "Worker",
+        task: "demo-running-task",
+        next: "查看任务，引导，暂停",
+        actions: ["查看任务", "引导", "暂停"],
+        hot: false
+      },
+      result: {
+        status: "已完成",
+        title: "Chat Markdown 表格和引用预览修复",
+        subtitle: "Main · completed",
+        summary: "已完成任务应该优先展示 RESULT、产出物、验证截图和可点击原文件。",
+        agent: "Main",
+        task: "completed-chat-markdown",
+        next: "打开 RESULT，查看截图，归档知识库",
+        actions: ["打开 RESULT", "预览文件", "归档"],
+        hot: false
+      }
+    };
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    function setContext(id) {
+      const data = contexts[id] || contexts.main;
+      $("#contextStatus").textContent = data.status;
+      $("#contextTitle").textContent = data.title;
+      $("#contextSubtitle").textContent = data.subtitle;
+      $("#contextSummary").textContent = data.summary;
+      $("#kvAgent").textContent = data.agent;
+      $("#kvTask").textContent = data.task;
+      $("#kvNext").textContent = data.next;
+      $("#contextCard").classList.toggle("hot", data.hot);
+      $("#contextActions").innerHTML = data.actions.map((action, index) => `<button class="${data.hot && index === 0 ? "danger" : ""}">${action}</button>`).join("");
+      $$(".task-card").forEach((card) => card.classList.toggle("active", card.dataset.context === id));
+    }
+
+    document.addEventListener("click", (event) => {
+      const contextButton = event.target.closest("[data-context]");
+      if (contextButton) setContext(contextButton.dataset.context);
+
+      const tab = event.target.closest("[data-tab]");
+      if (tab) {
+        $$(".tabbar button").forEach((button) => button.classList.toggle("active", button === tab));
+        $$(".evidence-section").forEach((section) => section.classList.toggle("active", section.dataset.section === tab.dataset.tab));
+      }
+
+      const preview = event.target.closest("[data-preview]");
+      if (preview) {
+        $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === "preview"));
+        $$(".evidence-section").forEach((section) => section.classList.toggle("active", section.dataset.section === "preview"));
+        const map = {
+          plan: "<h4>PLAN.md 预览</h4><p>目标：恢复 Gateway 接收能力，并让 Worker 任务从 created/stale 回到可执行状态。</p>",
+          result: "<h4>RESULT.md 预览</h4><p>结果应包含：修复动作、验证命令、浏览器截图、未完成风险。</p>",
+          report: "<h4>验收报告预览</h4><p>视觉验收必须覆盖 1440x900、1280x720、390px，并证明无假工作动画。</p>"
+        };
+        $("#previewBox").innerHTML = map[preview.dataset.preview] || map.plan;
+      }
+    });
+
+    $$(".scenario-tabs button").forEach((button) => {
+      button.addEventListener("click", () => {
+        $$(".scenario-tabs button").forEach((item) => item.classList.toggle("active", item === button));
+        const mode = button.dataset.scenario;
+        const desks = $$(".desk");
+        desks.forEach((desk) => desk.classList.remove("working", "recover", "human", "idle"));
+        if (mode === "working") {
+          $(".desk.worker").classList.add("working");
+          $(".desk.main").classList.add("idle");
+          $(".desk.boss").classList.add("idle");
+          setContext("demo-working");
+        } else if (mode === "approval") {
+          desks.forEach((desk) => desk.classList.add("human"));
+          setContext("approval");
+        } else if (mode === "recover") {
+          $(".desk.main").classList.add("recover");
+          $(".desk.worker").classList.add("recover");
+          $(".desk.boss").classList.add("idle");
+          setContext("worker");
+        } else {
+          $(".desk.main").classList.add("recover");
+          $(".desk.worker").classList.add("recover");
+          $(".desk.boss").classList.add("idle");
+          setContext("main");
+        }
+      });
+    });
+
+    $("#openSettings").addEventListener("click", () => $("#settingsSheet").classList.add("open"));
+    $("#closeSettings").addEventListener("click", () => $("#settingsSheet").classList.remove("open"));
+    $("#saveSettings").addEventListener("click", () => {
+      $("#settingsSheet").classList.remove("open");
+      setContext("value");
+    });
+
+    let tick = 0;
+    setInterval(() => {
+      tick += 1;
+      $$("[data-live]").forEach((node) => {
+        const base = Number(node.dataset.live);
+        if (!Number.isFinite(base)) return;
+        const wave = Math.round(Math.sin(tick / 2) * 3);
+        const value = base + wave;
+        if (Math.abs(value) >= 1000) {
+          node.textContent = `${value < 0 ? "-" : ""}${(Math.abs(value) / 1000).toFixed(1)}k`;
+        } else {
+          node.textContent = String(value);
+        }
+      });
+    }, 1400);
+  </script>
+</body>
+</html>

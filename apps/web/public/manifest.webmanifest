@@ -1,0 +1,9 @@
+{
+  "name": "OpenClaw Workbench",
+  "short_name": "Workbench",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f8",
+  "theme_color": "#101820",
+  "icons": []
+}

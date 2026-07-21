@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw_data/openclaw_workbench/design/agent-operator-console-v4.html">
+  <meta name="source-hash" content="prototype-20260601-agent-operator-console-v4">
+  <title>OpenClaw Agent Operator Console v4</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f8;
+      --paper: #ffffff;
+      --paper-soft: #fbfbfc;
+      --ink: #111827;
+      --muted: #667085;
+      --line: #e5e7eb;
+      --line-strong: #cfd6df;
+      --green: #0f766e;
+      --green-soft: #e7f7f3;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --amber: #b45309;
+      --amber-soft: #fff5dd;
+      --red: #b42318;
+      --red-soft: #fff0ef;
+      --purple: #6d28d9;
+      --purple-soft: #f1eaff;
+      --slate: #182230;
+      --screen: #07111f;
+      --shadow: 0 18px 48px rgb(15 23 42 / .08);
+      --radius: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 14% 4%, rgb(15 118 110 / .06), transparent 28%),
+        linear-gradient(180deg, #fff 0, var(--bg) 330px, var(--bg) 100%);
+      color: var(--ink);
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    body, button, input, textarea, select { font: inherit; }
+    button, input, textarea, select {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 38px;
+    }
+    button {
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button.primary { border-color: #0b675f; background: var(--green); color: #fff; }
+    button.dark { border-color: #111827; background: #111827; color: #fff; }
+    button.ghost { background: transparent; }
+    button.danger { border-color: #e0aaa5; background: var(--red-soft); color: var(--red); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 18px; line-height: 1.1; }
+    h2 { font-size: 16px; line-height: 1.2; }
+    h3 { font-size: 14px; line-height: 1.25; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: auto minmax(320px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgb(255 255 255 / .92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 950;
+    }
+    .brand small, .muted { color: var(--muted); }
+    .brand small {
+      display: block;
+      margin-top: 2px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .command {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      min-width: 0;
+    }
+    .command input {
+      width: 100%;
+      padding: 8px 12px;
+    }
+
+    .global-state {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+    .dot.red { background: var(--red); }
+    .dot.amber { background: var(--amber); }
+    .dot.blue { background: var(--blue); }
+
+    .operator-layout {
+      display: grid;
+      grid-template-columns: 286px minmax(720px, 1fr) 372px;
+      gap: 14px;
+      padding: 14px;
+      align-items: start;
+    }
+    .panel {
+      min-width: 0;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgb(15 23 42 / .045);
+    }
+    .task-rail, .evidence {
+      position: sticky;
+      top: 76px;
+      height: calc(100vh - 90px);
+      overflow: auto;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head small { color: var(--muted); font-weight: 800; }
+    .panel-body { display: grid; gap: 12px; padding: 12px; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: var(--paper-soft);
+    }
+    .kpi strong { display: block; font-size: 24px; line-height: 1; }
+    .kpi span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+
+    .quick-task {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #fbfbfc);
+    }
+    .quick-task textarea {
+      width: 100%;
+      min-height: 74px;
+      resize: vertical;
+      padding: 10px;
+    }
+    .quick-row {
+      display: grid;
+      grid-template-columns: 1fr 74px 84px;
+      gap: 8px;
+    }
+
+    .queue-section {
+      display: grid;
+      gap: 8px;
+    }
+    .queue-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .task-item {
+      width: 100%;
+      display: grid;
+      gap: 5px;
+      text-align: left;
+      border-radius: 14px;
+      padding: 10px;
+      background: #fff;
+    }
+    .task-item.selected { border-color: var(--green); box-shadow: 0 0 0 3px rgb(15 118 110 / .1); }
+    .task-item.recover { background: var(--red-soft); border-color: #ffd0cc; }
+    .task-item.human { background: var(--amber-soft); border-color: #f7d798; }
+    .task-item.running { background: var(--green-soft); border-color: #b8e4da; }
+    .task-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .task-line strong { font-size: 13px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .center {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .value-board {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 10% 8%, rgb(20 184 166 / .2), transparent 26%),
+        linear-gradient(135deg, #07111f, #101828 55%, #0d1b2d);
+      color: #e5f9f5;
+      border: 1px solid #16253a;
+    }
+    .value-inner {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 12px;
+      padding: 16px;
+    }
+    .value-copy { display: grid; align-content: space-between; gap: 14px; }
+    .value-copy h2 { font-size: 22px; color: #fff; }
+    .value-copy p {
+      color: #9fb5c7;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .value-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .value-actions button {
+      min-height: 32px;
+      border-color: rgb(255 255 255 / .18);
+      background: rgb(255 255 255 / .08);
+      color: #e7f7f3;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric-card {
+      min-height: 98px;
+      display: grid;
+      align-content: space-between;
+      border: 1px solid rgb(255 255 255 / .12);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgb(255 255 255 / .055);
+      box-shadow: inset 0 1px rgb(255 255 255 / .08);
+    }
+    .metric-card strong {
+      color: #fff;
+      font-size: 26px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-card span, .metric-card small {
+      color: #9fb5c7;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .metric-card .delta { color: #8ff1df; }
+    .ticker {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 18px;
+      overflow: hidden;
+      white-space: nowrap;
+      border-top: 1px solid rgb(255 255 255 / .1);
+      padding-top: 10px;
+      color: #8ff1df;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .ticker span { animation: ticker 18s linear infinite; }
+    @keyframes ticker { to { transform: translateX(-320px); } }
+
+    .office {
+      position: relative;
+      min-height: 640px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgb(17 24 39 / .035) 1px, transparent 1px),
+        linear-gradient(rgb(17 24 39 / .035) 1px, transparent 1px),
+        #fcfcfd;
+      background-size: 32px 32px;
+      border-color: #d8dee6;
+    }
+    .office-head {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      padding: 14px 16px 6px;
+    }
+    .office-head h2 { font-size: 20px; }
+    .office-head p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .office-score {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 8px;
+    }
+    .mini-kpi {
+      min-width: 74px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px 10px;
+      background: rgb(255 255 255 / .88);
+      text-align: center;
+    }
+    .mini-kpi strong { display: block; font-size: 18px; }
+    .mini-kpi span { color: var(--muted); font-size: 11px; font-weight: 850; }
+
+    .office-map {
+      position: relative;
+      display: grid;
+      grid-template-columns: 150px 1fr 150px;
+      gap: 16px;
+      padding: 8px 16px 16px;
+      min-height: 588px;
+    }
+    .service-lane, .right-lane {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding-top: 24px;
+    }
+    .zone {
+      position: relative;
+      min-height: 150px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      background: rgb(255 255 255 / .78);
+      box-shadow: 0 20px 38px rgb(15 23 42 / .05);
+    }
+    .zone.tea { background: linear-gradient(180deg, #fffaf0, #fff); }
+    .zone.ops { background: linear-gradient(180deg, #f0f6ff, #fff); }
+    .zone.gm { background: linear-gradient(180deg, #fff1ef, #fff); }
+    .zone strong { display: block; margin-bottom: 4px; }
+    .zone span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .zone-action {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      min-height: 30px;
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
+    .desks {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(170px, 1fr));
+      grid-template-rows: repeat(2, 240px);
+      gap: 18px;
+      align-content: center;
+      min-width: 0;
+    }
+    .desk-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgb(255 255 255 / .8);
+      box-shadow: 0 22px 42px rgb(15 23 42 / .055);
+    }
+    .desk-card.main { border-color: #abe0d7; }
+    .desk-card.boss { border-color: #f3c981; }
+    .desk-card.worker { border-color: #bdd2ff; }
+    .desk-card.tool { opacity: .88; }
+    .desk-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 8px;
+      padding: 10px 12px 0;
+    }
+    .desk-title small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .desk-action {
+      min-height: 30px;
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+    .desk-scene {
+      position: relative;
+      height: 126px;
+      margin: 8px 12px 0;
+      border-radius: 16px;
+      background:
+        radial-gradient(ellipse at 50% 95%, rgb(15 23 42 / .12), transparent 48%),
+        linear-gradient(180deg, #f7fafc, #eef3f8);
+      overflow: hidden;
+    }
+    .desk {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      width: 120px;
+      height: 48px;
+      transform: translateX(-50%);
+      border-radius: 7px 7px 3px 3px;
+      background: linear-gradient(180deg, #f8fafc, #e8edf2);
+      box-shadow: 0 18px 22px rgb(15 23 42 / .15);
+    }
+    .monitor {
+      position: absolute;
+      left: 50%;
+      bottom: 62px;
+      width: 66px;
+      height: 44px;
+      transform: translateX(-50%);
+      border: 7px solid #111827;
+      border-radius: 5px;
+      background: #101828;
+      box-shadow: 0 12px 16px rgb(15 23 42 / .18);
+    }
+    .monitor::before, .monitor::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      height: 4px;
+      border-radius: 99px;
+      background: #7dd3fc;
+    }
+    .monitor::before { top: 9px; width: 36px; }
+    .monitor::after { top: 22px; width: 48px; opacity: .75; }
+    .agent {
+      position: absolute;
+      left: 50%;
+      bottom: 26px;
+      width: 42px;
+      height: 52px;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+    .agent::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      width: 28px;
+      height: 24px;
+      border: 4px solid #111827;
+      border-radius: 9px;
+      background: #f8fafc;
+    }
+    .agent::after {
+      content: attr(data-badge);
+      position: absolute;
+      left: 7px;
+      top: 24px;
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 26px;
+      border: 4px solid #111827;
+      border-radius: 8px;
+      background: var(--green);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 950;
+    }
+    .agent.boss::after { background: #c45a09; }
+    .agent.worker::after { background: var(--blue); }
+    .agent.tool::after { background: #475467; font-size: 11px; }
+    .eyes {
+      position: absolute;
+      left: 17px;
+      top: 10px;
+      z-index: 5;
+      width: 4px;
+      height: 4px;
+      border-radius: 99px;
+      background: #111827;
+      box-shadow: 9px 0 #111827;
+    }
+    .agent.working { animation: type-breathe 1.6s ease-in-out infinite; }
+    .agent.watch { transform: translateX(-78px); }
+    .agent.idle { transform: translateX(-92px); }
+    .agent.recover { transform: translateX(72px); }
+    .desk-card.recover .monitor::before { background: #fb7185; }
+    .desk-card.working .monitor::before,
+    .desk-card.working .monitor::after { animation: screen-flow 1.1s linear infinite; }
+    @keyframes type-breathe { 50% { translate: 0 -2px; } }
+    @keyframes screen-flow { 50% { width: 22px; opacity: .55; } }
+
+    .desk-status {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 10px;
+      display: grid;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgb(255 255 255 / .92);
+      box-shadow: 0 8px 16px rgb(15 23 42 / .06);
+      font-size: 12px;
+    }
+    .desk-status strong { font-size: 12px; }
+    .progress {
+      height: 7px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+    .progress i {
+      display: block;
+      height: 100%;
+      width: var(--p, 30%);
+      border-radius: inherit;
+      background: var(--green);
+    }
+    .recover .progress i { background: var(--red); }
+    .human .progress i { background: var(--amber); }
+
+    .status-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px 12px;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .evidence-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .evidence-tabs button {
+      min-height: 34px;
+      padding: 6px;
+      font-size: 12px;
+    }
+    .evidence-tabs button.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .selected-card {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: var(--paper-soft);
+    }
+    .selected-card.danger { background: var(--red-soft); border-color: #ffd0cc; }
+    .selected-card.running { background: var(--green-soft); border-color: #b8e4da; }
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .evidence-cell {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px;
+      background: #fff;
+    }
+    .evidence-cell span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .evidence-cell strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .log-list, .artifact-list {
+      display: grid;
+      gap: 8px;
+    }
+    .log, .artifact {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px;
+      background: #fff;
+      font-size: 12px;
+    }
+    .log strong, .artifact strong { display: block; margin-bottom: 4px; }
+    .preview-box {
+      min-height: 160px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .metric-settings {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgb(15 23 42 / .42);
+    }
+    .metric-settings.open { display: grid; }
+    .settings-card {
+      width: min(680px, 100%);
+      max-height: min(760px, calc(100vh - 40px));
+      overflow: auto;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .settings-card header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .metric-setting-row {
+      display: grid;
+      grid-template-columns: auto 1fr 90px 90px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .metric-setting-row input[type="text"] { width: 100%; padding: 8px; }
+    .settings-card footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 16px;
+    }
+
+    @media (max-width: 1280px) {
+      .operator-layout {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+      .evidence {
+        position: static;
+        grid-column: 1 / -1;
+        height: auto;
+      }
+      .value-inner { grid-template-columns: 1fr; }
+      .office-map { grid-template-columns: 1fr; }
+      .service-lane, .right-lane { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 0; }
+      .desks { grid-row: 1; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+      .command { grid-template-columns: 1fr auto; }
+      .command .dark { display: none; }
+      .operator-layout {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+      .task-rail, .evidence {
+        position: static;
+        height: auto;
+      }
+      .metric-grid, .desks, .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .desks { grid-template-rows: none; }
+      .office { min-height: 0; }
+      .office-map { padding: 8px 10px 12px; }
+      .service-lane, .right-lane { grid-template-columns: 1fr; }
+      .office-score { grid-template-columns: repeat(3, 1fr); width: 100%; }
+      .office-head { display: grid; }
+      .metric-setting-row { grid-template-columns: auto 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">OC</div>
+        <div>
+          <h1>OpenClaw Agent OS</h1>
+          <small>prototype sample · Owner Operator console v4</small>
+        </div>
+      </div>
+      <div class="command">
+        <input value="@all OpenClaw" aria-label="全局搜索">
+        <button class="primary">搜索</button>
+        <button class="dark">布置任务</button>
+      </div>
+      <div class="global-state" aria-label="系统状态">
+        <span class="pill"><i class="dot"></i>SSE 在线</span>
+        <span class="pill"><i class="dot red"></i>Gateway 需恢复</span>
+        <span class="pill"><i class="dot amber"></i>15 待审批</span>
+      </div>
+    </header>
+
+    <section class="operator-layout">
+      <aside class="panel task-rail">
+        <div class="panel-head">
+          <div>
+            <h2>任务与停机队列</h2>
+            <small>所有停机点必须可处置</small>
+          </div>
+          <span class="tag">06:31</span>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-grid">
+            <div class="kpi"><strong>2</strong><span>自动化中</span></div>
+            <div class="kpi"><strong>15</strong><span>待审批</span></div>
+            <div class="kpi"><strong>4</strong><span>需恢复</span></div>
+          </div>
+          <form class="quick-task">
+            <div class="task-line"><strong>快速布置任务</strong><span class="tag">1s 可见</span></div>
+            <textarea placeholder="输入目标，例如：让 Worker 检查 Gateway 超时原因并生成恢复建议"></textarea>
+            <div class="quick-row">
+              <select><option>Worker</option><option>Main</option><option>Boss</option></select>
+              <select><option>P1</option><option>P0</option><option>P2</option></select>
+              <button class="primary" type="button">布置</button>
+            </div>
+          </form>
+          <section class="queue-section">
+            <div class="queue-title"><span>当前停机点</span><strong>19</strong></div>
+            <button class="task-item recover selected" data-select="worker">
+              <span class="task-line"><strong>Worker 需恢复</strong><span class="tag">P0</span></span>
+              <small>Gateway CLI timeout · 106h stale</small>
+              <small>下一步：处理恢复 / 生成恢复提示</small>
+            </button>
+            <button class="task-item human" data-select="approval">
+              <span class="task-line"><strong>15 项待审批</strong><span class="tag">system</span></span>
+              <small>涉及配置写入和外部动作确认</small>
+              <small>下一步：处理审批 / 查看风险</small>
+            </button>
+            <button class="task-item running" data-select="main">
+              <span class="task-line"><strong>Main 观察队列</strong><span class="tag">live</span></span>
+              <small>Cron Health Digest · tool_result</small>
+              <small>下一步：查看任务 / 引导</small>
+            </button>
+          </section>
+          <section class="queue-section">
+            <div class="queue-title"><span>最近完成</span><strong>41</strong></div>
+            <button class="task-item" data-select="done"><strong>图表计算逻辑修复</strong><small>RESULT 已交付 · Token 407.1万</small></button>
+            <button class="task-item" data-select="done"><strong>航材系统 PRD 迭代</strong><small>文档产出 · Token 883.1万</small></button>
+          </section>
+        </div>
+      </aside>
+
+      <section class="center">
+        <section class="panel value-board" aria-label="自动化价值输出">
+          <div class="value-inner">
+            <div class="value-copy">
+              <div>
+                <h2>自动化价值输出</h2>
+                <p>只展示能证明代理正在创造价值的指标：累计、近 1 天产出率、近 5 分钟实时变化分开呈现。</p>
+              </div>
+              <div class="value-actions">
+                <button type="button" id="openSettings">设置指标</button>
+                <button type="button">查看口径</button>
+              </div>
+            </div>
+            <div class="metric-grid">
+              <article class="metric-card">
+                <span>Token 消耗</span>
+                <strong data-counter data-base="30900">30.9k</strong>
+                <small><span class="delta">+917 / 5m</span> · 近 1 天</small>
+              </article>
+              <article class="metric-card">
+                <span>文字产出</span>
+                <strong data-counter data-base="55600">55.6k</strong>
+                <small><span class="delta">+1.9k / 5m</span> · 近 1 天</small>
+              </article>
+              <article class="metric-card">
+                <span>代码产出</span>
+                <strong data-counter data-base="1400">1.4k</strong>
+                <small><span class="delta">+36 / 5m</span> · 近 1 天</small>
+              </article>
+              <article class="metric-card">
+                <span>文档交付</span>
+                <strong data-counter data-base="251">251</strong>
+                <small><span class="delta">+2 / 5m</span> · 近 1 天</small>
+              </article>
+              <article class="metric-card">
+                <span>完成任务</span>
+                <strong data-counter data-base="41">41</strong>
+                <small><span class="delta">+0 / 5m</span> · 今日</small>
+              </article>
+              <article class="metric-card">
+                <span>节省人工</span>
+                <strong data-counter data-base="18">18h</strong>
+                <small><span class="delta">估算</span> · events + artifacts</small>
+              </article>
+              <div class="ticker" aria-label="实时产出变化">
+                <span>main tool_result +917 tokens</span>
+                <span>worker artifact +2 files</span>
+                <span>review evidence +1 RESULT</span>
+                <span>knowledge preview +4 refs</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel office" aria-label="统一开放办公室">
+          <div class="office-head">
+            <div>
+              <h2>统一开放办公室</h2>
+              <p>六个工位同屏：主代理、决策、执行、浏览器、知识、复核。机器人移动只表达真实状态。</p>
+            </div>
+            <div class="office-score">
+              <div class="mini-kpi"><strong>1</strong><span>运行</span></div>
+              <div class="mini-kpi"><strong>1</strong><span>恢复</span></div>
+              <div class="mini-kpi"><strong>15</strong><span>审批</span></div>
+            </div>
+          </div>
+
+          <div class="office-map">
+            <div class="service-lane">
+              <div class="zone tea">
+                <strong>茶歇区</strong>
+                <span>在线待命，不显示假工作</span>
+                <button class="zone-action" data-select="boss">接开发台</button>
+              </div>
+              <div class="zone gm">
+                <strong>总经理办公室</strong>
+                <span>审批停机点，高风险动作确认</span>
+                <button class="zone-action" data-select="approval">接审批台</button>
+              </div>
+            </div>
+
+            <div class="desks">
+              <article class="desk-card main working" data-select="main">
+                <div class="desk-title"><div><h3>OpenClaw Main</h3><small>系统管理员 / 调度 / 审计</small></div><button class="desk-action">查看电脑</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent working" data-badge="M"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>Main 在观察队列</strong><span>Cron Health Digest · tool_result</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">观察中</span><span class="chip">75%</span><span class="chip">0m</span></div>
+              </article>
+
+              <article class="desk-card boss" data-select="boss">
+                <div class="desk-title"><div><h3>Boss</h3><small>战略判断 / 方案评审 / 价值审计</small></div><button class="desk-action">查看电脑</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent boss idle" data-badge="B"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>Boss 待命</strong><span>无自动化运行 · 可布置任务</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">茶歇区</span><span class="chip">ready</span><span class="chip">617m</span></div>
+              </article>
+
+              <article class="desk-card worker recover" data-select="worker">
+                <div class="desk-title"><div><h3>Worker</h3><small>执行代理 / 代码文档 / 系统运维 Owner</small></div><button class="desk-action danger">处理恢复</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent worker recover" data-badge="W"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>Worker 前往系统运维</strong><span>Gateway CLI timeout · 106h stale</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">需恢复</span><span class="chip">55%</span><span class="chip">4 产物</span></div>
+              </article>
+
+              <article class="desk-card tool" data-select="browser">
+                <div class="desk-title"><div><h3>Browser Agent</h3><small>网页核验 / 本地页面验收</small></div><button class="desk-action">查看工具</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent tool watch" data-badge="BR"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>可按需调用</strong><span>Browser / screenshots / checks</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">ready</span><span class="chip">on demand</span></div>
+              </article>
+
+              <article class="desk-card tool" data-select="knowledge">
+                <div class="desk-title"><div><h3>Knowledge Agent</h3><small>知识引用 / 文件检索 / NAS</small></div><button class="desk-action">查看工具</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent tool" data-badge="K"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>索引待命</strong><span>refs / preview / source links</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">ready</span><span class="chip">source aware</span></div>
+              </article>
+
+              <article class="desk-card tool" data-select="review">
+                <div class="desk-title"><div><h3>Review Agent</h3><small>结果复核 / 交付验收</small></div><button class="desk-action">查看工具</button></div>
+                <div class="desk-scene">
+                  <div class="desk"></div><div class="monitor"></div><div class="agent tool" data-badge="R"><i class="eyes"></i></div>
+                  <div class="desk-status"><strong>等待 RESULT</strong><span>quality gate / acceptance</span></div>
+                </div>
+                <div class="status-chips"><span class="chip">ready</span><span class="chip">evidence first</span></div>
+              </article>
+            </div>
+
+            <div class="right-lane">
+              <div class="zone ops">
+                <strong>系统运维</strong>
+                <span>Gateway、配置、恢复、诊断</span>
+                <button class="zone-action" data-select="worker">接系统设置</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="panel evidence">
+        <div class="panel-head">
+          <div>
+            <h2>证据与处置</h2>
+            <small id="evidenceLabel">Worker · 需恢复</small>
+          </div>
+          <span class="tag">source</span>
+        </div>
+        <div class="panel-body">
+          <div class="evidence-tabs">
+            <button class="active">状态</button>
+            <button>日志</button>
+            <button>产出物</button>
+            <button>预览</button>
+          </div>
+          <section id="selectedCard" class="selected-card danger">
+            <div class="task-line"><h3 id="selectedTitle">Worker 需恢复</h3><span id="selectedStatus" class="tag">recover</span></div>
+            <p id="selectedSummary" class="muted">Gateway CLI timed out after 180000ms，自动化停在系统运维入口。</p>
+            <div class="progress" style="--p:55%"><i></i></div>
+            <div class="evidence-grid">
+              <div class="evidence-cell"><span>代理</span><strong id="selectedAgent">worker</strong></div>
+              <div class="evidence-cell"><span>最新事件</span><strong id="selectedEvent">gateway_timeout</strong></div>
+              <div class="evidence-cell"><span>产物</span><strong id="selectedArtifacts">4 files</strong></div>
+              <div class="evidence-cell"><span>下一步</span><strong id="selectedNext">处理恢复</strong></div>
+            </div>
+          </section>
+          <div class="actions" id="actionBox">
+            <button class="danger">处理恢复</button>
+            <button>生成恢复提示</button>
+            <button>诊断</button>
+            <button>查看事件</button>
+          </div>
+          <section class="log-list">
+            <div class="queue-title"><span>最近日志</span><strong>实时</strong></div>
+            <div class="log"><strong>system · gateway_timeout</strong>OpenClaw Gateway CLI timed out while waiting for final agent output.</div>
+            <div class="log"><strong>worker · artifact</strong>PLAN.md / RESULT.md 已生成，可预览。</div>
+            <div class="log"><strong>main · tool_result</strong>Cron Health Digest refreshed task state.</div>
+          </section>
+          <section class="artifact-list">
+            <div class="queue-title"><span>产出物</span><strong>click preview</strong></div>
+            <button class="artifact"><strong>PLAN.md</strong>/Users/njx/openclaw_data/tasks/TASK_20260531_007/PLAN.md</button>
+            <button class="artifact"><strong>RESULT.md</strong>/Users/njx/openclaw_data/tasks/TASK_20260531_007/RESULT.md</button>
+          </section>
+          <section class="preview-box">
+            <strong>预览</strong>
+            <p>点击产出物后在这里展示 Markdown / HTML / 图片 / 文本。正式版必须复用文件预览能力，并保留原文件链接。</p>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="metric-settings" id="settingsPanel" role="dialog" aria-modal="true" aria-label="价值指标设置">
+    <section class="settings-card">
+      <header>
+        <div>
+          <h2>价值指标设置</h2>
+          <p class="muted">正式版写入 value-metrics.json；这里是原型交互。</p>
+        </div>
+        <button type="button" id="closeSettings">关闭</button>
+      </header>
+      <div class="metric-setting-row"><input type="checkbox" checked><input type="text" value="Token 消耗"><select><option>近 1 天</option></select><select><option>tokens</option></select></div>
+      <div class="metric-setting-row"><input type="checkbox" checked><input type="text" value="文字产出"><select><option>近 1 天</option></select><select><option>chars</option></select></div>
+      <div class="metric-setting-row"><input type="checkbox" checked><input type="text" value="代码产出"><select><option>近 1 天</option></select><select><option>lines</option></select></div>
+      <div class="metric-setting-row"><input type="checkbox" checked><input type="text" value="文档交付"><select><option>近 1 天</option></select><select><option>files</option></select></div>
+      <footer>
+        <button type="button" id="cancelSettings">取消</button>
+        <button type="button" class="primary" id="saveSettings">保存并刷新</button>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    const samples = {
+      worker: {
+        label: "Worker · 需恢复",
+        title: "Worker 需恢复",
+        status: "recover",
+        summary: "Gateway CLI timed out after 180000ms，自动化停在系统运维入口。",
+        agent: "worker",
+        event: "gateway_timeout",
+        artifacts: "4 files",
+        next: "处理恢复",
+        tone: "danger",
+        actions: ["处理恢复", "生成恢复提示", "诊断", "查看事件"]
+      },
+      main: {
+        label: "Main · 观察中",
+        title: "Main 观察队列",
+        status: "watch",
+        summary: "最新 tool_result 有效，但没有执行中任务。只显示观察，不显示假工作。",
+        agent: "main",
+        event: "tool_result",
+        artifacts: "0 files",
+        next: "布置任务",
+        tone: "running",
+        actions: ["布置任务", "查看任务", "引导", "暂停"]
+      },
+      boss: {
+        label: "Boss · 待命",
+        title: "Boss 在线待命",
+        status: "idle",
+        summary: "无自动化运行，停在茶歇区，等待战略/评审任务。",
+        agent: "boss",
+        event: "idle",
+        artifacts: "0 files",
+        next: "打开开发台",
+        tone: "",
+        actions: ["布置任务", "打开开发台", "查看技能", "查看配置"]
+      },
+      approval: {
+        label: "System · 待审批",
+        title: "15 项待审批",
+        status: "human",
+        summary: "涉及配置写入、外部动作或高风险变更，必须进入总经理办公室确认。",
+        agent: "system",
+        event: "approval_required",
+        artifacts: "15 items",
+        next: "处理审批",
+        tone: "",
+        actions: ["处理审批", "查看风险", "补充说明", "打开审计"]
+      },
+      done: {
+        label: "Review · 已完成",
+        title: "完成任务证据",
+        status: "completed",
+        summary: "RESULT 已交付，等待 Review Agent 复核质量和验收证据。",
+        agent: "review",
+        event: "result_ready",
+        artifacts: "PLAN + RESULT",
+        next: "预览结果",
+        tone: "",
+        actions: ["预览结果", "加入知识库", "复盘", "导出"]
+      },
+      browser: {
+        label: "Browser Agent · 可调用",
+        title: "Browser Agent 工具工位",
+        status: "ready",
+        summary: "负责本地页面、截图、响应式和验收脚本。",
+        agent: "browser",
+        event: "on_demand",
+        artifacts: "screenshots",
+        next: "打开浏览器",
+        tone: "",
+        actions: ["打开浏览器", "截图验收", "检查移动端", "查看工具"]
+      },
+      knowledge: {
+        label: "Knowledge Agent · 可调用",
+        title: "Knowledge Agent 工具工位",
+        status: "ready",
+        summary: "负责知识引用、文件链接、预览和 NAS/IMA 来源证据。",
+        agent: "knowledge",
+        event: "source_ready",
+        artifacts: "refs",
+        next: "查询知识",
+        tone: "",
+        actions: ["查询知识", "预览来源", "加入知识库", "查看索引"]
+      },
+      review: {
+        label: "Review Agent · 可调用",
+        title: "Review Agent 工具工位",
+        status: "ready",
+        summary: "负责 RESULT 质量、验收截图和上线风险审计。",
+        agent: "review",
+        event: "quality_gate",
+        artifacts: "acceptance",
+        next: "开始验收",
+        tone: "",
+        actions: ["开始验收", "查看风险", "生成报告", "导出"]
+      }
+    };
+
+    const setSelected = (key) => {
+      const data = samples[key] || samples.worker;
+      document.getElementById("evidenceLabel").textContent = data.label;
+      document.getElementById("selectedTitle").textContent = data.title;
+      document.getElementById("selectedStatus").textContent = data.status;
+      document.getElementById("selectedSummary").textContent = data.summary;
+      document.getElementById("selectedAgent").textContent = data.agent;
+      document.getElementById("selectedEvent").textContent = data.event;
+      document.getElementById("selectedArtifacts").textContent = data.artifacts;
+      document.getElementById("selectedNext").textContent = data.next;
+      const card = document.getElementById("selectedCard");
+      card.className = "selected-card" + (data.tone ? " " + data.tone : "");
+      document.getElementById("actionBox").innerHTML = data.actions.map((action, index) => (
+        `<button class="${index === 0 && data.status === "recover" ? "danger" : ""}">${action}</button>`
+      )).join("");
+    };
+
+    document.querySelectorAll("[data-select]").forEach((el) => {
+      el.addEventListener("click", () => {
+        document.querySelectorAll(".task-item").forEach((item) => item.classList.remove("selected"));
+        if (el.classList.contains("task-item")) el.classList.add("selected");
+        setSelected(el.dataset.select);
+      });
+    });
+
+    const formatMetric = (value, suffix = "") => {
+      if (value >= 1000) return `${(value / 1000).toFixed(1)}k${suffix}`;
+      return `${Math.round(value)}${suffix}`;
+    };
+    setInterval(() => {
+      document.querySelectorAll("[data-counter]").forEach((node, index) => {
+        const base = Number(node.dataset.base || 0);
+        const drift = Math.sin(Date.now() / (1400 + index * 173)) * (index + 1) * 3;
+        const value = Math.max(0, base + drift);
+        node.textContent = index === 5 ? `${Math.round(value)}h` : formatMetric(value);
+      });
+    }, 900);
+
+    const settings = document.getElementById("settingsPanel");
+    document.getElementById("openSettings").addEventListener("click", () => settings.classList.add("open"));
+    document.getElementById("closeSettings").addEventListener("click", () => settings.classList.remove("open"));
+    document.getElementById("cancelSettings").addEventListener("click", () => settings.classList.remove("open"));
+    document.getElementById("saveSettings").addEventListener("click", () => settings.classList.remove("open"));
+    settings.addEventListener("click", (event) => {
+      if (event.target === settings) settings.classList.remove("open");
+    });
+  </script>
+</body>
+</html>

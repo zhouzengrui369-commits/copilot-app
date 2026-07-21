@@ -1,0 +1,51 @@
+{
+  "metrics": {
+    "metric_001_app_start": {
+      "label": "macOS app cold start",
+      "value_ms": 0,
+      "target_ms": 2000,
+      "source": "placeholder",
+      "note": "apps/copilot-desktop not merged",
+      "last_captured_at": "2026-07-09T04:47:26.819Z",
+      "value": 0,
+      "unit": "ms"
+    },
+    "metric_002_app_memory": {
+      "label": "idle memory",
+      "value_mb": 0,
+      "target_mb": 500,
+      "source": "process.memoryUsage",
+      "note": "Will be measured on apps/copilot-desktop once T-1.1.1 / T-1.1.2 merge.",
+      "last_captured_at": "2026-07-09T04:47:26.819Z",
+      "value": 47,
+      "unit": "MB"
+    },
+    "metric_003_kb_query": {
+      "label": "100 notes query avg",
+      "value_ms": 0,
+      "target_ms": 50,
+      "source": "placeholder",
+      "note": "T-1.1.4 (local KB) will own the canonical measurement.",
+      "last_captured_at": "2026-07-09T04:47:26.819Z",
+      "value": 0,
+      "unit": "ms"
+    },
+    "metric_004_kg_render": {
+      "label": "100 nodes FPS",
+      "value_fps": 0,
+      "target_fps": 30,
+      "source": "placeholder",
+      "note": "T-1.2.2 will populate",
+      "last_captured_at": "2026-07-09T04:47:26.819Z",
+      "value": 0,
+      "unit": "FPS"
+    }
+  },
+  "schema_version": "0.1.0",
+  "captured_at": "2026-07-09T04:47:26.819Z",
+  "runner": {
+    "os": "darwin",
+    "node": "v24.13.1",
+    "hostname": "ci-runner"
+  }
+}

@@ -1,0 +1,127 @@
+appId: ai.njx.copilot
+productName: njx-copilot
+copyright: Copyright © 2026 njx
+asar: true
+asarUnpack:
+  - "resources/server/**/*"
+  - "resources/web/**/*"
+directories:
+  output: release
+  buildResources: build
+files:
+  - "dist/**/*"
+  - "package.json"
+  - "!**/*.map"
+# Pin electron version — electron-builder refuses to compute it from
+# semver ranges like ^33.2.0 (see electron-userland/electron-builder#3984).
+# Bump this when bumping the electron devDependency.
+electronVersion: 33.4.11
+# The desktop workspace is part of an npm workspaces repo. Letting
+# electron-builder run its production install here prunes the shared root
+# node_modules while the builder is still running, so app-builder-bin can
+# disappear mid-package. Server/web runtime assets are included explicitly via
+# extraResources, and the desktop shell has no native dependency to rebuild.
+npmRebuild: false
+extraMetadata:
+  # electron-builder reads productName / description from package.json;
+  # forward the fields the desktop app needs into the packaged manifest.
+  productName: njx-copilot
+  description: njx-copilot — macOS desktop shell for OpenClaw Workbench (Electron).
+extraResources:
+  - from: "../server/dist"
+    to: "resources/server"
+  - from: "../server/node_modules"
+    to: "resources/server/node_modules"
+  # npm workspaces hoist @openclaw-workbench/server's runtime dependency tree
+  # to the repo root, so ../server/node_modules can be empty in local builds.
+  # Copy the complete production dependency closure used by Fastify; otherwise
+  # the installed app can start in the build folder but fail after being copied
+  # to ~/Applications where parent-node_modules fallback no longer exists.
+  - from: "../../node_modules"
+    to: "resources/server/node_modules"
+    filter:
+      - "fastify/**"
+      - "@fastify/**"
+      - "@pinojs/**"
+      - "abstract-logging/**"
+      - "ajv/**"
+      - "ajv-formats/**"
+      - "atomic-sleep/**"
+      - "avvio/**"
+      - "cookie/**"
+      - "dequal/**"
+      - "fast-decode-uri-component/**"
+      - "fast-deep-equal/**"
+      - "fast-json-stringify/**"
+      - "fast-querystring/**"
+      - "fast-uri/**"
+      - "fastq/**"
+      - "find-my-way/**"
+      - "ipaddr.js/**"
+      - "json-schema-ref-resolver/**"
+      - "json-schema-traverse/**"
+      - "light-my-request/**"
+      - "on-exit-leak-free/**"
+      - "pino/**"
+      - "pino-abstract-transport/**"
+      - "pino-std-serializers/**"
+      - "process-warning/**"
+      - "quick-format-unescaped/**"
+      - "real-require/**"
+      - "require-from-string/**"
+      - "ret/**"
+      - "reusify/**"
+      - "rfdc/**"
+      - "safe-regex2/**"
+      - "safe-stable-stringify/**"
+      - "secure-json-parse/**"
+      - "set-cookie-parser/**"
+      - "sonic-boom/**"
+      - "split2/**"
+      - "thread-stream/**"
+      - "toad-cache/**"
+  - from: "../web/dist"
+    to: "resources/web"
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  # Build the directory bundle first; run `npm run sign:mac:local` for local
+  # app acceptance. electron-builder's automatic signing path is rejected by
+  # AppleSystemPolicy on this machine after copying into ~/Applications.
+  identity: null
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    CFBundleName: njx-copilot
+    CFBundleDisplayName: njx-copilot
+    LSApplicationCategoryType: public.app-category.productivity
+    NSHumanReadableCopyright: "OpenClaw Workbench — njx-copilot © 2026"
+    NSAppTransportSecurity:
+      NSAllowsLocalNetworking: true
+      NSExceptionDomains:
+        127.0.0.1:
+          NSExceptionAllowsInsecureHTTPLoads: true
+          NSIncludesSubdomains: true
+        localhost:
+          NSExceptionAllowsInsecureHTTPLoads: true
+          NSIncludesSubdomains: true
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+dmg:
+  # macOS only ships `python3`, but electron-builder's dmg pipeline shells
+  # out to `python` (not `python3`) for layout. We point it at the system
+  # python3 explicitly so the dmg build doesn't depend on a Homebrew
+  # python shim being installed by the developer.
+  writeUpdateInfo: false
+  # Keep the dmg small; we ship a real icon already in the .app bundle.
+  icon: null
+publish: null

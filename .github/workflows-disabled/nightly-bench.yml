@@ -1,0 +1,71 @@
+name: nightly-bench
+
+# Performance baseline collection — runs every night at 02:00 UTC.
+# Writes benchmarks/baseline.json and uploads it as a 90-day artifact so we
+# can spot regressions across sprints.
+#
+# Note: this workflow does NOT auto-commit back to main; the contract owner
+# reviews the diff at sprint boundary and merges a curated update.
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-bench
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  collect:
+    name: collect baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            **/node_modules
+          key: ${{ runner.os }}-bench-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-bench-deps-
+
+      - name: Install
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Run bench-collect
+        run: bash scripts/ci/bench-collect.sh
+
+      - name: Validate baseline schema
+        run: node scripts/ci/bench-validate.mjs
+
+      - name: Compare against previous baseline
+        run: node scripts/ci/bench-compare.mjs
+
+      - name: Upload updated baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline-${{ github.run_id }}
+          path: |
+            benchmarks/baseline.json
+            benchmarks/baseline.previous.json
+            reports/bench/*.json
+          retention-days: 90

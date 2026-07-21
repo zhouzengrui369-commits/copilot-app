@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-path" content="/Users/njx/openclaw/copilot/design/openclaw-all-pages-codex-preview.html">
+  <meta name="source-hash" content="73dd8850bff7db31f40b86bb5e2cc70de0ef99f6cb6f627c2b21e5b5b8f48af2">
+  <meta name="rendered-at" content="2026-06-14T10:32:00+08:00">
+  <title>OpenClaw App Pages Codex Style Preview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff;
+      --rail: #f4f5f5;
+      --hover: #eceeed;
+      --active: #e3e5e4;
+      --line: #e5e5e3;
+      --line-strong: #d6d7d5;
+      --ink: #202124;
+      --muted: #6f7377;
+      --faint: #9aa0a6;
+      --soft: #f7f7f6;
+      --bubble: #f6f6f5;
+      --ok: #16833a;
+      --bad: #cf222e;
+      --warn: #9a6700;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+    * { box-sizing: border-box; }
+    html { overflow-wrap:anywhere; word-break:break-word; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    button, input, textarea, label { font: inherit; letter-spacing: 0; }
+    button {
+      min-height: 26px;
+      padding: 3px 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: #343639;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    button:hover, label:hover { background: var(--hover); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 14px; font-weight: 650; }
+    h2 { font-size: 13px; font-weight: 650; }
+    h3 { font-size: 12px; font-weight: 650; }
+    p { color: #383a3d; }
+    small { color: var(--muted); font-size: 11px; }
+    input[name="screen"] { position: absolute; opacity: 0; pointer-events: none; }
+
+    .doc-shell {
+      display: grid;
+      grid-template-rows: 38px minmax(0, 1fr);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .page-switchbar {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbfa;
+    }
+    .page-tabs {
+      display: flex;
+      gap: 4px;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .page-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 25px;
+      padding: 3px 8px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: #343639;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .page-key {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      background: #eceeed;
+      color: #565a5e;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .page-switch-status {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .codex-window {
+      display: grid;
+      grid-template-columns: 184px minmax(680px, 1fr) 264px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background: #fff;
+    }
+    .left-sidebar {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      min-width: 0;
+      border-right: 1px solid var(--line);
+      background: var(--rail);
+    }
+    .traffic { display: flex; gap: 7px; align-items: center; height: 30px; padding: 0 10px; }
+    .light { width: 10px; height: 10px; border-radius: 50%; background: #d6d7d5; }
+    .light.red { background: #ff5f57; }
+    .light.yellow { background: #febc2e; }
+    .light.green { background: #28c840; }
+    .nav-scroll { min-height: 0; overflow: auto; padding: 5px 8px 8px; }
+    .sidebar-context { display: none; }
+    body:has(#screen-chat:checked) .sidebar-generic,
+    body:has(#screen-agent:checked) .sidebar-generic,
+    body:has(#screen-overview:checked) .sidebar-generic,
+    body:has(#screen-command:checked) .sidebar-generic,
+    body:has(#screen-dev:checked) .sidebar-generic,
+    body:has(#screen-knowledge:checked) .sidebar-generic,
+    body:has(#screen-research:checked) .sidebar-generic,
+    body:has(#screen-graph:checked) .sidebar-generic,
+    body:has(#screen-assistant:checked) .sidebar-generic,
+    body:has(#screen-opc:checked) .sidebar-generic,
+    body:has(#screen-projects:checked) .sidebar-generic,
+    body:has(#screen-system:checked) .sidebar-generic { display: none; }
+    body:has(#screen-chat:checked) .sidebar-chat,
+    body:has(#screen-agent:checked) .sidebar-agent,
+    body:has(#screen-overview:checked) .sidebar-overview,
+    body:has(#screen-command:checked) .sidebar-command,
+    body:has(#screen-dev:checked) .sidebar-dev,
+    body:has(#screen-knowledge:checked) .sidebar-knowledge,
+    body:has(#screen-research:checked) .sidebar-research,
+    body:has(#screen-graph:checked) .sidebar-graph,
+    body:has(#screen-assistant:checked) .sidebar-assistant,
+    body:has(#screen-opc:checked) .sidebar-opc,
+    body:has(#screen-projects:checked) .sidebar-projects,
+    body:has(#screen-system:checked) .sidebar-system { display: block; }
+    .nav-group { margin-bottom: 13px; }
+    .nav-group-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 2px 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .nav-item {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+      min-height: 25px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      color: #343639;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .nav-item:hover { background: var(--hover); }
+    .nav-item span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-icon { color: #565a5e; font-size: 12px; text-align: center; }
+    .nav-count { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .sidebar-footer { padding: 8px; border-top: 1px solid var(--line); }
+    body:has(#screen-chat:checked) label[for="screen-chat"],
+    body:has(#screen-agent:checked) label[for="screen-agent"],
+    body:has(#screen-overview:checked) label[for="screen-overview"],
+    body:has(#screen-command:checked) label[for="screen-command"],
+    body:has(#screen-dev:checked) label[for="screen-dev"],
+    body:has(#screen-knowledge:checked) label[for="screen-knowledge"],
+    body:has(#screen-research:checked) label[for="screen-research"],
+    body:has(#screen-graph:checked) label[for="screen-graph"],
+    body:has(#screen-assistant:checked) label[for="screen-assistant"],
+    body:has(#screen-opc:checked) label[for="screen-opc"],
+    body:has(#screen-projects:checked) label[for="screen-projects"],
+    body:has(#screen-system:checked) label[for="screen-system"] {
+      border-color: var(--line-strong);
+      background: var(--active);
+    }
+
+    .main-column {
+      display: grid;
+      grid-template-rows: 42px minmax(0, 1fr) auto;
+      min-width: 0;
+      background: #fff;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 0 13px;
+      border-bottom: 1px solid var(--line);
+    }
+    .top-title { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 600; }
+    .top-title strong { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    body:has(#screen-chat:checked) .title-chat,
+    body:has(#screen-agent:checked) .title-agent,
+    body:has(#screen-overview:checked) .title-overview,
+    body:has(#screen-command:checked) .title-command,
+    body:has(#screen-dev:checked) .title-dev,
+    body:has(#screen-knowledge:checked) .title-knowledge,
+    body:has(#screen-research:checked) .title-research,
+    body:has(#screen-graph:checked) .title-graph,
+    body:has(#screen-assistant:checked) .title-assistant,
+    body:has(#screen-opc:checked) .title-opc,
+    body:has(#screen-projects:checked) .title-projects,
+    body:has(#screen-system:checked) .title-system { display: block; }
+    .top-actions { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
+
+    .screen { display: none; min-height: 0; overflow: auto; background: #fff; }
+    body:has(#screen-chat:checked) .screen-chat,
+    body:has(#screen-agent:checked) .screen-agent,
+    body:has(#screen-overview:checked) .screen-overview,
+    body:has(#screen-command:checked) .screen-command,
+    body:has(#screen-dev:checked) .screen-dev,
+    body:has(#screen-knowledge:checked) .screen-knowledge,
+    body:has(#screen-research:checked) .screen-research,
+    body:has(#screen-graph:checked) .screen-graph,
+    body:has(#screen-assistant:checked) .screen-assistant,
+    body:has(#screen-opc:checked) .screen-opc,
+    body:has(#screen-projects:checked) .screen-projects,
+    body:has(#screen-system:checked) .screen-system { display: block; }
+
+    .page-canvas { padding: 14px; min-height: 100%; }
+    .page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .page-head p { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .codex-grid { display: grid; gap: 10px; min-width: 0; }
+    .cols-2 { grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); }
+    .cols-3 { grid-template-columns: 220px minmax(360px, 1fr) 260px; }
+    .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dev-thread-grid { grid-template-columns: minmax(0, 1fr); }
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .panel > header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 7px 9px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbfa;
+    }
+    .panel > header strong { font-size: 12px; }
+    .panel-body { display: grid; gap: 6px; padding: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 32px;
+      padding: 5px 7px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+    .row.active { background: var(--soft); border-color: var(--line-strong); }
+    .row strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+    .row small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      display: grid;
+      place-items: center;
+      min-width: 26px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+    }
+    .status { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+    .status.bad { color: var(--bad); }
+    .metric-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 8px; min-height: 54px; }
+    .metric span { display: block; color: var(--muted); font-size: 10px; font-weight: 650; text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 3px; font-size: 16px; font-weight: 650; }
+    .conversation { display: grid; gap: 9px; }
+    .msg { max-width: 640px; padding: 9px 12px; border-radius: 12px; background: var(--bubble); }
+    .msg.assistant { background: #fff; border: 1px solid var(--line); }
+    .doc-preview {
+      min-height: 230px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: repeating-linear-gradient(0deg, #fff 0, #fff 18px, #fafafa 19px);
+      padding: 14px;
+      color: var(--muted);
+    }
+    .graph-canvas {
+      position: relative;
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 45%, #f7f7f6 0, #f7f7f6 24%, #fff 25%);
+    }
+    .node {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 92px;
+      min-height: 34px;
+      padding: 5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 11px;
+      text-align: center;
+    }
+    .n1 { left: 42%; top: 42%; }
+    .n2 { left: 12%; top: 18%; }
+    .n3 { right: 10%; top: 19%; }
+    .n4 { left: 16%; bottom: 16%; }
+    .n5 { right: 14%; bottom: 18%; }
+    .composer-wrap { padding: 0 20px 14px; background: linear-gradient(to top, #fff 78%, rgb(255 255 255 / .82)); }
+    .composer {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) auto auto 30px;
+      gap: 7px;
+      align-items: end;
+      max-width: 640px;
+      min-height: 58px;
+      margin: 0 auto;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      box-shadow: 0 1px 4px rgb(0 0 0 / .04);
+    }
+    .composer textarea { min-height: 38px; resize: none; border: 0; outline: 0; color: #242629; font-size: 13px; line-height: 1.4; }
+    .icon-btn { display: grid; place-items: center; width: 28px; min-width: 28px; height: 28px; padding: 0; border-radius: 50%; }
+    .send { border-color: #8c8f92; background: #8c8f92; color: #fff; }
+
+    .right-panel { min-width: 0; border-left: 1px solid var(--line); background: #fff; }
+    .inspector { height: 100%; overflow: auto; padding: 12px; }
+    .inspect-panel { display: none; }
+    body:has(#screen-chat:checked) .inspect-chat,
+    body:has(#screen-agent:checked) .inspect-agent,
+    body:has(#screen-overview:checked) .inspect-overview,
+    body:has(#screen-command:checked) .inspect-command,
+    body:has(#screen-dev:checked) .inspect-dev,
+    body:has(#screen-knowledge:checked) .inspect-knowledge,
+    body:has(#screen-research:checked) .inspect-research,
+    body:has(#screen-graph:checked) .inspect-graph,
+    body:has(#screen-assistant:checked) .inspect-assistant,
+    body:has(#screen-opc:checked) .inspect-opc,
+    body:has(#screen-projects:checked) .inspect-projects,
+    body:has(#screen-system:checked) .inspect-system { display: block; }
+    .inspect-block { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .inspect-block:last-child { border-bottom: 0; }
+    .inspect-title { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .inspect-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; min-height: 24px; margin: 5px 0; color: #343639; font-size: 12px; }
+    .progress { height: 4px; margin: 8px 0; border-radius: 999px; background: #eceeed; overflow: hidden; }
+    .progress i { display: block; height: 100%; background: #8c8f92; }
+
+    @media (max-width: 1120px) {
+      .codex-window { grid-template-columns: 176px minmax(0, 1fr); }
+      .right-panel { display: none; }
+      .cols-3, .cols-2 { grid-template-columns: 1fr; }
+      .metric-row, .cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .doc-shell { height: auto; min-height: 100vh; overflow: visible; }
+      .page-switchbar { position: sticky; top: 0; z-index: 5; grid-template-columns: 1fr; height: auto; padding: 6px 8px; }
+      .page-switchbar .traffic, .page-switch-status { display: none; }
+      .codex-window { grid-template-columns: 1fr; height: auto; overflow: visible; }
+      .left-sidebar { max-height: none; }
+      .nav-scroll { display: block; max-height: 320px; }
+      .main-column { min-height: 760px; }
+      .metric-row, .cols-4 { grid-template-columns: 1fr; }
+      .composer { grid-template-columns: 30px minmax(0, 1fr) 30px; }
+      .composer button:nth-of-type(2), .composer button:nth-of-type(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <input id="screen-chat" name="screen" type="radio">
+  <input id="screen-agent" name="screen" type="radio">
+  <input id="screen-overview" name="screen" type="radio">
+  <input id="screen-command" name="screen" type="radio">
+  <input id="screen-dev" name="screen" type="radio" checked>
+  <input id="screen-knowledge" name="screen" type="radio">
+  <input id="screen-research" name="screen" type="radio">
+  <input id="screen-graph" name="screen" type="radio">
+  <input id="screen-assistant" name="screen" type="radio">
+  <input id="screen-opc" name="screen" type="radio">
+  <input id="screen-projects" name="screen" type="radio">
+  <input id="screen-system" name="screen" type="radio">
+
+  <div class="doc-shell">
+    <header class="page-switchbar" aria-label="页面导航">
+      <div class="traffic" aria-hidden="true"><i class="light red"></i><i class="light yellow"></i><i class="light green"></i></div>
+      <nav class="page-tabs">
+        <label class="page-tab" for="screen-chat"><span class="page-key">C</span>对话</label>
+        <label class="page-tab" for="screen-agent"><span class="page-key">A</span>智能体</label>
+        <label class="page-tab" for="screen-overview"><span class="page-key">D</span>系统总览</label>
+        <label class="page-tab" for="screen-command"><span class="page-key">⌘</span>Command Center</label>
+        <label class="page-tab" for="screen-dev"><span class="page-key">V</span>开发台</label>
+        <label class="page-tab" for="screen-knowledge"><span class="page-key">K</span>知识库</label>
+        <label class="page-tab" for="screen-research"><span class="page-key">R</span>Deep Research</label>
+        <label class="page-tab" for="screen-graph"><span class="page-key">G</span>关系图谱</label>
+        <label class="page-tab" for="screen-assistant"><span class="page-key">H</span>智能助理</label>
+        <label class="page-tab" for="screen-opc"><span class="page-key">O</span>OPC</label>
+        <label class="page-tab" for="screen-projects"><span class="page-key">P</span>项目管理</label>
+        <label class="page-tab" for="screen-system"><span class="page-key">S</span>系统设置</label>
+      </nav>
+      <div class="page-switch-status">12 pages · Codex style</div>
+    </header>
+    <div class="codex-window">
+      <aside class="left-sidebar" aria-label="上下文侧栏">
+        <div class="nav-scroll">
+          <div class="sidebar-context sidebar-chat">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>会话</span><span>18</span></div>
+              <div class="nav-item"><span class="nav-icon">01</span><span>OpenClaw UI 评审</span><span class="nav-count">now</span></div>
+              <div class="nav-item"><span class="nav-icon">02</span><span>知识库同步</span><span class="nav-count">1h</span></div>
+              <div class="nav-item"><span class="nav-icon">03</span><span>开发台验收</span><span class="nav-count">today</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>上下文</span></div>
+              <div class="nav-item"><span class="nav-icon">HTML</span><span>当前预览文件</span><span class="nav-count">open</span></div>
+              <div class="nav-item"><span class="nav-icon">IMG</span><span>Codex 对标截图</span><span class="nav-count">source</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-agent">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>Agents</span><span>6 online</span></div>
+              <div class="nav-item"><span class="nav-icon">PM</span><span>Aristotle</span><span class="nav-count">active</span></div>
+              <div class="nav-item"><span class="nav-icon">FE</span><span>Fermat</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">QA</span><span>Turing</span><span class="nav-count">blocked</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>运行</span></div>
+              <div class="nav-item"><span class="nav-icon">SK</span><span>world-class-ai-pm</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">CR</span><span>UI acceptance monitor</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-overview">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>系统状态</span><span>today</span></div>
+              <div class="nav-item"><span class="nav-icon">AL</span><span>告警</span><span class="nav-count">0</span></div>
+              <div class="nav-item"><span class="nav-icon">AG</span><span>三代理</span><span class="nav-count">3</span></div>
+              <div class="nav-item"><span class="nav-icon">CO</span><span>成本资源</span><span class="nav-count">est.</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>工作流</span></div>
+              <div class="nav-item"><span class="nav-icon">UI</span><span>Codex UI preview</span><span class="nav-count">accept</span></div>
+              <div class="nav-item"><span class="nav-icon">K</span><span>知识与项目</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-command">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>指挥链</span><span>live</span></div>
+              <div class="nav-item"><span class="nav-icon">M</span><span>Main 调度</span><span class="nav-count">run</span></div>
+              <div class="nav-item"><span class="nav-icon">B</span><span>Boss 决策</span><span class="nav-count">wait</span></div>
+              <div class="nav-item"><span class="nav-icon">W</span><span>Worker 执行</span><span class="nav-count">hold</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>审批</span></div>
+              <div class="nav-item"><span class="nav-icon">A1</span><span>预览通过后写代码</span><span class="nav-count">pending</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-dev">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>任务栈</span><span>5 subtasks</span></div>
+              <div class="nav-item"><span class="nav-icon">01</span><span>重构开发台首屏</span><span class="nav-count">active</span></div>
+              <div class="nav-item"><span class="nav-icon">02</span><span>补齐变更审阅</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">AI</span><span>多 agents 可视化</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">04</span><span>右栏目标与 token</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">05</span><span>Electron 验收</span><span class="nav-count">blocked</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>产出</span></div>
+              <div class="nav-item"><span class="nav-icon">HTML</span><span>Codex UI 预览</span><span class="nav-count">current</span></div>
+              <div class="nav-item"><span class="nav-icon">PLAN</span><span>AppShell 拆分</span><span class="nav-count">next</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-knowledge">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>Sources</span><span>3</span></div>
+              <div class="nav-item"><span class="nav-icon">OC</span><span>OpenClaw 文档</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">NAS</span><span>南极熊知识库</span><span class="nav-count">mount</span></div>
+              <div class="nav-item"><span class="nav-icon">HTML</span><span>Codex UI 架构</span><span class="nav-count">source</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>输出</span></div>
+              <div class="nav-item"><span class="nav-icon">DOC</span><span>Preview</span><span class="nav-count">open</span></div>
+              <div class="nav-item"><span class="nav-icon">ASK</span><span>Source to answer</span><span class="nav-count">ready</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>文件树 / 引用</span></div>
+              <div class="nav-item"><span class="nav-icon">TREE</span><span>文件树</span><span class="nav-count">open</span></div>
+              <div class="nav-item"><span class="nav-icon">CITE</span><span>引用治理</span><span class="nav-count">guard</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-research">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>研究任务</span><span>2</span></div>
+              <div class="nav-item"><span class="nav-icon">R1</span><span>UI parity research</span><span class="nav-count">active</span></div>
+              <div class="nav-item"><span class="nav-icon">R2</span><span>Electron gate</span><span class="nav-count">next</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>Sources</span></div>
+              <div class="nav-item"><span class="nav-icon">SRC</span><span>Codex screenshot</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">DOC</span><span>design contract</span><span></span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>产出边界</span></div>
+              <div class="nav-item"><span class="nav-icon">MAP</span><span>脑图草稿</span><span class="nav-count">draft</span></div>
+              <div class="nav-item"><span class="nav-icon">BD</span><span>未接入链路边界</span><span class="nav-count">visible</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-graph">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>Nodes</span><span>5</span></div>
+              <div class="nav-item"><span class="nav-icon">N</span><span>Codex UI 设计语言</span><span class="nav-count">sel</span></div>
+              <div class="nav-item"><span class="nav-icon">N</span><span>开发台目标线程</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">N</span><span>证据与验收</span><span></span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>路径</span></div>
+              <div class="nav-item"><span class="nav-icon">1</span><span>开发台 → 目标 → 证据</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-assistant">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>日程</span><span>2026-06-14</span></div>
+              <div class="nav-item"><span class="nav-icon">09</span><span>UI 预览验收</span><span class="nav-count">now</span></div>
+              <div class="nav-item"><span class="nav-icon">10</span><span>真实 AppShell 拆分</span><span class="nav-count">next</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>待办</span></div>
+              <div class="nav-item"><span class="nav-icon">T</span><span>确认页面结构</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">N</span><span>保存验收反馈</span><span></span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>提醒 / 动态</span></div>
+              <div class="nav-item"><span class="nav-icon">REM</span><span>提醒</span><span class="nav-count">2</span></div>
+              <div class="nav-item"><span class="nav-icon">PRJ</span><span>项目动态</span><span class="nav-count">live</span></div>
+              <div class="nav-item"><span class="nav-icon">CAL</span><span>日历抽屉</span><span class="nav-count">drawer</span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-opc">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>运营对象</span></div>
+              <div class="nav-item"><span class="nav-icon">CEO</span><span>今日经营判断</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">CRM</span><span>订单队列</span><span class="nav-count">3</span></div>
+              <div class="nav-item"><span class="nav-icon">AUD</span><span>高风险动作</span><span class="nav-count">guard</span></div>
+              <div class="nav-item"><span class="nav-icon">SC</span><span>供应链</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">FIN</span><span>财务</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">AI</span><span>智能体运营</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-projects">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>项目组合</span></div>
+              <div class="nav-item"><span class="nav-icon">P0</span><span>OpenClaw UI parity</span><span class="nav-count">active</span></div>
+              <div class="nav-item"><span class="nav-icon">P1</span><span>Knowledge reliability</span><span class="nav-count">ready</span></div>
+              <div class="nav-item"><span class="nav-icon">LIFE</span><span>人生规划</span><span class="nav-count">scope</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>里程碑</span></div>
+              <div class="nav-item"><span class="nav-icon">M1</span><span>HTML preview accepted</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">D</span><span>Electron validation</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">OPC</span><span>OPC 业务嵌入</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-context sidebar-system">
+            <section class="nav-group">
+              <div class="nav-group-title"><span>设置</span></div>
+              <div class="nav-item"><span class="nav-icon">APP</span><span>Electron launch</span><span class="nav-count">check</span></div>
+              <div class="nav-item"><span class="nav-icon">GW</span><span>Gateway</span><span class="nav-count">check</span></div>
+              <div class="nav-item"><span class="nav-icon">CON</span><span>Connectors</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">LOG</span><span>审计日志</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">CFG</span><span>配置评审</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">NOT</span><span>通知</span><span></span></div>
+            </section>
+          </div>
+          <div class="sidebar-generic">
+            <section class="nav-group">
+              <div class="nav-item"><span class="nav-icon">✎</span><span>新对话</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">⌕</span><span>搜索</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">◎</span><span>插件</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">◷</span><span>自动化</span><span></span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>当前工作</span></div>
+              <div class="nav-item"><span class="nav-icon">▣</span><span>OpenClaw UI 复刻</span><span class="nav-count">现在</span></div>
+              <div class="nav-item"><span class="nav-icon">▣</span><span>HTML 预览确认</span><span class="nav-count">待验收</span></div>
+              <div class="nav-item"><span class="nav-icon">▣</span><span>真实 AppShell 拆分</span><span class="nav-count">下一步</span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>项目</span></div>
+              <div class="nav-item"><span class="nav-icon">▱</span><span>copilot</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">▱</span><span>openclaw_data</span><span></span></div>
+              <div class="nav-item"><span class="nav-icon">▱</span><span>OPC 运营</span><span></span></div>
+            </section>
+            <section class="nav-group">
+              <div class="nav-group-title"><span>最近</span></div>
+              <div class="nav-item"><span class="nav-icon">◦</span><span>app UI 界面跟 Codex 还有差距</span><span class="nav-count">现在</span></div>
+              <div class="nav-item"><span class="nav-icon">◦</span><span>知识库 source-to-answer 重构</span><span class="nav-count">昨天</span></div>
+              <div class="nav-item"><span class="nav-icon">◦</span><span>Deep Research 报告生成</span><span class="nav-count">昨天</span></div>
+            </section>
+          </div>
+        </div>
+        <div class="sidebar-footer"><div class="nav-item"><span class="nav-icon">⚙</span><span>设置</span><span></span></div></div>
+      </aside>
+
+      <main class="main-column">
+        <header class="topbar" aria-label="当前页面状态">
+          <div class="top-title"><span>⌾</span>
+            <strong class="title-chat">对话</strong><strong class="title-agent">智能体</strong><strong class="title-overview">系统总览</strong><strong class="title-command">Command Center</strong>
+            <strong class="title-dev">开发台</strong><strong class="title-knowledge">知识库</strong><strong class="title-research">Deep Research</strong><strong class="title-graph">关系图谱</strong>
+            <strong class="title-assistant">智能助理</strong><strong class="title-opc">OPC 运营中枢</strong><strong class="title-projects">项目管理</strong><strong class="title-system">系统设置</strong>
+            <span>…</span>
+          </div>
+          <div class="top-actions"><span>已编辑 1 个文件</span><button>撤销</button><button>审核</button></div>
+        </header>
+
+        <section class="screen screen-dev"><div class="page-canvas">
+          <div class="page-head"><div><h1>开发台</h1><p>一体化开发台：左栏是任务栈，中栏是任务线程、变更审阅、运行日志和目标输入。</p></div><button>运行当前</button></div>
+          <div class="codex-grid dev-thread-grid">
+            <section class="panel"><header><strong>任务线程与变更</strong><button>审核</button></header><div class="panel-body conversation">
+              <div class="msg">开发台应该是一体的，不要在开发台页面又嵌入一个三栏结构。左侧栏就是任务栈。</div>
+              <div class="msg assistant">已按 AppShell 重构预览：任务栈进入全局左栏，目标、token、进度和证据进入全局右栏，中间只保留当前开发线程。</div>
+              <div class="row active"><span class="badge">NOW</span><div><strong>重构开发台首屏</strong><small>去掉内层三栏，建立 Codex 式全局任务控制台</small></div><span class="status ok">active</span></div>
+              <div class="row"><span class="badge">HTML</span><div><strong>design/openclaw-all-pages-codex-preview.html</strong><small>开发台预览结构：单线程 + 全局任务栈 + 右栏目标证据</small></div><span class="status ok">+1 file</span></div>
+              <div class="row"><span class="badge">NEXT</span><div><strong>确认预览后再改 React / Electron</strong><small>不在预览通过前写 app 代码</small></div><span class="status warn">gate</span></div>
+            </div></section>
+            <section class="panel"><header><strong>运行日志</strong><span class="status">live thread</span></header><div class="panel-body">
+              <div class="row"><span class="badge">01</span><div><strong>AppShell 结构</strong><small>顶部页面导航保留；开发台复用全局左中右，不再内嵌三栏。</small></div><span class="status ok">done</span></div>
+              <div class="row"><span class="badge">02</span><div><strong>左侧任务栈</strong><small>当前任务、子任务、产出和下一步成为开发台左栏。</small></div><span class="status ok">done</span></div>
+              <div class="row"><span class="badge">03</span><div><strong>右侧目标证据</strong><small>目标、token、进度、证据和 multi-agent 状态固定在 inspector。</small></div><span class="status ok">done</span></div>
+            </div></section>
+          </div>
+        </div></section>
+
+        <section class="screen screen-chat"><div class="page-canvas">
+          <div class="page-head"><div><h1>对话</h1><p>保留历史栏、当前消息线程、附件预览和上下文操作。</p></div><button>新对话</button></div>
+          <div class="codex-grid dev-thread-grid">
+            <section class="panel"><header><strong>当前对话记录</strong><button>创 goal</button></header><div class="panel-body conversation"><div class="msg">其他页功能和页面结构保留，UI 设计用 Codex 风格。</div><div class="msg assistant">已把历史会话和附件来源放到全局左栏；中间只保留当前线程和可执行输入，右侧显示上下文状态。</div><div class="row"><span class="badge">CTX</span><div><strong>当前附件、HTML 预览、原文件引用</strong><small>由左栏选择，右栏检查器展示来源状态</small></div><span class="status">ready</span></div></div></section>
+            <section class="panel"><header><strong>上下文预览</strong><button>加入知识库</button></header><div class="panel-body"><div class="doc-preview">OpenClaw UI 评审 · 当前预览文件 · Codex 对标截图</div></div></section>
+          </div>
+        </div></section>
+
+        <section class="screen screen-agent"><div class="page-canvas">
+          <div class="page-head"><div><h1>智能体</h1><p>保留 agent 档案、运行指挥、技能、Cron、配置和近期对话。</p></div><button>派发任务</button></div>
+          <div class="codex-grid cols-2">
+            <section class="panel"><header><strong>运行指挥</strong><span class="status">6 online</span></header><div class="panel-body"><div class="msg assistant">从左栏选择 agent 后，中间只显示当前 agent 的运行指令、任务队列和审批状态。</div><div class="row active"><span class="badge">PM</span><div><strong>Aristotle</strong><small>产品验收 · active</small></div><span class="status ok">active</span></div><div class="row"><span class="badge">QA</span><div><strong>Turing</strong><small>Electron acceptance · blocked</small></div><span class="status warn">blocked</span></div></div></section>
+            <section class="panel"><header><strong>档案 / 技能 / Cron / 对话</strong><button>配置</button></header><div class="panel-body"><div class="row"><span class="badge">SK</span><div><strong>world-class-ai-pm</strong><small>taste gate</small></div><span></span></div><div class="row"><span class="badge">CR</span><div><strong>UI acceptance monitor</strong><small>手动确认后继续</small></div><span></span></div><div class="row"><span class="badge">CH</span><div><strong>近期对话</strong><small>3 threads</small></div><span></span></div></div></section>
+          </div>
+        </div></section>
+
+        <section class="screen screen-overview"><div class="page-canvas">
+          <div class="page-head"><div><h1>系统总览</h1><p>保留告警、三代理、今日工作、任务、知识、项目、成本资源，但去掉大屏视觉。</p></div><button>刷新</button></div>
+          <div class="metric-row"><div class="metric"><span>alerts</span><strong>0</strong></div><div class="metric"><span>agents</span><strong>3</strong></div><div class="metric"><span>tasks</span><strong>12</strong></div><div class="metric"><span>cost</span><strong>est.</strong></div></div>
+          <div class="codex-grid cols-2" style="margin-top:10px"><section class="panel"><header><strong>今日工作</strong></header><div class="panel-body"><div class="row active"><span class="badge">UI</span><div><strong>Codex UI preview</strong><small>awaiting acceptance</small></div><span></span></div></div></section><section class="panel"><header><strong>知识与项目</strong></header><div class="panel-body"><div class="row"><span class="badge">K</span><div><strong>最近新增</strong><small>2 sources</small></div><span></span></div><div class="row"><span class="badge">P</span><div><strong>OpenClaw UI parity</strong><small>blocked by acceptance</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-command"><div class="page-canvas">
+          <div class="page-head"><div><h1>Command Center</h1><p>保留三代理实时协作、任务流转、审批和人工介入。</p></div><button>人工介入</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>协作线程</strong><span class="status">live</span></header><div class="panel-body conversation"><div class="row active"><span class="badge">M</span><div><strong>UI preview route</strong><small>Main 调度 · running</small></div><span></span></div><div class="row"><span class="badge">B</span><div><strong>验收门槛</strong><small>Boss 决策 · waiting user</small></div><span></span></div><div class="msg assistant">三代理身份放在左栏，主区域只展示协作流和当前阻塞。</div></div></section><section class="panel"><header><strong>审批与人工介入</strong><span class="status warn">1 pending</span></header><div class="panel-body"><div class="row"><span class="badge">W</span><div><strong>implementation hold</strong><small>code frozen until preview accepted</small></div><span></span></div><div class="row"><span class="badge">A1</span><div><strong>预览通过后写代码</strong><small>requires user acceptance</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-knowledge"><div class="page-canvas">
+          <div class="page-head"><div><h1>知识库</h1><p>保留 sources、文件树、内容预览、Studio 输出、ima Chat 和引用治理。</p></div><button>添加笔记</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>Preview</strong><button>下载</button></header><div class="panel-body"><div class="doc-preview">Markdown / HTML / PDF / code preview</div><div class="row active"><span class="badge">OC</span><div><strong>OpenClaw 文档</strong><small>由左栏 source 切换，预览区保持主阅读面。</small></div><span></span></div><div class="row"><span class="badge">TREE</span><div><strong>文件树</strong><small>目录和来源集合在左栏，当前文件在主区预览。</small></div><span></span></div><div class="row"><span class="badge">CITE</span><div><strong>引用治理</strong><small>缺引用、过期引用和 source path 在右栏检查。</small></div><span></span></div></div></section><section class="panel"><header><strong>Studio / Chat</strong><button>Ask</button></header><div class="panel-body"><div class="row"><span class="badge">OUT</span><div><strong>生成报告 / 脑图 / PPT</strong><small>未接入标注待开发</small></div><span></span></div><div class="row"><span class="badge">ANS</span><div><strong>Source to Answer</strong><small>回答必须带引用来源和可追溯路径。</small></div><span></span></div><div class="msg assistant">选择文件后开始对话，并展示引用来源。</div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-research"><div class="page-canvas">
+          <div class="page-head"><div><h1>Deep Research</h1><p>保留研究任务、来源、Markdown 报告、脑图草稿和未接入链路边界。</p></div><button>新研究</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>研究过程</strong></header><div class="panel-body"><div class="row active"><span class="badge">R1</span><div><strong>OpenClaw UI parity research</strong><small>任务和 sources 从左栏切换</small></div><span></span></div><div class="row"><span class="badge">SRC</span><div><strong>Codex screenshot / App.tsx / design doc</strong><small>3 sources</small></div><span></span></div><div class="row warn"><span class="badge">BD</span><div><strong>未接入链路边界</strong><small>缺真实后台能力的部分必须显式标注。</small></div><span></span></div></div></section><section class="panel"><header><strong>报告草稿</strong><button>导出 Markdown</button></header><div class="panel-body"><div class="doc-preview">研究结论、证据、风险、不做的事、验收脚本</div><div class="row"><span class="badge">MAP</span><div><strong>脑图草稿</strong><small>从研究结论生成结构化节点，确认后再输出。</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-graph"><div class="page-canvas">
+          <div class="page-head"><div><h1>关系图谱</h1><p>保留节点列表、局部图谱、关联路径和知识库治理证据。</p></div><button>打开节点</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>Graph</strong></header><div class="panel-body"><div class="graph-canvas"><div class="node n1">Codex UI</div><div class="node n2">开发台</div><div class="node n3">证据</div><div class="node n4">目标</div><div class="node n5">验收</div></div></div></section><section class="panel"><header><strong>Path Evidence</strong></header><div class="panel-body"><div class="row"><span class="badge">1</span><div><strong>开发台 → 目标 → 证据</strong><small>节点列表已移到左栏，主区域保留图谱和证据路径。</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-assistant"><div class="page-canvas">
+          <div class="page-head"><div><h1>智能助理</h1><p>保留日程、待办、提醒、项目动态、日历抽屉和代理讨论。</p></div><button>添加日程</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>Todos / Notes</strong></header><div class="panel-body"><div class="row"><span class="badge">T</span><div><strong>确认页面结构</strong><small>日程和待办移到左栏，主区只保留当前事项。</small></div><span></span></div><div class="row"><span class="badge">N</span><div><strong>保存验收反馈</strong><small>knowledge note</small></div><span></span></div><div class="row"><span class="badge">REM</span><div><strong>提醒</strong><small>到时提醒、跟进和重复任务统一在左栏切换。</small></div><span></span></div><div class="row"><span class="badge">PRJ</span><div><strong>项目动态</strong><small>关联项目的变更、阻塞和下一步。</small></div><span></span></div></div></section><section class="panel"><header><strong>代理讨论</strong></header><div class="panel-body"><div class="msg assistant">选择任务或日程后，直接和代理讨论安排、总结和报告。</div><div class="row"><span class="badge">CAL</span><div><strong>日历抽屉</strong><small>作为右侧/弹层 inspector，不占主工作流三栏。</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-opc"><div class="page-canvas">
+          <div class="page-head"><div><h1>OPC 运营中枢</h1><p>保留 CEO 总览、订单 CRM、供应链、财务、智能体运营、审批、报告复盘。</p></div><button>处理审批</button></div>
+          <div class="metric-row"><div class="metric"><span>orders</span><strong>3</strong></div><div class="metric"><span>cashflow</span><strong>watch</strong></div><div class="metric"><span>approvals</span><strong>1</strong></div><div class="metric"><span>agent output</span><strong>4</strong></div></div>
+          <div class="codex-grid dev-thread-grid" style="margin-top:10px"><section class="panel"><header><strong>审批与报告</strong></header><div class="panel-body"><div class="row warn"><span class="badge">AUD</span><div><strong>高风险动作</strong><small>运营对象已移到左栏；主区只显示当前审批和复盘输出。</small></div><span></span></div><div class="row"><span class="badge">SC</span><div><strong>供应链</strong><small>采购、库存、交付风险从左栏对象进入当前审批。</small></div><span></span></div><div class="row"><span class="badge">FIN</span><div><strong>财务</strong><small>现金、利润、应收应付进入经营判断。</small></div><span></span></div><div class="row"><span class="badge">AI</span><div><strong>智能体运营</strong><small>代理产出、审批和复盘沉淀到报告。</small></div><span></span></div><div class="row"><span class="badge">RPT</span><div><strong>OPC 运营报告</strong><small>source-backed</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-projects"><div class="page-canvas">
+          <div class="page-head"><div><h1>项目管理</h1><p>保留人生规划、项目组合、里程碑、成果物、OPC 业务嵌入。</p></div><button>新项目</button></div>
+          <div class="codex-grid dev-thread-grid"><section class="panel"><header><strong>里程碑 / 成果物</strong></header><div class="panel-body"><div class="row active"><span class="badge">P0</span><div><strong>OpenClaw UI parity</strong><small>项目组合在左栏选择，主区展示当前项目的里程碑和成果物。</small></div><span></span></div><div class="row"><span class="badge">LIFE</span><div><strong>人生规划</strong><small>长期目标映射到项目组合，不和当前执行流抢主位。</small></div><span></span></div><div class="row"><span class="badge">OPC</span><div><strong>OPC 业务嵌入</strong><small>业务项目可挂接运营中枢审批和报告。</small></div><span></span></div><div class="row"><span class="badge">M1</span><div><strong>HTML preview accepted</strong><small>before app code</small></div><span></span></div><div class="row"><span class="badge">D</span><div><strong>Electron validation</strong><small>after implementation</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <section class="screen screen-system"><div class="page-canvas">
+          <div class="page-head"><div><h1>系统设置</h1><p>保留系统总览、健康状态、配置评审、连接器、资源、通知和审计日志。</p></div><button>运行诊断</button></div>
+          <div class="codex-grid cols-2"><section class="panel"><header><strong>当前诊断</strong></header><div class="panel-body"><div class="row warn"><span class="badge">APP</span><div><strong>Electron launch</strong><small>requires app validation</small></div><span></span></div><div class="row"><span class="badge">GW</span><div><strong>Gateway</strong><small>checking</small></div><span></span></div><div class="row"><span class="badge">CFG</span><div><strong>配置评审</strong><small>变更配置必须经过检查和审计。</small></div><span></span></div></div></section><section class="panel"><header><strong>Resources / Audit</strong></header><div class="panel-body"><div class="row"><span class="badge">RES</span><div><strong>资源</strong><small>models / storage / cost</small></div><span></span></div><div class="row"><span class="badge">NOT</span><div><strong>通知</strong><small>任务、系统和自动化提醒进入统一设置。</small></div><span></span></div><div class="row"><span class="badge">LOG</span><div><strong>审计日志</strong><small>设置分组在左栏，主区聚焦当前检查。</small></div><span></span></div></div></section></div>
+        </div></section>
+
+        <div class="composer-wrap"><div class="composer"><button class="icon-btn">＋</button><textarea>要求后续变更，或确认这版页面结构保留 + Codex UI...</textarea><button>自定义⌄</button><button>目标</button><button class="icon-btn send">↑</button></div></div>
+      </main>
+
+      <aside class="right-panel" aria-label="页面检查器">
+        <div class="inspector">
+          <section class="inspect-panel inspect-dev">
+            <div class="inspect-block">
+              <div class="inspect-title"><span>开发台</span><span>⌘</span></div>
+              <div class="inspect-row"><span>▣</span><div>当前目标<small>Codex UI parity · active</small></div></div>
+              <div class="inspect-row"><span>◌</span><div>Token<small>91k estimate</small></div></div>
+              <div class="progress"><i style="width:37%"></i></div>
+            </div>
+            <div class="inspect-block">
+              <div class="inspect-title"><span>目标与证据</span><span>37%</span></div>
+              <div class="inspect-row"><span>G</span><div>Codex Goal 级开发台<small>左任务栈 · 中线程 · 右证据</small></div></div>
+              <div class="inspect-row"><span>E</span><div>HTML preview gate<small>确认后再改 app 代码</small></div></div>
+              <div class="inspect-row"><span>C</span><div>Changed files<small>1 preview file edited</small></div></div>
+            </div>
+            <div class="inspect-block">
+              <div class="inspect-title"><span>Multi Agents</span><span>ready</span></div>
+              <div class="inspect-row"><span>A</span><div>Aristotle<small>产品结构审阅</small></div></div>
+              <div class="inspect-row"><span>F</span><div>Fermat<small>布局一致性审阅</small></div></div>
+              <div class="inspect-row"><span>T</span><div>Turing<small>实现边界审阅</small></div></div>
+            </div>
+          </section>
+          <section class="inspect-panel inspect-chat"><div class="inspect-block"><div class="inspect-title"><span>对话</span></div><div class="inspect-row"><span>◌</span><div>历史 / 线程 / 预览<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-agent"><div class="inspect-block"><div class="inspect-title"><span>智能体</span></div><div class="inspect-row"><span>●</span><div>档案 / 运行 / 技能 / Cron<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-overview"><div class="inspect-block"><div class="inspect-title"><span>系统总览</span></div><div class="inspect-row"><span>◌</span><div>告警 / 三代理 / 成本<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-command"><div class="inspect-block"><div class="inspect-title"><span>Command Center</span></div><div class="inspect-row"><span>▧</span><div>Main / Boss / Worker<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-knowledge"><div class="inspect-block"><div class="inspect-title"><span>知识库</span></div><div class="inspect-row"><span>▤</span><div>Sources / Preview / Chat<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-research"><div class="inspect-block"><div class="inspect-title"><span>Deep Research</span></div><div class="inspect-row"><span>◇</span><div>Jobs / Sources / Report<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-graph"><div class="inspect-block"><div class="inspect-title"><span>关系图谱</span></div><div class="inspect-row"><span>◎</span><div>Nodes / Graph / Evidence<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-assistant"><div class="inspect-block"><div class="inspect-title"><span>智能助理</span></div><div class="inspect-row"><span>◷</span><div>Calendar / Todos / Chat<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-opc"><div class="inspect-block"><div class="inspect-title"><span>OPC</span></div><div class="inspect-row"><span>▱</span><div>CEO / CRM / 审批<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-projects"><div class="inspect-block"><div class="inspect-title"><span>项目管理</span></div><div class="inspect-row"><span>▱</span><div>项目 / 里程碑 / 成果物<small>保留</small></div></div></div></section>
+          <section class="inspect-panel inspect-system"><div class="inspect-block"><div class="inspect-title"><span>系统设置</span></div><div class="inspect-row"><span>⚙</span><div>健康 / 配置 / 审计<small>保留</small></div></div></div></section>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

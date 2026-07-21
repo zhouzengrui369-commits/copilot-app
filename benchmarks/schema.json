@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openclaw.local/benchmarks/schema.json",
+  "title": "OpenClaw Copilot Performance Baseline",
+  "description": "Schema for benchmarks/baseline.json. Used by scripts/ci/bench-validate.mjs and nightly-bench.yml. Bump version + add migration note whenever the metric set changes.",
+  "version": "0.1.0",
+  "type": "object",
+  "required": ["schema_version", "captured_at", "metrics"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version this baseline was authored against."
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the latest capture."
+    },
+    "runner": {
+      "type": "object",
+      "description": "Free-form runner metadata (os / node / hostname)."
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/metric" },
+      "description": "Map of metric id -> reading. Keys must be stable across versions."
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "required": ["label", "target_ms", "target_mb", "target_fps"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Human-readable metric description."
+        },
+        "value_ms": { "type": "number", "minimum": 0 },
+        "value_mb": { "type": "number", "minimum": 0 },
+        "value_fps": { "type": "number", "minimum": 0 },
+        "target_ms": { "type": "number", "exclusiveMinimum": 0 },
+        "target_mb": { "type": "number", "exclusiveMinimum": 0 },
+        "target_fps": { "type": "number", "exclusiveMinimum": 0 },
+        "source": {
+          "type": "string",
+          "description": "How the value was obtained (e.g. process.memoryUsage, better-sqlite3 micro-bench)."
+        },
+        "note": { "type": "string" },
+        "last_captured_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "metrics": [
+    {
+      "id": "metric_001_app_start",
+      "label": "macOS app cold start",
+      "value_ms": 0,
+      "target_ms": 2000
+    },
+    {
+      "id": "metric_002_app_memory",
+      "label": "idle memory",
+      "value_mb": 0,
+      "target_mb": 500
+    },
+    {
+      "id": "metric_003_kb_query",
+      "label": "100 notes query avg",
+      "value_ms": 0,
+      "target_ms": 50
+    },
+    {
+      "id": "metric_004_kg_render",
+      "label": "100 nodes FPS",
+      "value_fps": 0,
+      "target_fps": 30
+    }
+  ]
+}

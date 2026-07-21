@@ -1,0 +1,13 @@
+{"results":[
+{"workspace":"apps/copilot-desktop","status":"pass","duration_s":30,"log":"reports/unit/apps_copilot-desktop.log"}
+,
+{"workspace":"apps/copilot-cloud","status":"pass","duration_s":7,"log":"reports/unit/apps_copilot-cloud.log"}
+,
+{"workspace":"packages/kb","status":"pass","duration_s":4,"log":"reports/unit/packages_kb.log"}
+,
+{"workspace":"packages/kg","status":"pass","duration_s":2,"log":"reports/unit/packages_kg.log"}
+,
+{"workspace":"packages/llm-client","status":"pass","duration_s":4,"log":"reports/unit/packages_llm-client.log"}
+,
+{"workspace":"packages/rag","status":"pass","duration_s":3,"log":"reports/unit/packages_rag.log"}
+]}

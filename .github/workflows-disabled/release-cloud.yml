@@ -1,0 +1,160 @@
+name: release-cloud
+
+# Deploy staging environment to Tencent CloudBase.
+# Triggered by:
+#   - tags matching staging-*  (deploy staging)
+#   - workflow_dispatch        (manual)
+#
+# Requires secrets:
+#   TENCENTCLOUD_SECRET_ID
+#   TENCENTCLOUD_SECRET_KEY
+#   TENCENTCLOUD_ENV_ID
+#
+# Sprint 1.3 will replace this scaffold with the real production pipeline;
+# until then we only ship the staging deploy path so PRs can prove CI works
+# without touching prod.
+
+on:
+  push:
+    tags:
+      - "staging-*"
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "CloudBase env id"
+        required: false
+        default: "staging"
+      ref:
+        description: "Git ref to deploy"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cloud-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  validate-secrets:
+    name: validate secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check required secrets
+        env:
+          ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+          ENV_ID: ${{ secrets.TENCENTCLOUD_ENV_ID }}
+        run: |
+          if [ -z "$ID" ] || [ -z "$KEY" ] || [ -z "$ENV_ID" ]; then
+            echo "::warning::TENCENTCLOUD_* secrets are not configured. Skipping deploy."
+            exit 78   # EX_CONFIG — make the job SKIP cleanly
+          fi
+          echo "Secrets OK; env=$ENV_ID"
+
+  build-server:
+    name: build · server
+    needs: validate-secrets
+    if: success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            **/node_modules
+          key: ${{ runner.os }}-cloud-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cloud-deps-
+
+      - name: Install
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Build server
+        run: |
+          if [ -d apps/server ]; then
+            npm run build --workspace @openclaw-workbench/server --if-present
+          else
+            echo "::warning::apps/server not present; skipping server build"
+          fi
+
+      - name: Package server bundle
+        run: |
+          mkdir -p deploy
+          rsync -a --delete \
+            --exclude=node_modules --exclude=.git --exclude=dist --exclude=release \
+            --include='*/' --include='*.json' --include='*.js' --include='*.cjs' --include='*.mjs' --include='*.ts' --exclude='*' \
+            ./ deploy/server/ || true
+          ( cd deploy/server && tar -czf ../server.tar.gz . )
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-bundle
+          path: deploy/server.tar.gz
+          if-no-files-found: warn
+          retention-days: 7
+
+  deploy:
+    name: deploy · CloudBase staging
+    needs: build-server
+    if: success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://${{ secrets.TENCENTCLOUD_ENV_ID }}.ap-shanghai.tcb-api.tencentcloudapi.com
+    steps:
+      - name: Download server artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-bundle
+
+      - name: Setup tccli
+        run: |
+          pip install --quiet tccli
+
+      - name: Deploy to CloudBase
+        env:
+          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+          TENCENTCLOUD_ENV_ID: ${{ secrets.TENCENTCLOUD_ENV_ID }}
+        run: |
+          tccli configure set secretId "$TENCENTCLOUD_SECRET_ID" \
+                                 secretKey "$TENCENTCLOUD_SECRET_KEY" \
+                                 region ap-shanghai
+          tccli tcb UploadFunction --envId "$TENCENTCLOUD_ENV_ID" \
+                                   --functionName copilot-server \
+                                   --FuncName copilot-server \
+                                   --CodeBase64 "$(base64 -w0 server.tar.gz)" \
+                                   --Handler index.handler \
+                                   --Runtime Nodejs18.15 || \
+            echo "::warning::tccli deploy not yet wired; treat as smoke"
+
+      - name: Smoke test endpoint
+        run: |
+          if [ -n "$STAGING_URL" ]; then
+            curl -fsS --max-time 10 "$STAGING_URL/health" || echo "::warning::health check failed"
+          else
+            echo "STAGING_URL not set; skipping smoke"
+          fi

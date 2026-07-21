@@ -1,0 +1,40 @@
+{
+  "name": "@openclaw-workbench/desktop",
+  "productName": "njx-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "author": {
+    "name": "njx",
+    "email": "zhouzengrui369@gmail.com"
+  },
+  "description": "njx-copilot — macOS desktop shell for OpenClaw Workbench (Electron).",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "start": "electron .",
+    "dev:renderer": "npm run dev --workspace @openclaw-workbench/web",
+    "dev:server": "npm run dev --workspace @openclaw-workbench/server",
+    "dev:desktop": "node scripts/dev-desktop.mjs",
+    "icon:build": "/usr/bin/python3 ../../scripts/make-brand-mark.py",
+    "sync:web": "node scripts/sync-web-dist.mjs",
+    "sync:web:app": "node scripts/sync-web-dist.mjs --app /Users/njx/Applications/njx-copilot.app",
+    "icon:check": "/usr/bin/python3 ../../scripts/make-brand-mark.py --check",
+    "sign:mac:local": "node scripts/sign-local.mjs",
+    "prebuild": "npm run icon:build",
+    "prepack": "npm run icon:build",
+    "dist:mac": "PYTHON_PATH=/usr/bin/python3 npm run build && PYTHON_PATH=/usr/bin/python3 electron-builder --mac --config electron-builder.yml",
+    "dist:mac:arm64": "PYTHON_PATH=/usr/bin/python3 npm run build && PYTHON_PATH=/usr/bin/python3 electron-builder --mac --arm64 --config electron-builder.yml",
+    "dist:mac:arm64:dir": "PYTHON_PATH=/usr/bin/python3 npm run build && PYTHON_PATH=/usr/bin/python3 electron-builder --mac --arm64 --dir --config electron-builder.yml",
+    "dist:mac:x64": "PYTHON_PATH=/usr/bin/python3 npm run build && PYTHON_PATH=/usr/bin/python3 electron-builder --mac --x64 --config electron-builder.yml"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.0"
+  }
+}

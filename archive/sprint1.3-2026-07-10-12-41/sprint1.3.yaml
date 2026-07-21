@@ -1,0 +1,296 @@
+version: 1
+plan:
+  name: 'Sprint 1.3 v3 · RAG + Windows + workspace refresh (拆 T-1.3.0 → a/b)'
+  max_concurrency: 3
+  max_consecutive_failures: 2
+  max_cycles: 12
+  auto_accept: false
+  auto_reject_retries: 1
+  verifier_config:
+    default_verifiers:
+      - verifier
+    audit_sample_rate: 0.3
+    strict_mode: false
+tasks:
+  # ========== T-1.3.0a — PHASE A env-only (npm install + kg build) ==========
+  - id: 'T-1.3.0a'
+    title: 'Workspace refresh PHASE A · npm install cold-cache + packages/kg build (env-only)'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    timeout_ms: 1500000
+    depends_on: []
+    prompt: |
+      你是 Sprint 1.3 worker α-PHASE-A (workspace refresh PHASE A)。解决 Sprint 1.2 env-blocker 钉子 #22, 仅做 ENV REFRESH, 不跑 tsc/vitest (留给 PHASE B)。
+
+      **PHASE 边界 (硬约束)**:
+      - 你只做: npm install + packages/kg build
+      - 你不做: tsc 3 configs / vitest / apps/copilot-desktop 业务代码
+      - 报 done 时只附 env 验收信号
+
+      必读:
+      - /Users/njx/openclaw/copilot/goal.md v6.2
+      - /Users/njx/openclaw/copilot/plan.md v6.2 §2.2
+      - /Users/njx/openclaw/copilot/rules.md v6.2 (钉子 #14 §2.6 Done 硬条件)
+      - /Users/njx/openclaw/copilot/sprint1.2/board.md (Sprint 1.2 CLOSE)
+      - 钉子 #22 (Mavis MEMORY.md)
+
+      工作位置:
+      - worktree: `git worktree add ../copilot.wt-T130a/wt-T130a -b sp1.3-T-1.3.0a main`
+      - 写: package-lock.json + node_modules/ + packages/kg/dist/ + outputs/T-1.3.0a/ + SELF-VERIFY-T-1.3.0a.md + sprint1.3/board.md
+      - 不写: src/ 业务代码 · packages/kb/ (T-1.2.5 carryover, NOT scope) · 4 docs
+
+      核心动作 (≤15min hard cap):
+      1. T+1min: `git worktree add ../copilot.wt-T130a/wt-T130a -b sp1.3-T-1.3.0a main`
+      2. T+1-12min: `cd /Users/njx/openclaw/copilot.wt-T130a/wt-T130a && nohup npm install > /tmp/npm-install-T130a.log 2>&1 &` 然后 `tail -f /tmp/npm-install-T130a.log` poll
+      3. T+12-14min: `cd packages/kg && npm run build` (1-2min)
+      4. T+14min: 立即 commit + outputs/T-1.3.0a/deliverable.md + SELF-VERIFY + board entry → exit
+
+      **T+13min 硬 wrap-up checkpoint**: 不管 npm install 是否完成, 立即 git add + commit + 写 deliverable.md "PARTIAL (X/N packages added)" + 列剩余 → exit. 不强行 PASS.
+
+      验收信号 (PHASE A):
+      - packages/kg/dist/ 存在 (含 index.js + index.d.ts)
+      - node_modules/@copilot/kg 指向 ../packages/kg symlink
+      - node_modules/sigma + graphology + graphology-layout 存在
+      - npm install log 含 `added` 关键字 (即使数量 < expected)
+
+      决策红线:
+      - 不动业务代码 · 不 amend Sprint 1.2 commit · 不跑 npm prune/rebuild
+      - npm install 失败 / T+13min 未完成 → 立即 PARTIAL commit, 不 retry
+      - **绝对不要 commit packages/kb/ 任何文件** (T-1.2.5 carryover)
+
+      ## Done 硬条件 (钉子 #14) — 3 件齐
+      1. `git add package-lock.json node_modules/ packages/kg/dist/ outputs/T-1.3.0a/ SELF-VERIFY-T-1.3.0a.md && git commit`
+      2. `outputs/T-1.3.0a/deliverable.md` (VERDICT + npm install 摘要 + kg dist ls + known limitations)
+      3. `sprint1.3/board.md` append in_progress → done 行 (含 PHASE A 标注)
+
+      完成: commit + 写 SELF-VERIFY-T-1.3.0a.md (≥ 3 验收信号 + 1 张 terminal capture) → exit。
+    verify_prompt: |
+      你是 Sprint 1.3 verifier α-PHASE-A, 验证 env refresh 产出。
+
+      必跑:
+      1. cd /Users/njx/openclaw/copilot.wt-T130a/wt-T130a && git log --oneline -3
+      2. cat outputs/T-1.3.0a/deliverable.md (含 VERDICT)
+      3. cat SELF-VERIFY-T-1.3.0a.md (≥ 3 验收信号)
+      4. ls packages/kg/dist/ (index.js + index.d.ts)
+      5. readlink node_modules/@copilot/kg (→ ../packages/kg)
+      6. ls node_modules/sigma node_modules/graphology node_modules/graphology-layout
+      7. grep "added" /tmp/npm-install-T130a.log
+      8. git log --stat HEAD~1..HEAD (NOT 含 packages/kb/*)
+      9. 钉子 #14 verify
+
+      PASS/FAIL 必填 + 5 行以内原因。
+
+  # ========== T-1.3.0b — PHASE B tsc + vitest (depends T-1.3.0a) ==========
+  - id: 'T-1.3.0b'
+    title: 'Workspace refresh PHASE B · tsc 3 configs + vitest 200+ tests clean baseline'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    timeout_ms: 1200000
+    depends_on:
+      - 'T-1.3.0a'
+    prompt: |
+      你是 Sprint 1.3 worker α-PHASE-B。在 PHASE A env refresh 完成后, 跑 tsc 3 configs + vitest 200+ tests 验收。
+
+      必读:
+      - /Users/njx/openclaw/copilot/sprint1.3/board.md (T-1.3.0a done + verdict)
+      - /Users/njx/openclaw/copilot/sprint1.3/outputs/T-1.3.0a/deliverable.md
+      - 钉子 #22 + 钉子 #14 §2.6
+
+      工作位置:
+      - 复用 PHASE A worktree: `/Users/njx/openclaw/copilot.wt-T130a/wt-T130a`
+      - 分支: `sp1.3-T-1.3.0b` (从 sp1.3-T-1.3.0a HEAD 拉)
+      - 写: outputs/T-1.3.0b/ + SELF-VERIFY-T-1.3.0b.md + sprint1.3/board.md PHASE B entry
+      - 不写: src/ 业务代码 · packages/kb/ · node_modules/ (env 已 OK)
+
+      核心动作 (≤15min hard cap):
+      1. T+1min: `cd /Users/njx/openclaw/copilot.wt-T130a/wt-T130a && git checkout -b sp1.3-T-1.3.0b`
+      2. T+1-3min: `cd apps/copilot-desktop && npm run check` (tsc 3 configs, 1-2min)
+      3. T+3-13min: `npm run test` (vitest 全跑, 200+ tests)
+      4. T+13min: 立即 commit + outputs/T-1.3.0b/deliverable.md + board entry → exit
+
+      **T+12min 硬 wrap-up checkpoint**: 未跑完 → 立即 PARTIAL commit + 列剩余 → exit.
+
+      验收信号:
+      - tsc 3 configs 全部 0 error
+      - vitest ≥ 200 PASS
+      - 截图 ≥ 2 张 (tsc 通过 + vitest 全绿 terminal capture)
+
+      决策红线:
+      - 不动业务代码 · 不 amend PHASE A · 不跑 npm install/rebuild
+      - **T+12min 仍未完成 → PARTIAL commit, 不 retry 测试**
+      - **不要 commit packages/kb/* 改动**
+
+      ## Done 硬条件 (钉子 #14) — 3 件齐
+      1. `git add outputs/T-1.3.0b/ SELF-VERIFY-T-1.3.0b.md && git commit`
+      2. `outputs/T-1.3.0b/deliverable.md` (VERDICT + tsc 输出 + vitest pass count)
+      3. `sprint1.3/board.md` append PHASE B done 行
+
+      完成: commit + SELF-VERIFY + 截图 → exit。
+    verify_prompt: |
+      你是 Sprint 1.3 verifier α-PHASE-B, 验证 tsc + vitest 产出。
+
+      必跑:
+      1. cd /Users/njx/openclaw/copilot.wt-T130a/wt-T130a && git checkout sp1.3-T-1.3.0b && git log --oneline -3
+      2. cat outputs/T-1.3.0b/deliverable.md (VERDICT + tsc/vitest 输出)
+      3. cat SELF-VERIFY-T-1.3.0b.md (≥ 2 信号 + 截图路径)
+      4. cd apps/copilot-desktop && npm run check (exit 0)
+      5. npm run test (exit 0, ≥ 200 PASS)
+      6. ls screenshots/T-1.3.0b/*.png | wc -l (≥ 2)
+      7. 钉子 #14 verify
+
+      PASS/FAIL 必填 + 5 行以内原因。
+
+  # ========== T-1.3.1 — RAG scaffold (depends T-1.3.0a, env-only 即可启动) ==========
+  - id: 'T-1.3.1'
+    title: 'RAG scaffold · 向量化 + 检索 + LLM 答案生成 + 笔记引用 (3 wave)'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    timeout_ms: 1800000
+    depends_on:
+      - 'T-1.3.0a'
+    prompt: |
+      你是 Sprint 1.3 worker β (RAG scaffold)。
+
+      必读基础文档 (10 分钟不可省):
+      - /Users/njx/openclaw/copilot/goal.md v6.2 §1 RAG 范围
+      - /Users/njx/openclaw/copilot/plan.md v6.2 §2.2 T-1.3.1
+      - /Users/njx/openclaw/copilot/rules.md v6.2 (钉子 #14 §2.6 Done 硬条件)
+      - /Users/njx/openclaw/copilot/delivery.md v6.2
+      - /Users/njx/openclaw/copilot/sprint1.2/board.md Sprint 1.2 CLOSE entry
+      - /Users/njx/openclaw/copilot/packages/kb/ (T-1.2.5 todos + T-1.2.1 KG 基础, T-1.3.0a 后 env 已 OK)
+
+      工作位置:
+      - worktree: `git worktree add ../copilot.wt-T131/wt-T131 -b sp1.3-T-1.3.1 main`
+      - 写: packages/rag/ 新包 · apps/copilot-desktop/src/renderer/components/RAG/ · tests · SELF-VERIFY-T-1.3.1.md
+      - 不写: apps/web/、apps/server/、其他 sub-agent worktree、4 docs、packages/kb/
+
+      核心范围 (≤ 30min cap, 3 wave 拆):
+      - wave 1 (≤10min): Vector store scaffold — sqlite-vss (本地优先) + Embedding wrapper (mxbai-embed-large via Ollama HTTP)
+      - wave 2 (≤10min): Indexing pipeline — chunk KB 笔记 (按段落 512 token) → embed → store vss table
+      - wave 3 (≤10min): Retrieval + answer API — query → top-k=5 → LLM 答案 + cite note_path
+      - **T+25min 硬 wrap-up checkpoint**: 立即 commit + deliverable.md "PARTIAL (wave X/Y done)" + 列剩余 → exit
+
+      决策红线:
+      - RAG 100% 本地 (sqlite-vss + Ollama, 不调 cloud OpenAI)
+      - 笔记引用必须含 `note_path`
+      - 不修改 Sprint 1.2 既有 schema (notes / note_links / kg_pending / todos)
+      - 不动 apps/server/
+      - **T+25min 未完成 → PARTIAL commit, 不延展**
+
+      ## Done 硬条件 (钉子 #14) — 3 件齐
+      1. `git add && git commit`
+      2. `outputs/T-1.3.1/deliverable.md` (VERDICT + 已跑命令 + 截图 + wave 进度 + known limitations)
+      3. `sprint1.3/board.md` append in_progress → done 行
+
+      完成: commit + push + SELF-VERIFY-T-1.3.1.md + 截图 ≥ 4 张 → exit。
+    verify_prompt: |
+      你是 Sprint 1.3 verifier β, 验证 RAG scaffold 产出。
+
+      必跑:
+      1. cd /Users/njx/openclaw/copilot.wt-T131/wt-T131 && git log --oneline -5
+      2. cat outputs/T-1.3.1/deliverable.md (VERDICT + wave 进度)
+      3. cat SELF-VERIFY-T-1.3.1.md (≥ 4 信号 + 截图)
+      4. ls screenshots/T-1.3.1/*.png | wc -l (≥ 4)
+      5. cd packages/rag && npm install (exit 0)
+      6. npm run check (exit 0)
+      7. npm run test (exit 0, coverage ≥ 70%)
+      8. 跑 indexing baseline: seed 20 KB 笔记 → indexing → sqlite-vss 表存在 + ≥ 20 row
+      9. 跑 retrieval smoke: query "test" → top-5 cosine ≥ 0.5
+      10. 跑 answer generation: query → LLM 答案含 ≥ 1 个 cite_note_path
+      11. grep -r "TODO\|FIXME\|XXX" packages/rag/src/
+      12. 钉子 #14 verify
+
+      PASS/FAIL 必填 + 5 行以内原因。
+
+  # ========== T-1.3.2 — Windows packaging (depends T-1.3.0a, env-only 即可) ==========
+  - id: 'T-1.3.2'
+    title: 'Windows packaging · electron-builder config + Win10/11 build + code signing prep (2 wave)'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 2
+    timeout_ms: 1800000
+    depends_on:
+      - 'T-1.3.0a'
+    prompt: |
+      你是 Sprint 1.3 worker γ (Windows packaging)。
+
+      必读基础文档:
+      - /Users/njx/openclaw/copilot/goal.md v6.2 §2 Windows 目标
+      - /Users/njx/openclaw/copilot/plan.md v6.2 §2.2 T-1.3.2
+      - /Users/njx/openclaw/copilot/rules.md v6.2 (钉子 #14)
+      - /Users/njx/openclaw/copilot/apps/copilot-desktop/electron-builder.yml (现有 Mac config)
+      - /Users/njx/openclaw/copilot/apps/copilot-desktop/package.json dist:mac:* (Sprint 1.1 Mac 派生 Win)
+
+      工作位置:
+      - worktree: `git worktree add ../copilot.wt-T132/wt-T132 -b sp1.3-T-1.3.2 main`
+      - 写: apps/copilot-desktop/electron-builder.yml (Mac + Win) · package.json dist:win:* script · build/icon.ico · SELF-VERIFY-T-1.3.2.md
+      - 不写: apps/web/、apps/server/、apps/copilot-desktop/src/ 业务代码、4 docs、packages/kb/
+
+      核心范围 (≤ 30min cap, 2 wave):
+      - wave 1 (≤15min): electron-builder.yml Mac + Win 双 target + dist:win:x64 + dist:win:arm64 npm script + Win icon (256/128/48/16 .ico)
+      - wave 2 (≤10min): Win10/11 build verification — `npm run dist:win:x64` + Win NSIS + Win portable .exe
+      - **T+25min 硬 wrap-up checkpoint**: PARTIAL commit + 列剩余 → exit
+
+      决策红线:
+      - 不破坏现有 Mac 打包 (dist:mac:* 保持 work)
+      - code signing cert 缺失 → deliverable.md "Sprint 1.4 deferred", 用 self-signed placeholder
+      - 不在 main 分支跑 `npm run dist:win` (.gitignore dist/)
+      - Win build 必须 macOS cross-compile OK
+
+      ## Done 硬条件 (钉子 #14) — 3 件齐
+      1. `git add electron-builder.yml package.json build/icon.ico SELF-VERIFY-T-1.3.2.md && git commit`
+      2. `outputs/T-1.3.2/deliverable.md` (VERDICT + 已跑命令 + 截图 + known limitations)
+      3. `sprint1.3/board.md` append in_progress → done 行
+
+      完成: commit + push + SELF-VERIFY-T-1.3.2.md + 截图 ≥ 3 张 (electron-builder.yml diff + dist:win script + Win NSIS file size) → exit。
+    verify_prompt: |
+      你是 Sprint 1.3 verifier γ, 验证 Windows packaging 产出。
+
+      必跑:
+      1. cd /Users/njx/openclaw/copilot.wt-T132/wt-T132 && git log --oneline -3
+      2. cat outputs/T-1.3.2/deliverable.md (VERDICT)
+      3. cat SELF-VERIFY-T-1.3.2.md (≥ 3 信号)
+      4. ls screenshots/T-1.3.2/*.png | wc -l (≥ 3)
+      5. cat apps/copilot-desktop/electron-builder.yml (含 mac + win 双 target)
+      6. grep -E 'dist:win:x64|dist:win:arm64' apps/copilot-desktop/package.json (2 个 script)
+      7. ls apps/copilot-desktop/build/icon.ico (256x256)
+      8. grep 'dist/' .gitignore (排除 build 产物)
+      9. grep -r "TODO\|FIXME\|XXX" apps/copilot-desktop/electron-builder.yml
+      10. 钉子 #14 verify
+
+      PASS/FAIL 必填 + 5 行以内原因。
+
+  # ========== T-1.3.3 — Sprint 1.3 cycle-close verifier (钉子 #15 v2) ==========
+  - id: 'T-1.3.3'
+    title: 'Sprint 1.3 cycle-close verifier (T-1.3.0a/b + 1 + 2 spot-check + 钉子 #20 audit + cross-doc)'
+    assigned_to: verifier
+    verified_by: verifier
+    max_retries: 1
+    depends_on:
+      - 'T-1.3.0b'
+      - 'T-1.3.1'
+      - 'T-1.3.2'
+    prompt: |
+      你是 Sprint 1.3 顶层 verifier (钉子 #15 v2 schema)。验证 T-1.3.0a/b/1/2 四个 worker 产出 + 钉子 #20 audit + cross-doc 5 件齐。
+
+      必跑 (per钉子 #11+#14+#15 v2+#18+#20):
+      1. cd /Users/njx/openclaw/copilot && git log --oneline main -15 (看 main HEAD 含 Sprint 1.3 merge commits)
+      2. cat sprint1.3/board.md (T-1.3.0a/b + 1 + 2 四个 done 行存在)
+      3. 抽样 verify 4 个 worker 各跑 30s spot-check:
+         - T-1.3.0a: ls packages/kg/dist + readlink node_modules/@copilot/kg
+         - T-1.3.0b: cd apps/copilot-desktop && npm run check && npm run test (exit 0)
+         - T-1.3.1: cd packages/rag && npm run check && npm run test (exit 0)
+         - T-1.3.2: cat apps/copilot-desktop/electron-builder.yml | grep -E 'win|nsis' (双 target 存在)
+      4. 钉子 #20 audit: git log --since=now-2h --all (检查所有 worker 有无 post-kill commit)
+      5. Cross-doc 5 件齐: goal.md / plan.md / rules.md / delivery.md / sprint1.3.yaml + sprint1.3/board.md
+      6. 钉子 #14 verify: 4 个 outputs/<task>/deliverable.md 都存在 + VERDICT 行 + 4 个 SELF-VERIFY-T-1.3.*.md 都存在
+
+      输出: outputs/T-1.3.3/audit.md (≥ 200 行, 含 PASS/FAIL verdict + 5/5 cross-doc + 钉子 #20 audit result)
+      + sprint1.3/board.md append verifier audit entry (author_role: verifier)
+      + commit 全部 outputs + board entry
+      → exit。
+    verify_prompt: |
+      (顶层 verifier self-spot-check 即可, owner NJX 会单独 verify)

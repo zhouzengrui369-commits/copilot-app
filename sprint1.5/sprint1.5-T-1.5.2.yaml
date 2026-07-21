@@ -1,0 +1,98 @@
+version: 1
+plan:
+  name: 'Sprint 1.5 Wave 2 · T-1.5.2 Branded icon verify (T-1.3.2 placeholder + 4 signed artifact re-verify)'
+  max_concurrency: 1
+  max_consecutive_failures: 2
+  max_cycles: 3
+  auto_accept: false
+  auto_reject_retries: 1
+  verifier_config:
+    default_verifiers:
+      - verifier
+    audit_sample_rate: 0.5
+    strict_mode: true
+tasks:
+  # ========== T-1.5.2 — Branded icon verify (T-1.3.2 placeholder + 4 signed artifact re-verify) ==========
+  - id: 'T-1.5.2'
+    title: 'Sprint 1.5 Wave 2 · Branded icon verify (T-1.3.2 placeholder + 4 signed artifact re-verify + S1.5 close path)'
+    assigned_to: coder
+    verified_by: verifier
+    max_retries: 1
+    timeout_ms: 900000  # 15min hard cap (远小于 30min, task 简单)
+    depends_on: []
+    prompt: |
+      你是 Sprint 1.5 worker α-Wave-2 (T-1.5.2 branded icon verify)。本 task 是 NJX 20:13 拍板 范围收窄版 (用 T-1.3.2 placeholder, 不等新 logo), 替代原 "branded icon 替换" task。
+
+      **背景 (NJX 20:13 拍板)**: T-1.5.1 worker 已 build 4 signed artifact (x64-setup + x64-portable + arm64-setup + arm64-portable), 用的是 T-1.3.2 placeholder icon (`apps/copilot-desktop/build/icon.ico`)。NJX 拍板"用现在 njx-copilot app 的 logo", T-1.5.2 不替换 icon, 只验证 + 收口。
+
+      **必读 (3 件, 不读 = 失职)**:
+      1. /Users/njx/openclaw/copilot/sprint1.5/outputs/T-1.5.2/TASK.md (完整 task contract, 含 4 phase + 5 验收信号 + 决策红线)
+      2. /Users/njx/openclaw/copilot/sprint1.5/board.md (S1.5 状态, 7/10 20:14 已 update)
+      3. /Users/njx/openclaw/copilot/sprint1.5/rules.md §2.6 (4 artifact verify 红线)
+
+      **必跑 PM 拍板硬规则**:
+      - 钉子 #14 (3件齐): commit + deliverable.md + SELF-VERIFY + board.md
+      - 钉子 #23 (5-min audit): ls + grep VERDICT + wc -l + git status + git log
+      - 钉子 #30 (dispatch explicit flags): electron-builder 必带 --config electron-builder.yml + 显式 cd apps/copilot-desktop + timeout ≥ 15min (本 task 简化为 byte-level grep + osslsigncode, 不重 build)
+      - 钉子 #37 (Wine auto-provision): 本 task 不重 build, 不需要 wine, 但要 cross-check 4 artifact 完整
+      - 钉子 #38 (dist bundle grep): Sprint close PM SOP, 本 task 必跑 src vs dist 一致性
+
+      **工作位置**:
+      - worktree: `git worktree add ../copilot.wt-T152/wt-T152 -b sp1.5-T-1.5.2 main`
+        (注意: T-1.5.2 简写 T152, 避免跟 wt-T151 撞名)
+      - 分支: `sp1.5-T-1.5.2` from main (HEAD = `d7ed6f93`, 含 T-1.5.1 commit f0df9380 + board update d7ed6f93)
+      - 写: `outputs/T-1.5.2/` (TASK.md + deliverable.md + SELF-VERIFY) + `sprint1.5/board.md` (append Wave 2 entry) + `sprint1.5/delivery.md` (S1.5 close path 草稿)
+      - 不写: `build/icon.ico` (保留 T-1.3.2 placeholder) · `gen-icon.mjs` (T-1.3.2 design decision 保持) · `apps/copilot-desktop/src/` · `packages/kb/` · `packages/rag/`
+      - **不重 build**: 4 artifact 已在 T-1.5.1 留在 `apps/copilot-desktop/release/`, T-1.5.2 只 verify 不 rebuild (节省 5-10min)
+
+      **核心动作 (≤15min hard cap, 严格按 TASK.md §4 4 phase 跑)**:
+      - Phase A (T+0-2min): 4 artifact 存在 + size sanity check (期望 x64-setup ~80MB, x64-portable ~78MB, arm64-setup ~80MB, arm64-portable ~78MB)
+      - Phase B (T+2-7min): icon.ico byte-level grep 4 artifact (期望 4/4 命中 "icon" header 或 T-1.3.2 placeholder 标识)
+      - Phase C (T+7-12min): osslsigncode verify 4/4 artifact (期望 4/4 "Number of verified signatures: 1" + signer = CN=NJX Dev Signing (Self-Signed))
+      - Phase D (T+12-15min): 5-min audit + commit + 3件齐 + board entry + delivery.md 草稿
+
+      **T+12min 硬 wrap-up checkpoint**: 不管是否完成, 立即 git add + commit + 写 deliverable.md "PARTIAL (X/5 验收信号)" + 列剩余 → exit. 不强行 PASS.
+
+      **验收信号 (5 件, 必全 PASS 才 VERDICT=PASS)**:
+      1. **4 artifact 存在 + size sanity**: `ls -la apps/copilot-desktop/release/njx-copilot-v6-0.1.0-{x64,arm64}-{setup,portable}.exe` 4 个 file, size 在预期范围 (70-90MB)
+      2. **icon.ico 嵌入 4/4**: 4 artifact 全部 hexdump 命中 icon header (T-1.3.2 placeholder 标识, e.g. "ICONDIR" magic bytes 00 00 01 00 或 "icon" string)
+      3. **osslsigncode 4/4 verified**: 4 artifact 全部 `Number of verified signatures: 1` + signer = CN=NJX Dev Signing (Self-Signed)
+      4. **build/icon.ico 保持 T-1.3.2 placeholder**: `git log --oneline -1 -- apps/copilot-desktop/build/icon.ico` 显示是 T-1.3.2 commit, 未被覆盖
+      5. **commit + 3件齐 + board entry + delivery.md 草稿**: 钉子 #14 + 钉子 #38
+
+      **决策红线 (不可破)**:
+      - ❌ 不替换 icon.ico (T-1.3.2 placeholder 保留, NJX 20:13 拍板)
+      - ❌ 不重 build artifact (T-1.5.1 已 build, 节省时间, 不重新消耗 wine/electron-builder)
+      - ❌ 不动 gen-icon.mjs (T-1.3.2 design decision 保持)
+      - ❌ 不引入新 logo (NJX 20:13 拍板不等)
+      - ❌ 不引入 prod cert (S1.4 rules.md §3.1 红线)
+      - ❌ 不超时 (>15min 立即 PARTIAL commit + exit)
+      - ❌ 不假报 VERDICT (任何 artifact verify 失败 → VERDICT=FAIL)
+      - ❌ 不省略 5-min audit (钉子 #23)
+      - ❌ 不省略 钉子 #38 dist bundle grep
+
+      ## Done 硬条件 (钉子 #14)
+      1. `git add ... && git commit` (在 sp1.5-T-1.5.2 branch)
+      2. `outputs/T-1.5.2/deliverable.md` (含 VERDICT + 5 验收信号 + caveat + 钉子 #38 grep)
+      3. `outputs/T-1.5.2/SELF-VERIFY-T-1.5.2.md` (5-min cross-doc audit 结果)
+      4. `sprint1.5/board.md` 追加 entry (worktree 路径 + branch + commit hash)
+      5. `sprint1.5/delivery.md` 草稿 (S1.5 close 路径, 7/18 复盘会前 finalize)
+
+      完成: commit + 写 SELF-VERIFY-T-1.5.2.md + delivery.md 草稿 → exit。NJX 验收弹窗由 PM (Mavis) 触发。
+    verify_prompt: |
+      你是 Sprint 1.5 verifier α-Wave-2, 验证 T-1.5.2 branded icon verify 产出。
+
+      必跑 (5 件, 1 件 FAIL = 整体 FAIL):
+      1. `cd /Users/njx/openclaw/copilot.wt-T152/wt-T152 && git log --oneline -3` (确认 commit hash, base = d7ed6f93)
+      2. `cat outputs/T-1.5.2/deliverable.md` (含 VERDICT + 5 验收信号)
+      3. `cat SELF-VERIFY-T-1.5.2.md` (5-min audit 结果, ≥ 5 项)
+      4. **4 artifact 存在 + size sanity**: `ls -la apps/copilot-desktop/release/njx-copilot-v6-0.1.0-{x64,arm64}-{setup,portable}.exe` 4 个 file 70-90MB 范围
+      5. **icon.ico 嵌入 4/4**: 4 artifact hexdump 命中 icon header (T-1.3.2 placeholder 标识)
+      6. **osslsigncode 4/4 verified**: 4 artifact 全部 "Number of verified signatures: 1" + signer = CN=NJX Dev Signing (Self-Signed)
+      7. **build/icon.ico 保持 T-1.3.2 placeholder**: `git log --oneline -1 -- apps/copilot-desktop/build/icon.ico` 显示是 T-1.3.2 commit
+      8. **sprint1.5/delivery.md 草稿存在**: 含 S1.5 状态 + Wave 1-4 摘要 + 钉子 #38 待补
+      9. 钉子 #14 verify: 3件齐 (commit + deliverable + SELF-VERIFY + board entry)
+      10. 钉子 #38 verify: dist bundle grep "Sprint 1.4 release" 命中 ≥ 1
+      11. **红线 verify**: `git log --stat HEAD~1..HEAD` 确认 NOT 含 icon.ico / gen-icon.mjs / src 业务代码 / packages/kb / packages/rag / 4 artifact 重 build
+
+      PASS/FAIL 必填 + 5 行以内原因 (钉子 #9: VERDICT 必独立 verify, 不信 producer self-report)。

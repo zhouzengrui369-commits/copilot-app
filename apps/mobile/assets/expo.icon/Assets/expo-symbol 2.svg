@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <!-- OpenClaw 3-claw glyph for iOS 18+ Liquid Glass icon (.icon).
+       Treated as foreground image (fill = teal solid, see icon.json).
+       The white "claw" is drawn as 4 shapes: 1 cap + 3 vertical bars. -->
+  <!-- Cap (horizontal pill) -->
+  <rect x="13" y="31" width="74" height="15" rx="7.5" ry="7.5" fill="#ffffff"/>
+  <!-- 3 vertical claws (outer ones slightly longer for character) -->
+  <rect x="10.75" y="44.5" width="15" height="30" rx="7.5" ry="7.5" fill="#ffffff"/>
+  <rect x="42.5" y="44.5" width="15" height="22" rx="7.5" ry="7.5" fill="#ffffff"/>
+  <rect x="74.25" y="44.5" width="15" height="30" rx="7.5" ry="7.5" fill="#ffffff"/>
+</svg>

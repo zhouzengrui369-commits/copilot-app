@@ -1,0 +1,54 @@
+/*
+ * theme.css — CSS custom properties for the three theme variants.
+ * The renderer applies `data-theme` on <html> based on settings.theme.
+ * "auto" resolves to prefers-color-scheme at the OS layer.
+ */
+:root {
+  --copilot-radius-sm: 4px;
+  --copilot-radius-md: 8px;
+  --copilot-space-1: 4px;
+  --copilot-space-2: 8px;
+  --copilot-space-3: 12px;
+  --copilot-space-4: 16px;
+  --copilot-space-5: 24px;
+  --copilot-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --copilot-font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
+:root[data-theme='dark'],
+:root[data-theme='auto'] {
+  --copilot-bg: #0e0e10;
+  --copilot-bg-elev: #1a1a1d;
+  --copilot-fg: #f4f4f5;
+  --copilot-fg-muted: #a1a1aa;
+  --copilot-border: #2a2a2e;
+  --copilot-accent: #6366f1;
+  --copilot-danger: #ef4444;
+}
+
+:root[data-theme='auto'] {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='auto'] {
+    --copilot-bg: #ffffff;
+    --copilot-bg-elev: #f4f4f5;
+    --copilot-fg: #18181b;
+    --copilot-fg-muted: #52525b;
+    --copilot-border: #e4e4e7;
+    --copilot-accent: #4f46e5;
+    --copilot-danger: #b91c1c;
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --copilot-bg: #ffffff;
+  --copilot-bg-elev: #f4f4f5;
+  --copilot-fg: #18181b;
+  --copilot-fg-muted: #52525b;
+  --copilot-border: #e4e4e7;
+  --copilot-accent: #4f46e5;
+  --copilot-danger: #b91c1c;
+}

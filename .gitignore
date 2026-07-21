@@ -1,0 +1,114 @@
+node_modules/
+dist/
+.vite/
+apps/*/dist/
+apps/*/.vite/
+coverage/
+playwright-report/
+test-results/
+screenshots/
+data/*.sqlite
+data/*.sqlite-*
+data/*.db
+data/*.db-*
+data/backups/
+data/logs/
+data/run/
+knowledge_sidecars/research/*/
+knowledge_sidecars/ingest/*.md
+.env
+.env.*
+!.env.example
+*.log
+*.err
+*.out
+.DS_Store
+**/.DS_Store
+
+# GitHub source snapshot hygiene: never publish local credentials or large runtime artifacts.
+screenlog.0
+**/screenlog.0
+*.apk
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.mobileprovision
+
+# Local acceptance/runtime evidence is retained on the owner machine, not in the GitHub source snapshot.
+/evidence/
+/sprint1.1/
+
+# 仓迁移 6/12 强化 — 屏蔽产品 runtime 数据, 只留代码 + 配置 + 报告
+data/backups/
+data/knowledge_sidecars/
+data/logs/
+data/run/
+data/openclaw-workbench.sqlite
+data/workbench.db
+data/workbench.sqlite*
+data/china-holidays.json
+knowledge_sidecars/attachments/
+knowledge_sidecars/chat_exports/
+knowledge_sidecars/debug/
+knowledge_sidecars/html_docs/
+knowledge_sidecars/research/
+knowledge_sidecars/ingest/
+knowledge_sidecars/calendar_notes/
+reports/2026-*/
+!reports/2026-*/**/*.md
+!reports/2026-*/**/*.html
+knowledge_sidecars/outputs/
+knowledge_sidecars/
+
+# Phase 09 cleanup — runtime caches, build artifacts, local-only files
+# Added by autonomous full delivery protocol Phase 09
+.mavis/
+.minimax/
+.npm-cache/
+.opencode/
+apps/web/release/
+release/
+patchwork/
+decoded-cycle3.json
+decision-cycle3.json
+main.js
+server-runner.js
+data/
+
+# Phase 10 cleanup — temp/stray files, backup artifacts, debug evidence
+# Added by autonomous closure protocol 2026-07-03
+# Per master task rule: only .gitignore entries, no destructive delete
+tmp/iter*
+tmp/capture-evidence.mjs
+mobile-cycle3-*
+mobile-e2e-*
+openclaw-mate60.apk
+apps/server/node_modules.broken-*/
+apps/server/src/.cloudbaseForwarder.compiled.*
+apps/server/src/.config-stub.cjs
+apps/server/src/cloudbaseForwarder.ts.bak-*
+apps/mobile/src/lib/htmlPreview.ts.bak-*
+AGENTS.md.bak-*
+diff-
+independent-dev-console.patch
+independent-dev-console.standard.patch
+*执行*
+*测试*
+*计划*
+
+# Phase 11 — local runtime work dirs (added by final blocker resolution 2026-07-03)
+# memory/   : runtime context manifests (development_context_manifests JSON, regenerated each agent run)
+# tasks/    : ephemeral sprint / handoff / evidence working dirs (not source)
+memory/
+tasks/
+# Sprint 1.1 T-1.1.1 — keep the v6 skeleton screenshots tracked
+!screenshots/T-1.1.1/**
+!screenshots/T-1.1.1/*.png
+# Sprint 1.1 T-1.1.1 — apps/copilot-desktop generated artifacts
+apps/copilot-desktop/dist/
+apps/copilot-desktop/.vite/
+apps/copilot-desktop/release/
+apps/copilot-desktop/coverage/
