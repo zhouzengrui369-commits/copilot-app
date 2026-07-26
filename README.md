@@ -143,3 +143,8 @@ npm run dist:mac:copilot
 - [`tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/reports/`](tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/reports/)
 
 历史 unsigned candidate、source/static PASS、测试路由、计划或 worker 叙述都不能替代同一已签名 final candidate 的真实运行证据。最终状态以根基线和 `delivery.md` 为准。
+
+## Product Experience Review Baseline
+
+- Core: `docs/acceptance/PRODUCT_EXPERIENCE_REVIEWER_CORE.md`
+- Project profile: `docs/acceptance/PRODUCT_EXPERIENCE_PROFILE.md`
