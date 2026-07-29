@@ -1,0 +1,8 @@
+R2 compatibility RED: exit 1; 9 failed / 43 passed
+R2 compatibility GREEN: exit 0
+R2 focused 8-file set: exit 0; 69/69
+renderer TSC: exit 0
+desktop build: exit 0
+Electron intermediate runs: fail-closed and preserved in successor lanes
+Electron final current-source run: exit 0; 1/1; 13.3s
+global JSON run: exit 1; current-P0 regression count 0

@@ -1,0 +1,8 @@
+apps/copilot-desktop/tests/e2e/helpers/fake-minimax-provider.ts
+apps/copilot-desktop/tests/fake-minimax-provider-multisource.test.ts
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/RESULT.md
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/EVIDENCE.md
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/commands.log
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/changed-files.txt
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-fake-provider-multisource-citation-r1/ACCEPTANCE_LOG.md

@@ -1,0 +1,7 @@
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/RESULT.md
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/EVIDENCE.md
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/commands.log
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/changed-files.txt
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/ACCEPTANCE_LOG.md
+tasks/openclaw/2026-07-29-p0-global-json-capture-r3/failure-classification.json

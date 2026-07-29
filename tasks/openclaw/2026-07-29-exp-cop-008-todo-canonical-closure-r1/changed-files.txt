@@ -1,0 +1,44 @@
+# changed-files.txt
+
+## Production
+
+apps/copilot-desktop/src/main/local-knowledge-service.ts
+apps/copilot-desktop/src/renderer/App.tsx
+apps/copilot-desktop/src/renderer/lib/copilot-api.ts
+apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.module.css
+apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.tsx
+apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.module.css
+apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx
+
+## Tests
+
+apps/copilot-desktop/tests/todo-canonical-persistence-r1.test.ts
+apps/copilot-desktop/tests/exp-cop-008-todo-closure-r1.test.tsx
+apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts
+apps/copilot-desktop/tests/integration/local-first-domain-ipc.integration.test.ts
+apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+
+## Handoff governance
+
+PROJECT_STATE.yaml
+PROJECT_STATUS.md
+TODO.md
+docs/ARCHITECTURE.md
+CHANGELOG.md
+DECISIONS.md
+
+## Task evidence
+
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/PLAN.md
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/RESULT.md
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/EVIDENCE.md
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/commands.log
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/changed-files.txt
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/ACCEPTANCE_LOG.md
+
+## Execution-only, excluded from candidate/package
+
+node_modules
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/run/native-binding-probe.test.ts
+tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/run/native/better_sqlite3.node

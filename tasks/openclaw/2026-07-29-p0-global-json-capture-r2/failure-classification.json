@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "task": "2026-07-29-p0-global-json-capture-r2",
+  "source": {
+    "branch": "codex/p0-owner-gate",
+    "head": "2b832c20b93e07ee68b6b325dc3ad758986b7f69"
+  },
+  "verdict": "BLOCKED",
+  "candidateBlocking": true,
+  "globalRun": {
+    "command": "/Users/njx/openclaw/copilot/node_modules/.bin/vitest run --config apps/copilot-desktop/vitest.config.ts --reporter=json --outputFile=/private/tmp/copilot-p0-current-global-r2.json",
+    "runCount": 1,
+    "exitCode": 1,
+    "jsonPath": "/private/tmp/copilot-p0-current-global-r2.json",
+    "jsonExists": false,
+    "jsonParses": false,
+    "suiteTotals": null,
+    "assertionTotals": null,
+    "failedFiles": [],
+    "failedAssertions": [],
+    "classification": "EXECUTION_BRIDGE",
+    "firstExactError": "No test files found, exiting with code 1",
+    "evidence": "The config-relative include tests/**/*.test.{ts,tsx} resolved from the repository root rather than apps/copilot-desktop."
+  },
+  "workspaceCheck": {
+    "command": "npm run check --workspace @copilot/desktop",
+    "runCount": 1,
+    "exitCode": 2,
+    "diagnostics": [
+      {
+        "file": "apps/copilot-desktop/src/renderer/main.tsx",
+        "line": 7,
+        "firstExactError": "Property 'env' does not exist on type 'ImportMeta'.",
+        "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+        "evidence": "The exact import.meta.env expression matches HEAD and the file is outside the current diff."
+      },
+      {
+        "file": "apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.tsx",
+        "line": 286,
+        "firstExactError": "Property 'env' does not exist on type 'ImportMeta'.",
+        "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+        "evidence": "The exact import.meta.env expression matches HEAD and the file is outside the current diff."
+      },
+      {
+        "file": "apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx",
+        "line": 586,
+        "firstExactError": "Property 'env' does not exist on type 'ImportMeta'.",
+        "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+        "evidence": "The exact import.meta.env expression matches the corresponding HEAD expression; current Schedule changes do not modify that expression."
+      },
+      {
+        "file": "apps/copilot-desktop/tests/r44-h4c-knowledge-truth-reader.test.tsx",
+        "line": 95,
+        "firstExactError": "Type 'string[] | undefined' is not assignable to type 'string[]'.",
+        "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+        "evidence": "The file is outside the current diff."
+      },
+      {
+        "file": "apps/copilot-desktop/tests/vitest.critical-coverage.config.ts",
+        "line": 10,
+        "firstExactError": "No overload matches this call. Type 'Plugin<any>[]' is not assignable to type 'PluginOption'.",
+        "classification": "EXECUTION_BRIDGE",
+        "evidence": "The diagnostic explicitly compares root Vite types with vitest/node_modules/Vite types while the temporary root dependency bridge is active."
+      },
+      {
+        "file": "apps/copilot-desktop/tests/vitest.desktop-coverage.config.ts",
+        "line": 15,
+        "firstExactError": "No overload matches this call. Type 'Plugin<any>[]' is not assignable to type 'PluginOption'.",
+        "classification": "EXECUTION_BRIDGE",
+        "evidence": "The diagnostic explicitly compares root Vite types with vitest/node_modules/Vite types while the temporary root dependency bridge is active."
+      }
+    ]
+  },
+  "cleanup": {
+    "rootNodeModulesBridgeRemoved": true,
+    "appElectronWrapperRemoved": true,
+    "nodeModulesStatusEntryPresent": false
+  },
+  "nextAction": "Create a successor contract that runs the desktop Vitest config with the correct cwd/root exactly once."
+}

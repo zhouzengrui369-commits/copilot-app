@@ -1,14 +1,16 @@
 project: copilot-app
-stage: Owner Gate P0 Closure / Stage 0 truth recovery
+stage: Owner Gate P1 Closure / Stage 2 EXP-COP-009
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
+latest_commit: "0c69b8643ca4dcf20a86623f2528195a34f402a4"
+materialized_product_commit: "0c69b8643ca4dcf20a86623f2528195a34f402a4"
 artifact_sha256: null
 runtime_id: null
 ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
 ecosystem_baseline_version: "0.2.0"
-current_p0: EXP-COP-008
+current_p0: EXP-COP-008_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
 current_p1:
   primary: EXP-COP-009
   total_open: 6
@@ -22,10 +24,10 @@ r3_snapshot:
   role: product_layer_input_only
 release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Freeze Stage 0 base commit, then close EXP-COP-008 Todo false-success/discoverability/readback and EXP-COP-009 Ask source-return continuity.
+next_single_action: Implement EXP-COP-009 Ask-to-source-to-back continuity from its frozen contract, then bind P0 and P1 to a clean reproducible candidate for independent Focused Retest.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-29T07:35:00Z"
+updated_at: "2026-07-29T12:38:29Z"

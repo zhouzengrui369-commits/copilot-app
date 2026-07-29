@@ -1,0 +1,26 @@
+1. `npm run test --workspace @copilot/desktop -- tests/fake-minimax-provider-multisource.test.ts`
+   - exit `1`
+   - executor failure before collection: Vite temporary-config `EPERM`
+   - not counted as behavioral RED
+2. same focused helper command with worktree write authority
+   - exit `1`
+   - RED: `1 failed / 1 passed`
+   - old provider emitted source A only
+3. same focused helper command after minimal helper edit
+   - exit `0`
+   - GREEN: `2 passed / 2`
+4. `npm run test --workspace @copilot/desktop -- tests/todo-canonical-persistence-r1.test.ts tests/exp-cop-008-todo-closure-r1.test.tsx tests/r44-h1-schedule-owner-feedback.test.tsx tests/r44-h4-today-product-experience.test.tsx tests/coverage-renderer-critical.test.tsx tests/VoiceWorkspace.local-asr-draft.test.tsx tests/reversible-trash-ui-r1.test.tsx tests/integration/local-first-domain-ipc.integration.test.ts`
+   - exit `0`
+   - `8 files / 69 tests` passed
+   - jsdom canvas messages were non-fatal known test-environment warnings
+5. `npx tsc -p apps/copilot-desktop/tsconfig.renderer.json --noEmit`
+   - exit `0`
+6. `npm run build --workspace @copilot/desktop`
+   - exit `0`
+   - `RENDERER_BUNDLE_VERIFIED: files=7`
+7. `env COPILOT_SQLITE_NATIVE_BINDING=... COPILOT_E2E_EXECUTABLE_PATH=... ELECTRON_OVERRIDE_DIST_PATH=... npx playwright test --config apps/copilot-desktop/playwright.electron.config.ts apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts`
+   - first and only post-fix run
+   - exit `1`
+   - exact source A visibly opened in current Knowledge UI
+   - retired `note-detail-meta` selector not found
+   - no retry

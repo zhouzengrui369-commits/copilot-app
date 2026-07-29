@@ -1,0 +1,5 @@
+CONTROLLER create root dependency bridge: exit 0
+CONTROLLER create complete app-local Electron 38.8.6 identity: exit 0
+CONTROLLER focused Vitest JSON run: exit 1; JSON written
+CONTROLLER JSON validation: 42 tests, 41 passed, 1 baseline assertion failed
+CONTROLLER execution bridge cleanup: exit 0

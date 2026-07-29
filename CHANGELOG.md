@@ -2,6 +2,34 @@
 
 ## 2026-07-29
 
+- Closed EXP-COP-008 development acceptance on current-source Electron:
+  two-source grounded Ask, exact source summary/full reader, canonical
+  Unscheduled Todo creation, durable title/due/source/log/notes editing,
+  explicit-date calendar discovery, full quit, and same-userData relaunch all
+  pass in one 13.3-second journey.
+- Bound the accepted P0 product and test bytes to commit
+  `0c69b8643ca4dcf20a86623f2528195a34f402a4`; this is a development-stage
+  rollback point, not a release candidate.
+- Restored accepted Todo notes/execution-log UX as durable canonical local
+  state instead of page-memory, and made calendar date selection immediately
+  open the selected-day scope.
+- Made `knowledgeBuild.ready` fail closed on exact revision: pending,
+  processing, failed, stale, and done states now map to queued, running, failed,
+  not-ready, and ready truthfully.
+- Fixed the deterministic Electron MiniMax test provider to cite every valid,
+  ordered, deduplicated local path from the grounded prompt; production
+  Answerer citation filtering was intentionally unchanged.
+- Exhaustively classified the current global receipt: no current P0 regression
+  and no unclassified failures; the separate release baseline remains red and
+  continues to block release readiness.
+- Implemented the focused EXP-COP-008 canonical Todo closure: grounded
+  LOCAL_PRESENT answer gating, frozen answer/source payload, body/source
+  persistence, main and renderer canonical readback, All/Unscheduled discovery,
+  exact “查看待办”, persisted editing, and same-userData Electron relaunch
+  recovery. Focused Electron and 33 focused tests pass; independent review,
+  clean candidate identity, and the pre-existing global red suite remain.
+- Froze the independently accepted Stage 0 materialized product baseline at commit `2b832c20b93e07ee68b6b325dc3ad758986b7f69`; no runtime or release readiness is implied.
+- Entered Stage 1 for `EXP-COP-008` Todo false-success/discoverability/readback closure.
 - Materialized r3 Desktop product-layer snapshot onto `codex/p0-owner-gate@96c861706126317c27965fcb64c765973df9ac89`.
 - Preserved r3 as product-layer input only: `414 files / 7 tracked deletions / 51,347,389 bytes / aggregate 026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311`.
 - Added Stage 0 governance surface: `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `docs/ARCHITECTURE.md`, and `DECISIONS.md`.

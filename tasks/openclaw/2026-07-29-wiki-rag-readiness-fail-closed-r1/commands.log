@@ -1,0 +1,41 @@
+2026-07-29 19:10 CST
+command: npx vitest run tests/integration/note-wiki-before-rag-background.integration.test.ts
+exit: 1 before collection
+result: EPERM writing Vite temporary bundled-config file in the isolated worktree
+classification: executor sandbox boundary; no test result
+
+2026-07-29 19:10 CST
+command: npx vitest run tests/integration/note-wiki-before-rag-background.integration.test.ts
+execution: approved unsandboxed retry of the identical command
+exit: 1
+result: 9 tests; 2 failed; 7 passed
+evidence: processing expected running but received ready; stale completed
+revision expected not-ready but received ready
+classification: expected RED
+
+2026-07-29 19:11 CST
+command: npx vitest run tests/integration/note-wiki-before-rag-background.integration.test.ts
+exit: 0
+result: 9 tests; 9 passed
+classification: GREEN
+
+2026-07-29 19:13 CST
+command: npx vitest run tests/todo-canonical-persistence-r1.test.ts tests/integration/local-first-domain-ipc.integration.test.ts
+exit: 0
+result: 2 files; 13 tests; 13 passed
+classification: focused compatibility PASS
+
+2026-07-29 19:14 CST
+command: npx tsc -p tsconfig.main.json --noEmit
+exit: 0
+result: no diagnostics
+
+2026-07-29 19:14 CST
+command: npm run build --workspace @copilot/desktop
+exit: 0
+result: main, renderer, preload built; renderer bundle verified
+
+2026-07-29 19:15 CST
+command: git diff --check
+exit: 0
+result: no whitespace errors

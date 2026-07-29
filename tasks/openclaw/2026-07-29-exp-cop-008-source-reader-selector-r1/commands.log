@@ -1,0 +1,12 @@
+1. Static `rg` review of current selector/source bindings
+   - exit `0`
+   - retired selector absent; current selector pairs found in spec/source
+2. `npx playwright test --config apps/copilot-desktop/playwright.electron.config.ts apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts --list`
+   - exit `0`
+   - `1 test / 1 file`
+3. Exact app-local Electron 38.8.6 / ABI-139 EXP-COP-008 spec
+   - first and only run
+   - exit `1`
+   - duration `21.1s`
+   - source reader path/body passed
+   - stale ordered source-string assertion failed after relaunch
