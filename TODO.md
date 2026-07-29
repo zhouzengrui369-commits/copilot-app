@@ -7,6 +7,8 @@ Accepted P0+P1 product/test bytes are committed at
 `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
 The macOS build-order product repair is committed at
 `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`.
+The independently accepted Electron receipt/TSC repair is committed at
+`ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
 
 - `EXP-COP-008` (P0, DEVELOPMENT ACCEPTANCE PASS; INDEPENDENT RETEST PENDING):
   canonical persistence/readback, All/Unscheduled discoverability, exact
@@ -17,21 +19,29 @@ The macOS build-order product repair is committed at
   explicit return, route changes, renderer remount and same-userData restart;
   stale or unsafe persisted state fails closed.
 
+Receipt repair status:
+
+- R3 exact dependency install and ordered workspace builds passed.
+- R4 tests TSC and `3 files / 40 tests` passed.
+- R5 correctly rejected manual-launch ownership and cleanup gaps.
+- R6 closed those gaps; tests TSC and `2 files / 30 tests` passed.
+- R7 independent re-review returned
+  `PASS / P1_CLOSED / MVP_NOT_COMPLETE`.
+- focused profile is exactly `exp-cop-008-009-focused` with producers
+  `exp-cop-008` and `exp-cop-009`; the full real Electron gate remains
+  unchanged at `>=50`.
+
 ## Required Before Human Owner Gate
 
-- **P0 — build-order acceptance:** include committed product repair
-  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2` in the subsequent governance HEAD,
-  create a clean candidate from that HEAD, run exact `npm ci`, then rerun
-  desktop main/renderer/tests TSC. Current static contract is `6/6 PASS` and
-  main TSC is PASS, but renderer/tests TSC acceptance remains blocked; it is not
-  converted to PASS by the product commit.
-- Commit the separate governance update.
+- Commit this separate governance update after
+  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
 - Prove the committed source tree is clean and contains no execution bridge or
   untracked candidate input.
-- From the subsequent governance HEAD, build a fresh macOS candidate only after
-  exact `npm ci` and all three desktop TSC checks pass; then run macOS package,
-  focused Electron, runner list `>=50`, and eligible full Electron. Do not
-  reuse current-source `dist/` or any old source/runtime ID.
+- Reuse the existing candidate worktree. From the subsequent governance HEAD,
+  build a fresh macOS candidate only after exact `npm ci` and all three desktop
+  TSC checks pass; then run macOS package, focused Electron, runner list
+  `>=50`, and eligible full Electron. Do not reuse current-source `dist/` or
+  any old source/runtime ID.
 - Bind source commit/snapshot, artifact SHA256, runtime ID, deterministic
   test-data manifest, packaged Electron evidence and current screenshots.
 - Run the required candidate-bound checks, including the project-wide real

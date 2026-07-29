@@ -2,6 +2,24 @@
 
 ## 2026-07-30
 
+- Committed the exact nine-file Electron receipt/TSC repair at
+  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+- R1 established the fixed focused receipt contract and moved its bounded
+  receipt suite from valid RED (`7 failed / 22 passed`) to GREEN (`29/29`).
+  R3 then completed exact dependency installation and ordered workspace builds.
+- R4 closed four tests-TSC diagnostics and passed `3 files / 40 tests`.
+  Independent R5 correctly rejected a manual-launch ownership and provider
+  cleanup gap.
+- R6 centralized launch ownership, early runtime recording, failure cleanup,
+  process receipt flushing, original-error propagation, and guaranteed provider
+  close; tests TSC and `2 files / 30 tests` passed.
+- R7 independent read-only re-review returned
+  `PASS / P1_CLOSED / MVP_NOT_COMPLETE` for the complete nine-file diff.
+- The focused profile remains exactly `exp-cop-008-009-focused` with two exact
+  producers. The full real Electron gate remains unchanged at `>=50`.
+- No candidate, artifact SHA256, runtime ID, package, independent experience
+  retest, owner gate, release, or MVP PASS is attached to these source
+  receipts.
 - Added a single ordered `build:workspace-deps` contract and made every macOS
   distribution script execute it before the desktop build. This closes the
   clean-install ordering defect without changing Windows scripts or dependency

@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Clean Candidate Materialization / Stage 3.
+Clean Candidate Materialization / Receipt Governance Bind.
 
 Current branch/base:
 
@@ -12,7 +12,9 @@ Current branch/base:
   `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`
 - latest committed product head, including the macOS build-order repair:
   `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`
-- governance base commit: `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`
+- latest committed receipt/TSC repair:
+  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`
+- governance base commit: `d9ee8f5fc5cc6a07a441a0131afd2324f1b7b6bb`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict
@@ -35,26 +37,55 @@ Latest focused review facts:
 
 ## Open Gates
 
+Electron candidate receipt/TSC repair (2026-07-30):
+
+- R1 implemented the seven-file receipt contract. Its valid RED receipt was
+  `7 failed / 22 passed`; the bounded GREEN rerun was `2 files / 29 tests
+  PASS`. Tests TSC was initially blocked by the borrowed dependency tree.
+- R3 removed the stale dependency symlink, ran exact
+  `npm ci --ignore-scripts` (`exit 0`, `added 1454 packages in 3m`), then built
+  `@copilot/llm-client`, `@copilot/kb`, `@copilot/kg`, and `@copilot/rag` in
+  order with `exit 0`. The receipt slice remained `29/29 PASS`. Tests TSC then
+  exposed exactly four source diagnostics.
+- R4 added the test-side `vite/client` type and made the one optional note tag
+  access fail-safe. Tests TSC passed; `3 files / 40 tests PASS`; focused
+  diff-check and forbidden scan passed.
+- R5 independent source review returned
+  `FAIL / P1_MANUAL_LAUNCH_OWNERSHIP_GAP / MVP_NOT_COMPLETE`: readiness failure
+  could occur before the caller owned the Electron process, and recorder flush
+  could skip provider cleanup.
+- R6 introduced one shared launch/receipt owner. It records runtime immediately
+  after launch, closes and records process state before rethrowing the original
+  readiness error, avoids duplicate runtime rows, and guarantees provider
+  cleanup. Tests TSC passed; `2 files / 30 tests PASS`; focused diff-check and
+  scan passed.
+- R7 independent read-only re-review returned
+  `PASS / P1_CLOSED / MVP_NOT_COMPLETE`, with no remaining P0/P1 in the complete
+  nine-file diff. R7 did not replace or rerun the R6 command receipts.
+- Stage A committed those exact nine files at
+  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+
+The focused profile remains exactly `exp-cop-008-009-focused`: exactly two
+tests and the exact producers `exp-cop-008` and `exp-cop-009`. Runtime and
+process receipts are exclusively owned per producer. The full gate is
+unchanged and still requires at least 50 real Electron tests plus its required
+manual and fixture-worker producers.
+
+This repair is source acceptance only. No clean candidate, package, artifact
+SHA256, runtime ID, candidate-bound Electron run, independent product
+experience retest, owner gate, release, or MVP PASS exists yet.
+
 macOS build-order contract repair (2026-07-30):
 
-- `apps/copilot-desktop/package.json` now defines one ordered
+- `apps/copilot-desktop/package.json` defines one ordered
   `build:workspace-deps` chain for `@copilot/llm-client`, `@copilot/kb`,
-  `@copilot/kg`, and `@copilot/rag`.
-- all four macOS distribution scripts invoke that chain before the desktop
-  build; the generic desktop build and all Windows distribution scripts remain
-  unchanged.
-- static contract RED was `5 failed / 1 passed`; after the package-only repair
-  it is `6/6 PASS`. Desktop main TSC also passes.
-- acceptance remains `BLOCKED_EXECUTOR_DEPENDENCY_RESOLUTION`: this S15C
-  checkout has no complete root `node_modules`. The first renderer TSC stopped
-  at missing `vite/client`; per first-failure policy, it was not retried and
-  tests TSC was not run. No build, package, Electron, Git or network action was
-  performed.
-- revalidate the repair from a new clean committed candidate after its exact
-  `npm ci`; this focused result is not candidate or release evidence.
-- the product repair is committed at
-  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`; no candidate was built from that
-  commit and the renderer/tests TSC blocker remains open.
+  `@copilot/kg`, and `@copilot/rag`; every macOS distribution script invokes
+  it before the desktop build.
+- its product repair remains committed at
+  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`.
+- R3's exact install and ordered builds close the earlier executor dependency
+  blocker for the receipt repair, but they are not candidate-bound package
+  evidence and must be rerun from the clean candidate.
 
 P0 development acceptance:
 
@@ -91,13 +122,14 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Commit this governance postimage after product commit
-`1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`, then create a clean candidate from
-that subsequent governance HEAD. Run exact `npm ci`, main/renderer/tests TSC,
-macOS package, focused Electron, runner list proving `>=50`, and the eligible
-full Electron gate. Only after those pass may the flow bind the clean source
-commit, immutable source snapshot, artifact SHA256, runtime ID, deterministic
-test-data manifest, packaged Electron evidence and screenshots.
+Commit this governance postimage after receipt/TSC repair commit
+`ee8e207b44fc5091564f292ac130d8f0bd9a492b`, then reuse the existing candidate
+worktree to create a clean candidate from that governance HEAD. Run exact
+`npm ci`, main/renderer/tests TSC, macOS package, focused Electron, runner list
+proving `>=50`, and the eligible full Electron gate. Only after those pass may
+the flow bind the clean source commit, immutable source snapshot, artifact
+SHA256, runtime ID, deterministic test-data manifest, packaged Electron
+evidence and screenshots.
 
 The release baseline remains red outside the accepted P0 slice. R3 classified
 30 existing baseline/evidence failure records; complete Electron package

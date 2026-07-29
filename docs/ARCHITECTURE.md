@@ -89,6 +89,42 @@ WIKI digest current alone is not KG/RAG readiness. Retrieval ranking and
 production citation filtering remain unchanged; answer sources contain only
 paths actually cited by the model and validated against retrieval hits.
 
+## Electron Candidate Receipt Architecture
+
+Electron evidence has two explicit profiles:
+
+- `exp-cop-008-009-focused` is fixed to exactly two tests and the exact
+  producers `exp-cop-008` and `exp-cop-009`.
+- the full candidate gate is unchanged: it must list and run at least 50 real
+  Electron tests and include the required manual and fixture-worker producers.
+
+Each producer owns an exclusive runtime/process receipt pair in its absolute
+receipt directory. Producer slugs are validated before file creation and
+receipt files use exclusive owner-only creation. Aggregation rejects duplicate
+or mismatched producers, count/index disagreement, inconsistent runtime
+identity, and unclean process exit. Compatibility top-level process fields are
+retained for existing evidence consumers.
+
+Manual Electron launch uses one shared launch/receipt owner. It records runtime
+identity immediately after process creation, before page readiness. If
+readiness fails, the shared owner closes the launched application, records the
+process postimage, and rethrows the original error; the caller's `finally`
+boundary flushes receipts. Successful callers receive the application, page,
+and already-recorded runtime without adding a duplicate runtime row. Provider
+cleanup remains in an outer `finally` boundary even when receipt flushing
+fails.
+
+The initial independent review (R5) rejected the launch ownership and cleanup
+gaps. R6 closed them with focused TSC/tests and failure injection; R7
+independent read-only re-review returned
+`PASS / P1_CLOSED / MVP_NOT_COMPLETE`. The exact nine-file repair is committed
+at `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+
+This architecture validates source-side evidence ownership only. It does not
+create a candidate identity. Candidate commit, artifact SHA256, runtime ID,
+package proof, full Electron evidence, and independent product-experience
+retest remain unset.
+
 ## Explicit Non-Goals
 
 This stage does not include Windows expansion, Remote/Backup expansion, major

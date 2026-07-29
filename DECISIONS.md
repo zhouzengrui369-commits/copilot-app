@@ -66,3 +66,34 @@ Candidate identity begins only from clean committed P0+P1 bytes and binds an
 immutable source snapshot, exact artifact SHA256, runtime ID, deterministic
 test-data manifest and candidate-bound evidence. Independent Focused Retest is
 still required before Human Owner Gate eligibility.
+
+## D-2026-07-30-01: Electron Receipts Are Exclusively Owned Per Producer
+
+Focused and full Electron runs must write one exclusive runtime/process receipt
+pair per validated producer. Aggregation fails closed on duplicate or
+mismatched producers, inconsistent runtime identity, count/index disagreement,
+or unclean process exit. This prevents concurrent workers from overwriting or
+blending evidence.
+
+## D-2026-07-30-02: Manual Launch Owns Runtime Before Readiness
+
+The shared manual-launch helper records runtime immediately after Electron
+process creation, before page readiness. Any later failure closes and records
+the process, flushes evidence, and preserves the original error. Provider close
+is independent of recorder flush. This removes the R5 orphan-process and
+cleanup ambiguity without changing product behavior.
+
+## D-2026-07-30-03: Focused Receipt Profile Does Not Weaken The Full Gate
+
+`exp-cop-008-009-focused` contains exactly the two named tests and producers
+needed for the P0/P1 development slice. It is not a substitute for the
+candidate-bound full gate, which remains at least 50 real Electron tests with
+the required manual and fixture-worker producers.
+
+## D-2026-07-30-04: Governance Must Bind Receipt Repair Before Candidate
+
+Bind the independently accepted nine-file repair commit
+`ee8e207b44fc5091564f292ac130d8f0bd9a492b` in mandatory handoff governance,
+then reuse the existing candidate worktree to create a clean candidate from
+the resulting governance HEAD. Do not create a new worktree or reuse old
+artifact/runtime identity.

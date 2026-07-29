@@ -1,10 +1,10 @@
 project: copilot-app
-stage: Clean Candidate Materialization / Stage 3
+stage: Clean Candidate Materialization / Receipt Governance Bind
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
+latest_commit: "ee8e207b44fc5091564f292ac130d8f0bd9a492b"
 materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
@@ -15,6 +15,20 @@ current_p1:
   primary: EXP-COP-009_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
   total_open: 6
 review_verdict: NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3
+electron_receipt_repair:
+  stage_a_commit: "ee8e207b44fc5091564f292ac130d8f0bd9a492b"
+  focused_profile: exp-cop-008-009-focused
+  focused_expected_tests: 2
+  focused_expected_producers:
+    - exp-cop-008
+    - exp-cop-009
+  full_minimum_electron_tests: 50
+  receipt_ownership: per_producer_exclusive
+  dependency_install: PASS
+  ordered_workspace_builds: PASS
+  tests_tsc: PASS
+  focused_tests: PASS
+  independent_source_review: PASS / P1_CLOSED / MVP_NOT_COMPLETE
 r3_snapshot:
   manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
   aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
@@ -27,10 +41,10 @@ release_baseline: RED
 candidate_status: NOT_BUILT
 independent_retest: PENDING
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: From the subsequent governance HEAD, create a clean candidate; run exact npm ci, main/renderer/tests TSC, macOS package, focused Electron, list >=50 and eligible full Electron, then bind candidate evidence for independent Focused Retest.
+next_single_action: Commit this governance postimage, then reuse the existing candidate worktree to create a clean candidate from that governance HEAD; run exact npm ci, main/renderer/tests TSC, macOS package, focused Electron, list >=50 and eligible full Electron, then bind candidate evidence for independent Focused Retest.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-29T21:30:41Z"
+updated_at: "2026-07-30T07:21:00+08:00"
