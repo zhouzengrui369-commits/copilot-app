@@ -16,6 +16,46 @@ function resolveAppRoot(cwd = process.cwd()): string {
 }
 
 const appRoot = resolveAppRoot();
+const focusedSpecs = [
+  'apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts',
+  'apps/copilot-desktop/tests/e2e/ask-source-back-continuity.spec.ts',
+];
+const runtimeIdentity = {
+  schemaVersion: 1,
+  source: 'launched-electron-main-process',
+  electron: '38.8.6',
+  chrome: '140.0.7339.249',
+  node: '22.22.0',
+  modules: '139',
+  napi: '10',
+  arch: 'arm64',
+  platform: 'darwin',
+};
+
+function runtimeReceipt(producer: string, runCount = 1) {
+  return {
+    schemaVersion: 1,
+    producer,
+    runs: Array.from({ length: runCount }, (_value, index) => ({
+      runIndex: index + 1,
+      identity: runtimeIdentity,
+    })),
+  };
+}
+
+function processReceipt(producer: string, runCount = 1) {
+  return {
+    schemaVersion: 1,
+    producer,
+    runs: Array.from({ length: runCount }, (_value, index) => ({
+      runIndex: index + 1,
+      clean: true,
+      exitCode: 0,
+      signalCode: null,
+      error: null,
+    })),
+  };
+}
 
 describe('Electron Playwright evidence reporting', () => {
   it('keeps execution on a durable result path', () => {
@@ -135,6 +175,121 @@ describe('Electron Playwright evidence reporting', () => {
       .toThrow('BLOCKED_ELECTRON_RUNTIME_IDENTITY_INVALID');
   });
 
+  it('keeps the full suite at >=50 and fixes the focused profile to the exact two specs', async () => {
+    const runner = await import(pathToFileURL(path.join(appRoot, 'scripts/run-electron-e2e.mjs')).href);
+    expect(typeof runner.resolveElectronSuiteContract).toBe('function');
+
+    expect(runner.resolveElectronSuiteContract({
+      profile: undefined,
+      args: [],
+      minimumTests: '50',
+    })).toMatchObject({
+      profile: 'full',
+      minimumTests: 50,
+      exactExpectedTests: null,
+      requiredProducers: ['exp-cop-008', 'exp-cop-009', 'knowledge-case-97'],
+      requiredProducerPrefix: 'fixture-worker-',
+    });
+    expect(() => runner.resolveElectronSuiteContract({
+      profile: 'full',
+      args: [],
+      minimumTests: '49',
+    })).toThrow('COPILOT_E2E_MIN_TESTS must be an integer >= 50');
+
+    expect(runner.resolveElectronSuiteContract({
+      profile: 'exp-cop-008-009-focused',
+      args: focusedSpecs,
+      minimumTests: undefined,
+    })).toEqual({
+      profile: 'exp-cop-008-009-focused',
+      minimumTests: 2,
+      exactExpectedTests: 2,
+      requiredProducers: ['exp-cop-008', 'exp-cop-009'],
+      requiredProducerPrefix: null,
+      exactProducerSet: true,
+    });
+    expect(() => runner.resolveElectronSuiteContract({
+      profile: 'exp-cop-008-009-focused',
+      args: focusedSpecs.slice(0, 1),
+      minimumTests: undefined,
+    })).toThrow('BLOCKED_ELECTRON_FOCUSED_SPEC_SET');
+  });
+
+  it('aggregates unique matching producer receipts and fails closed on mismatches', async () => {
+    const runner = await import(pathToFileURL(path.join(appRoot, 'scripts/run-electron-e2e.mjs')).href);
+    expect(typeof runner.aggregateElectronReceipts).toBe('function');
+    const suiteContract = runner.resolveElectronSuiteContract({
+      profile: 'exp-cop-008-009-focused',
+      args: focusedSpecs,
+      minimumTests: undefined,
+    });
+    const aggregate = runner.aggregateElectronReceipts({
+      runtimeReceipts: [
+        runtimeReceipt('exp-cop-008', 2),
+        runtimeReceipt('exp-cop-009', 2),
+      ],
+      processReceipts: [
+        processReceipt('exp-cop-008', 2),
+        processReceipt('exp-cop-009', 2),
+      ],
+      executionMode: 'current-source',
+      suiteContract,
+    });
+    expect(aggregate.runtime).toMatchObject({
+      schemaVersion: 1,
+      producerCount: 2,
+      runCount: 4,
+      producers: ['exp-cop-008', 'exp-cop-009'],
+      runtimeIdentity,
+    });
+    expect(aggregate.process).toMatchObject({
+      schemaVersion: 1,
+      clean: true,
+      exitCode: 0,
+      signalCode: null,
+      producerCount: 2,
+      runCount: 4,
+      producers: ['exp-cop-008', 'exp-cop-009'],
+    });
+
+    expect(() => runner.aggregateElectronReceipts({
+      runtimeReceipts: [
+        runtimeReceipt('exp-cop-008'),
+        runtimeReceipt('exp-cop-008'),
+      ],
+      processReceipts: [processReceipt('exp-cop-008')],
+      executionMode: 'current-source',
+      suiteContract,
+    })).toThrow('BLOCKED_ELECTRON_RECEIPT_DUPLICATE_PRODUCER');
+    expect(() => runner.aggregateElectronReceipts({
+      runtimeReceipts: [runtimeReceipt('exp-cop-008')],
+      processReceipts: [processReceipt('exp-cop-009')],
+      executionMode: 'current-source',
+      suiteContract,
+    })).toThrow('BLOCKED_ELECTRON_RECEIPT_PRODUCER_MISMATCH');
+    expect(() => runner.aggregateElectronReceipts({
+      runtimeReceipts: [
+        runtimeReceipt('exp-cop-008'),
+        runtimeReceipt('exp-cop-009'),
+      ],
+      processReceipts: [
+        processReceipt('exp-cop-008'),
+        {
+          ...processReceipt('exp-cop-009'),
+          runs: [{
+            runIndex: 1,
+            clean: false,
+            exitCode: 1,
+            signalCode: null,
+            error: 'synthetic failure',
+          }],
+        },
+      ],
+      executionMode: 'current-source',
+      suiteContract,
+    })).toThrow('BLOCKED_ELECTRON_PROCESS_EXIT_UNCLEAN');
+  });
+
   it('rejects a relative Electron dist override', async () => {
     const runner = await import(pathToFileURL(path.join(appRoot, 'scripts/run-electron-e2e.mjs')).href);
     await expect(runner.resolveDevelopmentElectronExecutable({
@@ -158,8 +313,8 @@ describe('Electron Playwright evidence reporting', () => {
       executionMode: 'current-source',
       playwrightJsonPath: '/tmp/electron-results.json',
       userDataPath: '/tmp/electron-user-data',
-      processExitPath: '/tmp/electron-exit.json',
-      runtimeIdentityPath: '/tmp/electron-runtime.json',
+      processExitReceiptDirectory: '/tmp/electron-process-receipts',
+      runtimeReceiptDirectory: '/tmp/electron-runtime-receipts',
     });
     expect(env).toMatchObject({
       EXISTING: 'preserved',
@@ -167,9 +322,11 @@ describe('Electron Playwright evidence reporting', () => {
       COPILOT_E2E_EXECUTABLE_PATH: executablePath,
       COPILOT_E2E_PLAYWRIGHT_JSON_PATH: '/tmp/electron-results.json',
       COPILOT_E2E_USER_DATA: '/tmp/electron-user-data',
-      COPILOT_E2E_PROCESS_EXIT_PATH: '/tmp/electron-exit.json',
-      COPILOT_E2E_RUNTIME_IDENTITY_PATH: '/tmp/electron-runtime.json',
+      COPILOT_E2E_PROCESS_EXIT_RECEIPT_DIR: '/tmp/electron-process-receipts',
+      COPILOT_E2E_RUNTIME_RECEIPT_DIR: '/tmp/electron-runtime-receipts',
     });
+    expect(env).not.toHaveProperty('COPILOT_E2E_PROCESS_EXIT_PATH');
+    expect(env).not.toHaveProperty('COPILOT_E2E_RUNTIME_IDENTITY_PATH');
   });
 
   it('rejects a non-absolute computed executable identity', async () => {
@@ -180,7 +337,8 @@ describe('Electron Playwright evidence reporting', () => {
       executionMode: 'release',
       playwrightJsonPath: '/tmp/electron-results.json',
       userDataPath: '/tmp/electron-user-data',
-      processExitPath: '/tmp/electron-exit.json',
+      processExitReceiptDirectory: '/tmp/electron-process-receipts',
+      runtimeReceiptDirectory: '/tmp/electron-runtime-receipts',
     })).toThrow('BLOCKED_ELECTRON_EXECUTABLE_IDENTITY_INVALID');
   });
 

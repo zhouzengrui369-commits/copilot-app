@@ -3,17 +3,16 @@ import {
   type ElectronApplication,
   type Page,
 } from '@playwright/test';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import {
   APP_ROOT,
-  buildElectronLaunchArgs,
+  createElectronReceiptRecorder,
   expect,
+  launchElectronWithReceipt,
   openView,
-  resolveSourceElectronExecutable,
-  selectElectronExecutable,
+  resolveElectronLaunchContract,
   test,
   waitForElectronFirstWindow,
+  type ElectronRuntimeIdentity,
 } from './electron.fixture.js';
 import { startFakeMiniMaxProvider } from './helpers/fake-minimax-provider.js';
 
@@ -22,147 +21,53 @@ test.describe.configure({ mode: 'serial' });
 const TIMEOUT = 30_000;
 const CREDENTIAL = 'exp-cop-009-loopback-only';
 
-interface RuntimeIdentity {
-  schemaVersion: 1;
-  source: 'launched-electron-main-process';
-  electron: string;
-  chrome: string;
-  node: string;
-  modules: string;
-  napi: string;
-  arch: string;
-  platform: string;
-}
-
-interface ProcessExitReceipt {
-  clean: boolean;
-  exitCode: number | null;
-  signalCode: string | null;
-  error: string | null;
-}
-
-async function readRuntimeIdentity(app: ElectronApplication): Promise<RuntimeIdentity> {
-  return app.evaluate(() => ({
-    schemaVersion: 1,
-    source: 'launched-electron-main-process',
-    electron: process.versions.electron ?? '',
-    chrome: process.versions.chrome ?? '',
-    node: process.versions.node ?? '',
-    modules: process.versions.modules ?? '',
-    napi: process.versions.napi ?? '',
-    arch: process.arch,
-    platform: process.platform,
-  }));
-}
-
-async function writeRuntimeIdentity(identity: RuntimeIdentity): Promise<void> {
-  const target = process.env.COPILOT_E2E_RUNTIME_IDENTITY_PATH;
-  if (!target) return;
-  if (!path.isAbsolute(target)) {
-    throw new Error('COPILOT_E2E_RUNTIME_IDENTITY_PATH must be absolute');
-  }
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, `${JSON.stringify(identity, null, 2)}\n`, {
-    flag: 'wx',
-    mode: 0o600,
-  });
-}
-
-async function waitForChildExit(
-  child: ReturnType<ElectronApplication['process']>,
-): Promise<void> {
-  if (child.exitCode !== null || child.signalCode !== null) return;
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('BLOCKED_ELECTRON_EXIT_TIMEOUT'));
-    }, TIMEOUT);
-    child.once('exit', () => {
-      clearTimeout(timeout);
-      resolve();
-    });
-    child.once('error', (error) => {
-      clearTimeout(timeout);
-      reject(error);
-    });
-  });
-}
-
-async function closeAndRecord(app: ElectronApplication): Promise<ProcessExitReceipt> {
-  const child = app.process();
-  let error: string | null = null;
-  try {
-    await app.close();
-    await waitForChildExit(child);
-  } catch (cause) {
-    error = cause instanceof Error ? cause.message : String(cause);
-  }
-  return {
-    clean: error === null && child.exitCode === 0 && child.signalCode === null,
-    exitCode: child.exitCode,
-    signalCode: child.signalCode,
-    error,
-  };
-}
-
-async function writeProcessExit(runs: ProcessExitReceipt[]): Promise<void> {
-  const target = process.env.COPILOT_E2E_PROCESS_EXIT_PATH;
-  if (!target) return;
-  if (!path.isAbsolute(target)) {
-    throw new Error('COPILOT_E2E_PROCESS_EXIT_PATH must be absolute');
-  }
-  const last = runs.at(-1);
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, `${JSON.stringify({
-    clean: runs.length === 2 && runs.every((run) => run.clean),
-    exitCode: last?.exitCode ?? null,
-    signalCode: last?.signalCode ?? null,
-    runs,
-  }, null, 2)}\n`, {
-    flag: 'wx',
-    mode: 0o600,
-  });
-}
-
-async function launch(userDataPath: string): Promise<{
+async function launch(
+  userDataPath: string,
+  recorder: ReturnType<typeof createElectronReceiptRecorder>,
+): Promise<{
   app: ElectronApplication;
   page: Page;
+  runtimeIdentity: ElectronRuntimeIdentity;
 }> {
-  const app = await electron.launch({
-    executablePath: selectElectronExecutable(
-      process.env.COPILOT_E2E_EXECUTABLE_PATH,
-      () => resolveSourceElectronExecutable(),
-    ),
-    args: buildElectronLaunchArgs({
-      appRoot: APP_ROOT,
-      e2eUserData: userDataPath,
-      packagedExecutablePath: undefined,
-      e2eMode: 'current-source',
-      platform: process.platform,
-      nodeEnv: 'test',
-      copilotE2E: '1',
+  const launchContract = resolveElectronLaunchContract({
+    appRoot: APP_ROOT,
+    e2eUserData: userDataPath,
+    configuredExecutablePath: process.env.COPILOT_E2E_EXECUTABLE_PATH,
+    e2eMode: process.env.COPILOT_E2E_MODE,
+    platform: process.platform,
+    nodeEnv: 'test',
+    copilotE2E: '1',
+  });
+  return launchElectronWithReceipt({
+    launchApp: () => electron.launch({
+      executablePath: launchContract.executablePath,
+      args: launchContract.args,
+      env: {
+        ...process.env,
+        NODE_ENV: 'test',
+        COPILOT_E2E: '1',
+        ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+      },
+      timeout: TIMEOUT,
     }),
-    env: {
-      ...process.env,
-      NODE_ENV: 'test',
-      COPILOT_E2E: '1',
-      ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+    recorder,
+    initializePage: async (app) => {
+      await waitForElectronFirstWindow({
+        expectedUserDataPath: userDataPath,
+        readIdentity: () => app.evaluate(({ app: electronApp, BrowserWindow }) => ({
+          appName: electronApp.getName(),
+          appPath: electronApp.getAppPath(),
+          userDataPath: electronApp.getPath('userData'),
+          windowCount: BrowserWindow.getAllWindows().length,
+        })),
+        waitForFirstWindow: (options) => app.firstWindow(options),
+      });
+      const page = await app.firstWindow();
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByTestId('app-root')).toBeVisible();
+      return page;
     },
-    timeout: TIMEOUT,
   });
-  await waitForElectronFirstWindow({
-    expectedUserDataPath: userDataPath,
-    readIdentity: () => app.evaluate(({ app: electronApp, BrowserWindow }) => ({
-      appName: electronApp.getName(),
-      appPath: electronApp.getAppPath(),
-      userDataPath: electronApp.getPath('userData'),
-      windowCount: BrowserWindow.getAllWindows().length,
-    })),
-    waitForFirstWindow: (options) => app.firstWindow(options),
-  });
-  const page = await app.firstWindow();
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByTestId('app-root')).toBeVisible();
-  return { app, page };
 }
 
 test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state through relaunch at both viewports', async ({
@@ -175,12 +80,13 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
   const todoTitle = `EXP-COP-009 Todo ${Date.now()}`;
   let first: ElectronApplication | null = null;
   let second: ElectronApplication | null = null;
-  let firstRuntimeIdentity: RuntimeIdentity | null = null;
-  const processExits: ProcessExitReceipt[] = [];
+  let firstRuntimeIdentity: ElectronRuntimeIdentity | null = null;
+  const recorder = createElectronReceiptRecorder('exp-cop-009');
   try {
-    ({ app: first } = await launch(e2eUserData));
-    firstRuntimeIdentity = await readRuntimeIdentity(first);
-    await writeRuntimeIdentity(firstRuntimeIdentity);
+    ({ app: first, runtimeIdentity: firstRuntimeIdentity } = await launch(
+      e2eUserData,
+      recorder,
+    ));
     let page = await first.firstWindow();
     await page.setViewportSize({ width: 1229, height: 768 });
     await page.evaluate(
@@ -269,8 +175,7 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
       fullPage: false,
     });
 
-    const firstExit = await closeAndRecord(first);
-    processExits.push(firstExit);
+    const firstExit = await recorder.closeAndRecord(first);
     first = null;
     expect(firstExit).toMatchObject({
       clean: true,
@@ -278,8 +183,10 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
       signalCode: null,
       error: null,
     });
-    ({ app: second, page } = await launch(e2eUserData));
-    expect(await readRuntimeIdentity(second)).toEqual(firstRuntimeIdentity);
+    const secondLaunch = await launch(e2eUserData, recorder);
+    second = secondLaunch.app;
+    page = secondLaunch.page;
+    expect(secondLaunch.runtimeIdentity).toEqual(firstRuntimeIdentity);
     await page.setViewportSize({ width: 1440, height: 900 });
     await openView(page, 'ask');
     await expect(page.getByTestId('rag-answer')).toContainText('仅依据已完成索引', {
@@ -289,9 +196,12 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
     await expect(page.getByTestId('ask-todo-success')).toContainText(todoTitle);
     await expect(page.getByText(token).first()).toBeVisible();
   } finally {
-    if (first) processExits.push(await closeAndRecord(first));
-    if (second) processExits.push(await closeAndRecord(second));
-    await writeProcessExit(processExits);
-    await provider.close();
+    try {
+      if (first) await recorder.closeAndRecord(first);
+      if (second) await recorder.closeAndRecord(second);
+      await recorder.flush();
+    } finally {
+      await provider.close();
+    }
   }
 });

@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildElectronLaunchArgs,
+  launchElectronWithReceipt,
+  resolveElectronLaunchContract,
+  resolveElectronReceiptPaths,
   waitForElectronFirstWindow,
+  type ElectronProcessExitReceipt,
+  type ElectronRuntimeIdentity,
   type ElectronWindowIdentity,
 } from './e2e/electron.fixture.js';
 
@@ -25,6 +30,61 @@ const canonicalizeSame = async (expected: string, actual: string) => ({
 });
 
 describe('Electron fixture bounded first-window readiness', () => {
+  it('records ownership and closes exactly once before propagating readiness failure', async () => {
+    const readinessFailure = new Error('INJECTED_READINESS_FAILURE');
+    const app = { id: 'injected-app' };
+    const runtimeRows: ElectronRuntimeIdentity[] = [];
+    const processRows: ElectronProcessExitReceipt[] = [];
+    const runtimeIdentity: ElectronRuntimeIdentity = {
+      schemaVersion: 1,
+      source: 'launched-electron-main-process',
+      electron: '38.8.6',
+      chrome: '140',
+      node: '22',
+      modules: '140',
+      napi: '10',
+      arch: 'arm64',
+      platform: 'darwin',
+    };
+    const cleanProcessReceipt: ElectronProcessExitReceipt = {
+      clean: true,
+      exitCode: 0,
+      signalCode: null,
+      error: null,
+    };
+    const closeAndRecord = vi.fn(async () => {
+      processRows.push(cleanProcessReceipt);
+      return cleanProcessReceipt;
+    });
+    const flush = vi.fn(async () => {
+      expect(runtimeRows).toHaveLength(1);
+      expect(processRows).toHaveLength(1);
+      expect(processRows[0]).toEqual(cleanProcessReceipt);
+    });
+
+    await expect(launchElectronWithReceipt({
+      launchApp: vi.fn(async () => app),
+      recorder: {
+        recordRuntime: vi.fn(async () => {
+          runtimeRows.push(runtimeIdentity);
+          return runtimeIdentity;
+        }),
+        closeAndRecord,
+        flush,
+      },
+      initializePage: vi.fn(async () => {
+        throw readinessFailure;
+      }),
+    })).rejects.toBe(readinessFailure);
+
+    expect(runtimeRows).toEqual([runtimeIdentity]);
+    expect(processRows).toEqual([cleanProcessReceipt]);
+    expect(closeAndRecord).toHaveBeenCalledOnce();
+    expect(closeAndRecord).toHaveBeenCalledWith(app);
+    await expect(flush()).resolves.toBeUndefined();
+    expect(flush).toHaveBeenCalledOnce();
+  });
+
   it('accepts a delayed first window within the exact deadline', async () => {
     const readIdentity = vi.fn()
       .mockResolvedValueOnce(identity(0))
@@ -158,5 +218,68 @@ describe('Electron fixture launch arguments', () => {
       nodeEnv: 'production',
       copilotE2E: undefined,
     })).toEqual([appRoot, `--user-data-dir=${e2eUserData}`]);
+  });
+
+  it('resolves a configured release executable without source or mock-keychain arguments', () => {
+    const executablePath = '/Applications/Copilot.app/Contents/MacOS/Copilot';
+    expect(resolveElectronLaunchContract({
+      appRoot,
+      e2eUserData,
+      configuredExecutablePath: executablePath,
+      e2eMode: 'release',
+      platform: 'darwin',
+      nodeEnv: 'test',
+      copilotE2E: '1',
+      resolveSourceExecutable: () => {
+        throw new Error('source resolution must not run');
+      },
+    })).toEqual({
+      executablePath,
+      args: [`--user-data-dir=${e2eUserData}`],
+    });
+  });
+
+  it('preserves source arguments when a current-source executable is configured', () => {
+    const executablePath = '/tmp/Electron.app/Contents/MacOS/Electron';
+    expect(resolveElectronLaunchContract({
+      appRoot,
+      e2eUserData,
+      configuredExecutablePath: executablePath,
+      e2eMode: 'current-source',
+      platform: 'darwin',
+      nodeEnv: 'test',
+      copilotE2E: '1',
+      resolveSourceExecutable: () => '/unused/source/electron',
+    })).toEqual({
+      executablePath,
+      args: [
+        appRoot,
+        `--user-data-dir=${e2eUserData}`,
+        '--use-mock-keychain',
+      ],
+    });
+  });
+});
+
+describe('Electron per-producer receipt paths', () => {
+  it('resolves exclusive producer-owned files beneath absolute directories', () => {
+    expect(resolveElectronReceiptPaths('exp-cop-008', {
+      runtimeReceiptDirectory: '/tmp/runtime-receipts',
+      processExitReceiptDirectory: '/tmp/process-receipts',
+    })).toEqual({
+      runtimeReceiptPath: '/tmp/runtime-receipts/exp-cop-008.json',
+      processExitReceiptPath: '/tmp/process-receipts/exp-cop-008.json',
+    });
+  });
+
+  it('fails closed on unsafe producers or relative receipt directories', () => {
+    expect(() => resolveElectronReceiptPaths('../shared', {
+      runtimeReceiptDirectory: '/tmp/runtime-receipts',
+      processExitReceiptDirectory: '/tmp/process-receipts',
+    })).toThrow('BLOCKED_ELECTRON_RECEIPT_PRODUCER_INVALID');
+    expect(() => resolveElectronReceiptPaths('exp-cop-008', {
+      runtimeReceiptDirectory: 'relative/runtime',
+      processExitReceiptDirectory: '/tmp/process-receipts',
+    })).toThrow('BLOCKED_ELECTRON_RECEIPT_DIRECTORY_INVALID');
   });
 });

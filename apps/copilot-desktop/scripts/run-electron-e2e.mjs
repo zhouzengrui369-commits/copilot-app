@@ -29,8 +29,28 @@ const evidencePath = absoluteEnvPath(
   'COPILOT_E2E_EVIDENCE_PATH',
   path.join(resultRoot, 'electron-e2e-evidence.json'),
 );
+const processExitPath = absoluteEnvPath(
+  'COPILOT_E2E_PROCESS_EXIT_PATH',
+  path.join(resultRoot, 'electron-e2e-process-exit.json'),
+);
+const runtimeIdentityPath = absoluteEnvPath(
+  'COPILOT_E2E_RUNTIME_IDENTITY_PATH',
+  path.join(resultRoot, 'electron-e2e-runtime-identity.json'),
+);
 const CURRENT_SOURCE_ELECTRON_VERSION = '38.8.6';
 const CURRENT_SOURCE_ELECTRON_MODULE_ABI = '139';
+const FOCUSED_PROFILE = 'exp-cop-008-009-focused';
+const FOCUSED_SPECS = [
+  'apps/copilot-desktop/tests/e2e/ask-source-back-continuity.spec.ts',
+  'apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts',
+];
+const FOCUSED_PRODUCERS = ['exp-cop-008', 'exp-cop-009'];
+const FULL_REQUIRED_PRODUCERS = [
+  'exp-cop-008',
+  'exp-cop-009',
+  'knowledge-case-97',
+];
+const FIXTURE_PRODUCER_PREFIX = 'fixture-worker-';
 
 function absoluteEnvPath(name, fallback) {
   const value = process.env[name] || fallback;
@@ -193,6 +213,233 @@ export function validateElectronRuntimeIdentity(value, executionMode = mode) {
   return structuredClone(value);
 }
 
+function normalizeSpecArg(value) {
+  const absolute = path.isAbsolute(value) ? value : path.resolve(repoRoot, value);
+  return path.relative(repoRoot, absolute).split(path.sep).join('/');
+}
+
+export function resolveElectronSuiteContract({
+  profile,
+  args: suiteArgs,
+  minimumTests,
+}) {
+  const normalizedProfile = profile?.trim() || 'full';
+  if (normalizedProfile === FOCUSED_PROFILE) {
+    const normalizedArgs = suiteArgs.map(normalizeSpecArg).sort();
+    if (
+      normalizedArgs.length !== FOCUSED_SPECS.length
+      || normalizedArgs.some((value, index) => value !== FOCUSED_SPECS[index])
+    ) {
+      throw new Error(
+        `BLOCKED_ELECTRON_FOCUSED_SPEC_SET: ${JSON.stringify(normalizedArgs)}`,
+      );
+    }
+    return {
+      profile: FOCUSED_PROFILE,
+      minimumTests: 2,
+      exactExpectedTests: 2,
+      requiredProducers: [...FOCUSED_PRODUCERS],
+      requiredProducerPrefix: null,
+      exactProducerSet: true,
+    };
+  }
+  if (normalizedProfile !== 'full') {
+    throw new Error(`BLOCKED_ELECTRON_SUITE_PROFILE_INVALID: ${normalizedProfile}`);
+  }
+  const parsedMinimum = Number(minimumTests ?? 50);
+  if (!Number.isInteger(parsedMinimum) || parsedMinimum < 50) {
+    throw new Error('COPILOT_E2E_MIN_TESTS must be an integer >= 50');
+  }
+  return {
+    profile: 'full',
+    minimumTests: parsedMinimum,
+    exactExpectedTests: null,
+    requiredProducers: [...FULL_REQUIRED_PRODUCERS],
+    requiredProducerPrefix: FIXTURE_PRODUCER_PREFIX,
+    exactProducerSet: false,
+  };
+}
+
+function producerMap(receipts, kind) {
+  const result = new Map();
+  for (const receipt of receipts) {
+    if (
+      !receipt
+      || typeof receipt !== 'object'
+      || Array.isArray(receipt)
+      || receipt.schemaVersion !== 1
+      || typeof receipt.producer !== 'string'
+      || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(receipt.producer)
+      || !Array.isArray(receipt.runs)
+      || receipt.runs.length === 0
+    ) {
+      throw new Error(`BLOCKED_ELECTRON_${kind}_RECEIPT_INVALID`);
+    }
+    if (result.has(receipt.producer)) {
+      throw new Error(
+        `BLOCKED_ELECTRON_RECEIPT_DUPLICATE_PRODUCER: ${receipt.producer}`,
+      );
+    }
+    result.set(receipt.producer, receipt);
+  }
+  return result;
+}
+
+function requireProducerContract(producers, suiteContract) {
+  const actual = [...producers.keys()].sort();
+  const required = [...suiteContract.requiredProducers].sort();
+  if (
+    suiteContract.exactProducerSet
+    && (
+      actual.length !== required.length
+      || actual.some((producer, index) => producer !== required[index])
+    )
+  ) {
+    throw new Error(
+      `BLOCKED_ELECTRON_RECEIPT_REQUIRED_PRODUCERS: ${JSON.stringify(actual)}`,
+    );
+  }
+  for (const producer of required) {
+    if (!producers.has(producer)) {
+      throw new Error(`BLOCKED_ELECTRON_RECEIPT_REQUIRED_PRODUCER: ${producer}`);
+    }
+  }
+  if (
+    suiteContract.requiredProducerPrefix
+    && !actual.some((producer) => producer.startsWith(suiteContract.requiredProducerPrefix))
+  ) {
+    throw new Error(
+      `BLOCKED_ELECTRON_RECEIPT_REQUIRED_PRODUCER_PREFIX: ${suiteContract.requiredProducerPrefix}`,
+    );
+  }
+}
+
+export function aggregateElectronReceipts({
+  runtimeReceipts,
+  processReceipts,
+  executionMode,
+  suiteContract,
+}) {
+  const runtimeByProducer = producerMap(runtimeReceipts, 'RUNTIME');
+  const processByProducer = producerMap(processReceipts, 'PROCESS');
+  const runtimeProducers = [...runtimeByProducer.keys()].sort();
+  const processProducers = [...processByProducer.keys()].sort();
+  if (
+    runtimeProducers.length !== processProducers.length
+    || runtimeProducers.some(
+      (producer, index) => producer !== processProducers[index],
+    )
+  ) {
+    throw new Error(
+      `BLOCKED_ELECTRON_RECEIPT_PRODUCER_MISMATCH: runtime=${JSON.stringify(runtimeProducers)} process=${JSON.stringify(processProducers)}`,
+    );
+  }
+  requireProducerContract(runtimeByProducer, suiteContract);
+
+  const runtimeRuns = [];
+  const processRuns = [];
+  let canonicalRuntimeIdentity = null;
+  for (const producer of runtimeProducers) {
+    const runtimeReceipt = runtimeByProducer.get(producer);
+    const processReceipt = processByProducer.get(producer);
+    if (runtimeReceipt.runs.length !== processReceipt.runs.length) {
+      throw new Error(`BLOCKED_ELECTRON_RECEIPT_RUN_COUNT_MISMATCH: ${producer}`);
+    }
+    for (let index = 0; index < runtimeReceipt.runs.length; index += 1) {
+      const expectedRunIndex = index + 1;
+      const runtimeRun = runtimeReceipt.runs[index];
+      const processRun = processReceipt.runs[index];
+      if (
+        runtimeRun?.runIndex !== expectedRunIndex
+        || processRun?.runIndex !== expectedRunIndex
+      ) {
+        throw new Error(
+          `BLOCKED_ELECTRON_RECEIPT_RUN_INDEX_MISMATCH: ${producer}:${expectedRunIndex}`,
+        );
+      }
+      const identity = validateElectronRuntimeIdentity(
+        runtimeRun.identity,
+        executionMode,
+      );
+      if (
+        canonicalRuntimeIdentity
+        && JSON.stringify(identity) !== JSON.stringify(canonicalRuntimeIdentity)
+      ) {
+        throw new Error(
+          `BLOCKED_ELECTRON_RUNTIME_IDENTITY_MISMATCH: ${producer}:${expectedRunIndex}`,
+        );
+      }
+      canonicalRuntimeIdentity ??= identity;
+      if (
+        processRun.clean !== true
+        || processRun.exitCode !== 0
+        || processRun.signalCode !== null
+        || processRun.error !== null
+      ) {
+        throw new Error(
+          `BLOCKED_ELECTRON_PROCESS_EXIT_UNCLEAN: ${producer}:${expectedRunIndex}`,
+        );
+      }
+      runtimeRuns.push({ producer, runIndex: expectedRunIndex, identity });
+      processRuns.push({
+        producer,
+        runIndex: expectedRunIndex,
+        clean: true,
+        exitCode: 0,
+        signalCode: null,
+        error: null,
+      });
+    }
+  }
+  if (!canonicalRuntimeIdentity) {
+    throw new Error('BLOCKED_ELECTRON_RUNTIME_RECEIPTS_EMPTY');
+  }
+
+  return {
+    runtime: {
+      schemaVersion: 1,
+      source: 'aggregated-per-producer-runtime-receipts',
+      producerCount: runtimeProducers.length,
+      runCount: runtimeRuns.length,
+      producers: runtimeProducers,
+      runtimeIdentity: canonicalRuntimeIdentity,
+      runs: runtimeRuns,
+    },
+    process: {
+      schemaVersion: 1,
+      source: 'aggregated-per-producer-process-receipts',
+      clean: true,
+      exitCode: 0,
+      signalCode: null,
+      error: null,
+      producerCount: processProducers.length,
+      runCount: processRuns.length,
+      producers: processProducers,
+      runs: processRuns,
+    },
+  };
+}
+
+async function readProducerReceipts(directory, kind) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const receipts = [];
+  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) {
+      throw new Error(
+        `BLOCKED_ELECTRON_${kind}_RECEIPT_ENTRY_INVALID: ${entry.name}`,
+      );
+    }
+    const receipt = JSON.parse(await readFile(path.join(directory, entry.name), 'utf8'));
+    if (`${receipt?.producer}.json` !== entry.name) {
+      throw new Error(
+        `BLOCKED_ELECTRON_${kind}_RECEIPT_FILENAME_MISMATCH: ${entry.name}`,
+      );
+    }
+    receipts.push(receipt);
+  }
+  return receipts;
+}
+
 function requireAbsoluteExistingFile(name) {
   const value = process.env[name];
   if (!value) throw new Error(`BLOCKED_RELEASE_IDENTITY_MISSING: ${name}`);
@@ -249,20 +496,29 @@ export function createElectronExecutionEnv({
   executionMode,
   playwrightJsonPath,
   userDataPath,
-  processExitPath,
-  runtimeIdentityPath,
+  processExitReceiptDirectory,
+  runtimeReceiptDirectory,
 }) {
   if (!identity?.executablePath || !path.isAbsolute(identity.executablePath)) {
     throw new Error('BLOCKED_ELECTRON_EXECUTABLE_IDENTITY_INVALID');
   }
+  if (
+    !path.isAbsolute(processExitReceiptDirectory)
+    || !path.isAbsolute(runtimeReceiptDirectory)
+  ) {
+    throw new Error('BLOCKED_ELECTRON_RECEIPT_DIRECTORY_INVALID');
+  }
+  const childEnv = { ...baseEnv };
+  delete childEnv.COPILOT_E2E_PROCESS_EXIT_PATH;
+  delete childEnv.COPILOT_E2E_RUNTIME_IDENTITY_PATH;
   return {
-    ...baseEnv,
+    ...childEnv,
     COPILOT_E2E_MODE: executionMode,
     COPILOT_E2E_EXECUTABLE_PATH: identity.executablePath,
     COPILOT_E2E_PLAYWRIGHT_JSON_PATH: playwrightJsonPath,
     COPILOT_E2E_USER_DATA: userDataPath,
-    COPILOT_E2E_PROCESS_EXIT_PATH: processExitPath,
-    COPILOT_E2E_RUNTIME_IDENTITY_PATH: runtimeIdentityPath,
+    COPILOT_E2E_PROCESS_EXIT_RECEIPT_DIR: processExitReceiptDirectory,
+    COPILOT_E2E_RUNTIME_RECEIPT_DIR: runtimeReceiptDirectory,
   };
 }
 
@@ -279,6 +535,17 @@ async function main() {
   }
 
   const startedAt = new Date().toISOString();
+  let suiteContract;
+  try {
+    suiteContract = resolveElectronSuiteContract({
+      profile: process.env.COPILOT_E2E_PROFILE,
+      args,
+      minimumTests: process.env.COPILOT_E2E_MIN_TESTS,
+    });
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exit(1);
+  }
   if (process.env.COPILOT_E2E_SKIP_BUILD !== '1' && mode !== 'release') {
     const build = run('npm', ['run', 'build', '--workspace', '@copilot/desktop']);
     if (build.status !== 0) {
@@ -301,21 +568,27 @@ async function main() {
 
   await mkdir(path.dirname(jsonReportPath), { recursive: true });
   await mkdir(path.dirname(evidencePath), { recursive: true });
+  await mkdir(path.dirname(processExitPath), { recursive: true });
+  await mkdir(path.dirname(runtimeIdentityPath), { recursive: true });
   await rm(jsonReportPath, { force: true });
   await rm(evidencePath, { force: true });
+  await rm(processExitPath, { force: true });
+  await rm(runtimeIdentityPath, { force: true });
   const executionRoot = await mkdtemp(path.join(os.tmpdir(), 'njx-copilot-e2e-run-'));
   const userDataPath = path.join(executionRoot, 'user-data');
-  const processExitPath = path.join(executionRoot, 'process-exit.json');
-  const runtimeIdentityPath = path.join(executionRoot, 'runtime-identity.json');
+  const processExitReceiptDirectory = path.join(executionRoot, 'process-exit-receipts');
+  const runtimeReceiptDirectory = path.join(executionRoot, 'runtime-receipts');
   await mkdir(userDataPath, { recursive: true });
+  await mkdir(processExitReceiptDirectory, { recursive: true });
+  await mkdir(runtimeReceiptDirectory, { recursive: true });
 
   const executionEnv = createElectronExecutionEnv({
     identity,
     executionMode: mode,
     playwrightJsonPath: jsonReportPath,
     userDataPath,
-    processExitPath,
-    runtimeIdentityPath,
+    processExitReceiptDirectory,
+    runtimeReceiptDirectory,
   });
   const runResult = spawnSync(process.execPath, [
     cli,
@@ -352,29 +625,56 @@ async function main() {
   }
 
   let processExit = null;
-  try {
-    processExit = JSON.parse(await readFile(processExitPath, 'utf8'));
-  } catch (error) {
-    hardFailures.push(`BLOCKED_ELECTRON_PROCESS_EXIT_EVIDENCE_MISSING: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
   let runtimeIdentity = null;
+  let receiptAggregate = null;
+  let processExitSha256 = null;
+  let runtimeIdentitySha256 = null;
   try {
-    runtimeIdentity = validateElectronRuntimeIdentity(
-      JSON.parse(await readFile(runtimeIdentityPath, 'utf8')),
-      mode,
+    receiptAggregate = aggregateElectronReceipts({
+      runtimeReceipts: await readProducerReceipts(
+        runtimeReceiptDirectory,
+        'RUNTIME',
+      ),
+      processReceipts: await readProducerReceipts(
+        processExitReceiptDirectory,
+        'PROCESS',
+      ),
+      executionMode: mode,
+      suiteContract,
+    });
+    runtimeIdentity = receiptAggregate.runtime.runtimeIdentity;
+    processExit = receiptAggregate.process;
+    await writeFile(
+      runtimeIdentityPath,
+      `${JSON.stringify(receiptAggregate.runtime, null, 2)}\n`,
+      { encoding: 'utf8', mode: 0o600 },
     );
+    await writeFile(
+      processExitPath,
+      `${JSON.stringify(receiptAggregate.process, null, 2)}\n`,
+      { encoding: 'utf8', mode: 0o600 },
+    );
+    runtimeIdentitySha256 = await sha256File(runtimeIdentityPath);
+    processExitSha256 = await sha256File(processExitPath);
   } catch (error) {
     hardFailures.push(
-      `BLOCKED_ELECTRON_RUNTIME_IDENTITY: ${error instanceof Error ? error.message : String(error)}`,
+      `BLOCKED_ELECTRON_RECEIPT_AGGREGATION: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
-  const minimumTests = Number(process.env.COPILOT_E2E_MIN_TESTS || 50);
-  if (!Number.isInteger(minimumTests) || minimumTests < 50) {
-    hardFailures.push('COPILOT_E2E_MIN_TESTS must be an integer >= 50');
+  if (
+    suiteContract.exactExpectedTests !== null
+    && counts.expected !== suiteContract.exactExpectedTests
+  ) {
+    hardFailures.push(
+      `ELECTRON_E2E_TEST_COUNT_NOT_EXACT: ${counts.expected} != ${suiteContract.exactExpectedTests}`,
+    );
   }
-  if (counts.expected < minimumTests) hardFailures.push(`ELECTRON_E2E_TEST_COUNT_TOO_LOW: ${counts.expected} < ${minimumTests}`);
+  if (counts.expected < suiteContract.minimumTests) {
+    hardFailures.push(
+      `ELECTRON_E2E_TEST_COUNT_TOO_LOW: ${counts.expected} < ${suiteContract.minimumTests}`,
+    );
+  }
   if (counts.skipped !== 0) hardFailures.push(`ELECTRON_E2E_SKIPPED: ${counts.skipped}`);
   if (counts.unexpected !== 0) hardFailures.push(`ELECTRON_E2E_UNEXPECTED: ${counts.unexpected}`);
   if (counts.flaky !== 0) hardFailures.push(`ELECTRON_E2E_FLAKY: ${counts.flaky}`);
@@ -391,6 +691,13 @@ async function main() {
     os: process.platform,
     arch: process.arch,
     runtimeIdentity,
+    receiptProfile: suiteContract.profile,
+    receiptProducers: receiptAggregate?.runtime.producers ?? [],
+    receiptRunCount: receiptAggregate?.runtime.runCount ?? 0,
+    runtimeIdentityPath,
+    runtimeIdentitySha256,
+    processExitPath,
+    processExitSha256,
     playwrightReportPath: jsonReportPath,
     counts,
     startedAt,

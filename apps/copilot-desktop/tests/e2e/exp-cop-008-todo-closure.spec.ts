@@ -5,11 +5,11 @@ import {
 } from '@playwright/test';
 import {
   APP_ROOT,
-  buildElectronLaunchArgs,
+  createElectronReceiptRecorder,
   expect,
+  launchElectronWithReceipt,
   openView,
-  resolveSourceElectronExecutable,
-  selectElectronExecutable,
+  resolveElectronLaunchContract,
   test,
   waitForElectronFirstWindow,
 } from './electron.fixture.js';
@@ -35,47 +35,52 @@ function localInput(date: Date): string {
   ].join('');
 }
 
-async function launchIsolatedElectron(userDataPath: string): Promise<{
+async function launchIsolatedElectron(
+  userDataPath: string,
+  recorder: ReturnType<typeof createElectronReceiptRecorder>,
+): Promise<{
   app: ElectronApplication;
   page: Page;
 }> {
-  const executablePath = selectElectronExecutable(
-    process.env.COPILOT_E2E_EXECUTABLE_PATH,
-    () => resolveSourceElectronExecutable(),
-  );
-  const app = await electron.launch({
-    executablePath,
-    args: buildElectronLaunchArgs({
-      appRoot: APP_ROOT,
-      e2eUserData: userDataPath,
-      packagedExecutablePath: undefined,
-      e2eMode: 'current-source',
-      platform: process.platform,
-      nodeEnv: 'test',
-      copilotE2E: '1',
+  const launchContract = resolveElectronLaunchContract({
+    appRoot: APP_ROOT,
+    e2eUserData: userDataPath,
+    configuredExecutablePath: process.env.COPILOT_E2E_EXECUTABLE_PATH,
+    e2eMode: process.env.COPILOT_E2E_MODE,
+    platform: process.platform,
+    nodeEnv: 'test',
+    copilotE2E: '1',
+  });
+  return launchElectronWithReceipt({
+    launchApp: () => electron.launch({
+      executablePath: launchContract.executablePath,
+      args: launchContract.args,
+      env: {
+        ...process.env,
+        NODE_ENV: 'test',
+        COPILOT_E2E: '1',
+        ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+      },
+      timeout: TERMINAL_TIMEOUT_MS,
     }),
-    env: {
-      ...process.env,
-      NODE_ENV: 'test',
-      COPILOT_E2E: '1',
-      ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+    recorder,
+    initializePage: async (app) => {
+      await waitForElectronFirstWindow({
+        expectedUserDataPath: userDataPath,
+        readIdentity: () => app.evaluate(({ app: electronApp, BrowserWindow }) => ({
+          appName: electronApp.getName(),
+          appPath: electronApp.getAppPath(),
+          userDataPath: electronApp.getPath('userData'),
+          windowCount: BrowserWindow.getAllWindows().length,
+        })),
+        waitForFirstWindow: (options) => app.firstWindow(options),
+      });
+      const page = await app.firstWindow();
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page.getByTestId('app-root')).toBeVisible();
+      return page;
     },
-    timeout: TERMINAL_TIMEOUT_MS,
   });
-  await waitForElectronFirstWindow({
-    expectedUserDataPath: userDataPath,
-    readIdentity: () => app.evaluate(({ app: electronApp, BrowserWindow }) => ({
-      appName: electronApp.getName(),
-      appPath: electronApp.getAppPath(),
-      userDataPath: electronApp.getPath('userData'),
-      windowCount: BrowserWindow.getAllWindows().length,
-    })),
-    waitForFirstWindow: (options) => app.firstWindow(options),
-  });
-  const page = await app.firstWindow();
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByTestId('app-root')).toBeVisible();
-  return { app, page };
 }
 
 test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, memory, source open, and relaunch readback', async ({
@@ -103,9 +108,10 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
   let second: ElectronApplication | null = null;
   let unscheduledTodoId = '';
   let explicitTodoId = '';
+  const recorder = createElectronReceiptRecorder('exp-cop-008');
 
   try {
-    ({ app: first } = await launchIsolatedElectron(e2eUserData));
+    ({ app: first } = await launchIsolatedElectron(e2eUserData, recorder));
     const firstPage = await first.firstWindow();
     await firstPage.evaluate(
       async ({ baseUrl, credential }: { baseUrl: string; credential: string }) => {
@@ -288,10 +294,16 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
     );
     expect(explicitTodoId).not.toBe('');
 
-    await first.close();
+    const firstExit = await recorder.closeAndRecord(first);
+    expect(firstExit).toMatchObject({
+      clean: true,
+      exitCode: 0,
+      signalCode: null,
+      error: null,
+    });
     first = null;
 
-    ({ app: second } = await launchIsolatedElectron(e2eUserData));
+    ({ app: second } = await launchIsolatedElectron(e2eUserData, recorder));
     const secondPage = await second.firstWindow();
     await openView(secondPage, 'schedule');
     await secondPage.getByRole('button', { name: '未安排' }).click();
@@ -341,33 +353,40 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
         .getByRole('button', { name: `打开来源：${notePaths[1]}` }),
     ).toBeVisible();
   } finally {
-    const cleanupPage = second
-      ? await second.firstWindow().catch(() => null)
-      : first
-        ? await first.firstWindow().catch(() => null)
-        : null;
-    if (cleanupPage) {
-      if (unscheduledTodoId) {
-        await cleanupPage.evaluate(
-          (id: string) => (window as any).copilot.todos.remove(id).catch(() => false),
-          unscheduledTodoId,
-        );
+    try {
+      try {
+        const cleanupPage = second
+          ? await second.firstWindow().catch(() => null)
+          : first
+            ? await first.firstWindow().catch(() => null)
+            : null;
+        if (cleanupPage) {
+          if (unscheduledTodoId) {
+            await cleanupPage.evaluate(
+              (id: string) => (window as any).copilot.todos.remove(id).catch(() => false),
+              unscheduledTodoId,
+            );
+          }
+          if (explicitTodoId) {
+            await cleanupPage.evaluate(
+              (id: string) => (window as any).copilot.todos.remove(id).catch(() => false),
+              explicitTodoId,
+            );
+          }
+          for (const notePath of notePaths) {
+            await cleanupPage.evaluate(
+              (path: string) => (window as any).copilot.notes.remove(path).catch(() => false),
+              notePath,
+            );
+          }
+        }
+      } finally {
+        if (second) await recorder.closeAndRecord(second);
+        if (first) await recorder.closeAndRecord(first);
+        await recorder.flush();
       }
-      if (explicitTodoId) {
-        await cleanupPage.evaluate(
-          (id: string) => (window as any).copilot.todos.remove(id).catch(() => false),
-          explicitTodoId,
-        );
-      }
-      for (const notePath of notePaths) {
-        await cleanupPage.evaluate(
-          (path: string) => (window as any).copilot.notes.remove(path).catch(() => false),
-          notePath,
-        );
-      }
+    } finally {
+      await provider.close();
     }
-    if (second) await second.close();
-    if (first) await first.close();
-    await provider.close();
   }
 });

@@ -92,7 +92,7 @@ function currentTruth(note: CopilotNote, summary = '整理摘要'): WikiTruthRec
     status: 'current',
     contentDigest: digest,
     summary,
-    tags: note.tags,
+    tags: note.tags ?? [],
     entityIds: [],
     relationSignatures: [],
     generatedAt: note.updatedAt ?? null,

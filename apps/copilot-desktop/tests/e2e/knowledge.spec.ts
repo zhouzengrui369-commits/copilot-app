@@ -1,6 +1,13 @@
 import path from 'node:path';
 import { _electron as electron, type ElectronApplication } from '@playwright/test';
-import { APP_ROOT, expect, openView, test } from './electron.fixture.js';
+import {
+  APP_ROOT,
+  createElectronReceiptRecorder,
+  expect,
+  openView,
+  resolveElectronLaunchContract,
+  test,
+} from './electron.fixture.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -18,12 +25,18 @@ function noteListPrimaryAction(appPage: Parameters<typeof openView>[0], path: st
 }
 
 function launchCase97Electron(userDataPath: string): Promise<ElectronApplication> {
-  const executablePath = process.env.COPILOT_E2E_EXECUTABLE_PATH;
+  const launchContract = resolveElectronLaunchContract({
+    appRoot: APP_ROOT,
+    e2eUserData: userDataPath,
+    configuredExecutablePath: process.env.COPILOT_E2E_EXECUTABLE_PATH,
+    e2eMode: process.env.COPILOT_E2E_MODE,
+    platform: process.platform,
+    nodeEnv: 'test',
+    copilotE2E: '1',
+  });
   return electron.launch({
-    executablePath,
-    args: executablePath && process.env.COPILOT_E2E_MODE === 'release'
-      ? [`--user-data-dir=${userDataPath}`]
-      : [APP_ROOT, `--user-data-dir=${userDataPath}`],
+    executablePath: launchContract.executablePath,
+    args: launchContract.args,
     env: {
       ...process.env,
       NODE_ENV: 'test',
@@ -249,40 +262,57 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
   test('97 create-with-build keeps LOCAL_SAVED after a full Electron relaunch', async ({ e2eUserData }) => {
     const isolatedUserData = path.join(e2eUserData, 'dci-core-1-case-97');
     const pathOwned = 'e2e/dci-core-1-local-commit';
-    const first = await launchCase97Electron(isolatedUserData);
+    const recorder = createElectronReceiptRecorder('knowledge-case-97');
+    let first: ElectronApplication | null = null;
+    let second: ElectronApplication | null = null;
     try {
-      const page = await first.firstWindow();
-      await page.waitForLoadState('domcontentloaded');
-      const receipt = await page.evaluate(async (notePath) => {
-        const notes = (window as any).copilot.notes;
-        await notes.remove(notePath).catch(() => false);
-        return notes.createWithBuild({
-          path: notePath,
-          title: 'DCI local commit',
-          body: 'Local bytes survive regardless of build outcome.',
-          tags: ['e2e', 'dci-core-1'],
+      first = await launchCase97Electron(isolatedUserData);
+      await recorder.recordRuntime(first);
+      try {
+        const page = await first.firstWindow();
+        await page.waitForLoadState('domcontentloaded');
+        const receipt = await page.evaluate(async (notePath) => {
+          const notes = (window as any).copilot.notes;
+          await notes.remove(notePath).catch(() => false);
+          return notes.createWithBuild({
+            path: notePath,
+            title: 'DCI local commit',
+            body: 'Local bytes survive regardless of build outcome.',
+            tags: ['e2e', 'dci-core-1'],
+          });
+        }, pathOwned);
+        expect(receipt).toMatchObject({
+          localState: 'LOCAL_SAVED',
+          note: { path: pathOwned },
         });
-      }, pathOwned);
-      expect(receipt).toMatchObject({
-        localState: 'LOCAL_SAVED',
-        note: { path: pathOwned },
-      });
-    } finally {
-      await first.close();
-    }
+      } finally {
+        const firstExit = await recorder.closeAndRecord(first);
+        first = null;
+        expect(firstExit).toMatchObject({
+          clean: true,
+          exitCode: 0,
+          signalCode: null,
+          error: null,
+        });
+      }
 
-    const second = await launchCase97Electron(isolatedUserData);
-    try {
+      second = await launchCase97Electron(isolatedUserData);
+      await recorder.recordRuntime(second);
       const page = await second.firstWindow();
       await page.waitForLoadState('domcontentloaded');
       await expect.poll(
-        () => page.evaluate((notePath) => (window as any).copilot.notes.get(notePath), pathOwned),
+        () => page.evaluate(
+          (notePath) => (window as any).copilot.notes.get(notePath),
+          pathOwned,
+        ),
       ).toMatchObject({
         note: { path: pathOwned },
         body: expect.stringContaining('Local bytes survive'),
       });
     } finally {
-      await second.close();
+      if (second) await recorder.closeAndRecord(second);
+      if (first) await recorder.closeAndRecord(first);
+      await recorder.flush();
     }
   });
 

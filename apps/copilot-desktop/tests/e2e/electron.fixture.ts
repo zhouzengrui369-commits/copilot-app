@@ -190,6 +190,243 @@ export function buildElectronLaunchArgs({
   return args;
 }
 
+interface ElectronLaunchContractOptions {
+  appRoot: string;
+  e2eUserData: string;
+  configuredExecutablePath: string | undefined;
+  e2eMode: string | undefined;
+  platform: NodeJS.Platform;
+  nodeEnv: string | undefined;
+  copilotE2E: string | undefined;
+  resolveSourceExecutable?: () => string;
+}
+
+export function resolveElectronLaunchContract({
+  appRoot,
+  e2eUserData,
+  configuredExecutablePath,
+  e2eMode,
+  platform,
+  nodeEnv,
+  copilotE2E,
+  resolveSourceExecutable = resolveSourceElectronExecutable,
+}: ElectronLaunchContractOptions): {
+  executablePath: string;
+  args: string[];
+} {
+  if (e2eMode === 'release' && !configuredExecutablePath) {
+    throw new Error('BLOCKED_RELEASE_ELECTRON_EXECUTABLE_MISSING');
+  }
+  const executablePath = selectElectronExecutable(
+    configuredExecutablePath,
+    resolveSourceExecutable,
+  );
+  const packagedExecutablePath = e2eMode === 'release'
+    ? configuredExecutablePath
+    : undefined;
+  return {
+    executablePath,
+    args: buildElectronLaunchArgs({
+      appRoot,
+      e2eUserData,
+      packagedExecutablePath,
+      e2eMode,
+      platform,
+      nodeEnv,
+      copilotE2E,
+    }),
+  };
+}
+
+export interface ElectronRuntimeIdentity {
+  schemaVersion: 1;
+  source: 'launched-electron-main-process';
+  electron: string;
+  chrome: string;
+  node: string;
+  modules: string;
+  napi: string;
+  arch: string;
+  platform: string;
+}
+
+export interface ElectronProcessExitReceipt {
+  clean: boolean;
+  exitCode: number | null;
+  signalCode: string | null;
+  error: string | null;
+}
+
+export interface ElectronReceiptRecorder<TApp = ElectronApplication> {
+  recordRuntime: (app: TApp) => Promise<ElectronRuntimeIdentity>;
+  closeAndRecord: (app: TApp) => Promise<ElectronProcessExitReceipt>;
+  flush: () => Promise<void>;
+}
+
+interface ElectronReceiptDirectories {
+  runtimeReceiptDirectory: string | undefined;
+  processExitReceiptDirectory: string | undefined;
+}
+
+export function resolveElectronReceiptPaths(
+  producer: string,
+  {
+    runtimeReceiptDirectory,
+    processExitReceiptDirectory,
+  }: ElectronReceiptDirectories,
+): {
+  runtimeReceiptPath: string;
+  processExitReceiptPath: string;
+} {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(producer)) {
+    throw new Error(`BLOCKED_ELECTRON_RECEIPT_PRODUCER_INVALID: ${producer}`);
+  }
+  if (
+    !runtimeReceiptDirectory
+    || !processExitReceiptDirectory
+    || !path.isAbsolute(runtimeReceiptDirectory)
+    || !path.isAbsolute(processExitReceiptDirectory)
+  ) {
+    throw new Error('BLOCKED_ELECTRON_RECEIPT_DIRECTORY_INVALID');
+  }
+  return {
+    runtimeReceiptPath: path.join(runtimeReceiptDirectory, `${producer}.json`),
+    processExitReceiptPath: path.join(processExitReceiptDirectory, `${producer}.json`),
+  };
+}
+
+export function createElectronReceiptRecorder(
+  producer: string,
+  directories: ElectronReceiptDirectories = {
+    runtimeReceiptDirectory: process.env.COPILOT_E2E_RUNTIME_RECEIPT_DIR,
+    processExitReceiptDirectory: process.env.COPILOT_E2E_PROCESS_EXIT_RECEIPT_DIR,
+  },
+): ElectronReceiptRecorder {
+  const { runtimeReceiptPath, processExitReceiptPath } =
+    resolveElectronReceiptPaths(producer, directories);
+  const runtimeRuns: Array<{
+    runIndex: number;
+    identity: ElectronRuntimeIdentity;
+  }> = [];
+  const processRuns: Array<ElectronProcessExitReceipt & {
+    runIndex: number;
+  }> = [];
+
+  const recordRuntime = async (
+    app: ElectronApplication,
+  ): Promise<ElectronRuntimeIdentity> => {
+    const identity = await app.evaluate(() => ({
+      schemaVersion: 1 as const,
+      source: 'launched-electron-main-process' as const,
+      electron: process.versions.electron ?? '',
+      chrome: process.versions.chrome ?? '',
+      node: process.versions.node ?? '',
+      modules: process.versions.modules ?? '',
+      napi: process.versions.napi ?? '',
+      arch: process.arch,
+      platform: process.platform,
+    }));
+    runtimeRuns.push({
+      runIndex: runtimeRuns.length + 1,
+      identity,
+    });
+    return identity;
+  };
+
+  const closeAndRecord = async (
+    app: ElectronApplication,
+  ): Promise<ElectronProcessExitReceipt> => {
+    const child = app.process();
+    let error: string | null = null;
+    try {
+      await app.close();
+      await waitForExit(child);
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+    const receipt = {
+      clean: error === null && child.exitCode === 0 && child.signalCode === null,
+      exitCode: child.exitCode,
+      signalCode: child.signalCode,
+      error,
+    };
+    processRuns.push({
+      runIndex: processRuns.length + 1,
+      ...receipt,
+    });
+    return receipt;
+  };
+
+  const flush = async (): Promise<void> => {
+    if (
+      runtimeRuns.length === 0
+      || runtimeRuns.length !== processRuns.length
+      || runtimeRuns.some((run, index) => run.runIndex !== index + 1)
+      || processRuns.some((run, index) => run.runIndex !== index + 1)
+    ) {
+      throw new Error(
+        `BLOCKED_ELECTRON_RECEIPT_RUN_MISMATCH: ${producer} runtime=${runtimeRuns.length} process=${processRuns.length}`,
+      );
+    }
+    await mkdir(path.dirname(runtimeReceiptPath), { recursive: true });
+    await mkdir(path.dirname(processExitReceiptPath), { recursive: true });
+    await writeFile(
+      runtimeReceiptPath,
+      `${JSON.stringify({
+        schemaVersion: 1,
+        producer,
+        runs: runtimeRuns,
+      }, null, 2)}\n`,
+      { encoding: 'utf8', flag: 'wx', mode: 0o600 },
+    );
+    await writeFile(
+      processExitReceiptPath,
+      `${JSON.stringify({
+        schemaVersion: 1,
+        producer,
+        runs: processRuns,
+      }, null, 2)}\n`,
+      { encoding: 'utf8', flag: 'wx', mode: 0o600 },
+    );
+    const unclean = processRuns.find((run) => !run.clean);
+    if (unclean) {
+      throw new Error(
+        `BLOCKED_ELECTRON_UNCLEAN_EXIT: code=${unclean.exitCode} signal=${unclean.signalCode}`,
+      );
+    }
+  };
+
+  return { recordRuntime, closeAndRecord, flush };
+}
+
+export async function launchElectronWithReceipt<TApp, TPage>({
+  launchApp,
+  recorder,
+  initializePage,
+}: {
+  launchApp: () => Promise<TApp>;
+  recorder: ElectronReceiptRecorder<TApp>;
+  initializePage: (app: TApp) => Promise<TPage>;
+}): Promise<{
+  app: TApp;
+  page: TPage;
+  runtimeIdentity: ElectronRuntimeIdentity;
+}> {
+  const app = await launchApp();
+  try {
+    const runtimeIdentity = await recorder.recordRuntime(app);
+    const page = await initializePage(app);
+    return { app, page, runtimeIdentity };
+  } catch (error) {
+    try {
+      await recorder.closeAndRecord(app);
+    } catch {
+      // Preserve the readiness/app-root failure that caused ownership cleanup.
+    }
+    throw error;
+  }
+}
+
 interface TestFixtures {
   fakeMiniMaxProvider: FakeMiniMaxProvider;
 }
@@ -406,10 +643,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     if (!configured) await rm(directory, { recursive: true, force: true });
   }, { scope: 'worker' }],
 
-  electronApp: [async ({ e2eUserData }, use) => {
-    const packagedExecutablePath = process.env.COPILOT_E2E_EXECUTABLE_PATH;
+  electronApp: [async ({ e2eUserData }, use, workerInfo) => {
+    const configuredExecutablePath = process.env.COPILOT_E2E_EXECUTABLE_PATH;
     if (
-      !packagedExecutablePath
+      !configuredExecutablePath
       && (!existsSync(MAIN_ENTRY) || !existsSync(RENDERER_ENTRY))
     ) {
       throw new Error(
@@ -417,24 +654,31 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       );
     }
     if (
-      packagedExecutablePath
-      && (!path.isAbsolute(packagedExecutablePath) || !existsSync(packagedExecutablePath))
+      configuredExecutablePath
+      && (
+        !path.isAbsolute(configuredExecutablePath)
+        || !existsSync(configuredExecutablePath)
+      )
     ) {
-      throw new Error(`BLOCKED_PACKAGED_EXECUTABLE_MISSING: ${packagedExecutablePath}`);
+      throw new Error(
+        `BLOCKED_PACKAGED_EXECUTABLE_MISSING: ${configuredExecutablePath}`,
+      );
     }
-    const executablePath = selectElectronExecutable(packagedExecutablePath);
-
+    const launchContract = resolveElectronLaunchContract({
+      appRoot: APP_ROOT,
+      e2eUserData,
+      configuredExecutablePath,
+      e2eMode: process.env.COPILOT_E2E_MODE,
+      platform: process.platform,
+      nodeEnv: 'test',
+      copilotE2E: '1',
+    });
+    const recorder = createElectronReceiptRecorder(
+      `fixture-worker-${workerInfo.workerIndex}`,
+    );
     const app = await electron.launch({
-      executablePath,
-      args: buildElectronLaunchArgs({
-        appRoot: APP_ROOT,
-        e2eUserData,
-        packagedExecutablePath,
-        e2eMode: process.env.COPILOT_E2E_MODE,
-        platform: process.platform,
-        nodeEnv: 'test',
-        copilotE2E: '1',
-      }),
+      executablePath: launchContract.executablePath,
+      args: launchContract.args,
       env: {
         ...process.env,
         NODE_ENV: 'test',
@@ -443,8 +687,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       },
       timeout: 30_000,
     });
-    const child = app.process();
-    let teardownError: unknown = null;
+    let exitReceipt: ElectronProcessExitReceipt | null = null;
     try {
       const readIdentity = () =>
         app.evaluate(({ app: electronApp, BrowserWindow }) => ({
@@ -458,47 +701,15 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         readIdentity,
         waitForFirstWindow: (options) => app.firstWindow(options),
       });
-      const runtimeIdentityPath = process.env.COPILOT_E2E_RUNTIME_IDENTITY_PATH;
-      if (!runtimeIdentityPath || !path.isAbsolute(runtimeIdentityPath)) {
-        throw new Error('BLOCKED_ELECTRON_RUNTIME_IDENTITY_PATH_INVALID');
-      }
-      const runtimeIdentity = await app.evaluate(() => ({
-        schemaVersion: 1,
-        source: 'launched-electron-main-process',
-        electron: process.versions.electron ?? '',
-        chrome: process.versions.chrome ?? '',
-        node: process.versions.node ?? '',
-        modules: process.versions.modules ?? '',
-        napi: process.versions.napi ?? '',
-        arch: process.arch,
-        platform: process.platform,
-      }));
-      await writeFile(runtimeIdentityPath, `${JSON.stringify(runtimeIdentity, null, 2)}\n`, {
-        flag: 'wx',
-        mode: 0o600,
-      });
+      await recorder.recordRuntime(app);
       await use(app);
     } finally {
-      try {
-        await app.close();
-        await waitForExit(child);
-      } catch (error) {
-        teardownError = error;
-      }
-      const marker = process.env.COPILOT_E2E_PROCESS_EXIT_PATH;
-      if (marker) {
-        if (!path.isAbsolute(marker)) throw new Error('COPILOT_E2E_PROCESS_EXIT_PATH must be absolute');
-        await mkdir(path.dirname(marker), { recursive: true });
-        await writeFile(marker, `${JSON.stringify({
-          clean: teardownError === null && child.exitCode === 0 && child.signalCode === null,
-          exitCode: child.exitCode,
-          signalCode: child.signalCode,
-          error: teardownError instanceof Error ? teardownError.message : teardownError ? String(teardownError) : null,
-        }, null, 2)}\n`, 'utf8');
-      }
-      if (teardownError) throw teardownError;
-      if (child.exitCode !== 0 || child.signalCode !== null) {
-        throw new Error(`BLOCKED_ELECTRON_UNCLEAN_EXIT: code=${child.exitCode} signal=${child.signalCode}`);
+      exitReceipt = await recorder.closeAndRecord(app);
+      await recorder.flush();
+      if (!exitReceipt.clean) {
+        throw new Error(
+          `BLOCKED_ELECTRON_UNCLEAN_EXIT: code=${exitReceipt.exitCode} signal=${exitReceipt.signalCode}`,
+        );
       }
     }
   }, { scope: 'worker', timeout: 45_000 }],
