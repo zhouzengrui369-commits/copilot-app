@@ -5,35 +5,24 @@ import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
   CopilotDomainBridge,
+  NoteCommitBuildReceipt,
   NoteRecord,
   RagStreamEvent,
+  RendererTrashItem,
   TodoRecord,
+  WikiTruthReceipt,
 } from '../src/shared/domain-api.js';
 import {
   MarkdownRenderer,
   preprocessWikilinks,
 } from '../src/renderer/components/NoteDetail/MarkdownRenderer.js';
 import {
-  CloudAsrProvider,
-  characterAccuracy,
-  makeCloudAsrError,
-  parseCloudResponse,
-  type CloudAsrFetchLike,
-} from '../src/renderer/components/VoiceInput/CloudAsrProvider.js';
+  buildLocalAsrDecodeRequest,
+} from '../src/renderer/components/VoiceInput/audio-pcm.js';
 import {
-  LOCAL_ASR_RUNTIME_UNAVAILABLE,
-  WebSpeechError,
-  WebSpeechProvider,
-  type SpeechRecognitionCtor,
-  type SpeechRecognitionLike,
-  type SpeechRecognitionResultEvent,
-} from '../src/renderer/components/VoiceInput/WebSpeechProvider.js';
-import {
-  cloudAsrSecondary,
-  nativeFallback,
-  useTranscriber,
-  webSpeechPrimary,
-} from '../src/renderer/components/VoiceInput/useTranscriber.js';
+  useLocalAsrCapture,
+} from '../src/renderer/components/VoiceInput/useLocalAsrCapture.js';
+import { VoiceInput } from '../src/renderer/components/VoiceInput/index.js';
 import {
   createKgDataSource,
   createNoteDataSource,
@@ -48,6 +37,7 @@ import {
   type CopilotTodo,
 } from '../src/renderer/lib/copilot-api.js';
 import { AskWorkspace } from '../src/renderer/workspaces/AskWorkspace.js';
+import { WorkspaceState } from '../src/renderer/workspaces/WorkspaceState.js';
 import { ScheduleWorkspace } from '../src/renderer/workspaces/ScheduleWorkspace.js';
 
 const NOTE_RECORD: NoteRecord = {
@@ -79,6 +69,42 @@ const TODO_RECORD: TodoRecord = {
   updated_at: 2,
 };
 
+const MISSING_WIKI_RECEIPT: WikiTruthReceipt = {
+  notePath: NOTE_RECORD.path,
+  expectedContentDigest: null,
+  truth: 'missing',
+  projection: null,
+  current: null,
+  latest: null,
+  stale: [],
+  failed: [],
+  provenance: null,
+};
+
+function localSavedMissingBuild(): NoteCommitBuildReceipt {
+  return {
+    note: NOTE_RECORD,
+    localState: 'LOCAL_SAVED',
+    build: {
+      state: 'BUILD_FAILED',
+      kg: {
+        state: 'failed',
+        entitiesAdded: 0,
+        entitiesLinked: 0,
+        reason: 'KG_BUILD_NOT_COMPLETED',
+      },
+      wiki: MISSING_WIKI_RECEIPT,
+      rag: {
+        state: 'failed',
+        chunksInserted: 0,
+        reason: 'RAG_INDEX_NOT_COMPLETED',
+      },
+      failureStage: 'wiki',
+      failureReason: 'WIKI_MISSING',
+    },
+  };
+}
+
 function makeBridge(): CopilotDomainBridge {
   let streamListener: ((event: RagStreamEvent) => void) | null = null;
   return {
@@ -86,9 +112,14 @@ function makeBridge(): CopilotDomainBridge {
       list: vi.fn(async () => ({ items: [NOTE_RECORD], total: 1, limit: 100, offset: 0 })),
       get: vi.fn(async () => ({ note: NOTE_RECORD, body: '# body' })),
       create: vi.fn(async () => NOTE_RECORD),
+      createWithBuild: vi.fn(async () => localSavedMissingBuild()),
       update: vi.fn(async () => NOTE_RECORD),
+      updateWithBuild: vi.fn(async () => localSavedMissingBuild()),
       remove: vi.fn(async () => true),
       getBacklinks: vi.fn(async () => [{ fromPath: 'notes/from.md', toPath: NOTE_RECORD.path, relation: 'ref' }]),
+    },
+    wiki: {
+      getForNote: vi.fn(async () => MISSING_WIKI_RECEIPT),
     },
     kg: {
       getSubgraph: vi.fn(async () => ({ nodes: [], edges: [], degree: {} })),
@@ -122,7 +153,15 @@ function resolvedApi(bridge = makeBridge()): CopilotProductApi {
   return result.api!;
 }
 
-function makeProductApi(overrides: Partial<CopilotProductApi> = {}): CopilotProductApi {
+type CopilotProductApiOverrides = {
+  notes?: Partial<CopilotProductApi['notes']>;
+  kg?: Partial<CopilotProductApi['kg']>;
+  rag?: Partial<CopilotProductApi['rag']>;
+  todos?: Partial<CopilotProductApi['todos']>;
+  trash?: NonNullable<CopilotProductApi['trash']>;
+};
+
+function makeProductApi(overrides: CopilotProductApiOverrides = {}): CopilotProductApi {
   const base = resolvedApi();
   return {
     ...base,
@@ -173,501 +212,46 @@ describe('MarkdownRenderer critical behavior', () => {
   });
 });
 
-function response(
-  body: unknown,
-  options: { ok?: boolean; status?: number; text?: () => Promise<string>; json?: () => Promise<unknown> } = {},
-) {
-  return {
-    ok: options.ok ?? true,
-    status: options.status ?? 200,
-    text: options.text ?? (async () => JSON.stringify(body)),
-    json: options.json ?? (async () => body),
-  };
-}
-
-describe('CloudAsrProvider critical behavior', () => {
-  it('uses the default fetch, trims a trailing slash, passes language and signal, and reports health', async () => {
-    const fetchMock = vi.fn(async (url: string, init?: { method?: string; body?: FormData; signal?: AbortSignal }) => {
-      if (url.endsWith('/health')) return response(null, { status: 204 });
-      expect(url).toBe('https://asr.test/api/asr/transcribe');
-      expect(init?.method).toBe('POST');
-      expect(init?.body?.get('language')).toBe('en-US');
-      expect(init?.signal).not.toBe(controller.signal);
-      expect(init?.signal?.aborted).toBe(false);
-      return response({ text: '  transcript  ', confidence: 0.8, durationMs: 12 });
-    });
-    const controller = new AbortController();
-    const provider = new CloudAsrProvider({
-      serverBaseUrl: 'https://asr.test/',
-      fetchImpl: fetchMock as unknown as CloudAsrFetchLike,
-    });
-    await expect(provider.transcribe(new Blob(['audio']), { language: 'en-US', signal: controller.signal }))
-      .resolves.toMatchObject({ text: 'transcript', confidence: 0.8, durationMs: 12 });
-    await expect(provider.health()).resolves.toEqual({ ok: true, status: 204 });
-  });
-
-  it('combines caller cancellation and timeout into the actual fetch signal', async () => {
-    const requestSignals: AbortSignal[] = [];
-    const hangingFetch = vi.fn(
-      async (_url: string, init?: { signal?: AbortSignal }) =>
-        new Promise<ReturnType<typeof response>>((_resolve, reject) => {
-          if (init?.signal) requestSignals.push(init.signal);
-          init?.signal?.addEventListener('abort', () =>
-            reject(new DOMException('aborted', 'AbortError')),
-          );
-        }),
-    ) as unknown as CloudAsrFetchLike;
-
-    const caller = new AbortController();
-    const callerProvider = new CloudAsrProvider({
-      fetchImpl: hangingFetch,
-      timeoutMs: 1_000,
-    });
-    const callerPending = callerProvider.transcribe(new Blob(['x']), {
-      signal: caller.signal,
-    });
-    caller.abort();
-    await expect(callerPending).rejects.toMatchObject({ code: 'aborted' });
-    expect(requestSignals[0]).not.toBe(caller.signal);
-    expect(requestSignals[0]?.aborted).toBe(true);
-
-    const timeoutProvider = new CloudAsrProvider({
-      fetchImpl: hangingFetch,
-      timeoutMs: 5,
-    });
-    await expect(timeoutProvider.transcribe(new Blob(['x']))).rejects.toMatchObject({
-      code: 'timeout',
-    });
-    expect(requestSignals[1]?.aborted).toBe(true);
-  });
-
-  it('maps non-Error fetch and JSON failures and HTTP bodies that cannot be read', async () => {
-    const network = new CloudAsrProvider({ fetchImpl: vi.fn(async () => { throw 'down'; }) as unknown as CloudAsrFetchLike });
-    await expect(network.transcribe(new Blob(['x']))).rejects.toMatchObject({ code: 'network', message: 'network error' });
-
-    const badJson = new CloudAsrProvider({
-      fetchImpl: vi.fn(async () => response(null, { json: async () => { throw 'bad'; } })) as unknown as CloudAsrFetchLike,
-    });
-    await expect(badJson.transcribe(new Blob(['x']))).rejects.toMatchObject({ code: 'bad-json', message: 'invalid JSON' });
-
-    const unreadable = new CloudAsrProvider({
-      fetchImpl: vi.fn(async () => response(null, {
-        ok: false,
-        status: 429,
-        text: async () => { throw new Error('unreadable'); },
-      })) as unknown as CloudAsrFetchLike,
-    });
-    await expect(unreadable.transcribe(new Blob(['x']))).rejects.toMatchObject({
-      code: 'http-429',
-      status: 429,
-      message: 'cloud ASR returned 429',
-    });
-  });
-
-  it('covers tolerant response aliases, invalid values, and accuracy boundaries', () => {
-    expect(() => parseCloudResponse(null)).toThrowError(expect.objectContaining({ code: 'bad-shape' }));
-    expect(parseCloudResponse({ transcript: ' t ', score: Number.NaN, provider: 'proxy', duration_ms: 9 }))
-      .toMatchObject({ text: 't', confidence: 1, engine: 'proxy', durationMs: 9 });
-    expect(parseCloudResponse({ result: 42, confidence: 'bad', engine: 7, durationMs: Number.NaN }))
-      .toMatchObject({ text: '', confidence: 1, engine: undefined, durationMs: undefined });
-    const noStatus = makeCloudAsrError('code', 'message');
-    expect(noStatus).not.toHaveProperty('status');
-    expect(characterAccuracy('', 'x')).toBe(0);
-    expect(characterAccuracy('a', 'b')).toBe(0);
-    expect(characterAccuracy('abc', 'ab')).toBeGreaterThan(0);
-  });
-});
-
-interface SpeechHarness {
-  ctor: SpeechRecognitionCtor;
-  instances: SpeechRecognitionLike[];
-  startBehavior?: () => void;
-  abortBehavior?: () => void;
-}
-
-function speechHarness(): SpeechHarness {
-  const harness: SpeechHarness = { ctor: null as unknown as SpeechRecognitionCtor, instances: [] };
-  harness.ctor = function () {
-    const instance: SpeechRecognitionLike = {
-      lang: '',
-      continuous: true,
-      interimResults: false,
-      onresult: null,
-      onerror: null,
-      onend: null,
-      start: () => harness.startBehavior?.(),
-      stop: vi.fn(),
-      abort: () => harness.abortBehavior?.(),
-    };
-    harness.instances.push(instance);
-    return instance;
-  } as unknown as SpeechRecognitionCtor;
-  return harness;
-}
-
-function speechEvent(results: Array<unknown>): SpeechRecognitionResultEvent {
-  return { results } as unknown as SpeechRecognitionResultEvent;
-}
-
-describe('WebSpeechProvider critical behavior', () => {
-  afterEach(() => {
-    delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
-    delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-  });
-
-  it('detects standard and webkit constructors and applies defaults', async () => {
-    const harness = speechHarness();
-    (window as unknown as { webkitSpeechRecognition: SpeechRecognitionCtor }).webkitSpeechRecognition = harness.ctor;
-    harness.startBehavior = () => queueMicrotask(() => harness.instances[0]?.onend?.());
-    const provider = new WebSpeechProvider();
-    await expect(provider.transcribe()).resolves.toEqual({ text: '', confidence: -1 });
-    expect(harness.instances[0]).toMatchObject({ lang: 'zh-CN', continuous: false, interimResults: false });
-
-    const standard = speechHarness();
-    (window as unknown as { SpeechRecognition: SpeechRecognitionCtor }).SpeechRecognition = standard.ctor;
-    expect(new WebSpeechProvider().isAvailable()).toBe(true);
-  });
-
-  it('skips empty result slots, reports interim text, and defaults missing confidence', async () => {
-    const harness = speechHarness();
-    const partial = vi.fn();
-    harness.startBehavior = () => queueMicrotask(() => {
-      harness.instances[0]?.onresult?.(speechEvent([
-        undefined,
-        { isFinal: false, 0: undefined },
-        { isFinal: false, 0: { transcript: 'part', confidence: 0 } },
-        { isFinal: true, 0: { transcript: ' final ', confidence: undefined } },
-      ]));
-    });
-    await expect(new WebSpeechProvider(harness.ctor).transcribe({ interim: true, onPartial: partial }))
-      .resolves.toEqual({ text: 'final', confidence: -1 });
-    expect(partial).toHaveBeenCalledWith('part');
-  });
-
-  it('maps missing error values, non-Error start failures, and ignores later events', async () => {
-    const errorHarness = speechHarness();
-    errorHarness.startBehavior = () => queueMicrotask(() => errorHarness.instances[0]?.onerror?.({}));
-    await expect(new WebSpeechProvider(errorHarness.ctor).transcribe()).rejects.toMatchObject({ code: 'error', message: 'error' });
-
-    const startHarness = speechHarness();
-    startHarness.startBehavior = () => { throw 'blocked'; };
-    await expect(new WebSpeechProvider(startHarness.ctor).transcribe()).rejects.toMatchObject({ code: 'start-failed', message: 'start failed' });
-
-    const settledHarness = speechHarness();
-    settledHarness.startBehavior = () => queueMicrotask(() => {
-      settledHarness.instances[0]?.onend?.();
-      settledHarness.instances[0]?.onerror?.({ error: 'late' });
-    });
-    await expect(new WebSpeechProvider(settledHarness.ctor).transcribe()).resolves.toEqual({ text: '', confidence: -1 });
-  });
-
-  it('removes abort listeners, handles throwing abort, and keeps abort idempotent', async () => {
-    const harness = speechHarness();
-    harness.abortBehavior = () => { throw new Error('engine abort failed'); };
-    const controller = new AbortController();
-    const remove = vi.spyOn(controller.signal, 'removeEventListener');
-    const provider = new WebSpeechProvider(harness.ctor);
-    const pending = provider.transcribe({ signal: controller.signal });
-    controller.abort();
-    await expect(pending).rejects.toMatchObject({ code: 'aborted' });
-    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
-    expect(() => provider.abort()).not.toThrow();
-    expect(() => new WebSpeechProvider(harness.ctor).abort()).not.toThrow();
-  });
-
-  it('short-circuits repeated settlement and contains abort failures', async () => {
-    const harness = speechHarness();
-    let capturedEnd: (() => void) | null = null;
-    harness.startBehavior = () => {
-      capturedEnd = harness.instances[0]?.onend ?? null;
-      queueMicrotask(() => {
-        capturedEnd?.();
-        capturedEnd?.();
+describe('local ASR critical renderer boundary', () => {
+  it('fails closed before microphone access when the local bridge is absent', async () => {
+    const getUserMedia = vi.fn();
+    const hook = renderHook(() => useLocalAsrCapture({
+      bridge: null,
+      getUserMedia,
+      mediaRecorder: null,
+    }));
+    await act(async () => {
+      await expect(hook.result.current.start()).rejects.toMatchObject({
+        code: 'NOT_READY',
       });
-    };
-    const provider = new WebSpeechProvider(harness.ctor);
-    await expect(provider.transcribe()).resolves.toEqual({ text: '', confidence: -1 });
-
-    const abortHarness = speechHarness();
-    const aborting = new WebSpeechProvider(abortHarness.ctor);
-    const pending = aborting.transcribe();
-    abortHarness.instances[0]!.abort = () => { throw new Error('late abort failure'); };
-    expect(() => aborting.abort()).not.toThrow();
-    abortHarness.instances[0]!.onend?.();
-    await expect(pending).rejects.toMatchObject({ code: 'aborted' });
-  });
-});
-
-class RecorderWithChunk {
-  static isTypeSupported = vi.fn(() => false);
-  state: RecordingState = 'inactive';
-  mimeType = '';
-  ondataavailable: ((event: BlobEvent) => void) | null = null;
-  onstop: (() => void) | null = null;
-  constructor(_stream: MediaStream, options?: MediaRecorderOptions) {
-    this.mimeType = options?.mimeType ?? '';
-  }
-  start(): void {
-    this.state = 'recording';
-    queueMicrotask(() => this.ondataavailable?.({ data: new Blob(['voice']) } as BlobEvent));
-  }
-  stop(): void {
-    this.state = 'inactive';
-    queueMicrotask(() => this.onstop?.());
-  }
-}
-
-function mediaStream(stop = vi.fn()): MediaStream {
-  return { getTracks: () => [{ stop }] } as unknown as MediaStream;
-}
-
-function finalSpeechCtor(text: string, confidence?: number): SpeechRecognitionCtor {
-  const harness = speechHarness();
-  harness.startBehavior = () => queueMicrotask(() => {
-    const instance = harness.instances.at(-1);
-    instance?.onresult?.(speechEvent([{ isFinal: true, 0: { transcript: text, confidence } }]));
-  });
-  const ctor = function () {
-    const instance = new harness.ctor();
-    instance.processLocally = false;
-    return instance;
-  } as unknown as SpeechRecognitionCtor;
-  ctor.available = vi.fn(async () => 'available' as const);
-  return ctor;
-}
-
-function guardedStrictLocalCtor() {
-  const available = vi.fn(async () => 'available' as const);
-  const install = vi.fn(async () => true);
-  const start = vi.fn();
-  const ctor = function () {
-    return {
-      lang: '',
-      continuous: false,
-      interimResults: false,
-      processLocally: false,
-      onresult: null,
-      onerror: null,
-      onend: null,
-      start,
-      stop: vi.fn(),
-      abort: vi.fn(),
-    } satisfies SpeechRecognitionLike;
-  } as unknown as SpeechRecognitionCtor;
-  ctor.available = available;
-  ctor.install = install;
-  return { ctor, available, install, start };
-}
-
-describe('useTranscriber critical behavior', () => {
-  it('covers pure primary, secondary, and native path outcomes', async () => {
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.5, speechRecognitionCtor: null }))
-      .resolves.toMatchObject({ provider: 'web-speech', errorCode: 'not-supported' });
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.99, speechRecognitionCtor: finalSpeechCtor('low', 0.2) }))
-      .resolves.toMatchObject({ text: '', confidence: 0.2, errorCode: 'below-threshold' });
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.99, speechRecognitionCtor: finalSpeechCtor('unknown', undefined) }))
-      .resolves.toMatchObject({ text: 'unknown', confidence: -1, errorCode: null });
-
-    await expect(cloudAsrSecondary({ lang: 'zh-CN', minWebSpeechConfidence: 0.5, audioBlob: null }))
-      .resolves.toMatchObject({ provider: 'cloud', errorCode: 'no-audio' });
-    await expect(cloudAsrSecondary({
-      lang: 'zh-CN',
-      minWebSpeechConfidence: 0.9,
-      audioBlob: new Blob(['x']),
-      cloudFetchImpl: vi.fn(async () => response({ text: 'low', confidence: 0.2 })) as unknown as CloudAsrFetchLike,
-    })).resolves.toMatchObject({ text: '', errorCode: 'below-threshold' });
-    await expect(nativeFallback({ lang: 'zh-CN', minWebSpeechConfidence: 0.5 }))
-      .resolves.toMatchObject({ provider: 'native', errorCode: 'no-fallback-available' });
-  });
-
-  it('preserves the non-Electron Chrome 139 local result path, recorder construction, and reset', async () => {
-    const stopTrack = vi.fn();
-    const { result } = renderHook(() => useTranscriber({
-      speechRecognitionCtor: finalSpeechCtor('local answer', 0.95),
-      localAsrRuntimeContext: {
-        trustedMeta: null,
-        userAgent: 'Mozilla/5.0 AppleWebKit/537.36 Chrome/139.0.0.0 Safari/537.36',
-      },
-      mediaRecorderCtor: RecorderWithChunk as unknown as typeof MediaRecorder,
-      getUserMediaImpl: async () => mediaStream(stopTrack),
-      disableCloud: true,
-    }));
-    await act(() => result.current.start());
-    expect(result.current.status).toBe('recording');
-    const answer = await act(() => result.current.stop());
-    expect(answer).toMatchObject({ text: 'local answer', provider: 'web-speech', usedFallback: false });
-    expect(stopTrack).toHaveBeenCalled();
-    act(() => result.current.reset());
-    expect(result.current).toMatchObject({ status: 'idle', result: null });
-  });
-
-  it('fails closed and remains resettable for trusted Electron without the local ASR binder', async () => {
-    const speech = guardedStrictLocalCtor();
-    const getUserMediaImpl = vi.fn(async () => mediaStream());
-    const { result } = renderHook(() => useTranscriber({
-      speechRecognitionCtor: speech.ctor,
-      mediaRecorderCtor: null,
-      getUserMediaImpl,
-      localAsrRuntimeContext: {
-        trustedMeta: {
-          source: 'electron-preload-process-versions',
-          shell: 'electron',
-          electronVersion: '38.8.6',
-          chromiumVersion: '140.0.7339.249',
-          localAsrCapabilities: [],
-        },
-        userAgent: 'Mozilla/5.0 Chrome/140.0.7339.249 Electron/38.8.6 Safari/537.36',
-      },
-      disableCloud: true,
-    }));
-    await act(() => result.current.start());
-    expect(result.current.result).toMatchObject({
-      provider: 'web-speech',
-      usedFallback: false,
-      errorCode: LOCAL_ASR_RUNTIME_UNAVAILABLE,
     });
-    expect(result.current.status).toBe('error');
-    expect(speech.available).not.toHaveBeenCalled();
-    expect(speech.install).not.toHaveBeenCalled();
-    expect(speech.start).not.toHaveBeenCalled();
-    expect(getUserMediaImpl).not.toHaveBeenCalled();
-
-    act(() => result.current.reset());
-    expect(result.current.status).toBe('idle');
-    expect(result.current.result).toBeNull();
-  });
-
-  it('stops a stream acquired after cancellation', async () => {
-    const acquired = deferred<MediaStream>();
-    const stopTrack = vi.fn();
-    const first = renderHook(() => useTranscriber({
-      speechRecognitionCtor: null,
-      mediaRecorderCtor: null,
-      getUserMediaImpl: () => acquired.promise,
-      strictLocal: false,
-    }));
-    const { result } = first;
-    let startPromise!: Promise<void>;
-    act(() => { startPromise = result.current.start(); });
-    act(() => result.current.cancel());
-    await act(async () => {
-      acquired.resolve(mediaStream(stopTrack));
-      await startPromise;
+    expect(hook.result.current).toMatchObject({
+      phase: 'error',
+      errorCode: 'NOT_READY',
+      coreTruth: { state: 'NOT_READY', active: false },
     });
-    expect(stopTrack).toHaveBeenCalled();
-
-    first.unmount();
-    (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    expect(getUserMedia).not.toHaveBeenCalled();
   });
 
-  it('maps exceptional primary constructors and cloud payload failures', async () => {
-    const codedCtor = function () { throw { code: 'ctor-code' }; } as unknown as SpeechRecognitionCtor;
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.5, speechRecognitionCtor: codedCtor }))
-      .resolves.toMatchObject({ errorCode: 'ctor-code' });
-    const plainCtor = function () { throw 'engine down'; } as unknown as SpeechRecognitionCtor;
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.5, speechRecognitionCtor: plainCtor }))
-      .resolves.toMatchObject({ errorCode: 'engine-error' });
-    const webError = speechHarness();
-    webError.startBehavior = () => queueMicrotask(() => webError.instances[0]?.onerror?.({ error: 'no-speech' }));
-    await expect(webSpeechPrimary({ lang: 'zh-CN', minWebSpeechConfidence: 0.5, speechRecognitionCtor: webError.ctor }))
-      .resolves.toMatchObject({ errorCode: 'no-speech' });
-    await expect(cloudAsrSecondary({
-      lang: 'zh-CN', minWebSpeechConfidence: 0.5,
-      audioBlob: { size: 1 } as Blob,
-      cloudFetchImpl: vi.fn() as unknown as CloudAsrFetchLike,
-    })).resolves.toMatchObject({ errorCode: 'unknown' });
+  it('rejects invalid audio without creating a decode request', async () => {
+    await expect(buildLocalAsrDecodeRequest({
+      size: 0,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    } as Blob)).rejects.toEqual(expect.objectContaining({
+      code: 'INVALID_AUDIO',
+    }));
   });
 
-  it('covers default media discovery, non-Error denial, stop-before-start, and mounted teardown', async () => {
-    (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    await act(async () => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    });
-    const originalMediaDevices = navigator.mediaDevices;
-    const originalRecorder = window.MediaRecorder;
-    const getUserMedia = vi.fn(async () => mediaStream());
-    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
-    Object.defineProperty(window, 'MediaRecorder', { configurable: true, writable: true, value: undefined });
-    const defaults = renderHook(() => useTranscriber({ speechRecognitionCtor: null, disableCloud: true, strictLocal: false }));
-    await act(() => defaults.result.current.start());
-    expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
-    defaults.unmount();
-
-    const denied = renderHook(() => useTranscriber({
-      getUserMediaImpl: async () => { throw 'denied'; },
-      speechRecognitionCtor: null,
-      mediaRecorderCtor: null,
-      strictLocal: false,
-    }));
-    await act(() => denied.result.current.start());
-    expect(denied.result.current.result?.errorCode).toBe('mic-denied');
-
-    const immediate = renderHook(() => useTranscriber({
-      getUserMediaImpl: async () => mediaStream(),
-      speechRecognitionCtor: null,
-      mediaRecorderCtor: null,
-      disableCloud: true,
-      strictLocal: false,
-    }));
-    let stopped;
-    await act(async () => { stopped = await immediate.result.current.stop(); });
-    expect(stopped).toMatchObject({ durationMs: 0, provider: null, errorCode: 'no-active-session' });
-
-    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: originalMediaDevices });
-    Object.defineProperty(window, 'MediaRecorder', { configurable: true, writable: true, value: originalRecorder });
-  });
-
-  it('contains cleanup failures and uses the webkit audio monitor fallback', async () => {
-    const originalAudioContext = window.AudioContext;
-    const originalWebkit = (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    class ThrowingAudioContext {
-      createAnalyser() {
-        return {
-          fftSize: 4,
-          getByteTimeDomainData: (buffer: Uint8Array) => buffer.fill(128),
-          disconnect: () => { throw new Error('disconnect failed'); },
-        };
-      }
-      createMediaStreamSource() { return { connect: vi.fn() }; }
-      close() { return Promise.resolve(); }
-    }
-    class ThrowingStopRecorder {
-      static isTypeSupported = () => false;
-      state: RecordingState = 'inactive';
-      mimeType = '';
-      ondataavailable: ((event: BlobEvent) => void) | null = null;
-      onstop: (() => void) | null = null;
-      start() { this.state = 'recording'; }
-      stop() { throw new Error('stop failed'); }
-    }
-    Object.defineProperty(window, 'AudioContext', { configurable: true, writable: true, value: undefined });
-    Object.defineProperty(window, 'webkitAudioContext', { configurable: true, writable: true, value: ThrowingAudioContext });
-    const hook = renderHook(() => useTranscriber({
-      speechRecognitionCtor: null,
-      mediaRecorderCtor: ThrowingStopRecorder as unknown as typeof MediaRecorder,
-      getUserMediaImpl: async () => mediaStream(),
-      strictLocal: false,
-    }));
-    await act(() => hook.result.current.start());
-    act(() => hook.result.current.cancel());
-    expect(hook.result.current.status).toBe('idle');
-    Object.defineProperty(window, 'AudioContext', { configurable: true, writable: true, value: originalAudioContext });
-    Object.defineProperty(window, 'webkitAudioContext', { configurable: true, writable: true, value: originalWebkit });
-  });
-
-  it('uses mic-denied when an Error has no name', async () => {
-    const hook = renderHook(() => useTranscriber({
-      speechRecognitionCtor: null,
-      mediaRecorderCtor: null,
-      getUserMediaImpl: async () => {
-        const error = new Error('denied');
-        error.name = '';
-        throw error;
-      },
-      strictLocal: false,
-    }));
-    await act(() => hook.result.current.start());
-    expect(hook.result.current.result?.errorCode).toBe('mic-denied');
+  it('renders one neutral local truth surface and no transcript preview', () => {
+    render(<VoiceInput />);
+    expect(screen.getByTestId('voice-input-root')).toHaveAttribute(
+      'data-truth-tone',
+      'neutral',
+    );
+    expect(screen.getByTestId('voice-banner')).toHaveTextContent(
+      'LOCAL ASR · NOT_READY',
+    );
+    expect(screen.queryByTestId('voice-transcript')).not.toBeInTheDocument();
   });
 });
 
@@ -721,6 +305,263 @@ describe('copilot product bridge adapters', () => {
     await expect(api.todos.markReminderFired('todo-1')).resolves.toMatchObject({ id: 'todo-1' });
     vi.mocked(bridge.todos.markReminderFired).mockResolvedValueOnce(null);
     await expect(api.todos.markReminderFired('missing')).resolves.toBeNull();
+  });
+
+  it('allowlists raw local/build truth without coercion or unknown-field passthrough', async () => {
+    const bridge = makeBridge();
+    const api = resolvedApi(bridge);
+    const revision = `note:20:${'a'.repeat(64)}`;
+
+    vi.mocked(bridge.notes.create).mockResolvedValueOnce({
+      ...NOTE_RECORD,
+      localState: 'LOCAL_SAVED',
+      knowledgeBuild: {
+        state: 'queued',
+        revision,
+        privateDetail: 'must-not-pass',
+      },
+      privateTopLevel: 'must-not-pass',
+    } as unknown as NoteRecord);
+    const queued = await api.notes.create({
+      path: NOTE_RECORD.path,
+      title: NOTE_RECORD.title,
+      body: 'queued body',
+    });
+    expect(queued).toMatchObject({
+      localState: 'LOCAL_SAVED',
+      knowledgeBuild: { state: 'queued', revision },
+    });
+    expect(queued).not.toHaveProperty('privateTopLevel');
+    expect(queued.knowledgeBuild).toEqual({ state: 'queued', revision });
+
+    vi.mocked(bridge.notes.update).mockResolvedValueOnce({
+      ...NOTE_RECORD,
+      localState: 'LOCAL_SAVED',
+      knowledgeBuild: { state: 'failed', revision },
+    });
+    await expect(api.notes.update(NOTE_RECORD.path, { body: 'failed body' }))
+      .resolves.toMatchObject({
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: { state: 'failed', revision },
+      });
+
+    vi.mocked(bridge.notes.update).mockResolvedValueOnce({
+      ...NOTE_RECORD,
+      localState: 'LOCAL_SAVED',
+      knowledgeBuild: { state: 'not-ready', revision: null },
+    });
+    await expect(api.notes.update(NOTE_RECORD.path, { body: 'not ready body' }))
+      .resolves.toMatchObject({
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: { state: 'not-ready', revision: null },
+      });
+
+    const invalidReceipts = [
+      {
+        ...NOTE_RECORD,
+        localState: 'SAVED',
+        knowledgeBuild: { state: 'ready', revision },
+      },
+      {
+        ...NOTE_RECORD,
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: { state: 'current', revision },
+      },
+      {
+        ...NOTE_RECORD,
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: { state: 'ready', revision: `note:20:${'A'.repeat(64)}` },
+      },
+      {
+        ...NOTE_RECORD,
+        localState: 'LOCAL_SAVED',
+      },
+    ] as unknown as NoteRecord[];
+    for (const invalid of invalidReceipts) {
+      vi.mocked(bridge.notes.create).mockResolvedValueOnce(invalid);
+      const mapped = await api.notes.create({
+        path: NOTE_RECORD.path,
+        title: NOTE_RECORD.title,
+        body: 'invalid receipt',
+      });
+      expect(mapped).not.toHaveProperty('localState');
+      expect(mapped).not.toHaveProperty('knowledgeBuild');
+    }
+  });
+
+  it('maps createWithBuild/updateWithBuild: missing null, update without body, and WIKI truth safe fields', async () => {
+    const CURRENT_PROJECTION = {
+      projectionId: 'p-current',
+      notePath: NOTE_RECORD.path,
+      status: 'current' as const,
+      contentDigest: 'a'.repeat(64),
+      summary: 'current summary',
+      tags: ['local'],
+      entityIds: ['concept:alpha'],
+      relationSignatures: ['concept:alpha|related_to|concept:beta'],
+      generatedAt: 1_753_000_000_000,
+      failureStage: null,
+      failureReason: null,
+      provenance: { provider: 'minimax', model: 'MiniMax-M3', generatedAt: 1_753_000_000_000 },
+    };
+    const STALE_PROJECTION = {
+      ...CURRENT_PROJECTION,
+      projectionId: 'p-stale',
+      status: 'stale' as const,
+      contentDigest: 'b'.repeat(64),
+    };
+    const FAILED_PROJECTION = {
+      ...CURRENT_PROJECTION,
+      projectionId: 'p-failed',
+      status: 'failed' as const,
+      contentDigest: 'c'.repeat(64),
+      summary: null,
+      tags: [],
+      entityIds: [],
+      relationSignatures: [],
+      failureStage: 'provider' as const,
+      failureReason: 'WIKI_PROVIDER_DOWN',
+      provenance: null,
+    };
+    const makeReceipt = (wikiTruth: 'current' | 'stale' | 'failed' | 'missing'): NoteCommitBuildReceipt => ({
+      note: NOTE_RECORD,
+      localState: 'LOCAL_SAVED',
+      build: {
+        state: wikiTruth === 'current' ? 'BUILT' : 'BUILD_FAILED',
+        kg: { state: 'ready', entitiesAdded: 1, entitiesLinked: 1, reason: null },
+        rag: { state: 'ready', chunksInserted: 1, reason: null },
+        wiki: wikiTruth === 'current'
+          ? { notePath: NOTE_RECORD.path, expectedContentDigest: 'a'.repeat(64), truth: 'current',
+              projection: CURRENT_PROJECTION, current: CURRENT_PROJECTION, latest: CURRENT_PROJECTION,
+              stale: [], failed: [], provenance: CURRENT_PROJECTION.provenance }
+          : wikiTruth === 'stale'
+          ? { notePath: NOTE_RECORD.path, expectedContentDigest: 'a'.repeat(64), truth: 'stale',
+              projection: STALE_PROJECTION, current: null, latest: STALE_PROJECTION,
+              stale: [STALE_PROJECTION], failed: [],
+              provenance: { provider: 'minimax', model: 'MiniMax-M3', generatedAt: 1_753_000_000_000 } }
+          : wikiTruth === 'failed'
+          ? { notePath: NOTE_RECORD.path, expectedContentDigest: 'a'.repeat(64), truth: 'failed',
+              projection: FAILED_PROJECTION, current: null, latest: null,
+              stale: [], failed: [FAILED_PROJECTION], provenance: null }
+          : MISSING_WIKI_RECEIPT,
+        failureStage: wikiTruth === 'current' ? null : 'wiki',
+        failureReason: wikiTruth === 'current' ? null
+          : wikiTruth === 'stale' ? 'WIKI_STALE'
+          : wikiTruth === 'failed' ? 'WIKI_PROVIDER_DOWN'
+          : 'WIKI_MISSING',
+      },
+    });
+
+    const bridge = makeBridge();
+    vi.mocked(bridge.notes.createWithBuild).mockResolvedValue({
+      ...makeReceipt('current'),
+      note: {
+        ...NOTE_RECORD,
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: {
+          state: 'ready',
+          revision: `note:20:${'a'.repeat(64)}`,
+        },
+      },
+    });
+    const api = resolvedApi(bridge);
+    const legacyCreate = await api.notes.createWithBuild!({
+      path: NOTE_RECORD.path,
+      title: 'One',
+      body: 'brand new',
+    });
+    expect(legacyCreate).toMatchObject({
+      note: { path: NOTE_RECORD.path, body: 'brand new' },
+      localState: 'LOCAL_SAVED',
+      build: { state: 'BUILT', wiki: { truth: 'current',
+        current: { contentDigest: 'a'.repeat(64) },
+        latest: { contentDigest: 'a'.repeat(64) },
+        stale: [], failed: [],
+        provenance: { provider: 'minimax', model: 'MiniMax-M3' } } },
+    });
+    expect(legacyCreate.note).not.toHaveProperty('localState');
+    expect(legacyCreate.note).not.toHaveProperty('knowledgeBuild');
+    expect(bridge.notes.createWithBuild).toHaveBeenCalledWith(expect.objectContaining({
+      path: NOTE_RECORD.path, title: 'One', body: 'brand new',
+    }));
+
+    // updateWithBuild with body: forwarded, no extra get needed.
+    vi.mocked(bridge.notes.updateWithBuild).mockResolvedValueOnce(makeReceipt('current'));
+    const withBody = await api.notes.updateWithBuild!(NOTE_RECORD.path, { title: 'Renamed', body: 'replaced' });
+    expect(withBody).not.toBeNull();
+    expect(withBody!.note.body).toBe('replaced');
+    expect(withBody!.note.title).toBe(NOTE_RECORD.title);
+    expect(withBody!.build.state).toBe('BUILT');
+    expect(bridge.notes.updateWithBuild).toHaveBeenLastCalledWith({ path: NOTE_RECORD.path, patch: {
+      title: 'Renamed', body: 'replaced', type: undefined, status: undefined, tags: undefined,
+    } });
+    expect(bridge.notes.get).not.toHaveBeenCalled();
+
+    // updateWithBuild without body: the product API must fetch the current body
+    // from bridge.notes.get and surface it on the returned note.
+    vi.mocked(bridge.notes.get).mockResolvedValueOnce({
+      note: { ...NOTE_RECORD, updatedAt: 30 },
+      body: 'fetched current body',
+    });
+    vi.mocked(bridge.notes.updateWithBuild).mockResolvedValueOnce(makeReceipt('current'));
+    // The mock returns NOTE_RECORD unchanged; the title is the record's title.
+    const updated = await api.notes.updateWithBuild!(NOTE_RECORD.path, { title: 'No body change' });
+    expect(updated).not.toBeNull();
+    expect(updated!.note.body).toBe('fetched current body');
+    expect(updated!.note.title).toBe(NOTE_RECORD.title);
+    expect(bridge.notes.updateWithBuild).toHaveBeenLastCalledWith({ path: NOTE_RECORD.path, patch: {
+      title: 'No body change', body: undefined, type: undefined, status: undefined, tags: undefined,
+    } });
+    expect(bridge.notes.get).toHaveBeenCalledWith(NOTE_RECORD.path);
+
+    // updateWithBuild returning null: product API must return null and not call get.
+    vi.mocked(bridge.notes.get).mockClear();
+    vi.mocked(bridge.notes.updateWithBuild).mockResolvedValueOnce(null);
+    await expect(api.notes.updateWithBuild!(NOTE_RECORD.path, { title: 'x' })).resolves.toBeNull();
+    expect(bridge.notes.get).not.toHaveBeenCalled();
+
+    // current / stale / failed / missing safe-field behavior is preserved through
+    // the product mapping (renderer must display, not derive, the truth).
+    for (const truth of ['current', 'stale', 'failed', 'missing'] as const) {
+      vi.mocked(bridge.notes.updateWithBuild).mockReset();
+      vi.mocked(bridge.notes.updateWithBuild).mockResolvedValueOnce(makeReceipt(truth));
+      const receipt = await api.notes.updateWithBuild!(NOTE_RECORD.path, { body: 'x' });
+      expect(receipt).toMatchObject({ build: { wiki: { truth } } });
+      if (truth === 'current') {
+        expect(receipt!.build.wiki).toMatchObject({
+          expectedContentDigest: 'a'.repeat(64),
+          projection: { contentDigest: 'a'.repeat(64) },
+          current: { contentDigest: 'a'.repeat(64) },
+          latest: { contentDigest: 'a'.repeat(64) },
+          stale: [], failed: [],
+          provenance: { provider: 'minimax', model: 'MiniMax-M3' },
+        });
+      } else if (truth === 'stale') {
+        expect(receipt!.build.wiki).toMatchObject({
+          expectedContentDigest: 'a'.repeat(64),
+          projection: { contentDigest: 'b'.repeat(64), status: 'stale' },
+          current: null,
+          latest: { contentDigest: 'b'.repeat(64) },
+          stale: [expect.objectContaining({ contentDigest: 'b'.repeat(64) })],
+          failed: [],
+          provenance: { provider: 'minimax', model: 'MiniMax-M3' },
+        });
+      } else if (truth === 'failed') {
+        expect(receipt!.build.wiki).toMatchObject({
+          expectedContentDigest: 'a'.repeat(64),
+          projection: { contentDigest: 'c'.repeat(64), status: 'failed',
+            summary: null, tags: [], entityIds: [], relationSignatures: [],
+            failureStage: 'provider', failureReason: 'WIKI_PROVIDER_DOWN', provenance: null },
+          current: null, latest: null, stale: [],
+          failed: [expect.objectContaining({ contentDigest: 'c'.repeat(64),
+            summary: null, tags: [], entityIds: [], relationSignatures: [],
+            failureStage: 'provider', failureReason: 'WIKI_PROVIDER_DOWN', provenance: null })],
+          provenance: null,
+        });
+      } else {
+        expect(receipt!.build.wiki).toEqual(MISSING_WIKI_RECEIPT);
+      }
+    }
   });
 
   it('normalizes notes, data sources, graph source, and todo field aliases', async () => {
@@ -866,10 +707,11 @@ describe('copilot product bridge adapters', () => {
 });
 
 describe('AskWorkspace critical interaction', () => {
-  it('uses non-stream ask, renders source fallbacks, opens a source, and blocks blank queries', async () => {
+  it('keeps path-only sources unknown, never synthesizes evidence, and blocks navigation', async () => {
     const ask = vi.fn(async (): Promise<CopilotRagAnswer> => ({ text: 'Local answer', sources: ['notes/source.md'] }));
+    const get = vi.fn();
     const onOpenSource = vi.fn();
-    const api = makeProductApi({ rag: { ask, stream: undefined } });
+    const api = makeProductApi({ notes: { get }, rag: { ask, stream: undefined } });
     render(<AskWorkspace api={api} onOpenSource={onOpenSource} />);
     const input = screen.getByLabelText('问题');
     const submit = screen.getByRole('button', { name: '提问' });
@@ -881,47 +723,192 @@ describe('AskWorkspace critical interaction', () => {
     fireEvent.click(submit);
     expect(await screen.findByTestId('rag-answer')).toHaveTextContent('Local answer');
     expect(ask).toHaveBeenCalledWith('What?');
+    expect(screen.getAllByText(/SOURCE_DETAILS_ABSENT/).length).toBeGreaterThan(0);
+    expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
+    expect(screen.queryByText(/向量相似度/)).not.toBeInTheDocument();
+    expect(get).not.toHaveBeenCalled();
     const source = screen.getByRole('button', { name: 'notes/source.md' });
-    expect(source.closest('mark')).toHaveAttribute('title', '引用依据：向量相似度');
+    expect(source).toBeDisabled();
     fireEvent.click(source);
-    expect(onOpenSource).toHaveBeenCalledWith('notes/source.md');
+    expect(onOpenSource).not.toHaveBeenCalled();
   });
 
-  it('renders explicit multi-evidence sources and the empty answer/source fallbacks', async () => {
-    const api = makeProductApi({ rag: { stream: undefined, ask: vi.fn(async (): Promise<CopilotRagAnswer> => ({
+  it('checks an aligned detail locally, renders bounded text, copies, and opens local-present', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const get = vi.fn(async () => ({
+      note: { ...NOTE_RECORD, path: 'notes/kg.md', title: 'KG Source' },
+      body: '# Heading\u0000  local   preview',
+    }));
+    const ask = vi.fn(async (): Promise<CopilotRagAnswer> => ({
       text: '',
-      sources: [],
-      sourceDetails: [{ notePath: 'notes/kg.md', evidence: ['vector', 'kg-entity', 'kg-neighbor'], score: 1 }],
-    })) } });
-    const view = render(<AskWorkspace api={api} />);
+      sources: [' notes/kg.md '],
+      sourceDetails: [{ notePath: 'notes/kg.md', evidence: ['vector', 'kg-entity', 'kg-neighbor'], score: 0.91 }],
+    }));
+    const onOpenSource = vi.fn();
+    const api = makeProductApi({ notes: { get }, rag: { ask, stream: undefined } });
+    render(<AskWorkspace api={api} onOpenSource={onOpenSource} />);
     fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'q' } });
     fireEvent.click(screen.getByRole('button', { name: '提问' }));
     expect(await screen.findByTestId('rag-answer')).toHaveTextContent('知识库内未找到相关笔记');
-    expect(screen.getByRole('button', { name: 'notes/kg.md' }).closest('mark'))
-      .toHaveAttribute('title', '引用依据：向量相似度 + 知识图谱实体 + 知识图谱邻接');
+    expect(await screen.findByText('LOCAL_PRESENT')).toBeInTheDocument();
+    expect(get).toHaveBeenCalledWith('notes/kg.md');
+    expect(screen.getByText('标题：KG Source')).toBeInTheDocument();
+    expect(screen.getByText('预览：# Heading local preview')).toBeInTheDocument();
+    expect(screen.getByTitle('引用依据：向量相似度 + 知识图谱实体 + 知识图谱邻接')).toHaveTextContent('score 0.91');
+    const source = screen.getByRole('button', { name: 'notes/kg.md' });
+    expect(source).toBeEnabled();
+    fireEvent.click(source);
+    expect(onOpenSource).toHaveBeenCalledWith('notes/kg.md');
+    fireEvent.click(screen.getByRole('button', { name: '复制回答' }));
+    expect(await screen.findByTestId('copy-status-answer')).toHaveTextContent('已复制');
+    expect(writeText).toHaveBeenCalledWith('知识库内未找到相关笔记。');
+    fireEvent.click(screen.getByRole('button', { name: '复制来源凭据 notes/kg.md' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining('SOURCE_LOCAL_PRESENT')));
+  });
 
-    view.unmount();
-    const empty = makeProductApi({ rag: { stream: undefined, ask: vi.fn(async () => ({ text: 'answer', sources: [] })) } });
-    render(<AskWorkspace api={empty} />);
+  it('fails closed for invalid, mismatched, duplicate, and empty source identities', async () => {
+    const get = vi.fn();
+    const answer = {
+      text: 'answer',
+      sources: ['notes/invalid.md', 'notes/mismatch-a.md', 'notes/duplicate.md', 'notes/duplicate.md', ''],
+      sourceDetails: [
+        { notePath: 'notes/invalid.md', evidence: ['remote'], score: Number.NaN },
+        { notePath: 'notes/mismatch-b.md', evidence: ['vector'], score: 0.5 },
+        { notePath: 'notes/duplicate.md', evidence: ['vector'], score: 0.5 },
+      ],
+    } as unknown as CopilotRagAnswer;
+    const api = makeProductApi({ notes: { get }, rag: { stream: undefined, ask: vi.fn(async () => answer) } });
+    render(<AskWorkspace api={api} />);
     fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'q' } });
     fireEvent.click(screen.getByRole('button', { name: '提问' }));
-    expect(await screen.findByText('本次回答没有可引用来源')).toBeInTheDocument();
+    expect(await screen.findByTestId('rag-answer')).toHaveTextContent('answer');
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThanOrEqual(4);
+    expect(screen.getAllByText(/SOURCE_DETAIL_INVALID/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/SOURCE_ID_MISMATCH/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/SOURCE_ID_DUPLICATE/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/向量相似度/)).not.toBeInTheDocument();
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('distinguishes local present, missing, and unavailable and gates navigation', async () => {
+    const get = vi.fn(async (path: string) => {
+      if (path === 'notes/present.md') {
+        return { note: { ...NOTE_RECORD, path, title: 'Present' }, body: 'present body' };
+      }
+      if (path === 'notes/missing.md') return null;
+      throw new Error('raw provider detail must not escape');
+    });
+    const sources = ['notes/present.md', 'notes/missing.md', 'notes/unavailable.md'];
+    const sourceDetails: NonNullable<CopilotRagAnswer['sourceDetails']> = sources.map((notePath) => ({
+      notePath,
+      evidence: ['vector'],
+      score: 0.5,
+    }));
+    const onOpenSource = vi.fn();
+    const api = makeProductApi({
+      notes: { get },
+      rag: { stream: undefined, ask: vi.fn(async () => ({ text: 'answer', sources, sourceDetails })) },
+    });
+    render(<AskWorkspace api={api} onOpenSource={onOpenSource} />);
+    fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'q' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+    expect(await screen.findByText('LOCAL_PRESENT')).toBeInTheDocument();
+    expect(await screen.findByText('MISSING')).toBeInTheDocument();
+    expect(await screen.findByText('UNAVAILABLE')).toBeInTheDocument();
+    const present = screen.getByRole('button', { name: 'notes/present.md' });
+    const missing = screen.getByRole('button', { name: 'notes/missing.md' });
+    const unavailable = screen.getByRole('button', { name: 'notes/unavailable.md' });
+    expect(present).toBeEnabled();
+    expect(missing).toBeDisabled();
+    expect(unavailable).toBeDisabled();
+    fireEvent.click(present);
+    fireEvent.click(missing);
+    fireEvent.click(unavailable);
+    expect(onOpenSource).toHaveBeenCalledTimes(1);
+    expect(onOpenSource).toHaveBeenCalledWith('notes/present.md');
+  });
+
+  it('suppresses a late source read after a newer question', async () => {
+    const oldRead = deferred<Awaited<ReturnType<CopilotProductApi['notes']['get']>>>();
+    const ask = vi.fn()
+      .mockResolvedValueOnce({
+        text: 'old answer',
+        sources: ['notes/old.md'],
+        sourceDetails: [{ notePath: 'notes/old.md', evidence: ['vector'], score: 0.5 }],
+      })
+      .mockResolvedValueOnce({
+        text: 'new answer',
+        sources: ['notes/new.md'],
+        sourceDetails: [{ notePath: 'notes/new.md', evidence: ['vector'], score: 0.6 }],
+      });
+    const get = vi.fn((path: string) => path === 'notes/old.md'
+      ? oldRead.promise
+      : Promise.resolve({ note: { ...NOTE_RECORD, path, title: 'New title' }, body: 'new body' }));
+    const api = makeProductApi({ notes: { get }, rag: { ask, stream: undefined } });
+    render(<AskWorkspace api={api} />);
+    const input = screen.getByLabelText('问题');
+    fireEvent.change(input, { target: { value: 'old' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+    await waitFor(() => expect(get).toHaveBeenCalledWith('notes/old.md'));
+    fireEvent.change(input, { target: { value: 'new' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+    expect(await screen.findByText('标题：New title')).toBeInTheDocument();
+    oldRead.resolve({ note: { ...NOTE_RECORD, path: 'notes/old.md', title: 'Old title' }, body: 'old body' });
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.queryByText('标题：Old title')).not.toBeInTheDocument();
+  });
+
+  it('reports stable copy failure without exposing raw exception', async () => {
+    const writeText = vi.fn(async () => { throw new Error('secret raw clipboard failure'); });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const api = makeProductApi({
+      notes: { get: vi.fn() },
+      rag: { stream: undefined, ask: vi.fn(async () => ({ text: 'answer', sources: ['notes/path-only.md'] })) },
+    });
+    render(<AskWorkspace api={api} />);
+    fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'q' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+    await screen.findByTestId('rag-answer');
+    fireEvent.click(screen.getByRole('button', { name: '复制来源凭据 notes/path-only.md' }));
+    expect(await screen.findByTestId('copy-status-source-notes/path-only.md')).toHaveTextContent('复制不可用');
+    expect(screen.queryByText(/secret raw clipboard failure/)).not.toBeInTheDocument();
   });
 
   it.each([
-    [new Error('[CONFIG_REQUIRED] key missing'), '请先在设置中完成模型服务配置'],
-    [new Error('[OFFLINE] down'), '本地 AI 服务暂不可用'],
-    [new Error('offline'), 'offline'],
-    ['boom', '本地知识问答失败'],
-  ])('maps ask failure %# to a user-visible error', async (failure, expected) => {
+    [new Error('[CONFIG_REQUIRED] key missing'), '请先在设置中完成模型服务配置', 'RAG_CONFIG_REQUIRED'],
+    [new Error('[OFFLINE] down'), '本地 AI 服务暂不可用', 'RAG_OFFLINE'],
+    [new Error('offline'), '本地 AI 服务暂不可用', 'RAG_OFFLINE'],
+    ['boom', '本地知识问答失败', 'RAG_REQUEST_FAILED'],
+  ])('maps ask failure %# to safe text and stable reason', async (failure, expected, reason) => {
     const api = makeProductApi({ rag: { stream: undefined, ask: vi.fn(async () => { throw failure; }) } });
     render(<AskWorkspace api={api} />);
     fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'q' } });
     fireEvent.click(screen.getByRole('button', { name: '提问' }));
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent(expected);
+    expect(screen.getByTestId('workspace-state-error')).toHaveTextContent(reason);
+    expect(screen.queryByText(/key missing|down|boom/)).not.toBeInTheDocument();
   });
 
-  it('streams deltas, preserves source details, exposes cancel, and cancels on unmount', async () => {
+  it('offers retry and copies only stable diagnostic reason', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const ask = vi.fn()
+      .mockRejectedValueOnce(new Error('[OFFLINE] provider response'))
+      .mockResolvedValueOnce({ text: 'Recovered', sources: [] });
+    const api = makeProductApi({ rag: { ask, stream: undefined } });
+    render(<AskWorkspace api={api} />);
+    fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'retry me' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+    expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('RAG_OFFLINE');
+    fireEvent.click(screen.getByRole('button', { name: '复制诊断' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('问答失败\nRAG_OFFLINE'));
+    fireEvent.click(screen.getByRole('button', { name: '重试' }));
+    expect(await screen.findByTestId('rag-answer')).toHaveTextContent('Recovered');
+    expect(ask).toHaveBeenNthCalledWith(2, 'retry me');
+  });
+
+  it('streams deltas, keeps cancellation terminal, and cancels once', async () => {
     const done = deferred<CopilotRagAnswer>();
     const cancel = vi.fn(async () => undefined);
     let onEvent: ((event: RagStreamEvent) => void) | null = null;
@@ -929,26 +916,33 @@ describe('AskWorkspace critical interaction', () => {
       onEvent = listener;
       return { requestId: 'req', done: done.promise, cancel };
     });
-    const api = makeProductApi({ rag: { ask: vi.fn(), stream } });
+    const get = vi.fn(async () => ({
+      note: { ...NOTE_RECORD, path: 'notes/live.md', title: 'Live' },
+      body: 'live',
+    }));
+    const api = makeProductApi({ notes: { get }, rag: { ask: vi.fn(), stream } });
     const view = render(<AskWorkspace api={api} />);
     fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'stream me' } });
     fireEvent.click(screen.getByRole('button', { name: '提问' }));
     expect(await screen.findByText('正在检索本地知识并生成回答…')).toBeInTheDocument();
     act(() => onEvent?.({
-      requestId: 'req', type: 'delta', delta: 'partial',
+      requestId: 'req',
+      type: 'delta',
+      delta: 'partial',
       sources: [{ notePath: 'notes/live.md', evidence: ['vector'], score: 0.9 }],
     }));
     expect(screen.getByTestId('rag-answer')).toHaveTextContent('partial');
     fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    expect(await screen.findByText('已取消本次问答')).toBeInTheDocument();
     await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
-    await act(async () => done.resolve({ text: 'final', sources: ['notes/live.md'] }));
-    expect(screen.getByTestId('rag-answer')).toHaveTextContent('final');
-    expect(screen.getByRole('button', { name: 'notes/live.md' })).toBeInTheDocument();
+    await act(async () => done.resolve({ text: 'late final', sources: ['notes/live.md'] }));
+    expect(screen.queryByText('late final')).not.toBeInTheDocument();
+    expect(screen.getByTestId('rag-answer')).toHaveTextContent('partial');
     view.unmount();
     expect(cancel).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores abort rejection from a stream and cancels an active stream during unmount', async () => {
+  it('ignores abort rejection and cancels an active stream during unmount', async () => {
     const done = deferred<CopilotRagAnswer>();
     const cancel = vi.fn(async () => { throw new Error('cancel ignored'); });
     const api = makeProductApi({ rag: {
@@ -963,6 +957,19 @@ describe('AskWorkspace critical interaction', () => {
     expect(cancel).toHaveBeenCalled();
     done.reject(new DOMException('cancel', 'AbortError'));
     await act(async () => { await Promise.resolve(); });
+  });
+
+  it.each([
+    ['checking', 'polite'],
+    ['unknown', 'polite'],
+    ['stale', 'polite'],
+    ['unavailable', 'assertive'],
+  ] as const)('adds the %s WorkspaceState without changing stable DOM', (kind, live) => {
+    render(<WorkspaceState kind={kind} title={`${kind} title`} detail={`${kind} detail`} />);
+    const state = screen.getByTestId(`workspace-state-${kind}`);
+    expect(state).toHaveAttribute('aria-live', live);
+    expect(state).toHaveTextContent(`${kind} title`);
+    expect(state).toHaveTextContent(`${kind} detail`);
   });
 });
 
@@ -990,15 +997,45 @@ function todo(overrides: Partial<CopilotTodo> = {}): CopilotTodo {
   };
 }
 
+function rendererTrashItem(
+  kind: RendererTrashItem['kind'],
+  id: string | number,
+  title: string,
+  state: RendererTrashItem['state'] = 'trashed',
+): RendererTrashItem {
+  return {
+    trashId: `trash-${String(id)}`,
+    kind,
+    title,
+    revision: `trash:${String(id)}:1`,
+    state,
+    movedAt: 1,
+    recoveryRequired: false,
+  };
+}
+
 function todoApi(items: CopilotTodo[], dueItems: CopilotTodo[] = []): CopilotProductApi {
-  return makeProductApi({ todos: {
-    list: vi.fn(async () => items),
-    listDue: vi.fn(async () => dueItems),
-    create: vi.fn(async (input) => todo({ id: 'new', title: input.title, dueAt: input.dueAt, linkedNotePaths: input.linkedNotePaths })),
-    update: vi.fn(async (id, patch) => todo({ id, ...patch })),
-    remove: vi.fn(async () => true),
-    markReminderFired: vi.fn(async (id) => todo({ id })),
-  } });
+  return makeProductApi({
+    todos: {
+      list: vi.fn(async () => items),
+      listDue: vi.fn(async () => dueItems),
+      create: vi.fn(async (input) => todo({ id: 'new', title: input.title, dueAt: input.dueAt, linkedNotePaths: input.linkedNotePaths })),
+      update: vi.fn(async (id, patch) => todo({ id, ...patch })),
+      remove: vi.fn(async () => true),
+      markReminderFired: vi.fn(async (id) => todo({ id })),
+    },
+    trash: {
+      moveNote: vi.fn(async (path) => rendererTrashItem('note', path, path)),
+      moveTodo: vi.fn(async (id) => rendererTrashItem(
+        'todo',
+        id,
+        items.find((item) => String(item.id) === String(id))?.title ?? String(id),
+      )),
+      list: vi.fn(async () => []),
+      restore: vi.fn(async (request) => rendererTrashItem('todo', request.trashId, 'Restored', 'restored')),
+      purge: vi.fn(async (request) => rendererTrashItem('todo', request.trashId, 'Purged', 'purged')),
+    },
+  });
 }
 
 describe('ScheduleWorkspace critical interaction', () => {
@@ -1014,42 +1051,51 @@ describe('ScheduleWorkspace critical interaction', () => {
   it('loads unique todos, handles reminder acknowledgement, CRUD, links, and calendar grouping', async () => {
     Object.defineProperty(globalThis, 'Notification', { configurable: true, writable: true, value: FakeNotification });
     const dated = todo();
-    const undated = todo({ id: 'todo-2', title: 'Inbox item', due_at_ms: null, note_links: [] });
+    const inbox = todo({ id: 'todo-2', title: 'Inbox item', due_at_ms: dated.due_at_ms, note_links: [] });
     const doneTodo = todo({ id: 'todo-3', title: 'Already done', status: 'done', dueAt: dated.due_at_ms });
-    const api = todoApi([dated, { ...dated, title: 'deduped' }, undated, doneTodo], [dated, dated]);
+    const api = todoApi([dated, { ...dated, title: 'deduped' }, inbox, doneTodo], [dated, dated]);
     const onOpenNote = vi.fn();
     render(<ScheduleWorkspace api={api} onOpenNote={onOpenNote} />);
-    expect(await screen.findByText('deduped')).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    expect(await screen.findByRole('checkbox', { name: '完成 deduped' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: '待办列表' }).children).toHaveLength(3);
     expect(screen.getByText('提醒：Ship MVP')).toBeInTheDocument();
     await waitFor(() => expect(FakeNotification.instances).toHaveLength(1));
     expect(FakeNotification.instances[0]?.options).toMatchObject({ tag: 'copilot-todo-todo-1', requireInteraction: true });
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'notes/one.md' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: '打开笔记：notes/one.md' })[0]!);
     expect(onOpenNote).toHaveBeenCalledWith('notes/one.md');
-    fireEvent.click(screen.getByRole('button', { name: '切换 deduped' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '完成 deduped' }));
     await waitFor(() => expect(api.todos.update).toHaveBeenCalledWith('todo-1', { status: 'done' }));
-    fireEvent.click(screen.getByRole('button', { name: '切换 Already done' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '完成 Already done' }));
     await waitFor(() => expect(api.todos.update).toHaveBeenCalledWith('todo-3', { status: 'pending' }));
     fireEvent.click(screen.getByRole('button', { name: '删除 Inbox item' }));
-    await waitFor(() => expect(api.todos.remove).toHaveBeenCalledWith('todo-2'));
+    await waitFor(() => expect(api.trash?.moveTodo).toHaveBeenCalledWith('todo-2'));
+    expect(await screen.findByTestId('schedule-trash-feedback')).toHaveTextContent('Inbox item');
+    fireEvent.click(screen.getByRole('button', { name: '撤销删除' }));
+    await waitFor(() => expect(api.trash?.restore).toHaveBeenCalledWith({
+      trashId: 'trash-todo-2',
+      revision: 'trash:todo-2:1',
+    }));
 
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0]!, { target: { value: ' New task ' } });
-    fireEvent.change(screen.getByLabelText('到期与提醒时间'), { target: { value: '2026-07-21T10:30' } });
-    fireEvent.change(inputs[1]!, { target: { value: ' notes/two.md ' } });
+    fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: '待办标题' }), { target: { value: ' New task ' } });
+    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.change(screen.getByLabelText('临时日期与提醒时间'), { target: { value: '2026-07-21T10:30' } });
+    fireEvent.click(screen.getByRole('button', { name: '使用此时间' }));
+    fireEvent.change(screen.getByRole('combobox', { name: '搜索关联笔记' }), { target: { value: 'One' } });
+    fireEvent.click(screen.getByRole('option', { name: /One/ }));
     fireEvent.click(screen.getByRole('button', { name: '添加待办' }));
     await waitFor(() => expect(api.todos.create).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'New task', linkedNotePaths: ['notes/two.md'], dueAt: expect.any(Number), remindAt: expect.any(Number),
+      title: 'New task', linkedNotePaths: ['notes/one.md'], dueAt: expect.any(Number), remindAt: expect.any(Number),
     })));
 
-    fireEvent.click(screen.getByRole('button', { name: '日历视图' }));
-    expect(screen.getByRole('region', { name: '日历视图' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '无日期' })).toHaveTextContent('Inbox item');
-    expect(screen.queryByText('0 项')).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: '列表视图' }));
-    expect(screen.getByRole('list', { name: '待办列表' })).toBeInTheDocument();
+    expect(screen.getByLabelText('日历与当日概览')).toBeInTheDocument();
+    expect(screen.getByLabelText('月历')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: '待办列表' })).toHaveTextContent('Inbox item');
+    expect(screen.queryByRole('button', { name: '日历视图' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '列表视图' })).not.toBeInTheDocument();
 
     const focus = vi.spyOn(window, 'focus').mockImplementation(() => undefined);
     const notification = FakeNotification.instances[0]!;
@@ -1065,17 +1111,23 @@ describe('ScheduleWorkspace critical interaction', () => {
     notification.onclose?.call(notification as unknown as Notification, new Event('close'));
   });
 
-  it('shows empty state, undated calendar empty group, and creates without optional fields', async () => {
+  it('shows the Demo-first calendar and empty truth, then creates without optional fields', async () => {
     const api = todoApi([]);
     render(<ScheduleWorkspace api={api} />);
     expect(await screen.findByText('暂无待办')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '日历视图' }));
-    expect(screen.getByText('日历中暂无待办')).toBeInTheDocument();
-    expect(screen.getAllByText('0 项')).toHaveLength(2);
-    const title = screen.getAllByRole('textbox')[0]!;
+    expect(screen.getByLabelText('月历')).toBeInTheDocument();
+    expect(screen.getByText('这一天还没有本地待办。')).toBeInTheDocument();
+    expect(screen.getByText('选中日期没有时间线项目。')).toBeInTheDocument();
+    expect(screen.getByText('0 项当天待办 · 数据来自本地日程')).toBeInTheDocument();
+    expect(screen.getByText('0 项未完成')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
+    const title = screen.getByRole('textbox', { name: '待办标题' });
     fireEvent.submit(title.closest('form')!);
     expect(api.todos.create).not.toHaveBeenCalled();
     fireEvent.change(title, { target: { value: 'No date' } });
+    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(screen.getByRole('button', { name: '无日期' }));
+    fireEvent.click(screen.getByRole('button', { name: '使用此时间' }));
     fireEvent.click(screen.getByRole('button', { name: '添加待办' }));
     await waitFor(() => expect(api.todos.create).toHaveBeenCalledWith({
       title: 'No date', dueAt: null, remindAt: null, linkedNotePaths: [],
@@ -1088,15 +1140,22 @@ describe('ScheduleWorkspace critical interaction', () => {
     render(<ScheduleWorkspace api={api} />);
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('read failed');
     fireEvent.click(screen.getByRole('button', { name: '重试' }));
-    expect(await screen.findByText('Ship MVP')).toBeInTheDocument();
+    await waitFor(() => expect(api.todos.list).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    expect(await screen.findByRole('checkbox', { name: '完成 Ship MVP' })).toBeInTheDocument();
 
     vi.mocked(api.todos.create).mockRejectedValueOnce(new Error('create failed'));
-    fireEvent.change(screen.getAllByRole('textbox')[0]!, { target: { value: 'bad' } });
+    fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: '待办标题' }), { target: { value: 'bad' } });
+    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(screen.getByRole('button', { name: '无日期' }));
+    fireEvent.click(screen.getByRole('button', { name: '使用此时间' }));
     fireEvent.click(screen.getByRole('button', { name: '添加待办' }));
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('create failed');
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
 
     vi.mocked(api.todos.update).mockRejectedValueOnce('toggle failed');
-    fireEvent.click(screen.getByRole('button', { name: '切换 Ship MVP' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '完成 Ship MVP' }));
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('toggle failed');
 
     vi.mocked(api.todos.markReminderFired).mockRejectedValueOnce(new Error('ack failed'));
@@ -1141,12 +1200,19 @@ describe('ScheduleWorkspace critical interaction', () => {
     Object.defineProperty(globalThis, 'Notification', { configurable: true, writable: true, value: undefined });
     const api2 = todoApi([todo()], [todo()]);
     const second = render(<ScheduleWorkspace api={api2} />);
-    expect(await screen.findByText('Ship MVP')).toBeInTheDocument();
+    await waitFor(() => expect(api2.todos.list).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    expect(await screen.findByRole('checkbox', { name: '完成 Ship MVP' })).toBeInTheDocument();
     vi.mocked(api2.todos.create).mockRejectedValueOnce('create string');
-    fireEvent.change(screen.getAllByRole('textbox')[0]!, { target: { value: 'bad create' } });
+    fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: '待办标题' }), { target: { value: 'bad create' } });
+    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(screen.getByRole('button', { name: '无日期' }));
+    fireEvent.click(screen.getByRole('button', { name: '使用此时间' }));
     fireEvent.click(screen.getByRole('button', { name: '添加待办' }));
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('create string');
-    vi.mocked(api2.todos.remove).mockRejectedValueOnce(new Error('remove error'));
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    vi.mocked(api2.trash!.moveTodo).mockRejectedValueOnce(new Error('remove error'));
     fireEvent.click(screen.getByRole('button', { name: '删除 Ship MVP' }));
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('remove error');
     vi.mocked(api2.todos.markReminderFired).mockRejectedValueOnce('ack string');

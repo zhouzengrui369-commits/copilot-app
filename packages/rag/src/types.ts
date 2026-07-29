@@ -31,6 +31,17 @@ export interface EmbeddedChunk extends NoteChunk {
 }
 
 /**
+ * Durable local-text row. Vector metadata is present only when the same chunk
+ * also has a successfully persisted embedding; text-only rows never receive a
+ * sentinel vector.
+ */
+export interface StoredChunk extends NoteChunk {
+  embedding?: Float32Array;
+  model?: string;
+  embeddedAt?: number;
+}
+
+/**
  * One chunk returned by retrieval — chunk + similarity score + which note it
  * came from. The notePath field is what we surface to the UI as the citation
  * (goal.md R5 "sources 显示").
@@ -43,12 +54,62 @@ export interface RetrievalHit {
   evidence?: RetrievalEvidence[];
 }
 
-export type RetrievalEvidence = 'vector' | 'kg-entity' | 'kg-neighbor';
+/**
+ * Retrieval provenance enum — surfaces WHY a chunk landed in the candidate
+ * set.  RAG R2 adds `local-text` to distinguish the deterministic indexed
+ * text fallback (operates on chunk.text + notePath tokens) from the
+ * pre-existing KG signals.
+ */
+export type RetrievalEvidence =
+  | 'vector'
+  | 'kg-entity'
+  | 'kg-neighbor'
+  | 'local-text';
+
+/**
+ * Stable, non-sensitive diagnostics. These values are safe to surface to the
+ * renderer and logs: they contain no provider URL, model id, query text, note
+ * content, stack, or credential material.
+ */
+export type RagDiagnosticCode =
+  | 'RAG_VECTOR'
+  | 'RAG_LOCAL_TEXT_FALLBACK'
+  | 'RAG_KG_SUPPLEMENTAL'
+  | 'RAG_PROVIDER_UNAVAILABLE'
+  | 'RAG_PROVIDER_FAILURE'
+  | 'RAG_VECTOR_INDEX_DEGRADED'
+  | 'RAG_NO_CANDIDATE'
+  | 'RAG_CITATION_SOURCE_MISMATCH';
+
+/**
+ * Coarse-grained retrieval mode for diagnostics / source-detail rows. RAG R2
+ * requires stable, non-sensitive diagnostics that separate the four paths
+ * the answerer can take:
+ *   - `vector`     — embedding-backed similarity search
+ *   - `local-text` — deterministic token overlap over already indexed text
+ *   - `kg`         — supplemental KG-evidenced hits only
+ *   - `empty`      — no candidate found
+ */
+export type RetrievalMode = 'vector' | 'local-text' | 'kg' | 'empty';
+
+/**
+ * Coarse-grained embedding provider status. Stable, non-sensitive — never
+ * surfaces URLs, model ids, or stack traces.
+ */
+export type ProviderStatus = 'ok' | 'degraded' | 'unavailable' | 'failed';
 
 export interface RagSourceDetail {
   notePath: string;
   evidence: RetrievalEvidence[];
   score: number;
+  /** chunk id the excerpt is bound to — stable across re-indexing */
+  chunkId: string;
+  /** exact UTF-16 code-unit offsets [start, end] of `excerpt` in the note body */
+  charRange: [number, number];
+  /** bounded exact excerpt from the chunk (no synthesis, no paraphrase) */
+  excerpt: string;
+  /** dominant retrieval mode for this hit (first element of `evidence` after EVIDENCE_ORDER) */
+  mode: RetrievalMode;
 }
 
 export interface RetrievalResult {
@@ -57,6 +118,12 @@ export interface RetrievalResult {
   hits: RetrievalHit[];
   /** total candidates considered before top-k selection (for diagnostics) */
   candidates: number;
+  /** coarse retrieval mode for diagnostics (RAG R2) */
+  mode?: RetrievalMode;
+  /** embedding provider status (RAG R2) */
+  providerStatus?: ProviderStatus;
+  /** stable, non-sensitive diagnostic codes (RAG R2) */
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface RagAnswerChunk {
@@ -65,6 +132,9 @@ export interface RagAnswerChunk {
   /** which sources are cited so far (notePaths surfaced from the retrieval pass) */
   citedSources: string[];
   sourceDetails?: RagSourceDetail[];
+  retrievalMode?: RetrievalMode;
+  providerStatus?: ProviderStatus;
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface RagAnswerResult {
@@ -76,6 +146,12 @@ export interface RagAnswerResult {
   sourceDetails?: RagSourceDetail[];
   /** total tokens streamed (rough estimate) */
   totalChars: number;
+  /** coarse retrieval mode for diagnostics (RAG R2) */
+  retrievalMode?: RetrievalMode;
+  /** embedding provider status (RAG R2) */
+  providerStatus?: ProviderStatus;
+  /** stable, non-sensitive diagnostic codes (RAG R2) */
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface EmbedderConfig {

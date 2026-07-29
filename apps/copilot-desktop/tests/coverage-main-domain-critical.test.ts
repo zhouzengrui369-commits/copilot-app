@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import {
   DomainServiceError,
   LocalKnowledgeService,
@@ -7,6 +8,7 @@ import {
 } from '../src/main/local-knowledge-service.js';
 import { registerDomainIpc, toSafeIpcError } from '../src/main/domain-ipc.js';
 import {
+  credentialBinding,
   ModelCredentialStore,
   type CredentialPersistence,
   type CredentialRecord,
@@ -33,6 +35,14 @@ function credentialStore(): ModelCredentialStore {
   });
 }
 
+const SYNTHETIC_MODEL_CREDENTIAL = 'synthetic-test-credential';
+
+function credentialStoreFor(baseUrl: string): ModelCredentialStore {
+  const store = credentialStore();
+  store.write(credentialBinding('custom', baseUrl).binding, SYNTHETIC_MODEL_CREDENTIAL);
+  return store;
+}
+
 const runtime = vi.hoisted(() => ({
   kbInstances: [] as Array<Record<string, unknown>>,
   kgStores: [] as Array<Record<string, unknown>>,
@@ -45,19 +55,25 @@ const runtime = vi.hoisted(() => ({
   searchNodes: vi.fn(),
   subgraph: vi.fn(),
   fullGraph: vi.fn(),
+  wikiForNote: vi.fn(),
+  sqliteConstructorFailure: null as Error | null,
 }));
 
 vi.mock('@copilot/kb', () => {
   class SqliteStore {
-    constructor(public readonly options: unknown) {}
+    constructor(public readonly options: unknown) {
+      if (runtime.sqliteConstructorFailure) throw runtime.sqliteConstructorFailure;
+    }
   }
   class MdFileStore {
     constructor(public readonly options: unknown) {}
   }
   class KbClient {
     readonly notes = new Map<string, { note: ReturnType<typeof wire>; body: string }>();
+    readonly trashEntries = new Map<string, TestTrashEntry>();
     readonly options: unknown;
     closed = false;
+    nextTrashId = 1;
     constructor(options: unknown) {
       this.options = options;
       runtime.kbInstances.push(this as unknown as Record<string, unknown>);
@@ -92,6 +108,20 @@ vi.mock('@copilot/kb', () => {
     listLinks(notePath: string) {
       return { in: [{ from_path: 'from/note', to_path: notePath, rel: 'mentions' }] };
     }
+    moveNoteToTrash(request: TestTrashRequest) {
+      return moveTestDocumentToTrash(
+        this.notes,
+        this.trashEntries,
+        request,
+        `trash-${this.nextTrashId++}`,
+      );
+    }
+    readTrash(states?: readonly TestTrashEntry['state'][]) {
+      return readTestTrash(this.trashEntries, states);
+    }
+    markTrashClean(trashId: string) {
+      return markTestTrashClean(this.trashEntries, trashId);
+    }
     setKgStatus() {}
     close() { this.closed = true; }
   }
@@ -113,6 +143,7 @@ vi.mock('@copilot/kg', () => {
     searchNodes(query: string, options?: unknown) { return runtime.searchNodes(query, options); }
     subgraph(request: unknown) { return runtime.subgraph(request); }
     fullGraph(maxNodes?: number) { return runtime.fullGraph(maxNodes); }
+    wikiForNote(request: unknown) { return runtime.wikiForNote(request); }
   }
   class KgBuilder {
     constructor(public readonly options: unknown) {}
@@ -188,7 +219,152 @@ vi.mock('@copilot/llm-client', () => ({
   },
 }));
 
+function normalizeTag(value: string): string {
+  return value
+    .normalize('NFKC')
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64);
+}
+
+function canonicalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => canonicalizeJson(entry));
+  }
+  if (value && typeof value === 'object') {
+    const output: Record<string, unknown> = {};
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      const entry = canonicalizeJson((value as Record<string, unknown>)[key]);
+      if (entry !== undefined) output[key] = entry;
+    }
+    return output;
+  }
+  if (typeof value === 'number' && !Number.isFinite(value)) return null;
+  if (
+    value === undefined ||
+    typeof value === 'function' ||
+    typeof value === 'symbol'
+  ) {
+    return undefined;
+  }
+  return value;
+}
+
+type CanonicalWikiRequest = {
+  title: string;
+  body: string;
+  tags?: ReadonlyArray<string>;
+  related?: ReadonlyArray<string>;
+  metadata?: Record<string, unknown>;
+};
+
+function computeCanonicalWikiDigest(input: CanonicalWikiRequest): string {
+  const wrappedMeta = {
+    ...(input.metadata ?? {}),
+    related: [...(input.related ?? [])].map(String).sort(),
+  };
+  const canonicalTags = [...new Set(
+    [...(input.tags ?? [])]
+      .map((tag) => normalizeTag(String(tag)))
+      .filter(Boolean),
+  )].sort();
+  const canonicalMeta = canonicalizeJson(wrappedMeta);
+  const payload = JSON.stringify({
+    title: input.title,
+    body: input.body,
+    tags: canonicalTags,
+    meta: canonicalMeta,
+  });
+  return createHash('sha256').update(payload).digest('hex');
+}
+
 type Wire = ReturnType<typeof wire>;
+
+type TestTrashRequest = {
+  path: string;
+  kind: 'note' | 'todo';
+  expectedRevision: string;
+  idempotencyKey: string;
+};
+
+type TestTrashEntry = {
+  trashId: string;
+  kind: 'note' | 'todo';
+  originalPath: string;
+  originalRevision: string;
+  trashRevision: string;
+  state: 'cleanup_pending' | 'trashed';
+  movedAt: number;
+  restoredAt: null;
+  purgedAt: null;
+  cleanupAttempts: number;
+  metadataJson: string;
+  contentSha256: string;
+  idempotencyKey: string;
+  inputSha256: string;
+  restoreIdempotencyKey: null;
+  purgeIdempotencyKey: null;
+};
+
+function moveTestDocumentToTrash(
+  documents: Map<string, { note: Wire; body: string }>,
+  trashEntries: Map<string, TestTrashEntry>,
+  request: TestTrashRequest,
+  trashId: string,
+): TestTrashEntry {
+  const current = documents.get(request.path);
+  if (!current) {
+    throw Object.assign(new Error('trash item not found'), { code: 'TRASH_NOT_FOUND' });
+  }
+  const entry: TestTrashEntry = {
+    trashId,
+    kind: request.kind,
+    originalPath: request.path,
+    originalRevision: request.expectedRevision,
+    trashRevision: `trash:${trashId}:${current.note.updated_at}`,
+    state: 'cleanup_pending',
+    movedAt: current.note.updated_at,
+    restoredAt: null,
+    purgedAt: null,
+    cleanupAttempts: 0,
+    metadataJson: JSON.stringify({ note: current.note }),
+    contentSha256: createHash('sha256').update(current.body).digest('hex'),
+    idempotencyKey: request.idempotencyKey,
+    inputSha256: createHash('sha256').update(JSON.stringify(request)).digest('hex'),
+    restoreIdempotencyKey: null,
+    purgeIdempotencyKey: null,
+  };
+  trashEntries.set(trashId, entry);
+  documents.delete(request.path);
+  return entry;
+}
+
+function readTestTrash(
+  trashEntries: Map<string, TestTrashEntry>,
+  states?: readonly TestTrashEntry['state'][],
+): TestTrashEntry[] {
+  return [...trashEntries.values()].filter((entry) => !states || states.includes(entry.state));
+}
+
+function markTestTrashClean(
+  trashEntries: Map<string, TestTrashEntry>,
+  trashId: string,
+): TestTrashEntry {
+  const current = trashEntries.get(trashId);
+  if (!current) {
+    throw Object.assign(new Error('trash item not found'), { code: 'TRASH_NOT_FOUND' });
+  }
+  const clean: TestTrashEntry = {
+    ...current,
+    state: 'trashed',
+    cleanupAttempts: current.cleanupAttempts + 1,
+  };
+  trashEntries.set(trashId, clean);
+  return clean;
+}
 
 function wire(notePath: string, patch: Partial<{
   id: number;
@@ -221,10 +397,12 @@ function wire(notePath: string, patch: Partial<{
 
 class MemoryKb {
   readonly documents = new Map<string, { note: Wire; body: string }>();
+  readonly trashEntries = new Map<string, TestTrashEntry>();
   readonly statuses: Array<[string, string]> = [];
   readonly links = new Map<string, Array<{ from_path: string; to_path: string; rel: string | null }>>();
   closed = false;
   nextId = 1;
+  nextTrashId = 1;
   listTotalOverride: number | undefined;
 
   createNote(input: Record<string, unknown>) {
@@ -258,6 +436,20 @@ class MemoryKb {
     return { items, total: this.listTotalOverride ?? items.length, limit: 1000, offset: 0 };
   }
   listLinks(notePath: string) { return { in: this.links.get(notePath) ?? [] }; }
+  moveNoteToTrash(request: TestTrashRequest) {
+    return moveTestDocumentToTrash(
+      this.documents,
+      this.trashEntries,
+      request,
+      `trash-${this.nextTrashId++}`,
+    );
+  }
+  readTrash(states?: readonly TestTrashEntry['state'][]) {
+    return readTestTrash(this.trashEntries, states);
+  }
+  markTrashClean(trashId: string) {
+    return markTestTrashClean(this.trashEntries, trashId);
+  }
   setKgStatus(notePath: string, status: string) { this.statuses.push([notePath, status]); }
   close() { this.closed = true; }
 }
@@ -269,6 +461,17 @@ function createService(overrides: Partial<LocalKnowledgeServiceOptions> = {}) {
     reindexNote: vi.fn(async () => ({ entitiesAdded: 2, entitiesLinked: 3 })),
     removeNote: vi.fn(async () => undefined),
     relatedNotes: vi.fn(async () => [{ notePath: 'notes/a', score: 0.7, evidence: ['kg-entity'] }]),
+    wikiForNote: vi.fn(async () => ({
+      notePath: 'notes/wikified',
+      expectedContentDigest: null,
+      truth: 'current',
+      projection: null,
+      current: null,
+      latest: null,
+      stale: [],
+      failed: [],
+      provenance: null,
+    })),
     close: vi.fn(),
   };
   const rag = {
@@ -324,6 +527,17 @@ beforeEach(() => {
   runtime.searchNodes.mockReset().mockReturnValue([]);
   runtime.subgraph.mockReset().mockReturnValue({ nodes: [], edges: [], degree: {} });
   runtime.fullGraph.mockReset().mockReturnValue({ nodes: [], edges: [] });
+  runtime.sqliteConstructorFailure = null;
+  runtime.wikiForNote.mockReset().mockReturnValue({
+    note_path: 'notes/unset',
+    expected_content_digest: null,
+    truth: 'missing',
+    current: null,
+    latest: null,
+    stale: [],
+    failed: [],
+    provenance: null,
+  });
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -496,7 +710,11 @@ describe('local knowledge service critical behavior', () => {
     ]);
 
     await expect(service.notes.create({ path: 'notes/body', title: 'Body', body: 'local-secret' }))
-      .resolves.toMatchObject({ path: 'notes/body' });
+      .resolves.toMatchObject({
+        path: 'notes/body',
+        localState: 'LOCAL_SAVED',
+        knowledgeBuild: { state: 'queued', revision: expect.stringMatching(/^note:/u) },
+      });
     await expect(service.notes.create({ path: 'notes/voice', title: 'Voice', transcript: 'spoken' }))
       .resolves.toMatchObject({ path: 'notes/voice' });
     expect(kb.readNote('notes/voice')?.body).toBe('spoken');
@@ -508,8 +726,8 @@ describe('local knowledge service critical behavior', () => {
     await expect(service.notes.update({ path: 'missing', patch: { title: 'No' } })).resolves.toBeNull();
     await expect(service.notes.remove('notes/body')).resolves.toBe(true);
     await expect(service.notes.remove('notes/body')).resolves.toBe(false);
-    expect(kg.removeNote).toHaveBeenCalledTimes(2);
-    expect(rag.deleteNote).toHaveBeenCalledTimes(2);
+    expect(kg.removeNote).toHaveBeenCalledTimes(1);
+    expect(rag.deleteNote).toHaveBeenCalledTimes(1);
     expect(backup.enqueue).toHaveBeenCalledWith({ operation: 'update', path: 'notes/body' });
     expect(backup.enqueue).toHaveBeenCalledWith({ operation: 'remove', path: 'notes/body' });
 
@@ -550,18 +768,90 @@ describe('local knowledge service critical behavior', () => {
     await expect(service.notes.update({ path: 'x', patch: { tags: ['__copilot_todo__'] } }))
       .rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
 
+    await service.notes.create({ path: 'notes/kg-cleanup-failure', title: 'KG cleanup', body: 'x' });
     kg.removeNote.mockRejectedValueOnce(new Error('network timeout private'));
-    await expect(service.notes.remove('notes/missing')).rejects.toMatchObject({
+    await expect(service.notes.remove('notes/kg-cleanup-failure')).rejects.toMatchObject({
       code: 'OFFLINE', message: 'local AI service is unavailable',
     });
+    await service.notes.create({ path: 'notes/rag-cleanup-failure', title: 'RAG cleanup', body: 'x' });
     rag.deleteNote.mockRejectedValueOnce(new Error('private database detail'));
-    await expect(service.notes.remove('notes/missing')).rejects.toMatchObject({
+    await expect(service.notes.remove('notes/rag-cleanup-failure')).rejects.toMatchObject({
       code: 'INTERNAL', message: 'local knowledge operation failed',
     });
+    await service.notes.create({ path: 'notes/config-cleanup-failure', title: 'Config cleanup', body: 'x' });
     kg.removeNote.mockRejectedValueOnce(new DomainServiceError('CONFIG_REQUIRED', 'safe config'));
-    await expect(service.notes.remove('notes/missing')).rejects.toMatchObject({
+    await expect(service.notes.remove('notes/config-cleanup-failure')).rejects.toMatchObject({
       code: 'CONFIG_REQUIRED', message: 'safe config',
     });
+  });
+
+  it('covers complete invalid create/update payload fields and proves no KB/KG/RAG/WIKI mutation on INVALID_ARGUMENT', async () => {
+    const { service, kb, kg, rag } = createService();
+    // Baseline: zero build-side activity must occur for any rejected payload.
+    const beforeKbWrites = kb.documents.size;
+    const beforeKgCalls = kg.reindexNote.mock.calls.length
+      + kg.removeNote.mock.calls.length;
+    const beforeRagCalls = rag.indexNote.mock.calls.length
+      + rag.deleteNote.mock.calls.length;
+    const beforeWikiCalls = kg.wikiForNote.mock.calls.length;
+
+    const invalidCreatePayloads: ReadonlyArray<unknown> = [
+      { path: 'notes/invalid-type', title: 't', body: 'b', type: 'invalid-type' },
+      { path: 'notes/invalid-status', title: 't', body: 'b', status: 'queued' },
+      { path: 'notes/invalid-tags-shape', title: 't', body: 'b', tags: 'local-first' },
+      { path: 'notes/invalid-tags-item', title: 't', body: 'b', tags: ['ok', 7] },
+      { path: 'notes/invalid-related-shape', title: 't', body: 'b', related: { 0: 'notes/a' } },
+      { path: 'notes/invalid-related-item', title: 't', body: 'b', related: ['notes/a', 9] },
+      { path: 'notes/invalid-confidence-num', title: 't', body: 'b', confidence: Number.POSITIVE_INFINITY },
+      { path: 'notes/invalid-confidence-str', title: 't', body: 'b', confidence: 'high' },
+      { path: 'notes/invalid-agent-num', title: 't', body: 'b', agent: 42 },
+      { path: 'notes/invalid-agent-bool', title: 't', body: 'b', agent: true },
+      { path: 'notes/invalid-body-type', title: 't', body: 12 },
+      { path: 'notes/invalid-transcript-type', title: 't', transcript: ['array', 'forbidden'] },
+    ];
+    for (const request of invalidCreatePayloads) {
+      await expect(service.notes.create(request as never)).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
+    }
+
+    // The same shape failures must be rejected on the createWithBuild entrypoint
+    // so the build pipeline is never reached with malformed metadata.
+    for (const request of invalidCreatePayloads) {
+      await expect(service.notes.createWithBuild(request as never)).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
+    }
+
+    // Update invalid payloads cover every allowed patch field plus unknown keys.
+    const invalidUpdatePayloads: ReadonlyArray<unknown> = [
+      { path: 'notes/x', patch: { type: 'invalid-type' } },
+      { path: 'notes/x', patch: { status: 'queued' } },
+      { path: 'notes/x', patch: { tags: 'local-first' } },
+      { path: 'notes/x', patch: { tags: ['ok', 7] } },
+      { path: 'notes/x', patch: { related: { 0: 'notes/a' } } },
+      { path: 'notes/x', patch: { related: ['notes/a', 9] } },
+      { path: 'notes/x', patch: { confidence: Number.NaN } },
+      { path: 'notes/x', patch: { confidence: 'high' } },
+      { path: 'notes/x', patch: { agent: 42 } },
+      { path: 'notes/x', patch: { agent: { name: 'no' } } },
+      { path: 'notes/x', patch: { body: 12 } },
+      { path: 'notes/x', patch: { title: '' } },
+      { path: 'notes/x', patch: { unknownField: 'not-allowed' } },
+      { path: 'notes/x', patch: { nested: { key: 'value' } } },
+    ];
+    for (const request of invalidUpdatePayloads) {
+      await expect(service.notes.update(request as never)).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
+      await expect(service.notes.updateWithBuild(request as never)).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
+    }
+
+    // After all rejected payloads, the build/AI ports must show no activity
+    // that could leak a partial state. The mock call counts are unchanged and
+    // the KB has not stored any of the rejected notes.
+    const afterKgCalls = kg.reindexNote.mock.calls.length
+      + kg.removeNote.mock.calls.length;
+    const afterRagCalls = rag.indexNote.mock.calls.length
+      + rag.deleteNote.mock.calls.length;
+    expect(afterKgCalls).toBe(beforeKgCalls);
+    expect(afterRagCalls).toBe(beforeRagCalls);
+    expect(kg.wikiForNote.mock.calls.length).toBe(beforeWikiCalls);
+    expect(kb.documents.size).toBe(beforeKbWrites);
   });
 
   it('reindexes KG/RAG transactionally and exposes normalized RAG streams and sources', async () => {
@@ -742,14 +1032,60 @@ describe('production local-first composition ports', () => {
     runtime.subgraph.mockImplementation((request: { center: string }) => request.center === 'alpha'
       ? { nodes: [alpha, beta], edges: [edge], degree: { alpha: 1, beta: 1 } }
       : { nodes: [], edges: [], degree: {} });
+    const currentProjection = {
+      id: 1,
+      note_path: 'notes/a',
+      status: 'current',
+      content_digest: 'a'.repeat(64),
+      summary: 'Alpha summary',
+      tags: ['tag'],
+      entity_ids: ['alpha'],
+      relation_signatures: [],
+      provider: 'minimax',
+      model: 'MiniMax-M3',
+      generated_at: 1_753_000_000_000,
+      failure_reason: null,
+      failure_stage: null,
+    };
+    runtime.wikiForNote.mockReturnValue({
+      note_path: 'notes/a',
+      expected_content_digest: currentProjection.content_digest,
+      truth: 'current',
+      current: currentProjection,
+      latest: currentProjection,
+      stale: [],
+      failed: [],
+      provenance: {
+        provider: 'minimax',
+        model: 'MiniMax-M3',
+        generated_at: 1_753_000_000_000,
+      },
+    });
 
-    const service = await createProductionKnowledgeService({ userDataPath: '/tmp/copilot-user', settings: settings as never, credentials: credentialStore() });
+    const service = await createProductionKnowledgeService({
+      userDataPath: '/tmp/copilot-user',
+      settings: settings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+      sqliteNativeBinding: '/task/run/native/better_sqlite3.node',
+    });
     expect(runtime.kbInstances).toHaveLength(1);
     expect(runtime.kgStores).toHaveLength(1);
     expect(runtime.vectorStores).toHaveLength(1);
+    expect(
+      ((runtime.kbInstances[0].options as {
+        sqlite: { options: { nativeBinding?: string } };
+      }).sqlite.options.nativeBinding),
+    ).toBe('/task/run/native/better_sqlite3.node');
+    expect((runtime.kgStores[0].options as { nativeBinding?: string }).nativeBinding)
+      .toBe('/task/run/native/better_sqlite3.node');
     expect((runtime.kgStores[0].options as { dbPath: string }).dbPath).toContain('/tmp/copilot-user/local-first/kg.sqlite');
 
-    await service.notes.create({ path: 'notes/a', title: 'A', body: 'Alpha body', tags: ['tag'] });
+    await service.notes.createWithBuild({
+      path: 'notes/a',
+      title: 'A',
+      body: 'Alpha body',
+      tags: ['tag'],
+    });
     await expect(service.kg.getSubgraph(1)).resolves.toMatchObject({ nodes: [{ entity_id: 'alpha' }], edges: [] });
     await expect(service.kg.getSubgraph({ types: ['concept'], maxNodes: Number.POSITIVE_INFINITY })).resolves.toMatchObject({
       nodes: [{ entity_id: 'alpha' }], degree: { alpha: 0 },
@@ -787,6 +1123,21 @@ describe('production local-first composition ports', () => {
     expect(runtime.vectorStores[0].closed).toBe(true);
   });
 
+  it('maps native store construction failures to a stable non-sensitive domain error', async () => {
+    runtime.sqliteConstructorFailure = new Error(
+      'dlopen /private/path/secret.node wrong architecture user-note-content',
+    );
+    await expect(createProductionKnowledgeService({
+      userDataPath: '/tmp/native-failure',
+      settings: settings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+      sqliteNativeBinding: '/task/run/native/better_sqlite3.node',
+    })).rejects.toMatchObject({
+      code: 'INTERNAL',
+      message: 'LOCAL_STORAGE_NATIVE_UNAVAILABLE',
+    });
+  });
+
   it('fails closed for remote models without credentials and accepts explicit credentials', async () => {
     const remoteSettings = {
       get: vi.fn((key: string) => key === 'modelApi'
@@ -796,18 +1147,27 @@ describe('production local-first composition ports', () => {
     const remote = await createProductionKnowledgeService({ userDataPath: '/tmp/remote', settings: remoteSettings as never, credentials: credentialStore() });
     await remote.notes.create({ path: 'notes/remote', title: 'Remote', body: 'x' });
     await expect(remote.kg.reindexNote('notes/remote')).rejects.toMatchObject({
-      code: 'CONFIG_REQUIRED', message: 'an API key is required for the selected remote model',
+      code: 'CONFIG_REQUIRED',
+      message: '[MODEL_CREDENTIAL_REQUIRED] Configure a credential for this provider and origin.',
     });
 
     const keyedSettings = {
       get: vi.fn((key: string) => key === 'modelApi'
-        ? { provider: 'custom', baseUrl: 'not a url', model: 'remote', apiKey: 'key' }
+        ? { provider: 'custom', baseUrl: 'https://models.example/v1', model: 'remote', apiKey: '' }
         : false),
     };
-    const keyed = await createProductionKnowledgeService({ userDataPath: '/tmp/keyed', settings: keyedSettings as never, credentials: credentialStore() });
+    const keyed = await createProductionKnowledgeService({
+      userDataPath: '/tmp/keyed',
+      settings: keyedSettings as never,
+      credentials: credentialStoreFor('https://models.example/v1'),
+    });
     await keyed.notes.create({ path: 'notes/keyed', title: 'Keyed', body: 'x' });
     await expect(keyed.kg.reindexNote('notes/keyed')).resolves.toMatchObject({ entitiesAdded: 2 });
-    expect(runtime.llmOptions.at(-1)).toMatchObject({ apiKey: 'key', baseUrl: 'not a url', defaultModel: 'remote' });
+    expect(runtime.llmOptions.at(-1)).toMatchObject({
+      apiKey: SYNTHETIC_MODEL_CREDENTIAL,
+      baseUrl: 'https://models.example/v1',
+      defaultModel: 'remote',
+    });
 
     for (const baseUrl of ['http://localhost:1']) {
       const loopbackSettings = {
@@ -815,10 +1175,212 @@ describe('production local-first composition ports', () => {
           ? { provider: 'custom', baseUrl, model: 'local', apiKey: '' }
           : false,
       };
-      const local = await createProductionKnowledgeService({ userDataPath: `/tmp/${encodeURIComponent(baseUrl)}`, settings: loopbackSettings as never, credentials: credentialStore() });
+      const local = await createProductionKnowledgeService({
+        userDataPath: `/tmp/${encodeURIComponent(baseUrl)}`,
+        settings: loopbackSettings as never,
+        credentials: credentialStoreFor(baseUrl),
+      });
       await local.notes.create({ path: 'notes/local', title: 'Local', body: 'x' });
       await expect(local.kg.reindexNote('notes/local')).resolves.toMatchObject({ entitiesAdded: 2 });
     }
+  });
+  it('covers the production adapter wikiForNote (current-byte digest) and all safe WIKI states/fields', async () => {
+    // current-byte digest: the package query receives the full note body and
+    // returns a current projection whose content digest matches the input.
+    runtime.wikiForNote.mockImplementation((request: {
+      title: string; body: string;
+      tags?: ReadonlyArray<string>; related?: ReadonlyArray<string>;
+      metadata?: Record<string, unknown>;
+    }) => {
+      const digest = computeCanonicalWikiDigest(request);
+      return {
+        note_path: 'notes/wikified',
+        expected_content_digest: digest,
+        truth: 'current',
+        current: {
+          id: 100, note_path: 'notes/wikified', status: 'current', content_digest: digest,
+          summary: 'current-byte summary', tags: ['local'], entity_ids: ['concept:alpha'],
+          relation_signatures: ['concept:alpha|related_to|concept:beta'],
+          provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+          failure_reason: null, failure_stage: null,
+        },
+        latest: {
+          id: 100, note_path: 'notes/wikified', status: 'current', content_digest: digest,
+          summary: 'current-byte summary', tags: ['local'], entity_ids: ['concept:alpha'],
+          relation_signatures: ['concept:alpha|related_to|concept:beta'],
+          provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+          failure_reason: null, failure_stage: null,
+        },
+        stale: [],
+        failed: [],
+        provenance: { provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000 },
+      };
+    });
+    const localSettings = { get: (key: string) => key === 'modelApi' ? modelApi : false };
+    const current = await createProductionKnowledgeService({
+      userDataPath: '/tmp/wiki-current',
+      settings: localSettings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+    });
+    const currentReceipt = await current.notes.createWithBuild({
+      path: 'notes/wikified', title: 'Wikified', body: 'canon bytes',
+    });
+    const expectedCanonicalDigest = computeCanonicalWikiDigest({
+      title: 'Wikified', body: 'canon bytes', tags: [], related: [],
+      metadata: { type: 'note', status: 'active' },
+    });
+    expect(expectedCanonicalDigest).toBe('30f5870232b9abb61b3b442b0e98e853ffaf9d656e80e3d2166205bb9009fd11');
+    expect(currentReceipt).toMatchObject({
+      localState: 'LOCAL_SAVED',
+      build: { state: 'BUILT', wiki: {
+        truth: 'current',
+        expectedContentDigest: expectedCanonicalDigest,
+        current: { contentDigest: expectedCanonicalDigest },
+        latest: { contentDigest: expectedCanonicalDigest },
+        stale: [], failed: [],
+        provenance: { provider: 'minimax', model: 'MiniMax-M3' },
+      } },
+    });
+    // The package query was called with the current body bytes.
+    const lastCurrentCall = runtime.wikiForNote.mock.calls.at(-1)?.[0] as {
+      title: string; body: string;
+      tags?: ReadonlyArray<string>; related?: ReadonlyArray<string>;
+      metadata?: Record<string, unknown>;
+    };
+    expect(lastCurrentCall.body).toBe('canon bytes');
+    const ragCallsAfterCurrent = runtime.indexOne.mock.calls.length;
+    await current.close();
+
+    // stale truth: current projection is missing, latest is the prior byte digest,
+    // stale[] holds the older digest list, and provenance is preserved.
+    runtime.wikiForNote.mockReturnValueOnce({
+      note_path: 'notes/wikified',
+      expected_content_digest: 'sha256:newerdigest',
+      truth: 'stale',
+      current: null,
+      latest: {
+        id: 101, note_path: 'notes/wikified', status: 'stale', content_digest: 'sha256:olderdigest',
+        summary: 'older summary', tags: ['local'], entity_ids: ['concept:alpha'],
+        relation_signatures: ['concept:alpha|related_to|concept:beta'],
+        provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+        failure_reason: null, failure_stage: null,
+      },
+      stale: [
+        { id: 103, note_path: 'notes/wikified', status: 'stale', content_digest: 'sha256:olderdigest',
+          summary: 'older', tags: ['local'], entity_ids: ['concept:alpha'],
+          relation_signatures: ['concept:alpha|related_to|concept:beta'],
+          provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+          failure_reason: null, failure_stage: null },
+        { id: 102, note_path: 'notes/wikified', status: 'stale', content_digest: 'sha256:oldestdigest',
+          summary: 'oldest', tags: [], entity_ids: [], relation_signatures: [],
+          provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+          failure_reason: null, failure_stage: null },
+      ],
+      failed: [],
+      provenance: { provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000 },
+    });
+    const staleSettings = { get: (key: string) => key === 'modelApi' ? modelApi : false };
+    const stale = await createProductionKnowledgeService({
+      userDataPath: '/tmp/wiki-stale',
+      settings: staleSettings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+    });
+    const staleReceipt = await stale.notes.createWithBuild({
+      path: 'notes/wikified', title: 'Wikified', body: 'canon bytes',
+    });
+    expect(staleReceipt).toMatchObject({
+      build: { state: 'BUILD_FAILED', failureStage: 'wiki', failureReason: 'WIKI_STALE',
+        wiki: { truth: 'stale', expectedContentDigest: 'sha256:newerdigest',
+          // selected = first stale with digest != expected (olderdigest)
+          projection: { contentDigest: 'sha256:olderdigest', status: 'stale',
+            summary: 'older', tags: ['local'], entityIds: ['concept:alpha'],
+            relationSignatures: ['concept:alpha|related_to|concept:beta'] },
+          current: null,
+          latest: { contentDigest: 'sha256:olderdigest' },
+          stale: expect.arrayContaining([
+            expect.objectContaining({ contentDigest: 'sha256:olderdigest' }),
+            expect.objectContaining({ contentDigest: 'sha256:oldestdigest' }),
+          ]),
+          failed: [],
+          provenance: { provider: 'minimax', model: 'MiniMax-M3' } } },
+    });
+    expect(runtime.indexOne.mock.calls.length).toBe(ragCallsAfterCurrent);
+    await stale.close();
+
+    // failed truth: failed[] holds the failure, the projection carries the safe
+    // failure reason and stage, and summary/tags/entities are nulled/cleared.
+    runtime.wikiForNote.mockReturnValueOnce({
+      note_path: 'notes/wikified',
+      expected_content_digest: 'sha256:expecteddigest',
+      truth: 'failed',
+      current: null,
+      latest: null,
+      stale: [],
+      failed: [
+        { id: 200, note_path: 'notes/wikified', status: 'failed',
+          content_digest: 'sha256:expecteddigest',
+          summary: 'should-be-null', tags: ['should-be-empty'], entity_ids: ['should-be-empty'],
+          relation_signatures: ['should-be-empty'],
+          provider: 'minimax', model: 'MiniMax-M3', generated_at: 1_753_000_000_000,
+          failure_reason: 'WIKI_PROVIDER_DOWN', failure_stage: 'provider' },
+      ],
+      provenance: null,
+    });
+    const failedSettings = { get: (key: string) => key === 'modelApi' ? modelApi : false };
+    const failedService = await createProductionKnowledgeService({
+      userDataPath: '/tmp/wiki-failed',
+      settings: failedSettings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+    });
+    const failedReceipt = await failedService.notes.createWithBuild({
+      path: 'notes/wikified', title: 'Wikified', body: 'canon bytes',
+    });
+    expect(failedReceipt).toMatchObject({
+      build: { state: 'BUILD_FAILED', failureStage: 'wiki',
+        wiki: { truth: 'failed', expectedContentDigest: 'sha256:expecteddigest',
+          projection: { status: 'failed', contentDigest: 'sha256:expecteddigest',
+            summary: null, tags: [], entityIds: [], relationSignatures: [],
+            failureStage: 'provider', failureReason: 'WIKI_PROVIDER_DOWN',
+            provenance: null },
+          current: null, latest: null, stale: [], failed: [expect.objectContaining({
+            status: 'failed', contentDigest: 'sha256:expecteddigest', summary: null,
+            tags: [], entityIds: [], relationSignatures: [],
+            failureStage: 'provider', failureReason: 'WIKI_PROVIDER_DOWN',
+            provenance: null,
+          })],
+          provenance: null } },
+    });
+    expect(runtime.indexOne.mock.calls.length).toBe(ragCallsAfterCurrent);
+    await failedService.close();
+
+    // missing truth: no projection, no current, no latest, empty lists, no provenance.
+    runtime.wikiForNote.mockReturnValueOnce({
+      note_path: 'notes/wikified',
+      expected_content_digest: null,
+      truth: 'missing',
+      current: null,
+      latest: null,
+      stale: [],
+      failed: [],
+      provenance: null,
+    });
+    const missingSettings = { get: (key: string) => key === 'modelApi' ? modelApi : false };
+    const missingService = await createProductionKnowledgeService({
+      userDataPath: '/tmp/wiki-missing',
+      settings: missingSettings as never,
+      credentials: credentialStoreFor(modelApi.baseUrl),
+    });
+    const missingReceipt = await missingService.notes.createWithBuild({
+      path: 'notes/wikified', title: 'Wikified', body: 'canon bytes',
+    });
+    expect(missingReceipt).toMatchObject({
+      build: { state: 'BUILD_FAILED', failureStage: 'wiki', failureReason: 'WIKI_MISSING',
+        wiki: { truth: 'missing', expectedContentDigest: null,
+          projection: null, current: null, latest: null,
+          stale: [], failed: [], provenance: null } },
+    });
+    expect(runtime.indexOne.mock.calls.length).toBe(ragCallsAfterCurrent);
+    await missingService.close();
   });
 });
 

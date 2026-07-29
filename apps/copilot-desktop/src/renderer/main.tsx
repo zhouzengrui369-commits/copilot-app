@@ -4,7 +4,16 @@ import { StartupAppBoundary } from './startup-shell.js';
 import './styles/theme.css';
 import './styles/app.css';
 
-const loadApp = () => import('./App').then((module) => ({ default: module.App }));
+const browserPrototype = import.meta.env.VITE_COPILOT_BROWSER_PROTOTYPE === '1';
+const browserPrototypeReady = browserPrototype
+  ? import('./prototype/browser-api.js').then(({ installBrowserPrototype }) => {
+      installBrowserPrototype();
+    })
+  : Promise.resolve();
+
+const loadApp = () => browserPrototypeReady
+  .then(() => import('./App'))
+  .then((module) => ({ default: module.App }));
 
 const rootEl = document.getElementById('root');
 if (!rootEl) {

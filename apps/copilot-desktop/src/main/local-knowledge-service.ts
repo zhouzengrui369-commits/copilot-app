@@ -5,7 +5,8 @@
  * The service itself depends on narrow ports, which keeps IPC tests hermetic
  * and lets the still-evolving KG/Todo package exports change independently.
  */
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
+import { lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import type {
   BacklinkRecord,
@@ -15,9 +16,12 @@ import type {
   KgRelation,
   KgSubgraph,
   KgSubgraphRequest,
+  KnowledgeBuildStatusReceipt,
   ListNotesRequest,
   ListTodosRequest,
   NoteDocument,
+  NoteBuildReceipt,
+  NoteCommitBuildReceipt,
   NoteList,
   NoteRecord,
   RagAnswer,
@@ -29,6 +33,8 @@ import type {
   TodoRecord,
   UpdateNoteRequest,
   UpdateTodoRequest,
+  WikiProjectionReceipt,
+  WikiTruthReceipt,
 } from '../shared/domain-api.js';
 import type { SettingsStorage } from './settings-store.js';
 import {
@@ -52,6 +58,74 @@ export class DomainServiceError extends Error {
     super(message);
     this.name = 'DomainServiceError';
   }
+}
+
+export const LOCAL_STORAGE_NATIVE_UNAVAILABLE = 'LOCAL_STORAGE_NATIVE_UNAVAILABLE';
+
+export function resolveSourceSqliteNativeBinding(options: {
+  isPackaged: boolean;
+  configuredPath: string | undefined;
+  allowedTaskRoot: string;
+  sharedNodeModulesRoot: string;
+  currentUid?: number;
+}): string | undefined {
+  if (options.isPackaged) return undefined;
+
+  const unavailable = (): never => {
+    throw new DomainServiceError('INTERNAL', LOCAL_STORAGE_NATIVE_UNAVAILABLE);
+  };
+
+  try {
+    const configuredPath = options.configuredPath;
+    if (
+      typeof configuredPath !== 'string'
+      || configuredPath.length === 0
+      || !path.isAbsolute(configuredPath)
+      || path.normalize(configuredPath) !== configuredPath
+    ) {
+      return unavailable();
+    }
+
+    const requested = lstatSync(configuredPath);
+    if (!requested.isFile() || requested.isSymbolicLink() || requested.nlink !== 1) {
+      return unavailable();
+    }
+
+    const currentUid = options.currentUid
+      ?? (typeof process.getuid === 'function' ? process.getuid() : undefined);
+    if (currentUid !== undefined && requested.uid !== currentUid) return unavailable();
+
+    const binding = realpathSync(configuredPath);
+    const allowedTaskRoot = realpathSync(options.allowedTaskRoot);
+    const sharedNodeModulesRoot = realpathSync(options.sharedNodeModulesRoot);
+    if (binding !== configuredPath) return unavailable();
+    if (isWithinPath(sharedNodeModulesRoot, binding)) return unavailable();
+    if (!isWithinPath(allowedTaskRoot, binding)) return unavailable();
+
+    const relative = path.relative(allowedTaskRoot, binding);
+    const segments = relative.split(path.sep);
+    if (
+      segments.length !== 4
+      || !segments[0]
+      || segments[1] !== 'run'
+      || segments[2] !== 'native'
+      || path.extname(binding) !== '.node'
+    ) {
+      return unavailable();
+    }
+    return binding;
+  } catch (error) {
+    if (error instanceof DomainServiceError) throw error;
+    return unavailable();
+  }
+}
+
+function isWithinPath(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
+  return relative !== ''
+    && relative !== '..'
+    && !relative.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relative);
 }
 
 interface KbNoteWire {
@@ -136,6 +210,11 @@ interface KbPort {
     idempotencyKey: string;
   }): KbTrashEntryWire;
   setKgStatus?(path: string, status: 'pending' | 'processing' | 'done' | 'failed'): void;
+  listKgPending?(status?: 'pending' | 'processing' | 'done' | 'failed'): Array<{
+    note_path: string;
+    status: 'pending' | 'processing' | 'done' | 'failed';
+    queued_at: number;
+  }>;
   close?(): void;
 }
 
@@ -144,7 +223,10 @@ interface KgPort {
   reindexNote(note: NoteDocument): Promise<{
     entitiesAdded: number;
     entitiesLinked: number;
+    status?: 'done' | 'failed';
+    reason?: string;
   }>;
+  wikiForNote?(note: NoteDocument): Promise<WikiTruthReceipt> | WikiTruthReceipt;
   removeNote(notePath: string): Promise<void> | void;
   relatedNotes?(question: string, maxCandidates?: number): Promise<KgNoteCandidate[]> | KgNoteCandidate[];
   close?(): void;
@@ -194,6 +276,10 @@ export class LocalKnowledgeService {
   private readonly cloudBackup?: CloudBackupPort;
   private readonly clock: () => number;
   private readonly uuid: () => string;
+  private readonly notePathLocks = new Map<string, Promise<void>>();
+  private readonly backgroundBuilds = new Map<string, Promise<void>>();
+  private readonly backgroundBuildGenerations = new Map<string, number>();
+  private isClosing = false;
 
   constructor(options: LocalKnowledgeServiceOptions) {
     this.kb = options.kb;
@@ -229,37 +315,65 @@ export class LocalKnowledgeService {
       if (request.tags?.includes(TODO_TAG)) {
         throw new DomainServiceError('INVALID_ARGUMENT', 'reserved system Todo tag is not allowed');
       }
-      const body = request.body ?? request.transcript ?? '';
-      const created = this.kb.createNote({ ...request, body });
-      await this.maybeQueueBackup('create', created.path);
-      return toNoteRecord(created);
+      const note = await this.withNotePathLock(
+        request.path,
+        () => this.createNoteUnlocked(request),
+      );
+      return this.queueCommittedNoteBuild(note);
+    },
+
+    createWithBuild: async (request: CreateNoteRequest): Promise<NoteCommitBuildReceipt> => {
+      assertNoteCreate(request);
+      assertPublicNotePath(request.path);
+      if (request.tags?.includes(TODO_TAG)) {
+        throw new DomainServiceError('INVALID_ARGUMENT', 'reserved system Todo tag is not allowed');
+      }
+      return this.withNotePathLock(request.path, async () => {
+        const note = await this.createNoteUnlocked(request);
+        return {
+          note,
+          localState: 'LOCAL_SAVED',
+          build: await this.buildCommittedNoteUnlocked(note.path, note),
+        };
+      });
     },
 
     update: async (request: UpdateNoteRequest): Promise<NoteRecord | null> => {
-      assertNonEmpty(request?.path, 'note path');
+      assertNoteUpdate(request);
       assertPublicNotePath(request.path);
-      if (!request.patch || typeof request.patch !== 'object') {
-        throw new DomainServiceError('INVALID_ARGUMENT', 'note patch is required');
-      }
       if (request.patch.tags?.includes(TODO_TAG)) {
         throw new DomainServiceError('INVALID_ARGUMENT', 'reserved system Todo tag is not allowed');
       }
-      const updated = this.kb.updateNote(request.path, request.patch);
-      if (updated) await this.maybeQueueBackup('update', updated.path);
-      return updated ? toNoteRecord(updated) : null;
+      const note = await this.withNotePathLock(
+        request.path,
+        () => this.updateNoteUnlocked(request),
+      );
+      return note ? this.queueCommittedNoteBuild(note) : null;
+    },
+
+    updateWithBuild: async (
+      request: UpdateNoteRequest,
+    ): Promise<NoteCommitBuildReceipt | null> => {
+      assertNoteUpdate(request);
+      assertPublicNotePath(request.path);
+      if (request.patch.tags?.includes(TODO_TAG)) {
+        throw new DomainServiceError('INVALID_ARGUMENT', 'reserved system Todo tag is not allowed');
+      }
+      return this.withNotePathLock(request.path, async () => {
+        const note = await this.updateNoteUnlocked(request);
+        if (!note) return null;
+        return {
+          note,
+          localState: 'LOCAL_SAVED',
+          build: await this.buildCommittedNoteUnlocked(note.path, note),
+        };
+      });
     },
 
     remove: async (notePath: string): Promise<boolean> => {
       assertNonEmpty(notePath, 'note path');
       assertPublicNotePath(notePath);
-      const current = this.kb.readNote(notePath);
-      if (!current) return false;
-      await this.notes.moveToTrash({
-        path: notePath,
-        expectedRevision: `note:${current.note.updated_at}`,
-        idempotencyKey: randomUUID(),
-      });
-      return true;
+      return this.withNotePathLock(notePath, () => this.removeNoteUnlocked(notePath));
     },
 
     moveToTrash: async (request: {
@@ -271,10 +385,10 @@ export class LocalKnowledgeService {
       assertNonEmpty(request?.expectedRevision, 'expected revision');
       assertNonEmpty(request?.idempotencyKey, 'idempotency key');
       assertPublicNotePath(request.path);
-      const moved = this.moveToTrash({ ...request, kind: 'note' });
-      const completed = await this.finishTrashCleanup(moved);
-      await this.maybeQueueBackup('remove', request.path);
-      return completed;
+      return this.withNotePathLock(
+        request.path,
+        () => this.moveNoteToTrashUnlocked(request),
+      );
     },
 
     getBacklinks: async (notePath: string): Promise<BacklinkRecord[]> => {
@@ -288,30 +402,38 @@ export class LocalKnowledgeService {
     },
   };
 
+  readonly wiki = {
+    getForNote: async (notePath: string): Promise<WikiTruthReceipt> => {
+      assertNonEmpty(notePath, 'note path');
+      assertPublicNotePath(notePath);
+      const document = await this.notes.get(notePath);
+      if (!document) throw new DomainServiceError('NOT_FOUND', 'note was not found');
+      if (!this.kgPort.wikiForNote) {
+        throw new DomainServiceError('INTERNAL', 'local WIKI query is unavailable');
+      }
+      try {
+        const truth = await this.kgPort.wikiForNote(document);
+        return {
+          ...truth,
+          knowledgeBuild: this.readKnowledgeBuildStatus(document, truth),
+        };
+      } catch (error) {
+        throw normalizeExternalError(error);
+      }
+    },
+  };
+
   readonly kg = {
     getSubgraph: (request?: KgSubgraphRequest | number): Promise<KgSubgraph> =>
       this.kgPort.getSubgraph(request),
 
     reindexNote: async (notePath: string): Promise<ReindexResult> => {
       assertNonEmpty(notePath, 'note path');
-      const document = await this.notes.get(notePath);
-      if (!document) throw new DomainServiceError('NOT_FOUND', 'note was not found');
-      this.kb.setKgStatus?.(notePath, 'processing');
-      try {
-        const kg = await this.kgPort.reindexNote(document);
-        const rag = await this.ragPort.indexNote(document);
-        this.kb.setKgStatus?.(notePath, rag.errors.length ? 'failed' : 'done');
-        return {
-          notePath,
-          entitiesAdded: kg.entitiesAdded,
-          entitiesLinked: kg.entitiesLinked,
-          ragChunksInserted: rag.chunksInserted,
-          errors: rag.errors,
-        };
-      } catch (error) {
-        this.kb.setKgStatus?.(notePath, 'failed');
-        throw normalizeExternalError(error);
-      }
+      assertPublicNotePath(notePath);
+      return this.withNotePathLock(
+        notePath,
+        () => this.reindexNoteUnlocked(notePath),
+      );
     },
   };
 
@@ -578,7 +700,30 @@ export class LocalKnowledgeService {
     }
   }
 
+  /**
+   * Crash recovery for the existing durable kg_pending queue. A prior
+   * `processing` row is returned to `pending`; builds are scheduled without
+   * delaying service startup.
+   */
+  reconcileKnowledgeBuildStartup(): void {
+    const pending = this.kb.listKgPending;
+    if (!pending) return;
+    for (const entry of pending.call(this.kb)) {
+      if (entry.status !== 'pending' && entry.status !== 'processing') continue;
+      if (entry.status === 'processing') {
+        try {
+          this.kb.setKgStatus?.(entry.note_path, 'pending');
+        } catch {
+          continue;
+        }
+      }
+      this.scheduleBackgroundBuild(entry.note_path);
+    }
+  }
+
   async close(): Promise<void> {
+    this.isClosing = true;
+    await Promise.allSettled([...this.backgroundBuilds.values()]);
     await this.ragPort.close?.();
     this.kgPort.close?.();
     this.kb.close?.();
@@ -617,6 +762,402 @@ export class LocalKnowledgeService {
       return normalizeRagAnswer(item.value);
     } catch (error) {
       throw normalizeExternalError(error);
+    }
+  }
+
+  private async createNoteUnlocked(request: CreateNoteRequest): Promise<NoteRecord> {
+    const body = request.body ?? request.transcript ?? '';
+    const created = this.kb.createNote({ ...request, body });
+    await this.maybeQueueBackup('create', created.path);
+    return toNoteRecord(created);
+  }
+
+  private async updateNoteUnlocked(request: UpdateNoteRequest): Promise<NoteRecord | null> {
+    const updated = this.kb.updateNote(request.path, request.patch);
+    if (updated) await this.maybeQueueBackup('update', updated.path);
+    return updated ? toNoteRecord(updated) : null;
+  }
+
+  private queueCommittedNoteBuild(note: NoteRecord): NoteRecord {
+    let document: NoteDocument | null = null;
+    try {
+      document = this.readNoteDocumentUnlocked(note.path);
+    } catch {
+      // The local commit is already authoritative. A read failure is handled
+      // by the background lane and must not turn the save receipt into failure.
+    }
+    const receipt: NoteRecord = {
+      ...note,
+      localState: 'LOCAL_SAVED',
+      knowledgeBuild: {
+        state: 'queued',
+        revision: document ? noteBuildRevision(document) : null,
+      },
+    };
+    this.scheduleBackgroundBuild(note.path);
+    return receipt;
+  }
+
+  private scheduleBackgroundBuild(notePath: string): void {
+    if (this.isClosing) return;
+    const key = normalizeNotePathForLock(notePath);
+    this.backgroundBuildGenerations.set(
+      key,
+      (this.backgroundBuildGenerations.get(key) ?? 0) + 1,
+    );
+    if (this.backgroundBuilds.has(key)) return;
+    this.startBackgroundBuildOwner(notePath, key);
+  }
+
+  private startBackgroundBuildOwner(notePath: string, key: string): void {
+    let drainedGeneration = this.backgroundBuildGenerations.get(key) ?? 0;
+    let owner!: Promise<void>;
+    owner = Promise.resolve()
+      .then(async () => {
+        drainedGeneration = await this.drainBackgroundBuild(notePath, key);
+      })
+      .catch(() => {
+        const currentGeneration = this.backgroundBuildGenerations.get(key) ?? 0;
+        try {
+          this.kb.setKgStatus?.(
+            notePath,
+            currentGeneration > drainedGeneration ? 'pending' : 'failed',
+          );
+        } catch {
+          // Local note bytes remain authoritative.
+        }
+      })
+      .finally(() => {
+        if (this.backgroundBuilds.get(key) !== owner) return;
+        const currentGeneration = this.backgroundBuildGenerations.get(key) ?? 0;
+        if (currentGeneration > drainedGeneration) {
+          try {
+            this.kb.setKgStatus?.(notePath, 'pending');
+          } catch {
+            // The successor still owns the in-memory wakeup.
+          }
+          if (this.isClosing) {
+            this.backgroundBuilds.delete(key);
+            return;
+          }
+          // Replace the owner before this finally handler completes. A save
+          // that arrived after the drained work settled cannot lose its wakeup.
+          this.startBackgroundBuildOwner(notePath, key);
+          return;
+        }
+        this.backgroundBuilds.delete(key);
+      });
+    this.backgroundBuilds.set(key, owner);
+  }
+
+  private async drainBackgroundBuild(notePath: string, key: string): Promise<number> {
+    let drainedGeneration = this.backgroundBuildGenerations.get(key) ?? 0;
+    while (!this.isClosing) {
+      const generation = this.backgroundBuildGenerations.get(key) ?? 0;
+      drainedGeneration = generation;
+      const document = this.readNoteDocumentUnlocked(notePath);
+      if (!document) return drainedGeneration;
+      await this.buildCommittedNoteUnlocked(notePath, document.note);
+      const latestGeneration = this.backgroundBuildGenerations.get(key) ?? 0;
+      const latestDocument = this.readNoteDocumentUnlocked(notePath);
+      if (
+        latestGeneration === generation
+        && latestDocument !== null
+        && sameNoteDocument(latestDocument, document)
+      ) {
+        return drainedGeneration;
+      }
+      try {
+        this.kb.setKgStatus?.(notePath, 'pending');
+      } catch {
+        return drainedGeneration;
+      }
+    }
+    return drainedGeneration;
+  }
+
+  private readKnowledgeBuildStatus(
+    document: NoteDocument,
+    wiki: WikiTruthReceipt,
+  ): KnowledgeBuildStatusReceipt {
+    const revision = noteBuildRevision(document);
+    const currentProjection = wiki.current ?? wiki.projection;
+    const digestCurrent = (
+      wiki.notePath === document.note.path
+      && wiki.truth === 'current'
+      && wiki.expectedContentDigest !== null
+      && currentProjection?.status === 'current'
+      && currentProjection.notePath === document.note.path
+      && currentProjection.contentDigest === wiki.expectedContentDigest
+    );
+    if (digestCurrent) return { state: 'ready', revision };
+    let entry: ReturnType<NonNullable<KbPort['listKgPending']>>[number] | undefined;
+    try {
+      entry = this.kb.listKgPending?.()
+        .find((candidate) =>
+          normalizeNotePathForLock(candidate.note_path)
+            === normalizeNotePathForLock(document.note.path),
+        );
+    } catch {
+      return { state: 'not-ready', revision };
+    }
+    if (entry?.status === 'pending') return { state: 'queued', revision };
+    if (entry?.status === 'processing') return { state: 'running', revision };
+    if (entry?.status === 'failed') return { state: 'failed', revision };
+    return { state: 'not-ready', revision };
+  }
+
+  private async removeNoteUnlocked(notePath: string): Promise<boolean> {
+    const current = this.kb.readNote(notePath);
+    if (!current) return false;
+    await this.moveNoteToTrashUnlocked({
+      path: notePath,
+      expectedRevision: `note:${current.note.updated_at}`,
+      idempotencyKey: randomUUID(),
+    });
+    return true;
+  }
+
+  private async moveNoteToTrashUnlocked(request: {
+    path: string;
+    expectedRevision: string;
+    idempotencyKey: string;
+  }): Promise<LocalTrashEntry> {
+    const moved = this.moveToTrash({ ...request, kind: 'note' });
+    const completed = await this.finishTrashCleanup(moved);
+    await this.maybeQueueBackup('remove', request.path);
+    return completed;
+  }
+
+  private async reindexNoteUnlocked(notePath: string): Promise<ReindexResult> {
+    const document = this.readNoteDocumentUnlocked(notePath);
+    if (!document) throw new DomainServiceError('NOT_FOUND', 'note was not found');
+    this.kb.setKgStatus?.(notePath, 'processing');
+    try {
+      const kg = await this.kgPort.reindexNote(document);
+      if (!this.isCurrentNoteDocument(document)) {
+        this.kb.setKgStatus?.(notePath, 'failed');
+        return changedDuringReindex(notePath, kg.entitiesAdded, kg.entitiesLinked, 0);
+      }
+      if (kg.status === 'failed') {
+        const reason = stableBuildReason(kg.reason, 'KG_BUILD_FAILED');
+        this.kb.setKgStatus?.(notePath, 'failed');
+        return {
+          notePath,
+          entitiesAdded: kg.entitiesAdded,
+          entitiesLinked: kg.entitiesLinked,
+          ragChunksInserted: 0,
+          errors: [reason],
+        };
+      }
+      const wiki = this.kgPort.wikiForNote
+        ? await this.kgPort.wikiForNote(document)
+        : missingWikiTruth(notePath);
+      if (!this.isCurrentNoteDocument(document)) {
+        this.kb.setKgStatus?.(notePath, 'failed');
+        return changedDuringReindex(notePath, kg.entitiesAdded, kg.entitiesLinked, 0);
+      }
+      if (wiki.truth !== 'current') {
+        const reason = wikiBuildFailureReason(wiki);
+        this.kb.setKgStatus?.(notePath, 'failed');
+        return {
+          notePath,
+          entitiesAdded: kg.entitiesAdded,
+          entitiesLinked: kg.entitiesLinked,
+          ragChunksInserted: 0,
+          errors: [reason],
+        };
+      }
+      const rag = await this.ragPort.indexNote(document);
+      if (!this.isCurrentNoteDocument(document)) {
+        this.kb.setKgStatus?.(notePath, 'failed');
+        return changedDuringReindex(
+          notePath,
+          kg.entitiesAdded,
+          kg.entitiesLinked,
+          rag.chunksInserted,
+          rag.errors,
+        );
+      }
+      this.kb.setKgStatus?.(notePath, rag.errors.length ? 'failed' : 'done');
+      return {
+        notePath,
+        entitiesAdded: kg.entitiesAdded,
+        entitiesLinked: kg.entitiesLinked,
+        ragChunksInserted: rag.chunksInserted,
+        errors: rag.errors,
+      };
+    } catch (error) {
+      this.kb.setKgStatus?.(notePath, 'failed');
+      throw normalizeExternalError(error);
+    }
+  }
+
+  private async buildCommittedNoteUnlocked(
+    notePath: string,
+    expectedNote: NoteRecord,
+  ): Promise<NoteBuildReceipt> {
+    let document: NoteDocument | null = null;
+    try {
+      document = this.readNoteDocumentUnlocked(notePath);
+    } catch {
+      return failedBuildReceipt(notePath, 'kg', 'LOCAL_NOTE_READ_FAILED');
+    }
+    if (!document) return failedBuildReceipt(notePath, 'kg', 'LOCAL_NOTE_READ_FAILED');
+    if (!sameNoteRecord(document.note, expectedNote)) {
+      return this.noteChangedDuringBuild(notePath);
+    }
+
+    try {
+      this.kb.setKgStatus?.(notePath, 'processing');
+    } catch {
+      // The local commit already succeeded. Status bookkeeping cannot undo it.
+    }
+
+    let kgState: NoteBuildReceipt['kg'] = {
+      state: 'failed',
+      entitiesAdded: 0,
+      entitiesLinked: 0,
+      reason: 'KG_BUILD_FAILED',
+    };
+    let kgThrew = false;
+    try {
+      const result = await this.kgPort.reindexNote(document);
+      kgState = {
+        state: result.status === 'failed' ? 'failed' : 'ready',
+        entitiesAdded: result.entitiesAdded,
+        entitiesLinked: result.entitiesLinked,
+        reason: result.status === 'failed'
+          ? stableBuildReason(result.reason, 'KG_BUILD_FAILED')
+          : null,
+      };
+    } catch (error) {
+      kgThrew = true;
+      kgState = {
+        state: 'failed',
+        entitiesAdded: 0,
+        entitiesLinked: 0,
+        reason: stableDomainReason(error, 'KG_BUILD_FAILED'),
+      };
+    }
+    if (!this.isCurrentNoteDocument(document)) {
+      return this.noteChangedDuringBuild(notePath);
+    }
+
+    let wiki = missingWikiTruth(notePath);
+    if (this.kgPort.wikiForNote) {
+      try {
+        wiki = await this.kgPort.wikiForNote(document);
+      } catch {
+        // Missing is the fail-closed renderer truth when the local query itself
+        // cannot produce a digest-bound projection receipt.
+      }
+    }
+    if (!this.isCurrentNoteDocument(document)) {
+      return this.noteChangedDuringBuild(notePath);
+    }
+
+    let ragState: NoteBuildReceipt['rag'] = {
+      state: 'failed',
+      chunksInserted: 0,
+      reason: kgState.state === 'failed'
+        ? 'RAG_INDEX_BLOCKED_BY_KG'
+        : wiki.truth !== 'current'
+          ? 'RAG_INDEX_BLOCKED_BY_WIKI'
+          : 'RAG_INDEX_FAILED',
+    };
+    if (kgState.state === 'ready' && wiki.truth === 'current') {
+      try {
+        const result = await this.ragPort.indexNote(document);
+        ragState = {
+          state: result.errors.length ? 'failed' : 'ready',
+          chunksInserted: result.chunksInserted,
+          reason: result.errors.length ? 'RAG_INDEX_FAILED' : null,
+        };
+      } catch (error) {
+        ragState = {
+          state: 'failed',
+          chunksInserted: 0,
+          reason: stableDomainReason(error, 'RAG_INDEX_FAILED'),
+        };
+      }
+    }
+    if (!this.isCurrentNoteDocument(document)) {
+      return this.noteChangedDuringBuild(notePath);
+    }
+
+    let failureStage: NoteBuildReceipt['failureStage'] = null;
+    let failureReason: string | null = null;
+    if (kgThrew) {
+      failureStage = 'kg';
+      failureReason = kgState.reason;
+    } else if (wiki.truth !== 'current') {
+      failureStage = 'wiki';
+      failureReason = wikiBuildFailureReason(wiki);
+    } else if (kgState.state === 'failed') {
+      failureStage = 'kg';
+      failureReason = kgState.reason;
+    } else if (ragState.state === 'failed') {
+      failureStage = 'rag';
+      failureReason = ragState.reason;
+    }
+    const state = failureStage === null ? 'BUILT' : 'BUILD_FAILED';
+    try {
+      this.kb.setKgStatus?.(notePath, state === 'BUILT' ? 'done' : 'failed');
+    } catch {
+      // The receipt remains authoritative for this call even if status
+      // bookkeeping cannot be persisted.
+    }
+    return {
+      state,
+      kg: kgState,
+      wiki,
+      rag: ragState,
+      failureStage,
+      failureReason,
+    };
+  }
+
+  private readNoteDocumentUnlocked(notePath: string): NoteDocument | null {
+    const result = this.kb.readNote(notePath);
+    return result ? { note: toNoteRecord(result.note), body: result.body } : null;
+  }
+
+  private isCurrentNoteDocument(expected: NoteDocument): boolean {
+    const current = this.readNoteDocumentUnlocked(expected.note.path);
+    return current !== null
+      && sameNoteDocument(current, expected)
+      && sameNoteRecord(current.note, expected.note)
+      && noteBytesDigest(current.body) === noteBytesDigest(expected.body);
+  }
+
+  private noteChangedDuringBuild(notePath: string): NoteBuildReceipt {
+    try {
+      this.kb.setKgStatus?.(notePath, 'failed');
+    } catch {
+      // Local bytes remain authoritative even if status bookkeeping fails.
+    }
+    return failedBuildReceipt(notePath, 'kg', 'NOTE_CHANGED_DURING_BUILD');
+  }
+
+  private async withNotePathLock<T>(
+    notePath: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    const key = normalizeNotePathForLock(notePath);
+    const predecessor = this.notePathLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const tail = predecessor.then(() => hold, () => hold);
+    this.notePathLocks.set(key, tail);
+    await predecessor.catch(() => undefined);
+    try {
+      return await operation();
+    } finally {
+      release();
+      if (this.notePathLocks.get(key) === tail) this.notePathLocks.delete(key);
     }
   }
 
@@ -690,18 +1231,12 @@ export class LocalKnowledgeService {
     const raw = this.kb.readNote(notePath);
     if (!raw) throw new DomainServiceError('INTERNAL', 'restored note metadata is unavailable');
     const document = { note: toNoteRecord(raw.note), body: raw.body };
-    this.kb.setKgStatus?.(notePath, 'processing');
-    try {
-      const kg = await this.kgPort.reindexNote(document);
-      const rag = await this.ragPort.indexNote(document);
-      void kg;
-      this.kb.setKgStatus?.(notePath, rag.errors.length ? 'failed' : 'done');
-      if (rag.errors.length) {
-        throw new DomainServiceError('INTERNAL', 'restored note RAG indexing failed');
-      }
-    } catch (error) {
-      this.kb.setKgStatus?.(notePath, 'failed');
-      throw normalizeExternalError(error);
+    const receipt = await this.buildCommittedNoteUnlocked(notePath, document.note);
+    if (receipt.state === 'BUILD_FAILED') {
+      throw new DomainServiceError(
+        'INTERNAL',
+        `restored note build failed: ${receipt.failureReason ?? 'BUILD_FAILED'}`,
+      );
     }
   }
 
@@ -715,11 +1250,71 @@ export class LocalKnowledgeService {
   }
 }
 
+function failedBuildReceipt(
+  notePath: string,
+  failureStage: NonNullable<NoteBuildReceipt['failureStage']>,
+  failureReason: string,
+): NoteBuildReceipt {
+  return {
+    state: 'BUILD_FAILED',
+    kg: {
+      state: 'failed',
+      entitiesAdded: 0,
+      entitiesLinked: 0,
+      reason: failureStage === 'kg' ? failureReason : 'KG_BUILD_NOT_COMPLETED',
+    },
+    wiki: missingWikiTruth(notePath),
+    rag: {
+      state: 'failed',
+      chunksInserted: 0,
+      reason: 'RAG_INDEX_NOT_COMPLETED',
+    },
+    failureStage,
+    failureReason,
+  };
+}
+
+function missingWikiTruth(notePath: string): WikiTruthReceipt {
+  return {
+    notePath,
+    expectedContentDigest: null,
+    truth: 'missing',
+    projection: null,
+    current: null,
+    latest: null,
+    stale: [],
+    failed: [],
+    provenance: null,
+  };
+}
+
+function stableBuildReason(value: unknown, fallback: string): string {
+  return typeof value === 'string' && /^[A-Z][A-Z0-9_]{2,79}$/u.test(value)
+    ? value
+    : fallback;
+}
+
+function stableDomainReason(error: unknown, fallback: string): string {
+  const normalized = normalizeExternalError(error);
+  return normalized.code === 'INVALID_ARGUMENT' || normalized.code === 'NOT_FOUND'
+    ? fallback
+    : normalized.code;
+}
+
+function wikiBuildFailureReason(wiki: WikiTruthReceipt): string {
+  return wiki.truth === 'failed'
+    ? wiki.projection?.failureReason ?? 'WIKI_BUILD_FAILED'
+    : wiki.truth === 'stale'
+      ? 'WIKI_STALE'
+      : 'WIKI_MISSING';
+}
+
 /** Production composition. Package imports remain out of the renderer bundle. */
 export async function createProductionKnowledgeService(options: {
   userDataPath: string;
   settings: SettingsStorage;
   credentials: ModelCredentialStore;
+  sqliteNativeBinding?: string;
 }): Promise<LocalKnowledgeService> {
   // Variable dynamic imports intentionally form a narrow adapter boundary:
   // package workspace links are installed at runtime, while desktop typecheck
@@ -733,12 +1328,30 @@ export async function createProductionKnowledgeService(options: {
   const { KbClient, SqliteStore, MdFileStore } = kbModule;
 
   const dataRoot = path.join(options.userDataPath, 'local-first');
-  const sqlite = new SqliteStore({ dbPath: path.join(dataRoot, 'kb.sqlite') });
+  const nativeBinding = options.sqliteNativeBinding;
+  let sqlite: KbRuntimeSqliteStore | undefined;
+  let kgStore: PackageKgStore;
+  try {
+    sqlite = new SqliteStore({
+      dbPath: path.join(dataRoot, 'kb.sqlite'),
+      ...(nativeBinding === undefined ? {} : { nativeBinding }),
+    });
+    kgStore = new kgModule.KgStore({
+      dbPath: path.join(dataRoot, 'kg.sqlite'),
+      ...(nativeBinding === undefined ? {} : { nativeBinding }),
+    });
+  } catch {
+    try {
+      sqlite?.close?.();
+    } catch {
+      // Preserve the stable storage-runtime classification.
+    }
+    throw new DomainServiceError('INTERNAL', LOCAL_STORAGE_NATIVE_UNAVAILABLE);
+  }
   const kb = new KbClient({
     sqlite,
     md: new MdFileStore({ rootDir: path.join(dataRoot, 'notes') }),
   }) as unknown as KbPort;
-  const kgStore = new kgModule.KgStore({ dbPath: path.join(dataRoot, 'kg.sqlite') });
   const vectorStore = await ragModule.createVectorStore({
     dbPath: path.join(dataRoot, 'rag.sqlite'),
     dimensions: 1024,
@@ -832,17 +1445,22 @@ export async function createProductionKnowledgeService(options: {
 
   const service = new LocalKnowledgeService({ kb, kg, rag, settings: options.settings });
   await service.reconcileTrashStartup();
+  service.reconcileKnowledgeBuildStartup();
   return service;
 }
 
 interface KbRuntimeModule {
-  SqliteStore: new (options: { dbPath: string }) => unknown;
+  SqliteStore: new (options: { dbPath: string; nativeBinding?: string }) => KbRuntimeSqliteStore;
   MdFileStore: new (options: { rootDir: string }) => unknown;
   KbClient: new (options: { sqlite: unknown; md: unknown }) => KbPort;
 }
 
+interface KbRuntimeSqliteStore {
+  close?(): void;
+}
+
 interface KgRuntimeModule {
-  KgStore: new (options: { dbPath: string }) => PackageKgStore;
+  KgStore: new (options: { dbPath: string; nativeBinding?: string }) => PackageKgStore;
   KgBuilder: new (options: {
     store: PackageKgStore;
     provider: LlmProviderWire;
@@ -1055,6 +1673,37 @@ interface PackageKgStore {
   close(): void;
 }
 
+interface PackageWikiProjection {
+  id: number;
+  note_path: string;
+  status: 'current' | 'stale' | 'failed';
+  content_digest: string;
+  summary: string | null;
+  tags: string[];
+  entity_ids: string[];
+  relation_signatures: string[];
+  provider: string | null;
+  model: string | null;
+  generated_at: number;
+  failure_reason: string | null;
+  failure_stage: 'provider' | 'parse' | 'persist' | null;
+}
+
+interface PackageWikiTruth {
+  note_path: string;
+  expected_content_digest: string | null;
+  truth: 'current' | 'stale' | 'failed' | 'missing';
+  current: PackageWikiProjection | null;
+  latest: PackageWikiProjection | null;
+  stale: PackageWikiProjection[];
+  failed: PackageWikiProjection[];
+  provenance: {
+    provider: string;
+    model: string;
+    generated_at: number;
+  } | null;
+}
+
 interface PackageKgBuilder {
   buildNote(note: {
     path: string;
@@ -1065,7 +1714,13 @@ interface PackageKgBuilder {
     metadata?: Record<string, unknown>;
   }): Promise<{
     entitiesAdded: number;
+    status: 'done' | 'failed';
+    reason?: string;
     entitiesTotal: number;
+    wiki: {
+      truth: 'current' | 'failed';
+      content_digest: string;
+    };
   }>;
 }
 
@@ -1078,6 +1733,14 @@ interface PackageKgQuery {
     maxNodes?: number;
   }): KgSubgraph;
   fullGraph(maxNodes?: number): { nodes: KgEntity[]; edges: KgRelation[] };
+  wikiForNote(note: {
+    path: string;
+    title: string;
+    body: string;
+    tags?: string[];
+    related?: string[];
+    metadata?: Record<string, unknown>;
+  }): PackageWikiTruth;
 }
 
 class PackageKgAdapter implements KgPort {
@@ -1140,7 +1803,12 @@ class PackageKgAdapter implements KgPort {
       .slice(0, clampInteger(maxCandidates, 1, 50));
   }
 
-  async reindexNote(note: NoteDocument): Promise<{ entitiesAdded: number; entitiesLinked: number }> {
+  async reindexNote(note: NoteDocument): Promise<{
+    entitiesAdded: number;
+    entitiesLinked: number;
+    status: 'done' | 'failed';
+    reason?: string;
+  }> {
     const result = await this.createBuilder().buildNote({
       path: note.note.path,
       title: note.note.title,
@@ -1149,7 +1817,23 @@ class PackageKgAdapter implements KgPort {
       related: note.note.related,
       metadata: { type: note.note.type, status: note.note.status },
     });
-    return { entitiesAdded: result.entitiesAdded, entitiesLinked: result.entitiesTotal };
+    return {
+      entitiesAdded: result.entitiesAdded,
+      entitiesLinked: result.entitiesTotal,
+      status: result.status,
+      ...(result.reason ? { reason: stableBuildReason(result.reason, 'KG_BUILD_FAILED') } : {}),
+    };
+  }
+
+  wikiForNote(note: NoteDocument): WikiTruthReceipt {
+    return toWikiTruthReceipt(this.query.wikiForNote({
+      path: note.note.path,
+      title: note.note.title,
+      body: note.body,
+      tags: note.note.tags,
+      related: note.note.related,
+      metadata: { type: note.note.type, status: note.note.status },
+    }));
   }
 
   removeNote(notePath: string): void {
@@ -1159,6 +1843,69 @@ class PackageKgAdapter implements KgPort {
   close(): void {
     this.store.close();
   }
+}
+
+function toWikiTruthReceipt(result: PackageWikiTruth): WikiTruthReceipt {
+  const selected = result.truth === 'current'
+    ? result.current
+    : result.truth === 'failed'
+      ? result.failed.find((row) => row.content_digest === result.expected_content_digest) ?? null
+      : result.truth === 'stale'
+        ? result.stale.find((row) => row.content_digest !== result.expected_content_digest)
+          ?? result.stale.find((row) => row.content_digest === result.expected_content_digest)
+          ?? null
+        : null;
+  return {
+    notePath: result.note_path,
+    expectedContentDigest: result.expected_content_digest,
+    truth: result.truth,
+    projection: selected ? toWikiProjectionReceipt(selected) : null,
+    current: result.current ? toWikiProjectionReceipt(result.current) : null,
+    latest: result.latest ? toWikiProjectionReceipt(result.latest) : null,
+    stale: result.stale.map(toWikiProjectionReceipt),
+    failed: result.failed.map(toWikiProjectionReceipt),
+    provenance: result.truth === 'current' || result.truth === 'stale'
+      ? toWikiProvenanceReceipt(result.provenance)
+      : null,
+  };
+}
+
+function toWikiProjectionReceipt(row: PackageWikiProjection): WikiProjectionReceipt {
+  const failed = row.status === 'failed';
+  return {
+    projectionId: String(row.id),
+    notePath: row.note_path,
+    status: row.status,
+    contentDigest: row.content_digest,
+    summary: failed ? null : row.summary,
+    tags: failed ? [] : [...row.tags],
+    entityIds: failed ? [] : [...row.entity_ids],
+    relationSignatures: failed ? [] : [...row.relation_signatures],
+    generatedAt: Number.isFinite(row.generated_at) ? row.generated_at : null,
+    failureStage: failed ? row.failure_stage : null,
+    failureReason: failed ? stableBuildReason(row.failure_reason, 'WIKI_BUILD_FAILED') : null,
+    provenance: failed ? null : toWikiProvenanceReceipt(
+      row.provider && row.model
+        ? { provider: row.provider, model: row.model, generated_at: row.generated_at }
+        : null,
+    ),
+  };
+}
+
+function toWikiProvenanceReceipt(
+  provenance: PackageWikiTruth['provenance'],
+): WikiTruthReceipt['provenance'] {
+  if (
+    !provenance
+    || !provenance.provider
+    || !provenance.model
+    || !Number.isFinite(provenance.generated_at)
+  ) return null;
+  return {
+    provider: provenance.provider,
+    model: provenance.model,
+    generatedAt: provenance.generated_at,
+  };
 }
 
 async function* mapLlmStream(
@@ -1366,14 +2113,154 @@ function assertTodoId(id: TodoId): void {
 }
 
 function assertNoteCreate(request: CreateNoteRequest): void {
-  if (!request || typeof request !== 'object') {
+  if (!request || typeof request !== 'object' || Array.isArray(request)) {
     throw new DomainServiceError('INVALID_ARGUMENT', 'note request is required');
   }
   assertNonEmpty(request.path, 'note path');
   assertNonEmpty(request.title, 'note title');
+  if (request.body !== undefined && typeof request.body !== 'string') {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note body must be a string');
+  }
+  if (request.transcript !== undefined && typeof request.transcript !== 'string') {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note transcript must be a string');
+  }
   if (typeof request.body !== 'string' && typeof request.transcript !== 'string') {
     throw new DomainServiceError('INVALID_ARGUMENT', 'note body or transcript is required');
   }
+  validateNoteType(request.type);
+  validateNoteStatus(request.status);
+  validateStringArray(request.tags, 'note tags');
+  validateStringArray(request.related, 'note related');
+  validateNullableFiniteNumber(request.confidence, 'note confidence');
+  validateNullableString(request.agent, 'note agent');
+}
+
+function assertNoteUpdate(request: UpdateNoteRequest): void {
+  if (!request || typeof request !== 'object' || Array.isArray(request)) {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note update request is required');
+  }
+  assertNonEmpty(request.path, 'note path');
+  if (!request.patch || typeof request.patch !== 'object' || Array.isArray(request.patch)) {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note patch is required');
+  }
+  const patch = request.patch;
+  const allowed = new Set(['title', 'body', 'type', 'status', 'tags', 'related', 'confidence', 'agent']);
+  for (const key of Object.keys(patch)) {
+    if (!allowed.has(key)) throw new DomainServiceError('INVALID_ARGUMENT', `note patch field is invalid: ${key}`);
+  }
+  if (patch.title !== undefined) assertNonEmpty(patch.title, 'note title');
+  if (patch.body !== undefined && typeof patch.body !== 'string') {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note body must be a string');
+  }
+  validateNoteType(patch.type);
+  validateNoteStatus(patch.status);
+  validateStringArray(patch.tags, 'note tags');
+  validateStringArray(patch.related, 'note related');
+  validateNullableFiniteNumber(patch.confidence, 'note confidence');
+  validateNullableString(patch.agent, 'note agent');
+}
+
+function validateNoteType(value: unknown): void {
+  if (
+    value !== undefined
+    && value !== null
+    && value !== 'article'
+    && value !== 'note'
+    && value !== 'meeting'
+    && value !== 'todo'
+    && value !== 'reference'
+    && value !== 'idea'
+  ) {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note type is invalid');
+  }
+}
+
+function validateNoteStatus(value: unknown): void {
+  if (
+    value !== undefined
+    && value !== null
+    && value !== 'draft'
+    && value !== 'active'
+    && value !== 'archived'
+  ) {
+    throw new DomainServiceError('INVALID_ARGUMENT', 'note status is invalid');
+  }
+}
+
+function validateStringArray(value: unknown, label: string): void {
+  if (
+    value !== undefined
+    && (!Array.isArray(value) || value.some((item) => typeof item !== 'string'))
+  ) {
+    throw new DomainServiceError('INVALID_ARGUMENT', `${label} must be an array of strings`);
+  }
+}
+
+function validateNullableFiniteNumber(value: unknown, label: string): void {
+  if (
+    value !== undefined
+    && value !== null
+    && (typeof value !== 'number' || !Number.isFinite(value))
+  ) {
+    throw new DomainServiceError('INVALID_ARGUMENT', `${label} must be finite or null`);
+  }
+}
+
+function validateNullableString(value: unknown, label: string): void {
+  if (value !== undefined && value !== null && typeof value !== 'string') {
+    throw new DomainServiceError('INVALID_ARGUMENT', `${label} must be a string or null`);
+  }
+}
+
+function normalizeNotePathForLock(notePath: string): string {
+  return notePath.trim().split('/').map((segment) => segment.trim()).join('/');
+}
+
+function sameNoteRecord(left: NoteRecord, right: NoteRecord): boolean {
+  return left.id === right.id
+    && left.path === right.path
+    && left.title === right.title
+    && left.type === right.type
+    && left.status === right.status
+    && sameStringArray(left.tags, right.tags)
+    && sameStringArray(left.related, right.related)
+    && left.folder === right.folder
+    && left.createdAt === right.createdAt
+    && left.updatedAt === right.updatedAt
+    && left.confidence === right.confidence
+    && left.agent === right.agent;
+}
+
+function noteBytesDigest(body: string): string {
+  return createHash('sha256').update(Buffer.from(body, 'utf8')).digest('hex');
+}
+
+function noteBuildRevision(document: NoteDocument): string {
+  return `note:${document.note.updatedAt}:${noteBytesDigest(document.body)}`;
+}
+
+function sameNoteDocument(left: NoteDocument, right: NoteDocument): boolean {
+  return sameNoteRecord(left.note, right.note) && left.body === right.body;
+}
+
+function sameStringArray(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function changedDuringReindex(
+  notePath: string,
+  entitiesAdded: number,
+  entitiesLinked: number,
+  ragChunksInserted: number,
+  priorErrors: readonly string[] = [],
+): ReindexResult {
+  return {
+    notePath,
+    entitiesAdded,
+    entitiesLinked,
+    ragChunksInserted,
+    errors: [...priorErrors, 'NOTE_CHANGED_DURING_BUILD'],
+  };
 }
 
 function isSystemTodoPath(notePath: string): boolean {

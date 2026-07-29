@@ -743,28 +743,29 @@ describe('r22 RED-1..RED-3 startup and lazy-shell contract', () => {
     render(React.createElement(App, { routeLoader }));
 
     expect(screen.getByTestId('app-root')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'njx-copilot-v6' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Copilot' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
     expect(screen.getByTestId('status-theme')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-loading')).toHaveAttribute('role', 'status');
-    const knowledgeButton = screen.getByTestId('nav-knowledge');
-    knowledgeButton.focus();
-    expect(document.activeElement).toBe(knowledgeButton);
+    const scheduleButton = screen.getByTestId('nav-schedule');
+    scheduleButton.focus();
+    expect(document.activeElement).toBe(scheduleButton);
+    expect(screen.queryByTestId('nav-voice')).not.toBeInTheDocument();
     expect(rendererMocks.hydrate).toHaveBeenCalledTimes(1);
 
     const component = (route: RouteId): RouteModule => ({
       default: () => React.createElement('section', { 'data-testid': `feature-${route}` }, route),
     });
-    await act(async () => { lanes.knowledge.resolve(component('knowledge')); });
-    expect(await screen.findByTestId('feature-knowledge')).toBeInTheDocument();
-    for (const route of ['ask', 'voice', 'schedule', 'settings'] as RouteId[]) {
+    await act(async () => { lanes.schedule.resolve(component('schedule')); });
+    expect(await screen.findByTestId('feature-schedule')).toBeInTheDocument();
+    for (const route of ['knowledge', 'ask', 'settings'] as RouteId[]) {
       fireEvent.click(screen.getByTestId(`nav-${route}`));
       expect(screen.getByTestId('workspace-loading')).toBeInTheDocument();
       await act(async () => { lanes[route].resolve(component(route)); });
       expect(await screen.findByTestId(`feature-${route}`)).toBeInTheDocument();
     }
     expect(routeLoader.mock.calls.map(([route]) => route)).toEqual([
-      'knowledge', 'ask', 'voice', 'schedule', 'settings',
+      'schedule', 'knowledge', 'ask', 'settings',
     ]);
     hydrateLane.resolve();
   });

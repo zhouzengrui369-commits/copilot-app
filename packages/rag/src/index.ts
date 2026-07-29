@@ -80,8 +80,12 @@ export {
 export type {
   NoteChunk,
   EmbeddedChunk,
+  StoredChunk,
   RetrievalHit,
   RetrievalEvidence,
+  RetrievalMode,
+  ProviderStatus,
+  RagDiagnosticCode,
   RetrievalResult,
   RagSourceDetail,
   RagAnswerChunk,

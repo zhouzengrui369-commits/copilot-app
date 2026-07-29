@@ -12,7 +12,7 @@
  *
  * Sprint 1.2 T-1.2.6 (settings panel + multi-provider).
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listProviders, PROVIDER_IDS } from '@copilot/llm-client';
 import type { ChangeEvent } from 'react';
 import { useSettings, providerDefaults } from './useSettings';
@@ -23,6 +23,8 @@ export interface ModelApiConfigProps {
   /** Override the bound hook — useful in tests. */
   modelApi?: ModelApiConfig;
   onChange?: (next: ModelApiConfig & { apiKey?: string; clearApiKey?: boolean }) => void | Promise<void>;
+  /** Browser-only fixture mode: edit in memory without touching the runtime bridge. */
+  prototypeMode?: boolean;
 }
 
 const PROVIDER_OPTIONS = listProviders();
@@ -30,15 +32,27 @@ const PROVIDER_OPTIONS = listProviders();
 export function ModelApiConfig(props: ModelApiConfigProps) {
   const ctx = useSettings();
   const config = props.modelApi ?? ctx.modelApi;
+  const prototypeMode = props.prototypeMode === true;
+  const [prototypeConfig, setPrototypeConfig] = useState(config);
   const [credentialDraft, setCredentialDraft] = useState('');
+  const displayedConfig = prototypeMode ? prototypeConfig : config;
+
+  useEffect(() => {
+    if (prototypeMode) setPrototypeConfig(config);
+  }, [config, prototypeMode]);
+
+  useEffect(() => {
+    setCredentialDraft('');
+  }, [prototypeMode]);
+
   const onChange = async (next: ModelApiConfig & { apiKey?: string; clearApiKey?: boolean }) => {
     if (props.onChange) await props.onChange(next);
     else await ctx.updateModelApi(next);
   };
 
   const currentMeta = useMemo(
-    () => PROVIDER_OPTIONS.find((p) => p.id === config.id) ?? PROVIDER_OPTIONS[0]!,
-    [config.id],
+    () => PROVIDER_OPTIONS.find((p) => p.id === displayedConfig.id) ?? PROVIDER_OPTIONS[0]!,
+    [displayedConfig.id],
   );
 
   const handleProvider = useCallback(
@@ -48,6 +62,17 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
       // A provider/origin switch never carries credential material forward.
       const defaults = providerDefaults(next);
       setCredentialDraft('');
+      if (prototypeMode) {
+        setPrototypeConfig({
+          id: next,
+          baseUrl: defaults.baseUrl,
+          model: defaults.model,
+          apiKey: '',
+          apiKeyConfigured: false,
+          credentialStatus: 'not-configured',
+        });
+        return;
+      }
       await onChange({
         id: next,
         baseUrl: defaults.baseUrl,
@@ -57,13 +82,17 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
         credentialStatus: 'not-configured',
       });
     },
-    [onChange],
+    [onChange, prototypeMode],
   );
 
   const handleField =
     (field: keyof ModelApiConfig) =>
     (evt: ChangeEvent<HTMLInputElement>) => {
       const value = evt.target.value;
+      if (prototypeMode) {
+        setPrototypeConfig((current) => ({ ...current, [field]: value, apiKey: '' }));
+        return;
+      }
       void onChange({ ...config, [field]: value, apiKey: '' });
     };
 
@@ -74,13 +103,14 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
       className={styles.group}
       data-testid="settings-model-api"
       aria-label="Model API configuration"
+      data-assistant-avoid="critical"
     >
       <legend className={styles.legend}>Model API</legend>
 
       <label className={styles.select}>
         <span>Provider</span>
         <select
-          value={config.id}
+          value={displayedConfig.id}
           onChange={handleProvider}
           data-testid="model-provider-select"
           aria-label="LLM provider"
@@ -101,7 +131,7 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
         <span>Base URL</span>
         <input
           type="text"
-          value={config.baseUrl}
+          value={displayedConfig.baseUrl}
           onChange={handleField('baseUrl')}
           placeholder={currentMeta.defaultBaseUrl}
           data-testid="model-base-url"
@@ -115,7 +145,7 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
         <span>Model</span>
         <input
           type="text"
-          value={config.model}
+          value={displayedConfig.model}
           onChange={handleField('model')}
           placeholder={currentMeta.defaultModel}
           data-testid="model-name"
@@ -125,54 +155,74 @@ export function ModelApiConfig(props: ModelApiConfigProps) {
         />
       </label>
 
-      <label className={styles.field}>
-        <span>API key{apiKeyRequired ? '' : ' (optional)'}</span>
-        <input
-          type="password"
-          value={credentialDraft}
-          onChange={(event) => setCredentialDraft(event.target.value)}
-          placeholder={apiKeyRequired ? 'sk-...' : '(no key required for self-hosted)'}
-          data-testid="model-api-key"
-          aria-label="Provider API key"
-          autoComplete="off"
-        />
-      </label>
-
-      <div>
-        <button
-          type="button"
-          data-testid="model-credential-save"
-          disabled={credentialDraft.length === 0}
-          onClick={async () => {
-            await onChange({ ...config, apiKey: credentialDraft });
-            setCredentialDraft('');
-          }}
+      {prototypeMode ? (
+        <section
+          className={styles.browserCredentialBoundary}
+          data-testid="model-credential-browser-boundary"
+          aria-label="API 凭据浏览器边界"
         >
-          Save credential
-        </button>
-        <button
-          type="button"
-          data-testid="model-credential-clear"
-          disabled={!config.apiKeyConfigured}
-          onClick={async () => {
-            await onChange({ ...config, apiKey: '', clearApiKey: true });
-            setCredentialDraft('');
-          }}
-        >
-          Clear credential
-        </button>
-      </div>
+          <div>
+            <strong>API 凭据</strong>
+            <span className={styles.neutralBadge}>
+              仅桌面 App 可配置 · NOT_RUNTIME_PROOF
+            </span>
+          </div>
+          <p>API 凭据仅在 Electron 桌面 App 安全配置。浏览器原型不会接收、保存或发送 API key。</p>
+        </section>
+      ) : (
+        <>
+          <label className={styles.field}>
+            <span>API key{apiKeyRequired ? '' : ' (optional)'}</span>
+            <input
+              type="password"
+              value={credentialDraft}
+              onChange={(event) => setCredentialDraft(event.target.value)}
+              placeholder={apiKeyRequired ? 'sk-...' : '(no key required for self-hosted)'}
+              data-testid="model-api-key"
+              aria-label="Provider API key"
+              autoComplete="off"
+            />
+          </label>
 
-      <p className={styles.hint} data-testid="model-credential-status">
-        Credential: {config.credentialStatus ?? 'not-configured'}
-      </p>
+          <div>
+            <button
+              type="button"
+              data-testid="model-credential-save"
+              disabled={credentialDraft.length === 0}
+              onClick={async () => {
+                await onChange({ ...config, apiKey: credentialDraft });
+                setCredentialDraft('');
+              }}
+            >
+              安全保存
+            </button>
+            <button
+              type="button"
+              data-testid="model-credential-clear"
+              disabled={!config.apiKeyConfigured}
+              onClick={async () => {
+                await onChange({ ...config, apiKey: '', clearApiKey: true });
+                setCredentialDraft('');
+              }}
+            >
+              移除凭据
+            </button>
+          </div>
+
+          <p className={styles.hint} data-testid="model-credential-status">
+            凭据状态：{config.credentialStatus ?? 'not-configured'}
+          </p>
+        </>
+      )}
 
       <p
         className={styles.hint}
         data-testid="model-restart-hint"
         data-state="dynamic"
       >
-        Valid provider, endpoint, model, and credential changes apply to the next operation. No app restart is required.
+        {prototypeMode
+          ? 'Provider、endpoint 与模型仅用于当前页面内存预览；关闭或刷新页面后不会保留。'
+          : 'Valid provider, endpoint, model, and credential changes apply to the next operation. No app restart is required.'}
       </p>
     </fieldset>
   );

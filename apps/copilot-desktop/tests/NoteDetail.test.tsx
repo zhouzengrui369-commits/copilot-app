@@ -204,6 +204,40 @@ describe('NoteDetail', () => {
     expect(tags.map((t) => t.textContent)).toEqual(['#intro']);
   });
 
+  it('keeps the close button reachable when the title wraps to two lines (K-02)', async () => {
+    const longTitle =
+      'OPC 航材数字孪生 2026 试运行：跨班次交接、SB 匹配与拆装工时联动的本地化运行笔记';
+    const longNote = makeNote({
+      id: 'notes/long.md',
+      title: longTitle,
+      path: 'notes/long.md',
+      body: '# Long\n\nBody for the long-title close-button regression test.',
+    });
+    const source = new StubDataSource({ notes: [longNote] });
+    const view = render(<NoteDetail noteId="notes/long.md" dataSource={source} />);
+    expect(await screen.findByTestId('note-detail-title')).toHaveTextContent(longTitle);
+    const close = screen.getByTestId('note-detail-close');
+    expect(close).toBeInTheDocument();
+    expect(close).toBeVisible();
+    // Click triggers onClose without scrolling or layout shift.
+    fireEvent.click(close);
+    view.unmount();
+  });
+
+  it('shows a Chinese fail-closed "no tags" hint instead of #undefined (K-02)', async () => {
+    const noTagNote = makeNote({
+      id: 'notes/untagged.md',
+      path: 'notes/untagged.md',
+      title: 'Untagged',
+      body: '# Untagged\n\nBody without tags.',
+      tags: [],
+    });
+    const source = new StubDataSource({ notes: [noTagNote] });
+    render(<NoteDetail noteId="notes/untagged.md" dataSource={source} />);
+    expect(await screen.findByTestId('note-tags-empty')).toHaveTextContent('无标签');
+    expect(screen.queryByTestId('note-tag')).toBeNull();
+  });
+
   it('cancels stale fetches when noteId changes mid-flight', async () => {
     // Two notes, two fetches — only the latest should win.
     let resolveFirst!: (n: NoteContent | null) => void;

@@ -39,13 +39,25 @@ export type { RelationExtractInput, RelationExtractorLike } from './builder/rela
 export { Tagger, normalizeTag } from './builder/tagger.js';
 export type { TaggerExtractInput, TaggerLike } from './builder/tagger.js';
 
-export { Summarizer } from './builder/summarizer.js';
-export type { SummarizeInput, SummarizerLike } from './builder/summarizer.js';
+export {
+  NoteSummarizer,
+  NoteSummaryParseError,
+  Summarizer,
+  buildNoteSummaryPrompt,
+  parseNoteSummaryResponse,
+} from './builder/summarizer.js';
+export type {
+  NoteSummarizerLike,
+  NoteSummaryInput,
+  NoteSummaryOutput,
+  SummarizeInput,
+  SummarizerLike,
+} from './builder/summarizer.js';
 
 export { KgBuilder } from './builder/kg-builder.js';
 export type { KgBuilderOptions } from './builder/kg-builder.js';
 
-export { KgQuery, queryKg } from './api/query.js';
+export { KgQuery, queryKg, queryWikiByNote } from './api/query.js';
 
 export type {
   EntityType,
@@ -68,4 +80,15 @@ export type {
   QueryResult,
   Subgraph,
   SearchNodesOptions,
+  WikiProjectionStatus,
+  WikiProjectionWriteStatus,
+  WikiProjectionTruth,
+  WikiFailureStage,
+  WikiProvenance,
+  WikiProjection,
+  WikiProjectionInput,
+  PersistWikiProjectionResult,
+  WikiProjectionQueryResult,
+  WikiProjectionDomainResult,
+  WikiBuildOutcome,
 } from './types.js';

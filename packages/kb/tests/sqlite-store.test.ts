@@ -4,10 +4,45 @@ import os from 'node:os';
 import path from 'node:path';
 import { SqliteStore } from '../src/store/sqlite-store.js';
 import { runMigrations } from '../src/api/migration.js';
+import type { TrashEntry } from '../src/types.js';
 
 function tmpDb(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-sqlite-'));
   return path.join(dir, 'kb.sqlite');
+}
+
+const TRASH_ID = '11111111-1111-4111-8111-111111111111';
+
+function trashEntry(overrides: Partial<TrashEntry> = {}): TrashEntry {
+  return {
+    trashId: TRASH_ID,
+    kind: 'note',
+    originalPath: 'inbox/private',
+    originalRevision: 'note:1',
+    trashRevision: `trash:${TRASH_ID}:1`,
+    metadataJson: '{}',
+    contentSha256: 'a'.repeat(64),
+    idempotencyKey: '22222222-2222-4222-8222-222222222222',
+    inputSha256: 'b'.repeat(64),
+    state: 'prepared',
+    movedAt: 1,
+    restoredAt: null,
+    purgedAt: null,
+    cleanupAttempts: 0,
+    restoreIdempotencyKey: null,
+    purgeIdempotencyKey: null,
+    ownerId: 'owner-a',
+    leaseUntil: 100,
+    journalUpdatedAt: 1,
+    journalVersion: 1,
+    ...overrides,
+  };
+}
+
+function trashStore(): SqliteStore {
+  const store = new SqliteStore({ dbPath: tmpDb() });
+  runMigrations(store, 2);
+  return store;
 }
 
 describe('SqliteStore (v0 schema)', () => {
@@ -226,5 +261,210 @@ describe('runMigrations', () => {
     runMigrations(store, 2);
     expect(() => runMigrations(store, 3)).toThrow(/not registered/);
     store.close();
+  });
+});
+
+describe('SqliteStore trash boundary branches', () => {
+  it('filters trash entries by state and treats an empty filter as all states', () => {
+    const store = trashStore();
+    try {
+      store.insertTrashIntent(trashEntry());
+      expect(store.listTrashEntries(['prepared']).map((entry) => entry.trashId))
+        .toEqual([TRASH_ID]);
+      expect(store.listTrashEntries(['trashed'])).toEqual([]);
+      expect(store.listTrashEntries([]).map((entry) => entry.trashId))
+        .toEqual([TRASH_ID]);
+    } finally {
+      store.close();
+    }
+  });
+
+  it('returns null for missing, live foreign, and stale lease acquisitions', () => {
+    const store = trashStore();
+    try {
+      expect(store.acquireTrashLease({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        now: 1,
+        leaseUntil: 200,
+      })).toBeNull();
+
+      store.insertTrashIntent(trashEntry());
+      expect(store.acquireTrashLease({
+        trashId: TRASH_ID,
+        ownerId: 'owner-b',
+        now: 50,
+        leaseUntil: 200,
+      })).toBeNull();
+      expect(store.acquireTrashLease({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        now: 50,
+        leaseUntil: 200,
+      })).toMatchObject({ ownerId: 'owner-a', leaseUntil: 200 });
+    } finally {
+      store.close();
+    }
+  });
+
+  it('fails move finalization when the active revision disappeared', () => {
+    const store = trashStore();
+    try {
+      store.insertTrashIntent(trashEntry());
+      expect(() => store.finalizeTrashMove({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_REVISION_CONFLICT');
+    } finally {
+      store.close();
+    }
+  });
+
+  it('rejects restore and purge idempotency-key conflicts', () => {
+    const store = trashStore();
+    try {
+      store.insertTrashIntent(trashEntry({
+        state: 'trashed',
+        restoreIdempotencyKey: 'restore-original',
+        purgeIdempotencyKey: 'purge-original',
+      }));
+      expect(() => store.beginTrashRestore({
+        trashId: TRASH_ID,
+        idempotencyKey: 'restore-conflict',
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_IDEMPOTENCY_CONFLICT');
+      expect(() => store.beginTrashPurge({
+        trashId: TRASH_ID,
+        idempotencyKey: 'purge-conflict',
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_IDEMPOTENCY_CONFLICT');
+    } finally {
+      store.close();
+    }
+  });
+
+  it('reports missing journal rows at every transactional entry boundary', () => {
+    const store = trashStore();
+    const restoredNote = {
+      path: 'inbox/private',
+      title: 'Private',
+      type: null,
+      status: null,
+      tags: [],
+      related: [],
+      folder: 'inbox',
+      source_hash: null,
+      created_at: 1,
+      updated_at: 1,
+      confidence: null,
+      agent: null,
+    };
+    try {
+      expect(() => store.finalizeTrashMove({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_NOT_FOUND');
+      expect(() => store.beginTrashRestore({
+        trashId: TRASH_ID,
+        idempotencyKey: 'restore',
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_NOT_FOUND');
+      expect(() => store.finalizeTrashRestore({
+        trashId: TRASH_ID,
+        note: restoredNote,
+        mdPath: '/redacted/private.md',
+        restoredAt: 2,
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        leaseUntil: 200,
+      })).toThrow('TRASH_NOT_FOUND');
+      expect(() => store.beginTrashPurge({
+        trashId: TRASH_ID,
+        idempotencyKey: 'purge',
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_NOT_FOUND');
+    } finally {
+      store.close();
+    }
+  });
+
+  it('returns null or fails closed when journal CAS ownership is stale', () => {
+    const store = trashStore();
+    try {
+      store.insertTrashIntent(trashEntry({ state: 'cleanup_pending' }));
+      expect(store.markTrashCleanOwned({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 99,
+        now: 2,
+        leaseUntil: 200,
+      })).toBeNull();
+      expect(() => store.rollbackTrashRestoreOwned({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 99,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_RECOVERY_REQUIRED');
+      expect(store.markTrashRestoredOwned({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 99,
+        now: 2,
+        leaseUntil: 200,
+      })).toBeNull();
+      expect(() => store.finalizeTrashPurge({
+        trashId: TRASH_ID,
+        ownerId: 'owner-a',
+        journalVersion: 99,
+        purgedAt: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_RECOVERY_REQUIRED');
+    } finally {
+      store.close();
+    }
+  });
+
+  it('detects a transactional restore compare-and-swap that changes zero rows', () => {
+    const store = trashStore();
+    try {
+      store.insertTrashIntent(trashEntry({ state: 'trashed' }));
+      store.raw.exec(`
+        CREATE TRIGGER ignore_restore_update
+        BEFORE UPDATE OF state ON trash_entries
+        WHEN NEW.state = 'restoring'
+        BEGIN
+          SELECT RAISE(IGNORE);
+        END;
+      `);
+      expect(() => store.beginTrashRestore({
+        trashId: TRASH_ID,
+        idempotencyKey: 'restore',
+        ownerId: 'owner-a',
+        journalVersion: 1,
+        now: 2,
+        leaseUntil: 200,
+      })).toThrow('TRASH_RECOVERY_REQUIRED');
+    } finally {
+      store.close();
+    }
   });
 });

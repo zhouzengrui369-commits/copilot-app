@@ -39,9 +39,12 @@ export function registerDomainIpc(
   handle(ipc, IPC_CHANNELS.NOTES_LIST, getService, (service, request) => service.notes.list(request), recordOperation, 'notes.list');
   handle(ipc, IPC_CHANNELS.NOTES_GET, getService, (service, request) => service.notes.get(request), recordOperation, 'notes.get');
   handle(ipc, IPC_CHANNELS.NOTES_CREATE, getService, (service, request) => service.notes.create(request), recordOperation, 'notes.create');
+  handle(ipc, IPC_CHANNELS.NOTES_CREATE_WITH_BUILD, getService, (service, request) => service.notes.createWithBuild(request), recordOperation, 'notes.create');
   handle(ipc, IPC_CHANNELS.NOTES_UPDATE, getService, (service, request) => service.notes.update(request), recordOperation, 'notes.update');
+  handle(ipc, IPC_CHANNELS.NOTES_UPDATE_WITH_BUILD, getService, (service, request) => service.notes.updateWithBuild(request), recordOperation, 'notes.update');
   handle(ipc, IPC_CHANNELS.NOTES_REMOVE, getService, (service, request) => service.notes.remove(request), recordOperation, 'notes.remove');
   handle(ipc, IPC_CHANNELS.NOTES_GET_BACKLINKS, getService, (service, request) => service.notes.getBacklinks(request), recordOperation, 'notes.backlinks');
+  handle(ipc, IPC_CHANNELS.WIKI_GET_FOR_NOTE, getService, (service, request) => service.wiki.getForNote(request), recordOperation, 'kg.view');
   handle(ipc, IPC_CHANNELS.KG_GET_SUBGRAPH, getService, (service, request) => service.kg.getSubgraph(request), recordOperation, 'kg.view');
   handle(ipc, IPC_CHANNELS.KG_REINDEX_NOTE, getService, (service, request) => service.kg.reindexNote(request), recordOperation, 'kg.reindex');
   handle(ipc, IPC_CHANNELS.RAG_ASK, getService, (service, request) => service.rag.ask(request), recordOperation, 'rag.ask');

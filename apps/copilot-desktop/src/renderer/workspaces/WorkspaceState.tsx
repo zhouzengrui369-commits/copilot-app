@@ -1,23 +1,27 @@
 import type { ReactElement, ReactNode } from 'react';
 
 interface WorkspaceStateProps {
-  kind: 'loading' | 'empty' | 'error' | 'offline' | 'success';
+  kind:
+    | 'loading'
+    | 'empty'
+    | 'error'
+    | 'offline'
+    | 'success'
+    | 'checking'
+    | 'unknown'
+    | 'stale'
+    | 'unavailable';
   title: string;
   detail?: string;
   action?: ReactNode;
 }
 
-export function WorkspaceState({
-  kind,
-  title,
-  detail,
-  action,
-}: WorkspaceStateProps): ReactElement {
+export function WorkspaceState({ kind, title, detail, action }: WorkspaceStateProps): ReactElement {
   return (
     <section
       className={`workspace-state workspace-state--${kind}`}
       data-testid={`workspace-state-${kind}`}
-      aria-live={kind === 'error' || kind === 'offline' ? 'assertive' : 'polite'}
+      aria-live={kind === 'error' || kind === 'offline' || kind === 'unavailable' ? 'assertive' : 'polite'}
     >
       <strong>{title}</strong>
       {detail ? <p>{detail}</p> : null}

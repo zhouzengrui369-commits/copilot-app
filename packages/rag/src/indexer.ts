@@ -23,6 +23,7 @@ import type { Embedder } from './embedder.js';
 import type {
   EmbeddedChunk,
   NoteChunk,
+  ProviderStatus,
 } from './types.js';
 import type { VectorStore } from './vector-store.js';
 
@@ -47,6 +48,10 @@ export interface IndexerReport {
   notes: number;
   chunksAttempted: number;
   chunksInserted: number;
+  /** Chunks with a successful, persisted vector. */
+  vectorChunksInserted: number;
+  /** Honest vector coverage/provider status; local text does not imply `ok`. */
+  vectorStatus: ProviderStatus;
   chunksSkipped: number;
   /** Per-error record so the verifier / UI can show what failed */
   errors: Array<{ path: string; ordinal: number; reason: string }>;
@@ -74,11 +79,16 @@ export class Indexer {
     const startedAt = Date.now();
     let chunksAttempted = 0;
     let chunksInserted = 0;
+    let vectorChunksInserted = 0;
     let chunksSkipped = 0;
+    let unavailableFailures = 0;
+    let providerFailures = 0;
+    let storeFailures = 0;
     const errors: IndexerReport['errors'] = [];
 
     for (const note of notes) {
       const chunks = chunkNote(note.body, note.path, options.chunker);
+      const textChunks: NoteChunk[] = [];
       const embeddedChunks: EmbeddedChunk[] = [];
       for (const c of chunks) {
         if (options.shouldSkip?.(c)) {
@@ -86,6 +96,7 @@ export class Indexer {
           continue;
         }
         chunksAttempted += 1;
+        textChunks.push(c);
         try {
           const embedding = await this.embedder.embed(c.text);
           const embedded: EmbeddedChunk = {
@@ -96,6 +107,8 @@ export class Indexer {
           };
           embeddedChunks.push(embedded);
         } catch (err) {
+          if (isProviderUnavailable(err)) unavailableFailures += 1;
+          else providerFailures += 1;
           errors.push({
             path: note.path,
             ordinal: c.ordinal,
@@ -104,9 +117,11 @@ export class Indexer {
         }
       }
       try {
-        await this.store.replaceNote(note.path, embeddedChunks);
-        chunksInserted += embeddedChunks.length;
+        await this.store.replaceNoteIndex(note.path, textChunks, embeddedChunks);
+        chunksInserted += textChunks.length;
+        vectorChunksInserted += embeddedChunks.length;
       } catch (err) {
+        storeFailures += 1;
         errors.push({
           path: note.path,
           ordinal: -1,
@@ -119,6 +134,15 @@ export class Indexer {
       notes: notes.length,
       chunksAttempted,
       chunksInserted,
+      vectorChunksInserted,
+      vectorStatus: vectorStatusForReport({
+        chunksAttempted,
+        chunksInserted,
+        vectorChunksInserted,
+        unavailableFailures,
+        providerFailures,
+        storeFailures,
+      }),
       chunksSkipped,
       errors,
       embeddingModel: this.embedder.modelId,
@@ -137,4 +161,46 @@ export class Indexer {
   async deleteNote(notePath: string): Promise<void> {
     await this.store.deleteNote(notePath);
   }
+}
+
+function vectorStatusForReport(input: {
+  chunksAttempted: number;
+  chunksInserted: number;
+  vectorChunksInserted: number;
+  unavailableFailures: number;
+  providerFailures: number;
+  storeFailures: number;
+}): ProviderStatus {
+  if (input.storeFailures > 0) return 'failed';
+  if (
+    input.chunksInserted > 0 &&
+    input.vectorChunksInserted === input.chunksInserted &&
+    input.chunksInserted === input.chunksAttempted
+  ) {
+    return 'ok';
+  }
+  if (input.vectorChunksInserted > 0) return 'degraded';
+  if (input.providerFailures > 0) return 'failed';
+  return 'unavailable';
+}
+
+function isProviderUnavailable(error: unknown): boolean {
+  const record = isRecord(error) ? error : {};
+  const cause = isRecord(record.cause) ? record.cause : {};
+  const code = String(record.code ?? cause.code ?? '').toUpperCase();
+  const name = String(record.name ?? '').toLowerCase();
+  const causeName = String(cause.name ?? '').toLowerCase();
+  const message = `${String(record.message ?? '')} ${String(cause.message ?? '')}`.toLowerCase();
+  return (
+    name === 'networkerror' ||
+    causeName === 'networkerror' ||
+    name === 'providerunavailableerror' ||
+    causeName === 'providerunavailableerror' ||
+    ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EHOSTUNREACH', 'ETIMEDOUT'].includes(code) ||
+    /unavailable|not configured|fetch failed|connection refused|timed out/u.test(message)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

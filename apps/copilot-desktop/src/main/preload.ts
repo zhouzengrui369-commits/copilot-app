@@ -35,6 +35,23 @@ import type {
   BackupManagementBridge,
 } from '../shared/backup-management.js';
 import type { ElectronRuntimeMeta } from '../shared/runtime-meta.js';
+import type {
+  LocalAsrDecodeRequest,
+  LocalAsrDecodeResult,
+  LocalAsrErrorCode,
+  LocalAsrStatus,
+} from '../shared/local-asr.js';
+import {
+  isExactLocalAsrIpcEnvelope,
+  isExactPlainRecord,
+  isKnownLocalAsrErrorCode,
+} from '../shared/local-asr-ipc-envelope.js';
+import {
+  LocalAsrError,
+  isLocalAsrTimings,
+  isUuidV4,
+  normalizeLocalAsrTranscript,
+} from '../shared/local-asr.js';
 
 export interface CopilotBridge extends CopilotDomainBridge {
   trash: NonNullable<CopilotDomainBridge['trash']>;
@@ -49,6 +66,11 @@ export interface CopilotBridge extends CopilotDomainBridge {
   };
   remote: RemoteBridge;
   backup: BackupManagementBridge;
+  localAsr: {
+    status(): Promise<LocalAsrStatus>;
+    decode(request: LocalAsrDecodeRequest): Promise<LocalAsrDecodeResult>;
+    cancel(requestId: string): Promise<{ requestId: string; cancelled: boolean }>;
+  };
   window: {
     minimize(): Promise<void>;
     toggleMaximize(): Promise<void>;
@@ -104,6 +126,80 @@ const invokeDomain = <C extends DomainIpcChannel>(
   payload: DomainIpcRequest<C>,
 ): Promise<DomainIpcResponse<C>> =>
   ipcRenderer.invoke(channel, payload) as Promise<DomainIpcResponse<C>>;
+
+type LocalAsrIpcChannel =
+  | typeof IPC_CHANNELS.LOCAL_ASR_STATUS
+  | typeof IPC_CHANNELS.LOCAL_ASR_DECODE
+  | typeof IPC_CHANNELS.LOCAL_ASR_CANCEL;
+
+async function invokeLocalAsr<T>(
+  channel: LocalAsrIpcChannel,
+  payload: unknown,
+  isValue: (value: unknown) => value is T,
+): Promise<T> {
+  let received: unknown;
+  try {
+    received = await ipcRenderer.invoke(channel, payload) as unknown;
+  } catch {
+    throw rendererLocalAsrError('WORKER_FAILURE');
+  }
+  if (!isExactLocalAsrIpcEnvelope(received)) {
+    throw rendererLocalAsrError('WORKER_FAILURE');
+  }
+  if (!received.ok) {
+    throw rendererLocalAsrError(received.error.code);
+  }
+  try {
+    if (isValue(received.value)) return received.value;
+  } catch {
+    // Malformed accessors/proxies are never allowed to surface raw failures.
+  }
+  throw rendererLocalAsrError('WORKER_FAILURE');
+}
+
+function rendererLocalAsrError(code: LocalAsrErrorCode): Error {
+  const error = new Error(`[${code}] ${new LocalAsrError(code).message}`);
+  error.name = 'LocalAsrError';
+  error.stack = undefined;
+  return error;
+}
+
+const LOCAL_ASR_STATES = [
+  'NOT_READY',
+  'AVAILABLE',
+  'DECODING',
+  'READY',
+  'FAILED',
+  'CANCELLED',
+] as const;
+
+function isLocalAsrStatusValue(value: unknown): value is LocalAsrStatus {
+  if (!isExactPlainRecord(value, ['active', 'lastErrorCode', 'state'])) return false;
+  return typeof value.active === 'boolean'
+    && typeof value.state === 'string'
+    && (LOCAL_ASR_STATES as readonly string[]).includes(value.state)
+    && (value.lastErrorCode === null || isKnownLocalAsrErrorCode(value.lastErrorCode));
+}
+
+function isLocalAsrDecodeResultValue(
+  value: unknown,
+): value is LocalAsrDecodeResult {
+  if (!isExactPlainRecord(value, ['requestId', 'timings', 'transcript'])) return false;
+  const normalized = normalizeLocalAsrTranscript(value.transcript);
+  return isUuidV4(value.requestId)
+    && normalized !== null
+    && normalized === value.transcript
+    && isExactPlainRecord(value.timings, ['decodeMs', 'totalMs'])
+    && isLocalAsrTimings(value.timings);
+}
+
+function isLocalAsrCancelValue(
+  value: unknown,
+): value is { requestId: string; cancelled: boolean } {
+  return isExactPlainRecord(value, ['cancelled', 'requestId'])
+    && isUuidV4(value.requestId)
+    && typeof value.cancelled === 'boolean';
+}
 
 let startupComplete = false;
 ipcRenderer.on(IPC_CHANNELS.STARTUP_COMPLETE, () => {
@@ -165,6 +261,25 @@ const bridge: CopilotBridge = {
       return () => ipcRenderer.removeListener(IPC_CHANNELS.BACKUP_APPROVAL_LIFECYCLE, wrapped);
     },
   },
+  localAsr: {
+    status: () => invokeLocalAsr(
+      IPC_CHANNELS.LOCAL_ASR_STATUS,
+      undefined,
+      isLocalAsrStatusValue,
+    ),
+    decode: (request) =>
+      invokeLocalAsr(
+        IPC_CHANNELS.LOCAL_ASR_DECODE,
+        request,
+        isLocalAsrDecodeResultValue,
+      ),
+    cancel: (requestId) =>
+      invokeLocalAsr(
+        IPC_CHANNELS.LOCAL_ASR_CANCEL,
+        requestId,
+        isLocalAsrCancelValue,
+      ),
+  },
   window: {
     minimize: () => invoke<void>(IPC_CHANNELS.WINDOW_MINIMIZE),
     toggleMaximize: () => invoke<void>(IPC_CHANNELS.WINDOW_TOGGLE_MAXIMIZE),
@@ -179,9 +294,16 @@ const bridge: CopilotBridge = {
     list: (request?: unknown) => invokeDomain(IPC_CHANNELS.NOTES_LIST, request as never),
     get: (path: string) => invokeDomain(IPC_CHANNELS.NOTES_GET, path as never),
     create: (request: unknown) => invokeDomain(IPC_CHANNELS.NOTES_CREATE, request as never),
+    createWithBuild: (request: unknown) =>
+      invokeDomain(IPC_CHANNELS.NOTES_CREATE_WITH_BUILD, request as never),
     update: (request: unknown) => invokeDomain(IPC_CHANNELS.NOTES_UPDATE, request as never),
+    updateWithBuild: (request: unknown) =>
+      invokeDomain(IPC_CHANNELS.NOTES_UPDATE_WITH_BUILD, request as never),
     remove: (path: string) => invokeDomain(IPC_CHANNELS.NOTES_REMOVE, path as never),
     getBacklinks: (path: string) => invokeDomain(IPC_CHANNELS.NOTES_GET_BACKLINKS, path as never),
+  },
+  wiki: {
+    getForNote: (path: string) => invokeDomain(IPC_CHANNELS.WIKI_GET_FOR_NOTE, path as never),
   },
   kg: {
     getSubgraph: (request?: unknown) => invokeDomain(IPC_CHANNELS.KG_GET_SUBGRAPH, request as never),

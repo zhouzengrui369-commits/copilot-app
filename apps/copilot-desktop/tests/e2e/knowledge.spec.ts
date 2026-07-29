@@ -1,4 +1,6 @@
-import { expect, openView, test } from './electron.fixture.js';
+import path from 'node:path';
+import { _electron as electron, type ElectronApplication } from '@playwright/test';
+import { APP_ROOT, expect, openView, test } from './electron.fixture.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -13,6 +15,23 @@ function noteListRow(appPage: Parameters<typeof openView>[0], path: string) {
 
 function noteListPrimaryAction(appPage: Parameters<typeof openView>[0], path: string) {
   return noteListRow(appPage, path).locator('button').first();
+}
+
+function launchCase97Electron(userDataPath: string): Promise<ElectronApplication> {
+  const executablePath = process.env.COPILOT_E2E_EXECUTABLE_PATH;
+  return electron.launch({
+    executablePath,
+    args: executablePath && process.env.COPILOT_E2E_MODE === 'release'
+      ? [`--user-data-dir=${userDataPath}`]
+      : [APP_ROOT, `--user-data-dir=${userDataPath}`],
+    env: {
+      ...process.env,
+      NODE_ENV: 'test',
+      COPILOT_E2E: '1',
+      ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
+    },
+    timeout: 30_000,
+  });
 }
 
 test.describe('Knowledge local-first persistence and graph boundary', () => {
@@ -30,7 +49,10 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
     await openView(appPage, 'knowledge');
     await expect(appPage.getByTestId('knowledge-workspace')).toBeVisible();
     await expect(appPage.locator('.note-list')).toBeVisible();
+    await expect(appPage.getByTestId('knowledge-moc-reader')).toBeVisible();
+    await appPage.getByRole('tab', { name: '2D 关系' }).click();
     await expect(appPage.getByTestId('kg-root')).toBeVisible();
+    await appPage.getByRole('button', { name: '返回 MOC 阅读' }).click();
   });
 
   test('31 New note starts from a clean editor', async ({ appPage }) => {
@@ -93,6 +115,8 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
       `reloaded main-process note list did not contain ${notePath}; paths=${JSON.stringify(persisted.visiblePaths)}`,
     ).toMatchObject({ path: notePath, title: noteTitle });
 
+    await openView(appPage, 'knowledge');
+
     const row = noteListRow(appPage, notePath);
     await expect(row).toHaveCount(1);
     const button = noteListPrimaryAction(appPage, notePath);
@@ -131,6 +155,7 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
 
   test('42 updated note survives renderer reload', async ({ appPage }) => {
     await appPage.reload();
+    await openView(appPage, 'knowledge');
     const button = noteListPrimaryAction(appPage, notePath);
     await expect(button).toContainText('E2E Knowledge Updated');
     await expect(button).toBeVisible();
@@ -155,6 +180,7 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
 
   test('45 graph UI reports production data rather than the 100-node fixture', async ({ appPage }) => {
     await openView(appPage, 'knowledge');
+    await appPage.getByRole('tab', { name: '2D 关系' }).click();
     await expect(appPage.getByTestId('kg-toolbar-meta')).not.toHaveText(/100 \/ 100 nodes/);
   });
 
@@ -207,6 +233,7 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
     }, path);
     try {
       await appPage.reload();
+      await openView(appPage, 'knowledge');
       const button = noteListPrimaryAction(appPage, path);
       await expect(button).toContainText('E2E Markdown Renderer');
       await button.click();
@@ -216,6 +243,101 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
       await expect(renderer.getByText('first', { exact: true })).toBeVisible();
     } finally {
       await appPage.evaluate((notePath) => (window as any).copilot.notes.remove(notePath).catch(() => false), path);
+    }
+  });
+
+  test('97 create-with-build keeps LOCAL_SAVED after a full Electron relaunch', async ({ e2eUserData }) => {
+    const isolatedUserData = path.join(e2eUserData, 'dci-core-1-case-97');
+    const pathOwned = 'e2e/dci-core-1-local-commit';
+    const first = await launchCase97Electron(isolatedUserData);
+    try {
+      const page = await first.firstWindow();
+      await page.waitForLoadState('domcontentloaded');
+      const receipt = await page.evaluate(async (notePath) => {
+        const notes = (window as any).copilot.notes;
+        await notes.remove(notePath).catch(() => false);
+        return notes.createWithBuild({
+          path: notePath,
+          title: 'DCI local commit',
+          body: 'Local bytes survive regardless of build outcome.',
+          tags: ['e2e', 'dci-core-1'],
+        });
+      }, pathOwned);
+      expect(receipt).toMatchObject({
+        localState: 'LOCAL_SAVED',
+        note: { path: pathOwned },
+      });
+    } finally {
+      await first.close();
+    }
+
+    const second = await launchCase97Electron(isolatedUserData);
+    try {
+      const page = await second.firstWindow();
+      await page.waitForLoadState('domcontentloaded');
+      await expect.poll(
+        () => page.evaluate((notePath) => (window as any).copilot.notes.get(notePath), pathOwned),
+      ).toMatchObject({
+        note: { path: pathOwned },
+        body: expect.stringContaining('Local bytes survive'),
+      });
+    } finally {
+      await second.close();
+    }
+  });
+
+  test('104 Knowledge UI submit persists exact bytes, reaches current, and survives renderer reload as LOCAL_DERIVED MOC truth', async ({
+    appPage,
+    fakeMiniMaxProvider,
+  }) => {
+    const uiPath = 'e2e/b3-knowledge-ui-submit';
+    const uiTitle = 'B3 Knowledge UI submit';
+    const uiBody = `B3KnowledgeUi${Date.now()} exact local body`;
+    await appPage.evaluate(async (path: string) => {
+      await (window as any).copilot.notes.remove(path).catch(() => false);
+    }, uiPath);
+    fakeMiniMaxProvider.reset('success');
+    try {
+      await openView(appPage, 'knowledge');
+      await appPage.getByRole('button', { name: '新建笔记' }).click();
+      await appPage.getByLabel('笔记标题').fill(uiTitle);
+      await appPage.getByLabel('笔记路径').fill(uiPath);
+      await appPage.getByLabel('笔记标签').fill('e2e, b3-ui');
+      await appPage.getByLabel('笔记正文').fill(uiBody);
+      await appPage.getByRole('button', { name: '保存到本地' }).click();
+
+      await expect(appPage.getByTestId('knowledge-save-receipt')).toContainText('LOCAL_SAVED');
+      await expect(appPage.getByTestId('knowledge-save-path')).toHaveText(uiPath);
+      expect(await appPage.evaluate(
+        async (path: string) => (window as any).copilot.notes.get(path),
+        uiPath,
+      )).toMatchObject({
+        note: { path: uiPath, title: uiTitle },
+        body: uiBody,
+      });
+      await expect(appPage.getByTestId('wiki-truth-chip')).toHaveText('CURRENT', {
+        timeout: 30_000,
+      });
+      await expect(appPage.getByTestId('wiki-truth-block')).toHaveAttribute(
+        'data-wiki-state',
+        'current',
+      );
+
+      await appPage.reload();
+      await openView(appPage, 'knowledge');
+      await expect(appPage.getByTestId('moc-truth-chip')).toHaveText('LOCAL_DERIVED');
+      const reloadedNote = noteListPrimaryAction(appPage, uiPath);
+      await expect(reloadedNote).toContainText(uiTitle);
+      await reloadedNote.click();
+      await expect(appPage.getByTestId('note-detail-meta')).toContainText(uiPath);
+      await expect(appPage.getByTestId('note-detail-panel')).toContainText(uiBody);
+      await expect(appPage.getByTestId('wiki-truth-chip')).toHaveText('CURRENT', {
+        timeout: 30_000,
+      });
+    } finally {
+      await appPage.evaluate(async (path: string) => {
+        await (window as any).copilot.notes.remove(path).catch(() => false);
+      }, uiPath);
     }
   });
 });

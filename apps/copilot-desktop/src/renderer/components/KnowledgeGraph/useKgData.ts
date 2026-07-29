@@ -9,9 +9,14 @@
  * KG is 100% local (decision red line #2 in goal.md v6.2) — no
  * network traffic. The hook is React-only; no DOM access happens
  * outside `useEffect`s, so it's safe under jsdom in tests.
+ *
+ * R2 keeps one canonical renderer Entity per KG node. Its source_notes
+ * contains only real, navigable local paths in a locale-independent order;
+ * graph projection and click callbacks consume that same Entity.
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import type { Entity } from '@copilot/kg';
 import type { KgDataSource } from './types.js';
 import {
   EMPTY_FILTER,
@@ -23,6 +28,21 @@ import {
   type KgGraphNode,
 } from './types.js';
 
+/**
+ * A source path is navigable only after trimming when it is non-empty and
+ * does not use the reserved `unknown:` prefix (case-insensitive).
+ */
+export function isNavigableSource(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const path = value.trim();
+  return path.length > 0 && !path.toLowerCase().startsWith('unknown:');
+}
+
+function compareBinary(left: string, right: string): number {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
 export interface KgDataState {
   /** All nodes from the data source — unfiltered. */
   nodes: ReadonlyArray<KgGraphNode>;
@@ -30,6 +50,21 @@ export interface KgDataState {
   edges: ReadonlyArray<KgGraphEdge>;
   /** Edge keys (`from|to`) in the same order as `edges`. */
   edgeKeys: ReadonlyArray<string>;
+  /**
+   * Canonical `Entity` objects from the data source, sorted by
+   * `entity_id` (stable order, deterministic across renders). The
+   * 2D renderer relies on these to drive the source navigation UI;
+   * `entityIndex` in `index.tsx` is built from this map, not from
+   * the projected `KgGraphNode` shape.
+   */
+  entities: ReadonlyArray<Entity>;
+  /** `entity_id` → canonical `Entity` lookup. */
+  entitiesById: ReadonlyMap<string, Entity>;
+  /**
+   * Canonical navigable `source_notes` per `entity_id`, trimmed, deduped,
+   * and sorted without locale/ICU dependence.
+   */
+  sourceNotesByEntity: ReadonlyMap<string, ReadonlyArray<string>>;
   /** `true` while the Subgraph is being loaded. */
   loading: boolean;
   /** Non-null if loading failed. */
@@ -53,6 +88,26 @@ export interface UseKgDataOptions {
   initialFilter?: Partial<KgFilter>;
 }
 
+/**
+ * Pure helper for the canonical renderer source list.
+ */
+export function normalizeSourceNotes(
+  sourceNotes: ReadonlyArray<string> | undefined | null,
+): ReadonlyArray<string> {
+  if (!sourceNotes || sourceNotes.length === 0) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of sourceNotes) {
+    if (!isNavigableSource(raw)) continue;
+    const path = raw.trim();
+    if (seen.has(path)) continue;
+    seen.add(path);
+    out.push(path);
+  }
+  out.sort(compareBinary);
+  return out;
+}
+
 export function useKgData({
   dataSource,
   initialFilter,
@@ -60,6 +115,13 @@ export function useKgData({
   const [rawNodes, setRawNodes] = useState<ReadonlyArray<KgGraphNode>>([]);
   const [edges, setEdges] = useState<ReadonlyArray<KgGraphEdge>>([]);
   const [edgeKeys, setEdgeKeys] = useState<ReadonlyArray<string>>([]);
+  const [entities, setEntities] = useState<ReadonlyArray<Entity>>([]);
+  const [entitiesById, setEntitiesById] = useState<ReadonlyMap<string, Entity>>(
+    () => new Map(),
+  );
+  const [sourceNotesByEntity, setSourceNotesByEntity] = useState<
+    ReadonlyMap<string, ReadonlyArray<string>>
+  >(() => new Map());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState<number>(0);
@@ -76,16 +138,32 @@ export function useKgData({
       .getSubgraph(2000)
       .then((subgraph) => {
         if (cancelled) return;
-        const nodes = subgraph.nodes.map(toGraphNode);
         const edgeList: KgGraphEdge[] = [];
         const keys: string[] = [];
         for (const rel of subgraph.edges) {
           edgeList.push(toGraphEdge(rel));
           keys.push(`${rel.from_entity_id}|${rel.to_entity_id}`);
         }
-        setRawNodes(nodes);
+        const sortedEntities: Entity[] = subgraph.nodes
+          .map((entity) => ({
+            ...entity,
+            source_notes: [...normalizeSourceNotes(entity.source_notes)],
+          }))
+          .sort((left, right) => compareBinary(left.entity_id, right.entity_id));
+        const entityIndex = new Map<string, Entity>();
+        const notesIndex = new Map<string, ReadonlyArray<string>>();
+        for (const entity of sortedEntities) {
+          entityIndex.set(entity.entity_id, entity);
+          notesIndex.set(entity.entity_id, entity.source_notes);
+        }
+        // Project only after source normalisation so graph node sourceCount and
+        // sizing describe the same real paths exposed by the canonical Entity.
+        setRawNodes(sortedEntities.map(toGraphNode));
         setEdges(edgeList);
         setEdgeKeys(keys);
+        setEntities(sortedEntities);
+        setEntitiesById(entityIndex);
+        setSourceNotesByEntity(notesIndex);
         setLoading(false);
       })
       .catch((err: unknown) => {
@@ -130,6 +208,9 @@ export function useKgData({
     nodes: rawNodes,
     edges,
     edgeKeys,
+    entities,
+    entitiesById,
+    sourceNotesByEntity,
     loading,
     error,
     filter,

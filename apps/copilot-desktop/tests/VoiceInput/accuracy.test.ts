@@ -1,12 +1,11 @@
 /**
- * Legacy scorer compatibility only. The Phase-1 release gate uses
- * evaluateAsrCorpus (NFC + Unicode punctuation/space removal + Levenshtein).
+ * Test-only local ASR scorer. Runtime provider code is deliberately absent.
  *
  * Sprint 1.2 / T-1.2.4 — PM discipline #6 (中文识别 ≥ 90%).
  */
 
 import { describe, expect, it } from 'vitest';
-import { characterAccuracy } from '../../src/renderer/components/VoiceInput/CloudAsrProvider';
+import { characterAccuracy, evaluateAsrCorpus } from './local-asr-quality';
 import samples from '../fixtures/asr-samples-zh.json';
 
 interface Sample {
@@ -18,18 +17,18 @@ interface Sample {
 
 const data = samples as { samples: Sample[] };
 
-describe('legacy characterAccuracy compatibility (not the release gate)', () => {
-  it('passes the ≥ 0.9 bar for every web-speech sample', () => {
+describe('local ASR transcript quality fixtures', () => {
+  it('passes the ≥ 0.9 bar for every first transcript candidate', () => {
     for (const s of data.samples) {
       const a = characterAccuracy(s.expected, s.web);
-      expect(a, `web-speech sample ${s.id}`).toBeGreaterThanOrEqual(0.9);
+      expect(a, `first transcript sample ${s.id}`).toBeGreaterThanOrEqual(0.9);
     }
   });
 
-  it('passes the ≥ 0.9 bar for every cloud sample', () => {
+  it('passes the ≥ 0.9 bar for every second transcript candidate', () => {
     for (const s of data.samples) {
       const a = characterAccuracy(s.expected, s.cloud);
-      expect(a, `cloud sample ${s.id}`).toBeGreaterThanOrEqual(0.9);
+      expect(a, `second transcript sample ${s.id}`).toBeGreaterThanOrEqual(0.9);
     }
   });
 
@@ -42,5 +41,19 @@ describe('legacy characterAccuracy compatibility (not the release gate)', () => 
       n += 2;
     }
     expect(sum / n).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('keeps NFC, punctuation removal and critical-token truth fail closed', () => {
+    const result = evaluateAsrCorpus([
+      {
+        id: 'critical',
+        reference: '下午三点提醒我开会',
+        transcript: '下午四点提醒我开会',
+        criticalTokens: ['三点'],
+      },
+    ], 0.8);
+    expect(result.accuracy).toBeCloseTo(8 / 9);
+    expect(result.criticalTokensPass).toBe(false);
+    expect(result.pass).toBe(false);
   });
 });

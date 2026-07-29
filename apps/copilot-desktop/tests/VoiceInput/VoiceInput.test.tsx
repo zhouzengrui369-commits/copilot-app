@@ -1,235 +1,154 @@
-/**
- * VoiceInput integration test — exercises the public React entry.
- * Uses focused dependency stubs so jsdom can verify renderer integration
- * without spawning Electron.
- */
-
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { VoiceInput } from '../../src/renderer/components/VoiceInput';
-import * as transcriberModule from '../../src/renderer/components/VoiceInput/useTranscriber';
-import type {
-  TranscriberResult,
-  UseTranscriberApi,
-} from '../../src/renderer/components/VoiceInput/useTranscriber';
-import type { CloudAsrFetchLike } from '../../src/renderer/components/VoiceInput/CloudAsrProvider';
-import type {
-  SpeechRecognitionCtor,
-  SpeechRecognitionLike,
-} from '../../src/renderer/components/VoiceInput/WebSpeechProvider';
+import * as captureModule from '../../src/renderer/components/VoiceInput/useLocalAsrCapture';
+import type { UseLocalAsrCaptureResult } from '../../src/renderer/components/VoiceInput/useLocalAsrCapture';
 
-class StubRecorder {
-  static isTypeSupported = () => true;
-  state: 'inactive' | 'recording' = 'inactive';
-  mimeType = 'audio/webm';
-  ondataavailable: ((ev: BlobEvent) => void) | null = null;
-  onstop: (() => void) | null = null;
-  start = vi.fn(() => {
-    this.state = 'recording';
-    queueMicrotask(() => {
-      this.ondataavailable?.({
-        data: new Blob([new Uint8Array(32)], { type: 'audio/webm' }),
-      } as unknown as BlobEvent);
-    });
-  });
-  stop = vi.fn(() => {
-    this.state = 'inactive';
-    queueMicrotask(() => this.onstop?.());
-  });
-}
+const REQUEST_1 = 'de305d54-75b4-431b-adb2-eb6b9e546014';
+const REQUEST_2 = 'de305d54-75b4-431b-adb2-eb6b9e546015';
 
-class StubAudioContext {
-  state = 'running';
-  analyser = {
-    fftSize: 256,
-    smoothingTimeConstant: 0.5,
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    getByteTimeDomainData: (arr: Uint8Array) => {
-      for (let i = 0; i < arr.length; i++) arr[i] = 128;
-    },
-  };
-  source = { connect: vi.fn(), disconnect: vi.fn() };
-  createAnalyser() {
-    return this.analyser as unknown as AnalyserNode;
-  }
-  createMediaStreamSource() {
-    return this.source as unknown as MediaStreamAudioSourceNode;
-  }
-  close() {
-    return Promise.resolve();
-  }
-}
-
-function mockStream(): MediaStream {
+function capture(
+  overrides: Partial<UseLocalAsrCaptureResult> = {},
+): UseLocalAsrCaptureResult {
   return {
-    getTracks: () => [
-      {
-        stop: vi.fn(),
-        kind: 'audio',
-        id: 't1',
-        enabled: true,
-        readyState: 'live',
-        applyConstraints: () => Promise.resolve(),
-        clone: () => mockStream().getTracks()[0]!,
-        dispatchEvent: () => true,
-        addEventListener: () => undefined,
-        removeEventListener: () => undefined,
-        onended: null,
-        onmute: null,
-        onunmute: null,
-        label: '',
-        muted: false,
-        contentHint: '',
-        getSettings: () => ({}),
-      } as unknown as MediaStreamTrack,
-    ],
-    active: true,
-    id: 's1',
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-    dispatchEvent: () => true,
-    getAudioTracks: () => mockStream().getTracks(),
-    getVideoTracks: () => [],
-    clone: () => mockStream(),
-    onaddtrack: null,
-    onremovetrack: null,
-  } as unknown as MediaStream;
-}
-
-function completedTranscriber(runId: string, text: string): UseTranscriberApi {
-  const result: TranscriberResult = {
-    text,
-    confidence: 0.95,
-    provider: 'web-speech',
-    durationMs: 1_000,
-    usedFallback: false,
+    phase: 'idle',
+    coreTruth: { state: 'NOT_READY', active: false, lastErrorCode: null },
     errorCode: null,
-    runId,
-    audioSha256: 'a'.repeat(64),
-    audioMimeType: 'audio/webm',
-    audioBytes: 32,
-    audioDurationMs: 1_000,
-    durationSource: 'blob-decoded',
-    providerTransitions: [],
-  };
-  return {
-    status: 'done',
-    result,
+    requestId: null,
+    transcript: '',
+    result: null,
     stream: null,
-    audioLevel: 0,
-    providerTransitions: [],
     start: vi.fn(async () => undefined),
-    stop: vi.fn(async () => result),
-    cancel: vi.fn(),
-    reset: vi.fn(),
+    stop: vi.fn(async () => null),
+    cancel: vi.fn(async () => undefined),
+    ...overrides,
   };
 }
 
-beforeEach(() => {
-  (window as unknown as { AudioContext: unknown }).AudioContext = StubAudioContext;
-  (window as unknown as { MediaRecorder: unknown }).MediaRecorder = StubRecorder;
-  if (typeof (globalThis as { ResizeObserver?: unknown }).ResizeObserver === 'undefined') {
-    class FakeResizeObserver {
-      observe = vi.fn();
-      unobserve = vi.fn();
-      disconnect = vi.fn();
-    }
-    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = FakeResizeObserver;
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = FakeResizeObserver;
-  }
-});
+function completed(requestId: string, transcript: string): UseLocalAsrCaptureResult {
+  return capture({
+    phase: 'done',
+    coreTruth: { state: 'READY', active: false, lastErrorCode: null },
+    requestId,
+    transcript,
+    result: { requestId, transcript, timings: { decodeMs: 4, totalMs: 5 } },
+  });
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('VoiceInput', () => {
-  it('renders the initial idle recorder controls', () => {
-    const onTranscribe = vi.fn();
-    const fetchImpl: CloudAsrFetchLike = (async () => ({
-      ok: true,
-      status: 200,
-      text: async () => '{"text":"今天讨论项目进度","confidence":0.95}',
-      json: async () => ({ text: '今天讨论项目进度', confidence: 0.95 }),
-    })) as unknown as CloudAsrFetchLike;
-
-    render(
-      <VoiceInput
-        onTranscribe={onTranscribe}
-        cloudFetchImpl={fetchImpl}
-        speechRecognitionCtor={null}
-        serverBaseUrl="http://127.0.0.1:8787"
-        showProviderBadge
-      />,
-    );
-
-    // Drive getUserMedia via a hook override would normally happen via
-    // window.copilot, but here we just verify the buttons render and
-    // show the right state. (Full getUserMedia flow is exercised in
-    // useTranscriber.test.ts.)
-    const root = screen.getByTestId('voice-input-root');
-    expect(root.getAttribute('data-status')).toBe('idle');
-    const btn = screen.getByTestId('voice-recorder-button');
-    expect(btn.textContent).toContain('开始录音');
-  });
-
-  it('delivers each completed non-empty runId once across parent re-renders', async () => {
-    const onTranscribe = vi.fn().mockRejectedValue(new Error('save failed'));
-    const useTranscriber = vi
-      .spyOn(transcriberModule, 'useTranscriber')
-      .mockReturnValue(completedTranscriber('run-1', '第一次转写'));
-
-    const { rerender } = render(
-      <VoiceInput onTranscribe={onTranscribe} showProviderBadge={false} />,
-    );
-    await waitFor(() => expect(onTranscribe).toHaveBeenCalledTimes(1));
-    expect(onTranscribe).toHaveBeenLastCalledWith('第一次转写');
-
-    rerender(<VoiceInput onTranscribe={onTranscribe} showProviderBadge />);
-    await act(async () => Promise.resolve());
-    expect(onTranscribe).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('voice-transcript')).toHaveTextContent('第一次转写');
-
-    useTranscriber.mockReturnValue(completedTranscriber('run-2', '第二次转写'));
-    rerender(<VoiceInput onTranscribe={onTranscribe} showProviderBadge />);
-    await waitFor(() => expect(onTranscribe).toHaveBeenCalledTimes(2));
-    expect(onTranscribe).toHaveBeenLastCalledWith('第二次转写');
-  });
-
-  it('shows the unsupported label when no recognition engine exists', () => {
-    // The default SpeechRecognition isn't installed in jsdom. Verify the
-    // component can still render its fail-closed entry state without crashing.
+describe('VoiceInput local-only renderer boundary', () => {
+  it('renders one fail-closed truth surface and starts explicitly', () => {
+    const state = capture();
+    vi.spyOn(captureModule, 'useLocalAsrCapture').mockReturnValue(state);
     render(<VoiceInput />);
-    expect(screen.getByTestId('voice-input-root')).toBeTruthy();
+    expect(screen.getByTestId('voice-input-root')).toHaveAttribute('data-status', 'idle');
+    expect(screen.getByTestId('voice-input-root')).toHaveAttribute('data-truth-tone', 'neutral');
+    expect(screen.getByTestId('voice-banner')).toHaveTextContent('LOCAL ASR · NOT_READY');
+    expect(screen.queryByTestId('voice-transcript')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('voice-provider-badge')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('voice-recorder-button'));
+    expect(state.start).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a stable fail-closed error and ordered provider transitions', async () => {
-    const ctor = function () {
-      return {
-        lang: '',
-        continuous: false,
-        interimResults: false,
-        onresult: null,
-        onerror: null,
-        onend: null,
-        start: vi.fn(),
-        stop: vi.fn(),
-        abort: vi.fn(),
-      } as SpeechRecognitionLike;
-    } as unknown as SpeechRecognitionCtor;
-    const cloudFetchImpl = vi.fn() as unknown as CloudAsrFetchLike;
-    render(<VoiceInput speechRecognitionCtor={ctor} cloudFetchImpl={cloudFetchImpl} />);
+  it('delivers each matching READY non-empty request once across rerenders', async () => {
+    const onTranscriptDraft = vi.fn().mockRejectedValue(new Error('parent rejected'));
+    const hook = vi.spyOn(captureModule, 'useLocalAsrCapture')
+      .mockReturnValue(completed(REQUEST_1, ' 第一次转写 '));
+    const view = render(<VoiceInput onTranscriptDraft={onTranscriptDraft} />);
 
-    fireEvent.click(screen.getByTestId('voice-recorder-button'));
-    await waitFor(() => {
-      expect(screen.getByTestId('voice-banner')).toHaveTextContent(
-        '当前 Electron 版本不支持严格本地语音识别；未发送任何音频',
-      );
+    await waitFor(() => expect(onTranscriptDraft).toHaveBeenCalledTimes(1));
+    expect(onTranscriptDraft).toHaveBeenLastCalledWith('第一次转写', REQUEST_1);
+    expect(screen.getByTestId('voice-input-root')).toHaveAttribute(
+      'data-truth-tone',
+      'success',
+    );
+    expect(screen.getByTestId('voice-banner')).toHaveTextContent('本地转写完成');
+    view.rerender(<VoiceInput onTranscriptDraft={onTranscriptDraft} />);
+    await act(async () => Promise.resolve());
+    expect(onTranscriptDraft).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('voice-transcript')).not.toBeInTheDocument();
+
+    hook.mockReturnValue(completed(REQUEST_2, '第二次转写'));
+    view.rerender(<VoiceInput onTranscriptDraft={onTranscriptDraft} />);
+    await waitFor(() => expect(onTranscriptDraft).toHaveBeenCalledTimes(2));
+    expect(onTranscriptDraft).toHaveBeenLastCalledWith('第二次转写', REQUEST_2);
+  });
+
+  it.each([
+    ['stale core', completed(REQUEST_1, '不应交付'), { state: 'AVAILABLE', active: false, lastErrorCode: null }],
+    ['active core', completed(REQUEST_1, '不应交付'), { state: 'READY', active: true, lastErrorCode: null }],
+    ['missing result', { ...completed(REQUEST_1, '不应交付'), result: null }, { state: 'READY', active: false, lastErrorCode: null }],
+    ['mismatched result', {
+      ...completed(REQUEST_1, '不应交付'),
+      result: {
+        requestId: REQUEST_2,
+        transcript: '不应交付',
+        timings: { decodeMs: 4, totalMs: 5 },
+      },
+    }, { state: 'READY', active: false, lastErrorCode: null }],
+    ['empty transcript', completed(REQUEST_1, '   '), { state: 'READY', active: false, lastErrorCode: null }],
+  ] as const)('does not deliver %s', async (_label, value, coreTruth) => {
+    const onTranscriptDraft = vi.fn();
+    vi.spyOn(captureModule, 'useLocalAsrCapture').mockReturnValue({
+      ...value,
+      coreTruth,
+    } as UseLocalAsrCaptureResult);
+    render(<VoiceInput onTranscriptDraft={onTranscriptDraft} />);
+    await act(async () => Promise.resolve());
+    expect(onTranscriptDraft).not.toHaveBeenCalled();
+    expect(screen.getByTestId('voice-input-root')).not.toHaveAttribute(
+      'data-truth-tone',
+      'success',
+    );
+    expect(screen.getByTestId('voice-banner')).not.toHaveTextContent('本地转写完成');
+  });
+
+  it('prioritizes coherent active-core BUSY truth and disables start', () => {
+    const busy = capture({
+      phase: 'error',
+      coreTruth: { state: 'DECODING', active: true, lastErrorCode: null },
+      errorCode: 'BUSY',
     });
-    const transitions = screen.getByTestId('voice-provider-transitions');
-    expect(transitions.textContent).toContain('checking-local-capability');
-    expect(transitions.textContent).toContain('LOCAL_ASR_RUNTIME_UNAVAILABLE');
-    expect(cloudFetchImpl).not.toHaveBeenCalled();
+    vi.spyOn(captureModule, 'useLocalAsrCapture').mockReturnValue(busy);
+    render(<VoiceInput />);
+    expect(screen.getByTestId('voice-input-root')).toHaveAttribute(
+      'data-truth-tone',
+      'activity',
+    );
+    expect(screen.getByTestId('voice-banner')).toHaveTextContent('本地解码占用中');
+    const button = screen.getByTestId('voice-recorder-button') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(busy.start).not.toHaveBeenCalled();
+  });
+
+  it('maps stable local error copy and cancel routing without provider transitions', () => {
+    const value = capture({
+      phase: 'error',
+      errorCode: 'MIC_PERMISSION_DENIED',
+    });
+    vi.spyOn(captureModule, 'useLocalAsrCapture').mockReturnValue(value);
+    render(<VoiceInput />);
+    expect(screen.getByTestId('voice-banner')).toHaveTextContent(
+      '麦克风权限被拒绝，请在系统设置中允许后重试',
+    );
+    expect(screen.queryByTestId('voice-provider-transitions')).not.toBeInTheDocument();
+
+    const decoding = capture({
+      phase: 'decoding',
+      coreTruth: { state: 'AVAILABLE', active: true, lastErrorCode: null },
+      requestId: REQUEST_1,
+    });
+    vi.mocked(captureModule.useLocalAsrCapture).mockReturnValue(decoding);
+    const view = render(<VoiceInput />);
+    expect(screen.getAllByTestId('voice-banner').at(-1)).toHaveTextContent(
+      '本地模型已校验 · 解码中',
+    );
+    fireEvent.click(screen.getAllByTestId('voice-recorder-cancel').at(-1)!);
+    expect(decoding.cancel).toHaveBeenCalledTimes(1);
+    view.unmount();
   });
 });

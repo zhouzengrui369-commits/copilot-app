@@ -1,0 +1,31 @@
+project: copilot-app
+stage: Owner Gate P0 Closure / Stage 0 truth recovery
+verdict: BLOCKED
+default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
+active_branch: codex/p0-owner-gate
+active_candidate_commit: null
+artifact_sha256: null
+runtime_id: null
+ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
+ecosystem_baseline_version: "0.2.0"
+current_p0: EXP-COP-008
+current_p1:
+  primary: EXP-COP-009
+  total_open: 6
+review_verdict: NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3
+r3_snapshot:
+  manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
+  aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
+  files: 414
+  tracked_deletions: 7
+  bytes: 51347389
+  role: product_layer_input_only
+release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
+mvp_status: MVP_NOT_COMPLETE
+next_single_action: Freeze Stage 0 base commit, then close EXP-COP-008 Todo false-success/discoverability/readback and EXP-COP-009 Ask source-return continuity.
+not_doing:
+  - Windows expansion
+  - Remote or Backup expansion
+  - major dependency upgrade
+  - visual redesign
+updated_at: "2026-07-29T07:35:00Z"

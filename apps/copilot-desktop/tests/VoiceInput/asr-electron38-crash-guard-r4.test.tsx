@@ -1,143 +1,153 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  LocalAsrDecodeRequest,
+  LocalAsrDecodeResult,
+  LocalAsrStatus,
+} from '../../src/shared/local-asr';
 import {
-  ELECTRON_LOCAL_ASR_BINDER_V1,
-  LOCAL_ASR_RUNTIME_UNAVAILABLE,
-  WebSpeechProvider,
-  type LocalAsrRuntimeContext,
-  type SpeechRecognitionCtor,
-  type SpeechRecognitionLike,
-} from '../../src/renderer/components/VoiceInput/WebSpeechProvider';
-import { useTranscriber } from '../../src/renderer/components/VoiceInput/useTranscriber';
+  useLocalAsrCapture,
+  type LocalAsrCaptureBridge,
+  type MediaRecorderLike,
+} from '../../src/renderer/components/VoiceInput/useLocalAsrCapture';
 
-const CHROME_139_UA =
-  'Mozilla/5.0 AppleWebKit/537.36 Chrome/139.0.0.0 Safari/537.36';
-const ELECTRON_38_UA =
-  'Mozilla/5.0 AppleWebKit/537.36 Chrome/140.0.7339.249 Electron/38.8.6 Safari/537.36';
+const REQUEST_ID = 'de305d54-75b4-431b-adb2-eb6b9e546014';
 
-function trustedElectron(
-  capabilities: readonly (typeof ELECTRON_LOCAL_ASR_BINDER_V1)[] = [],
-): LocalAsrRuntimeContext {
+class Recorder implements MediaRecorderLike {
+  static latest: Recorder | null = null;
+  static isTypeSupported = () => true;
+  state = 'inactive';
+  ondataavailable: ((event: { data: Blob }) => void) | null = null;
+  onerror: ((event: unknown) => void) | null = null;
+  onstop: (() => void) | null = null;
+  constructor(_stream: MediaStream) {
+    Recorder.latest = this;
+  }
+  start() {
+    this.state = 'recording';
+  }
+  stop() {
+    this.state = 'inactive';
+  }
+}
+
+function stream(): MediaStream {
+  return { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream;
+}
+
+function request(): LocalAsrDecodeRequest {
   return {
-    trustedMeta: {
-      source: 'electron-preload-process-versions',
-      shell: 'electron',
-      electronVersion: '38.8.6',
-      chromiumVersion: '140.0.7339.249',
-      localAsrCapabilities: capabilities,
-    },
-    userAgent: CHROME_139_UA,
+    requestId: REQUEST_ID,
+    format: 'PCM16LE',
+    sampleRate: 16_000,
+    channels: 1,
+    byteLength: 2,
+    sampleCount: 1,
+    sha256: 'a'.repeat(64),
+    pcm: new Uint8Array([0, 0]),
   };
 }
 
-function browser139(): LocalAsrRuntimeContext {
-  return { trustedMeta: null, userAgent: CHROME_139_UA };
+function bridge(
+  overrides: Partial<LocalAsrCaptureBridge> = {},
+): LocalAsrCaptureBridge {
+  return {
+    status: vi.fn(async (): Promise<LocalAsrStatus> => ({
+      state: 'NOT_READY',
+      active: false,
+      lastErrorCode: null,
+    })),
+    decode: vi.fn(async (): Promise<LocalAsrDecodeResult> => ({
+      requestId: REQUEST_ID,
+      transcript: '本地结果',
+      timings: { decodeMs: 1, totalMs: 2 },
+    })),
+    cancel: vi.fn(async (requestId) => ({ requestId, cancelled: true })),
+    ...overrides,
+  };
 }
 
-function guardedCtor() {
-  const available = vi.fn(async () => 'available' as const);
-  const install = vi.fn(async () => true);
-  const start = vi.fn();
-  const ctor: SpeechRecognitionCtor = function () {
-    return {
-      lang: '',
-      continuous: false,
-      interimResults: false,
-      processLocally: false,
-      onresult: null,
-      onerror: null,
-      onend: null,
-      start,
-      stop: vi.fn(),
-      abort: vi.fn(),
-    } satisfies SpeechRecognitionLike;
-  } as unknown as SpeechRecognitionCtor;
-  ctor.available = available;
-  ctor.install = install;
-  return { ctor, available, install, start };
-}
-
-describe('ASR R4 Electron crash guard', () => {
-  it('blocks Electron from touching available/install/start even when the API surface exists', async () => {
-    const harness = guardedCtor();
-    const provider = new WebSpeechProvider(harness.ctor, trustedElectron());
-
-    await expect(provider.prepareLocal('zh-CN')).resolves.toBe(
-      LOCAL_ASR_RUNTIME_UNAVAILABLE,
-    );
-    await expect(
-      provider.transcribe({ strictLocal: true }),
-    ).rejects.toMatchObject({ code: LOCAL_ASR_RUNTIME_UNAVAILABLE });
-    expect(harness.available).not.toHaveBeenCalled();
-    expect(harness.install).not.toHaveBeenCalled();
-    expect(harness.start).not.toHaveBeenCalled();
-  });
-
-  it('prevents getUserMedia and leaves renderer state resettable after a blocked start', async () => {
-    const harness = guardedCtor();
-    const getUserMediaImpl = vi.fn();
-    const hook = renderHook(() =>
-      useTranscriber({
-        speechRecognitionCtor: harness.ctor,
-        getUserMediaImpl,
-        localAsrRuntimeContext: trustedElectron(),
-      }),
-    );
-
-    await act(async () => hook.result.current.start());
-    await waitFor(() => expect(hook.result.current.status).toBe('error'));
-    expect(hook.result.current.result?.errorCode).toBe(
-      LOCAL_ASR_RUNTIME_UNAVAILABLE,
-    );
-    expect(harness.available).not.toHaveBeenCalled();
-    expect(harness.install).not.toHaveBeenCalled();
-    expect(harness.start).not.toHaveBeenCalled();
-    expect(getUserMediaImpl).not.toHaveBeenCalled();
-
-    act(() => hook.result.current.reset());
-    expect(hook.result.current.status).toBe('idle');
-    expect(hook.result.current.result).toBeNull();
-  });
-
-  it.each([
-    ['Electron UA without trusted metadata', { trustedMeta: null, userAgent: ELECTRON_38_UA }],
-    ['unknown runtime', { trustedMeta: null, userAgent: 'unknown-shell/1.0' }],
-    ['Chrome 138', { trustedMeta: null, userAgent: 'Chrome/138.0.0.0' }],
-  ] satisfies Array<[string, LocalAsrRuntimeContext]>)('%s fails closed', async (_label, runtime) => {
-    const harness = guardedCtor();
-    await expect(
-      new WebSpeechProvider(harness.ctor, runtime).prepareLocal(),
-    ).resolves.toBe(LOCAL_ASR_RUNTIME_UNAVAILABLE);
-    expect(harness.available).not.toHaveBeenCalled();
-  });
-
-  it('trusted Electron metadata outranks a spoofed Chrome 139 UA', async () => {
-    const harness = guardedCtor();
-    await expect(
-      new WebSpeechProvider(harness.ctor, trustedElectron()).prepareLocal(),
-    ).resolves.toBe(LOCAL_ASR_RUNTIME_UNAVAILABLE);
-    expect(harness.available).not.toHaveBeenCalled();
-  });
-
-  it('preserves Chrome 139+ non-Electron strict-local available probing', async () => {
-    const harness = guardedCtor();
-    await expect(
-      new WebSpeechProvider(harness.ctor, browser139()).prepareLocal('zh-CN'),
-    ).resolves.toBe('available');
-    expect(harness.available).toHaveBeenCalledWith({
-      langs: ['zh-CN'],
-      processLocally: true,
+describe('local ASR bridge crash guard', () => {
+  it('fails closed before microphone access when the bridge is absent', async () => {
+    const getUserMedia = vi.fn(async () => stream());
+    const hook = renderHook(() => useLocalAsrCapture({
+      bridge: null,
+      getUserMedia,
+      mediaRecorder: Recorder,
+    }));
+    await act(async () => {
+      await expect(hook.result.current.start()).rejects.toMatchObject({ code: 'NOT_READY' });
     });
+    expect(hook.result.current).toMatchObject({
+      phase: 'error',
+      errorCode: 'NOT_READY',
+      coreTruth: { state: 'NOT_READY', active: false },
+    });
+    expect(getUserMedia).not.toHaveBeenCalled();
   });
 
-  it('allows a future Electron binder only through the explicit trusted capability allowlist', async () => {
-    const harness = guardedCtor();
-    await expect(
-      new WebSpeechProvider(
-        harness.ctor,
-        trustedElectron([ELECTRON_LOCAL_ASR_BINDER_V1]),
-      ).prepareLocal('zh-CN'),
-    ).resolves.toBe('available');
-    expect(harness.available).toHaveBeenCalledTimes(1);
+  it('maps malformed or rejecting status to stable fail-closed worker failure', async () => {
+    for (const status of [
+      vi.fn(async () => ({ state: 'READY' }) as unknown as LocalAsrStatus),
+      vi.fn(async () => { throw new Error('private bridge detail'); }),
+    ]) {
+      const getUserMedia = vi.fn(async () => stream());
+      const hook = renderHook(() => useLocalAsrCapture({
+        bridge: bridge({ status }),
+        getUserMedia,
+        mediaRecorder: Recorder,
+      }));
+      await act(async () => {
+        await expect(hook.result.current.start()).rejects.toMatchObject({ code: 'WORKER_FAILURE' });
+      });
+      expect(hook.result.current).toMatchObject({
+        phase: 'error',
+        errorCode: 'WORKER_FAILURE',
+        coreTruth: { state: 'NOT_READY', active: false },
+      });
+      expect(getUserMedia).not.toHaveBeenCalled();
+      hook.unmount();
+    }
+  });
+
+  it('cancels a decoding request at most once and ignores its late result', async () => {
+    let resolveDecode!: (value: LocalAsrDecodeResult) => void;
+    const decode = vi.fn(() => new Promise<LocalAsrDecodeResult>((resolve) => {
+      resolveDecode = resolve;
+    }));
+    const localBridge = bridge({ decode });
+    const hook = renderHook(() => useLocalAsrCapture({
+      bridge: localBridge,
+      getUserMedia: vi.fn(async () => stream()),
+      mediaRecorder: Recorder,
+      buildRequest: vi.fn(async () => request()),
+    }));
+    await act(async () => hook.result.current.start());
+    const recorder = Recorder.latest!;
+    let terminal!: Promise<LocalAsrDecodeResult | null>;
+    act(() => {
+      terminal = hook.result.current.stop();
+      recorder.ondataavailable?.({ data: new Blob(['x']) });
+      recorder.onstop?.();
+    });
+    await waitFor(() => expect(hook.result.current.phase).toBe('decoding'));
+    await act(async () => {
+      await hook.result.current.cancel();
+      await hook.result.current.cancel();
+    });
+    expect(localBridge.cancel).toHaveBeenCalledTimes(1);
+    expect(localBridge.cancel).toHaveBeenCalledWith(REQUEST_ID);
+    resolveDecode({
+      requestId: REQUEST_ID,
+      transcript: '迟到结果',
+      timings: { decodeMs: 1, totalMs: 2 },
+    });
+    await expect(terminal).resolves.toBeNull();
+    await act(async () => Promise.resolve());
+    expect(hook.result.current).toMatchObject({
+      phase: 'cancelled',
+      transcript: '',
+      result: null,
+    });
   });
 });

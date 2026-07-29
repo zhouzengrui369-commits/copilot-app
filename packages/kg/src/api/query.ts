@@ -1,10 +1,14 @@
 import type {
   Entity,
+  KgNoteInput,
   QueryRequest,
   QueryResult,
   SearchNodesOptions,
   Subgraph,
   Tag,
+  WikiProjection,
+  WikiProjectionDomainResult,
+  WikiProvenance,
 } from '../types.js';
 import type { KgStore } from '../store/sqlite-store.js';
 
@@ -70,6 +74,97 @@ export class KgQuery {
       tags: this.store.listTags().length,
     };
   }
+
+  /**
+   * Query the persisted WIKI truth for an exact note digest. A previously
+   * green row for different bytes is returned as stale, never current.
+   */
+  noteProjection(
+    note_path: string,
+    expectedContentDigest?: string,
+  ): WikiProjectionDomainResult {
+    const rows = this.store.listWikiProjectionsForNote(note_path);
+    const effectiveRows = rows.map((row) =>
+      row.status === 'current' &&
+      (expectedContentDigest === undefined ||
+        row.content_digest !== expectedContentDigest)
+        ? ({ ...row, status: 'stale' } satisfies WikiProjection)
+        : row,
+    );
+    const current = effectiveRows.find(
+      (row) =>
+        row.status === 'current' &&
+        expectedContentDigest !== undefined &&
+        row.content_digest === expectedContentDigest,
+    ) ?? null;
+    const stale = effectiveRows.filter((row) => row.status === 'stale');
+    const failed = effectiveRows.filter((row) => row.status === 'failed');
+    const failedForExpected = expectedContentDigest
+      ? failed.find((row) => row.content_digest === expectedContentDigest) ?? null
+      : null;
+    const priorSuccess = expectedContentDigest
+      ? stale.find((row) => row.content_digest !== expectedContentDigest) ??
+        stale.find((row) => row.content_digest === expectedContentDigest) ??
+        null
+      : null;
+    const latest = effectiveRows[0] ?? null;
+    const truth = expectedContentDigest === undefined
+      ? 'missing'
+      : current
+        ? 'current'
+        : failedForExpected
+          ? 'failed'
+          : priorSuccess
+            ? 'stale'
+            : 'missing';
+    const successForProvenance = truth === 'current'
+      ? current
+      : truth === 'stale'
+        ? priorSuccess
+        : null;
+    return {
+      note_path,
+      expected_content_digest: expectedContentDigest ?? null,
+      truth,
+      current,
+      latest,
+      stale,
+      failed,
+      provenance: projectionProvenance(successForProvenance),
+    };
+  }
+
+  /** Compute the canonical digest and return WIKI truth for current note bytes. */
+  wikiForNote(note: KgNoteInput): WikiProjectionDomainResult {
+    const contentDigest = this.store.computeNoteContentDigest({
+      title: note.title,
+      body: note.body,
+      tags: note.tags,
+      metadata: {
+        ...(note.metadata ?? {}),
+        related: [...(note.related ?? [])].map(String).sort(),
+      },
+    });
+    return this.noteProjection(note.path, contentDigest);
+  }
+}
+
+function projectionProvenance(projection: WikiProjection | null): WikiProvenance | null {
+  if (!projection?.provider || !projection.model) return null;
+  return {
+    provider: projection.provider,
+    model: projection.model,
+    generated_at: projection.generated_at,
+  };
+}
+
+/** Functional query-by-note surface for callers that do not keep KgQuery. */
+export function queryWikiByNote(
+  store: KgStore,
+  note_path: string,
+  expectedContentDigest?: string,
+): WikiProjectionDomainResult {
+  return new KgQuery(store).noteProjection(note_path, expectedContentDigest);
 }
 
 export function queryKg(store: KgStore, request: QueryRequest): Subgraph {

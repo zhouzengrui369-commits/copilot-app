@@ -19,11 +19,14 @@
 import type { VectorStore } from './vector-store.js';
 import type { Embedder } from './embedder.js';
 import type {
+  ProviderStatus,
+  RagDiagnosticCode,
   RagAnswerChunk,
   RagAnswerResult,
   RagSourceDetail,
   RetrievalEvidence,
   RetrievalHit,
+  RetrievalMode,
   RetrievalResult,
 } from './types.js';
 
@@ -62,6 +65,7 @@ const DEFAULT_MODEL = 'MiniMax-M3';
 const DEFAULT_TOP_K = 5;
 const DEFAULT_PER_CHUNK_CAP = 800;
 const DEFAULT_MAX_CONTEXT_CHUNKS = 5;
+const SOURCE_EXCERPT_CHAR_CAP = 240;
 
 export class Answerer {
   private readonly embedder: Embedder;
@@ -109,22 +113,32 @@ export class Answerer {
     const retrieval = await this.retrieve(query, options);
 
     if (retrieval.hits.length === 0) {
-      // empty-state: still surface a final answer (politely say "no info")
+      const answer = emptyAnswer(this.language);
       yield {
-        delta: emptyAnswer(this.language),
+        delta: answer,
         citedSources: [],
         sourceDetails: [],
+        retrievalMode: retrieval.mode,
+        providerStatus: retrieval.providerStatus,
+        diagnostics: retrieval.diagnostics,
       };
       return {
         query,
-        answer: emptyAnswer(this.language),
+        answer,
         sources: [],
         sourceDetails: [],
-        totalChars: emptyAnswer(this.language).length,
+        totalChars: answer.length,
+        retrievalMode: retrieval.mode,
+        providerStatus: retrieval.providerStatus,
+        diagnostics: retrieval.diagnostics,
       };
     }
 
-    const prompt = this.buildPrompt(query, retrieval);
+    // One shared slice is used for both prompt construction and citation
+    // validation. A lower-ranked hit that the model never saw must not become
+    // a valid citation merely because it existed elsewhere in retrieval.
+    const contextHits = retrieval.hits.slice(0, this.maxContextChunks);
+    const prompt = this.buildPrompt(query, contextHits);
     const stream = await this.streamFactory(
       [
         { role: 'system', content: this.systemPrompt() },
@@ -133,50 +147,181 @@ export class Answerer {
       { model: this.model, signal: options.signal },
     );
 
+    // R2 grounding gate: never surface provisional sources while the model is
+    // still generating. Buffer the complete output, then validate every
+    // citation against this retrieval pass before yielding anything.
     let assembled = '';
-    const citedSources = dedupSources(retrieval.hits.map((h) => h.chunk.notePath));
-    const sourceDetails = toSourceDetails(retrieval.hits);
-
+    let terminalFinishReason: string | undefined;
+    let terminalSeen = false;
+    let invalidTerminalSequence = false;
     for await (const delta of stream) {
       throwIfAborted(options.signal);
+      if (delta?.finishReason !== undefined) {
+        if (terminalSeen) invalidTerminalSequence = true;
+        terminalSeen = true;
+        terminalFinishReason = delta.finishReason;
+      } else if (terminalSeen && delta?.content) {
+        // Content after a terminal marker is not a valid completed response.
+        invalidTerminalSequence = true;
+      }
       if (!delta?.content) continue;
       assembled += delta.content;
+    }
+
+    throwIfAborted(options.signal);
+    const acceptedTerminal =
+      terminalSeen &&
+      !invalidTerminalSequence &&
+      terminalFinishReason === 'stop';
+    const grounded = acceptedTerminal
+      ? validateCitations(assembled, contextHits)
+      : { valid: false as const, sources: [] as [] };
+    if (!grounded.valid) {
+      const answer = groundingFailureAnswer(this.language);
+      const diagnostics = stableDiagnostics([
+        ...(retrieval.diagnostics ?? []),
+        'RAG_CITATION_SOURCE_MISMATCH',
+      ]);
       yield {
-        delta: delta.content,
-        citedSources,
-        sourceDetails,
+        delta: answer,
+        citedSources: [],
+        sourceDetails: [],
+        retrievalMode: retrieval.mode,
+        providerStatus: retrieval.providerStatus,
+        diagnostics,
+      };
+      return {
+        query,
+        answer,
+        sources: [],
+        sourceDetails: [],
+        totalChars: answer.length,
+        retrievalMode: retrieval.mode,
+        providerStatus: retrieval.providerStatus,
+        diagnostics,
       };
     }
 
+    const answer = assembled.trim();
+    const sourceDetails = toSourceDetails(contextHits, grounded.sources);
+    yield {
+      delta: answer,
+      citedSources: grounded.sources,
+      sourceDetails,
+      retrievalMode: retrieval.mode,
+      providerStatus: retrieval.providerStatus,
+      diagnostics: retrieval.diagnostics,
+    };
     return {
       query,
-      answer: assembled.trim(),
-      sources: citedSources,
+      answer,
+      sources: grounded.sources,
       sourceDetails,
-      totalChars: assembled.length,
+      totalChars: answer.length,
+      retrievalMode: retrieval.mode,
+      providerStatus: retrieval.providerStatus,
+      diagnostics: retrieval.diagnostics,
     };
   }
 
   /** Retrieval-only path — exposed for /search routes & tests. */
   async retrieve(query: string, options: AnswerOptions = {}): Promise<RetrievalResult> {
     throwIfAborted(options.signal);
-    let queryEmbedding: Float32Array = new Float32Array(0);
-    let vectorHits: RetrievalHit[] = [];
-    let candidates = 0;
-    if (this.store.count() > 0) {
-      queryEmbedding = await this.embedder.embed(query, options.signal);
-      const vectorResult = await this.store.search(queryEmbedding, {
-        topK: this.topK,
-        minScore: this.minScore,
-      });
-      vectorHits = vectorResult.hits.map((hit) => ({ ...hit, evidence: hit.evidence ?? ['vector'] }));
-      candidates = vectorResult.candidates;
+    const supplemental = options.supplementalHits ?? [];
+    // Deliberately outside every catch: database/store failures must remain
+    // hard failures and must never be mislabeled as provider fallback.
+    const indexedCount = typeof this.store.textCount === 'function'
+      ? this.store.textCount()
+      : this.store.count();
+
+    if (indexedCount === 0) {
+      const hits = fuseRetrievalHits([], supplemental, this.topK);
+      const mode = retrievalModeForHits(hits);
+      const diagnostics = stableDiagnostics([
+        ...(hits.length > 0 ? ['RAG_KG_SUPPLEMENTAL' as const] : []),
+        ...(hits.length === 0 ? ['RAG_NO_CANDIDATE' as const] : []),
+      ]);
+      return {
+        query,
+        queryEmbedding: new Float32Array(0),
+        hits,
+        candidates: supplemental.length,
+        mode,
+        diagnostics,
+      };
     }
+
+    let queryEmbedding: Float32Array;
+    try {
+      // This is the only operation whose failure may activate local-text.
+      queryEmbedding = await this.embedder.embed(query, options.signal);
+    } catch (error) {
+      if (options.signal?.aborted) throwIfAborted(options.signal);
+      const abortCause = findAbortLike(error);
+      if (abortCause) throw abortCause;
+      const providerStatus = classifyProviderFailure(error);
+      const localHits = localTextFallback(query, this.store);
+      const hits = fuseRetrievalHits(localHits, supplemental, this.topK);
+      const diagnostics = stableDiagnostics([
+        providerStatus === 'unavailable'
+          ? 'RAG_PROVIDER_UNAVAILABLE'
+          : 'RAG_PROVIDER_FAILURE',
+        'RAG_LOCAL_TEXT_FALLBACK',
+        ...(supplemental.length > 0 ? ['RAG_KG_SUPPLEMENTAL' as const] : []),
+        ...(hits.length === 0 ? ['RAG_NO_CANDIDATE' as const] : []),
+      ]);
+      return {
+        query,
+        queryEmbedding: new Float32Array(0),
+        hits,
+        candidates: indexedCount + supplemental.length,
+        mode: retrievalModeForHits(hits),
+        providerStatus,
+        diagnostics,
+      };
+    }
+
+    throwIfAborted(options.signal);
+    // Deliberately outside the embedding catch: search/database errors
+    // propagate unchanged instead of being hidden behind local-text.
+    const vectorResult = await this.store.search(queryEmbedding, {
+      topK: this.topK,
+      minScore: this.minScore,
+    });
+    const vectorHits = vectorResult.hits.map((hit) => ({
+      ...hit,
+      evidence: hit.evidence ?? ['vector' as const],
+    }));
+    const vectorCount = typeof this.store.vectorCount === 'function'
+      ? this.store.vectorCount()
+      : this.store.count();
+    const vectorDegraded = vectorCount < indexedCount;
+    const useLocalText = vectorDegraded || vectorHits.length === 0;
+    const localHits = useLocalText ? localTextFallback(query, this.store) : [];
+    const hits = fuseRetrievalHits(
+      [...vectorHits, ...localHits],
+      supplemental,
+      this.topK,
+    );
+    const diagnostics = stableDiagnostics([
+      ...(vectorDegraded ? ['RAG_VECTOR_INDEX_DEGRADED' as const] : []),
+      'RAG_VECTOR',
+      ...(useLocalText ? ['RAG_LOCAL_TEXT_FALLBACK' as const] : []),
+      ...(supplemental.length > 0 ? ['RAG_KG_SUPPLEMENTAL' as const] : []),
+      ...(hits.length === 0 ? ['RAG_NO_CANDIDATE' as const] : []),
+    ]);
     return {
       query,
       queryEmbedding,
-      hits: fuseRetrievalHits(vectorHits, options.supplementalHits ?? [], this.topK),
-      candidates: candidates + (options.supplementalHits?.length ?? 0),
+      hits,
+      candidates: (
+        useLocalText
+          ? Math.max(indexedCount, vectorResult.candidates)
+          : vectorResult.candidates
+      ) + supplemental.length,
+      mode: retrievalModeForHits(hits),
+      providerStatus: vectorDegraded ? 'degraded' : 'ok',
+      diagnostics,
     };
   }
 
@@ -197,9 +342,8 @@ export class Answerer {
     ].join('\n');
   }
 
-  private buildPrompt(query: string, retrieval: RetrievalResult): string {
-    const blocks = retrieval.hits
-      .slice(0, this.maxContextChunks)
+  private buildPrompt(query: string, contextHits: readonly RetrievalHit[]): string {
+    const blocks = contextHits
       .map((h, i) => {
         const truncated =
           h.chunk.text.length > this.perChunkCharCap
@@ -222,7 +366,22 @@ export class Answerer {
   }
 }
 
-const EVIDENCE_ORDER: readonly RetrievalEvidence[] = ['vector', 'kg-entity', 'kg-neighbor'];
+const EVIDENCE_ORDER: readonly RetrievalEvidence[] = [
+  'vector',
+  'local-text',
+  'kg-entity',
+  'kg-neighbor',
+];
+const DIAGNOSTIC_ORDER: readonly RagDiagnosticCode[] = [
+  'RAG_PROVIDER_UNAVAILABLE',
+  'RAG_PROVIDER_FAILURE',
+  'RAG_VECTOR_INDEX_DEGRADED',
+  'RAG_VECTOR',
+  'RAG_LOCAL_TEXT_FALLBACK',
+  'RAG_KG_SUPPLEMENTAL',
+  'RAG_NO_CANDIDATE',
+  'RAG_CITATION_SOURCE_MISMATCH',
+];
 
 /** Merge vector and KG candidates at note granularity with stable ranking. */
 export function fuseRetrievalHits(
@@ -251,19 +410,229 @@ export function fuseRetrievalHits(
     .slice(0, Math.max(0, Math.floor(limit)));
 }
 
-function compareHits(a: RetrievalHit, b: RetrievalHit): number {
-  return b.score - a.score ||
-    a.chunk.notePath.localeCompare(b.chunk.notePath) ||
-    a.chunk.ordinal - b.chunk.ordinal ||
-    a.chunk.id.localeCompare(b.chunk.id);
+
+function localTextFallback(query: string, store: VectorStore): RetrievalHit[] {
+  const terms = tokenize(query);
+  const hits: RetrievalHit[] = [];
+  if (terms.length === 0) return hits;
+  for (const notePath of store.listNotePaths()) {
+    for (const chunk of store.listChunksForNote(notePath)) {
+      const textTerms = tokenize(`${notePath} ${chunk.text}`);
+      const matches = terms.filter((term) => textTerms.includes(term)).length;
+      if (matches > 0) {
+        hits.push({
+          chunk,
+          score: matches / terms.length,
+          evidence: ['local-text'],
+        });
+      }
+    }
+  }
+  return hits.sort(compareHits);
 }
 
-function toSourceDetails(hits: readonly RetrievalHit[]): RagSourceDetail[] {
-  return hits.map((hit) => ({
-    notePath: hit.chunk.notePath,
-    evidence: hit.evidence ?? ['vector'],
-    score: hit.score,
-  }));
+function tokenize(value: string): string[] {
+  const normalized = value.normalize('NFKC').toLowerCase();
+  const tokens = new Set<string>();
+  for (const word of normalized.match(/[a-z0-9]+/gu) ?? []) {
+    tokens.add(word);
+  }
+  for (const sequence of normalized.match(/\p{Script=Han}+/gu) ?? []) {
+    const characters = [...sequence];
+    if (characters.length === 1) tokens.add(sequence);
+    for (let i = 0; i < characters.length - 1; i += 1) {
+      tokens.add(`${characters[i]}${characters[i + 1]}`);
+    }
+  }
+  for (const word of normalized.match(/[\p{L}\p{N}]+/gu) ?? []) {
+    if (!/[a-z0-9]/u.test(word) && !/\p{Script=Han}/u.test(word)) {
+      tokens.add(word);
+    }
+  }
+  return [...tokens].sort(compareText);
+}
+
+function compareHits(a: RetrievalHit, b: RetrievalHit): number {
+  return b.score - a.score ||
+    compareText(a.chunk.notePath, b.chunk.notePath) ||
+    a.chunk.ordinal - b.chunk.ordinal ||
+    compareText(a.chunk.id, b.chunk.id);
+}
+
+function compareText(a: string, b: string): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function retrievalModeForHits(hits: readonly RetrievalHit[]): RetrievalMode {
+  const evidence = new Set(hits.flatMap((hit) => hit.evidence ?? ['vector']));
+  if (evidence.has('vector')) return 'vector';
+  if (evidence.has('local-text')) return 'local-text';
+  if (evidence.has('kg-entity') || evidence.has('kg-neighbor')) return 'kg';
+  return 'empty';
+}
+
+function sourceMode(evidence: readonly RetrievalEvidence[]): RetrievalMode {
+  if (evidence.includes('vector')) return 'vector';
+  if (evidence.includes('local-text')) return 'local-text';
+  if (evidence.includes('kg-entity') || evidence.includes('kg-neighbor')) return 'kg';
+  return 'empty';
+}
+
+function toSourceDetails(
+  hits: readonly RetrievalHit[],
+  citedSources: readonly string[],
+): RagSourceDetail[] {
+  const firstHitByPath = new Map<string, RetrievalHit>();
+  for (const hit of hits) {
+    if (!firstHitByPath.has(hit.chunk.notePath)) {
+      firstHitByPath.set(hit.chunk.notePath, hit);
+    }
+  }
+  const details: RagSourceDetail[] = [];
+  for (const notePath of citedSources) {
+    const hit = firstHitByPath.get(notePath);
+    if (!hit) continue;
+    const evidence = [...(hit.evidence ?? ['vector' as const])];
+    const excerptStart = hit.chunk.charRange[0];
+    const availableCodeUnits = Math.max(
+      0,
+      hit.chunk.charRange[1] - excerptStart,
+    );
+    const excerpt = boundedExcerpt(
+      hit.chunk.text,
+      Math.min(SOURCE_EXCERPT_CHAR_CAP, availableCodeUnits),
+    );
+    const excerptEnd = excerptStart + excerpt.length;
+    details.push({
+      notePath,
+      evidence,
+      score: hit.score,
+      chunkId: hit.chunk.id,
+      charRange: [excerptStart, excerptEnd],
+      excerpt,
+      mode: sourceMode(evidence),
+    });
+  }
+  return details;
+}
+
+function boundedExcerpt(text: string, maxCodeUnits: number): string {
+  let excerpt = text.slice(0, Math.max(0, maxCodeUnits));
+  if (excerpt.length < text.length && excerpt.length > 0) {
+    const lastCodeUnit = excerpt.charCodeAt(excerpt.length - 1);
+    const nextCodeUnit = text.charCodeAt(excerpt.length);
+    if (
+      lastCodeUnit >= 0xD800 &&
+      lastCodeUnit <= 0xDBFF &&
+      nextCodeUnit >= 0xDC00 &&
+      nextCodeUnit <= 0xDFFF
+    ) {
+      excerpt = excerpt.slice(0, -1);
+    }
+  }
+  return excerpt;
+}
+
+function validateCitations(
+  answer: string,
+  hits: readonly RetrievalHit[],
+): { valid: true; sources: string[] } | { valid: false; sources: [] } {
+  if (!answer.trim()) return { valid: false, sources: [] };
+  const allowed = new Set(hits.map((hit) => hit.chunk.notePath));
+  const cited: string[] = [];
+  const segments = answerSegments(answer);
+  if (segments.length === 0) return { valid: false, sources: [] };
+  for (const segment of segments) {
+    const markerCount = segment.match(/\((?:来源|source)\s*:/giu)?.length ?? 0;
+    const matches = [...segment.matchAll(/\((?:来源|source)\s*:\s*([^)]+?)\s*\)/giu)];
+    if (matches.length === 0 || markerCount !== matches.length) {
+      return { valid: false, sources: [] };
+    }
+    const last = matches.at(-1);
+    if (
+      last?.index === undefined ||
+      segment.slice(last.index + last[0].length).trim().length > 0
+    ) {
+      return { valid: false, sources: [] };
+    }
+    for (const match of matches) {
+      const path = match[1]?.trim() ?? '';
+      if (!path || !allowed.has(path)) return { valid: false, sources: [] };
+      cited.push(path);
+    }
+  }
+  const sources = dedupSources(cited);
+  if (sources.length === 0) return { valid: false, sources: [] };
+  return { valid: true, sources };
+}
+
+function answerSegments(answer: string): string[] {
+  const segments: string[] = [];
+  let current: string[] = [];
+  const flush = () => {
+    const segment = current.join('\n').trim();
+    if (segment) segments.push(segment);
+    current = [];
+  };
+  for (const line of answer.split(/\r?\n/u)) {
+    if (!line.trim()) {
+      flush();
+      continue;
+    }
+    const beginsBullet = /^\s*(?:[-*+•]|\d+[.)])\s+/u.test(line);
+    if (beginsBullet && current.length > 0) flush();
+    current.push(line);
+  }
+  flush();
+  return segments;
+}
+
+function classifyProviderFailure(error: unknown): ProviderStatus {
+  const record = isRecord(error) ? error : {};
+  const cause = isRecord(record.cause) ? record.cause : {};
+  const code = String(record.code ?? cause.code ?? '').toUpperCase();
+  const name = String(record.name ?? '').toLowerCase();
+  const causeName = String(cause.name ?? '').toLowerCase();
+  const message = `${String(record.message ?? '')} ${String(cause.message ?? '')}`.toLowerCase();
+  if (
+    name === 'networkerror' ||
+    causeName === 'networkerror' ||
+    name === 'providerunavailableerror' ||
+    causeName === 'providerunavailableerror' ||
+    ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EHOSTUNREACH', 'ETIMEDOUT'].includes(code) ||
+    /unavailable|not configured|fetch failed|connection refused|timed out/.test(message)
+  ) {
+    return 'unavailable';
+  }
+  return 'failed';
+}
+
+function findAbortLike(
+  error: unknown,
+  seen: Set<object> = new Set<object>(),
+): unknown | null {
+  if (!isRecord(error) || seen.has(error)) return null;
+  seen.add(error);
+  const name = String(error.name ?? '').toLowerCase();
+  const code = String(error.code ?? '').toUpperCase();
+  if (
+    name === 'aborterror' ||
+    code === 'ABORT_ERR' ||
+    code === 'ERR_ABORTED'
+  ) {
+    return error;
+  }
+  return findAbortLike(error.cause, seen);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function stableDiagnostics(values: readonly RagDiagnosticCode[]): RagDiagnosticCode[] {
+  const present = new Set(values);
+  return DIAGNOSTIC_ORDER.filter((value) => present.has(value));
 }
 
 function throwIfAborted(signal?: AbortSignal): void {
@@ -289,4 +658,11 @@ function emptyAnswer(lang: 'zh' | 'en'): string {
     return 'No relevant notes found in the knowledge base.';
   }
   return '知识库内未找到相关笔记。';
+}
+
+function groundingFailureAnswer(lang: 'zh' | 'en'): string {
+  if (lang === 'en') {
+    return 'No verifiable answer could be produced from the local notes.';
+  }
+  return '未能基于本地笔记生成可核验回答。';
 }

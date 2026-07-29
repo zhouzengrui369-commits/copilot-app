@@ -15,6 +15,16 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 当前 Phase 1 只有在同一 macOS final candidate 完成规定覆盖率、集成测试、至少 50 条真实 Electron E2E、candidate-bound 性能、三轮 verify-fix、真机截图、Developer ID 签名、Apple 公证、可安装包/SHA256 和文档证据后，才能声明 MVP 完成。
 
+## Ecosystem Baseline
+
+- repository: `zhouzengrui369-commits/knowme-ecosystem`
+- version: `0.2.0`
+- commit: `965713b81a726279f63527eb17979f5e768423c1`
+- review date: `2026-07-29`
+- deviations: `None`
+
+治理风险：生态仓缺少其自身 `docs/acceptance` 权威路径；本仓只记录该风险，不修改 Copilot 评审 Core/Profile 或产品定位。
+
 ## 核心能力
 
 - 本地笔记与知识库：SQLite + Markdown 持久化、检索、恢复与数据完整性保护。

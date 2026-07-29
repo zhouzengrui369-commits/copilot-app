@@ -9,6 +9,7 @@ import {
   resolveStagePaths,
   sha256,
   spawnFailureEvidence,
+  validateSourceOutputPath,
 } from '../scripts/stage-electron-native.mjs';
 
 const cleanup: string[] = [];
@@ -66,5 +67,21 @@ describe('stage-electron-native', () => {
       timedOut: true,
       error: expect.objectContaining({ code: 'ETIMEDOUT', message: 'spawn timed out' }),
     });
+  });
+
+  it('allows source output only in one task-owned run/native directory', () => {
+    const taskOutput = path.resolve(
+      process.cwd(),
+      '../../tasks/openclaw/2026-07-25-test-task/run/native/better_sqlite3.node',
+    );
+    expect(validateSourceOutputPath(taskOutput)).toBe(taskOutput);
+    expect(() => validateSourceOutputPath(
+      path.resolve(process.cwd(), '../../node_modules/better-sqlite3/build/Release/better_sqlite3.node'),
+    )).toThrow('SOURCE_OUTPUT_PATH_OUTSIDE_TASK_RUN_NATIVE');
+    expect(() => validateSourceOutputPath(
+      path.resolve(process.cwd(), '../../tasks/openclaw/2026-07-25-test-task/artifacts/better_sqlite3.node'),
+    )).toThrow('SOURCE_OUTPUT_PATH_OUTSIDE_TASK_RUN_NATIVE');
+    expect(() => validateSourceOutputPath('relative/better_sqlite3.node'))
+      .toThrow('SOURCE_OUTPUT_PATH_INVALID');
   });
 });

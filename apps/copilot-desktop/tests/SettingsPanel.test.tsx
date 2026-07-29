@@ -75,18 +75,20 @@ describe('SettingsPanel — explicit backup owner consent', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders backup OFF by default without a direct switch or prechecked scope', async () => {
+  it('renders Remote and Backup as a read-only post-MVP boundary', async () => {
     makeBridge();
     render(<SettingsPanel />);
-    await screen.findByText(/State: OFF/);
+    await screen.findByTestId('settings-post-mvp-boundary');
+    expect(screen.getByTestId('settings-post-mvp-boundary')).toHaveTextContent('OFF · POST-MVP');
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
-    expect((screen.getAllByRole('checkbox') as HTMLInputElement[]).every((item) => !item.checked)).toBe(true);
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
-  it('does not route enable through settings.setCloudBackup(boolean)', async () => {
+  it('does not expose owner-consent or route enable through settings.setCloudBackup', async () => {
     const bridge = makeBridge();
     render(<SettingsPanel />);
-    await screen.findByTestId('backup-owner-consent');
+    await screen.findByTestId('settings-post-mvp-boundary');
+    expect(screen.queryByTestId('backup-owner-consent')).not.toBeInTheDocument();
     expect(bridge.setCloudBackup).not.toHaveBeenCalled();
   });
 
@@ -103,7 +105,7 @@ describe('SettingsPanel — explicit backup owner consent', () => {
       }),
     });
     render(<SettingsPanel />);
-    await screen.findByText(/State: OFF/);
+    await screen.findByTestId('settings-post-mvp-boundary');
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 });

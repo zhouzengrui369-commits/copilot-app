@@ -12,6 +12,12 @@ files:
   - "!**/__tests__/**"
   - "!**/*.test.*"
   - "!**/coverage/**"
+  # Keep the complete built main-module sibling graph in app.asar even when
+  # selected entries are also copied to macOS extraResources.
+  - from: "dist/main"
+    to: "dist/main"
+    filter:
+      - "**/*.{js,mjs,cjs}"
 # Pin electron version — electron-builder refuses to compute it from
 # semver ranges like ^33.2.0 (see electron-userland/electron-builder#3984).
 # Bump this when bumping the electron devDependency.
@@ -35,6 +41,28 @@ mac:
         - x64
   hardenedRuntime: true
   gatekeeperAssess: false
+  extraResources:
+    - from: resources/local-asr
+      to: local-asr
+      filter:
+        - "BUNDLE-MANIFEST.json"
+        - "THIRD-PARTY-NOTICES.md"
+        - "licenses/Apache-2.0.txt"
+        - "model/README.md"
+        - "model/decoder-epoch-99-avg-1.int8.onnx"
+        - "model/encoder-epoch-99-avg-1.int8.onnx"
+        - "model/joiner-epoch-99-avg-1.int8.onnx"
+        - "model/tokens.txt"
+        - "runtime/README.md"
+        - "runtime/local-asr-no-egress-preload.cjs"
+        - "runtime/package.json"
+        - "runtime/sherpa-onnx-asr.js"
+        - "runtime/sherpa-onnx-wasm-nodejs.js"
+        - "runtime/sherpa-onnx-wasm-nodejs.wasm"
+    - from: dist/main
+      to: local-asr/worker
+      filter:
+        - "local-asr-*.js"
   # Sprint 1.1 ships unsigned local builds (T-1.4.1 will wire signing).
   # Following v5 desktop's identity-null pattern to avoid the auto-sign
   # rejection that hits njx's machine.
