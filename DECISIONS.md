@@ -48,3 +48,21 @@ Users can explicitly return to those scopes.
 WIKI digest current is necessary but insufficient for Knowledge build
 readiness. Only the exact current note revision with completed durable KG/RAG
 work may report ready. Running, failed, missing, or stale work fails closed.
+
+## D-2026-07-29-10: Persist Only The Latest Completed Grounded Ask Exchange
+
+Persist one versioned latest-completed grounded exchange in the local Electron
+main process. Do not persist streaming, cancelled, failed, zero-source or
+renderer draft state. Use atomic owner-only storage and revalidate local
+sources and the optional canonical Todo receipt on load. This gives users
+source-return and restart continuity without creating a second knowledge truth
+or cloud/session-storage dependency.
+
+## D-2026-07-29-11: Development Evidence Is Not Candidate Identity
+
+Current-source focused tests, Electron runs, screenshots and task-local evidence
+may establish development acceptance, but they do not establish a candidate.
+Candidate identity begins only from clean committed P0+P1 bytes and binds an
+immutable source snapshot, exact artifact SHA256, runtime ID, deterministic
+test-data manifest and candidate-bound evidence. Independent Focused Retest is
+still required before Human Owner Gate eligibility.

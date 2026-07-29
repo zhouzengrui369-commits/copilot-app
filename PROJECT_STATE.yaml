@@ -1,18 +1,18 @@
 project: copilot-app
-stage: Owner Gate P1 Closure / Stage 2 EXP-COP-009
+stage: Clean Candidate Materialization / Stage 3
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "60497a5071b1c274255cf08237c02532a94f2d8b"
-materialized_product_commit: "0c69b8643ca4dcf20a86623f2528195a34f402a4"
+latest_commit: "bd82407dc63fd278c0523f46bcf0e96c5344fd9b"
+materialized_product_commit: "bd82407dc63fd278c0523f46bcf0e96c5344fd9b"
 artifact_sha256: null
 runtime_id: null
 ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
 ecosystem_baseline_version: "0.2.0"
 current_p0: EXP-COP-008_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
 current_p1:
-  primary: EXP-COP-009
+  primary: EXP-COP-009_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
   total_open: 6
 review_verdict: NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3
 r3_snapshot:
@@ -23,11 +23,14 @@ r3_snapshot:
   bytes: 51347389
   role: product_layer_input_only
 release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
+release_baseline: RED
+candidate_status: NOT_BUILT
+independent_retest: PENDING
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Implement EXP-COP-009 Ask-to-source-to-back continuity from its frozen contract, then bind P0 and P1 to a clean reproducible candidate for independent Focused Retest.
+next_single_action: Build a fresh reproducible unsigned macOS candidate from the clean P0+P1 commits, bind source snapshot, artifact SHA256, runtime ID, test-data manifest and current Electron evidence, then request independent Focused Retest.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-29T12:38:29Z"
+updated_at: "2026-07-29T16:24:40Z"

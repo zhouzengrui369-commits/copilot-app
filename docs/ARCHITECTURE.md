@@ -8,8 +8,8 @@ Copilot Desktop is the local-first product authority for notes, KB, KG, Todo, sc
 
 - Git baseline: GitHub `main@96c861706126317c27965fcb64c765973df9ac89`.
 - Active branch: `codex/p0-owner-gate`.
-- Current accepted P0 product/test commit:
-  `0c69b8643ca4dcf20a86623f2528195a34f402a4`.
+- Current accepted P0+P1 product/test commit:
+  `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
 - r3 snapshot: Desktop product-layer input only, verified as `414 files / 7 tracked deletions / 51,347,389 bytes`.
 - r3 aggregate: `026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311`.
 
@@ -19,7 +19,14 @@ Review artifacts remain independent fact references. They are not product code a
 
 P0 is `EXP-COP-008`. P1 first is `EXP-COP-009`. Old source/runtime IDs are not reproducible and must not be reused for candidate, release, or owner-gate evidence.
 
-The next engineering pass must close `EXP-COP-008` Todo false-success/discoverability/readback and `EXP-COP-009` Ask source-return continuity. It must then produce fresh runtime, artifact, screenshot, and independent Focused Retest evidence before Human Owner Gate can become eligible.
+EXP-COP-008 and EXP-COP-009 have development-acceptance implementations.
+Neither is independently closed until both are materialized into one clean,
+reproducible candidate and pass the independent Focused Retest. Candidate,
+release and owner-gate identities remain unset until that boundary.
+
+Current-source focused Electron evidence is development evidence only; a clean
+commit, packaged artifact SHA256, runtime ID and test-data manifest are required
+for candidate identity.
 
 ## Canonical Grounded-Answer Todo Flow
 
@@ -48,6 +55,26 @@ Calendar date selection is a navigation action: it sets the selected date and
 switches the list to the selected-day scope. `全部` and `未安排` remain explicit
 alternate scopes.
 
+## Grounded Ask Continuity
+
+The latest completed grounded Ask exchange is a versioned local main-process
+projection under Electron `userData`; it is not renderer page memory,
+localStorage, sessionStorage or cloud truth.
+
+The persisted projection contains one immutable completed exchange: exchange
+ID, submitted question, terminal answer, aligned source/sourceDetails, optional
+canonical Todo receipt and completion time. Main IPC serializes save, load and
+clear operations. Writes are atomic and owner-only (`0600`); load uses
+`O_NOFOLLOW`, validates the opened handle as bounded, regular, owner-controlled
+and single-link, then reads from that same handle.
+
+Before exposing source or Todo actions after restore, the main process
+revalidates every local source against current note bytes and re-reads the Todo
+canonically. Missing, changed, stale, corrupt, unsafe, nonterminal or mismatched
+state loses current/success actions. Ask-to-Knowledge navigation carries the
+exact exchange ID, note path and full-reader intent; return restores only the
+still-matching exchange.
+
 ## Knowledge Build Readiness
 
 `knowledgeBuild.ready` is revision-bound and fail-closed:
@@ -64,4 +91,8 @@ paths actually cited by the model and validated against retrieval hits.
 
 ## Explicit Non-Goals
 
-Stage 0 does not include Windows expansion, Remote/Backup expansion, major dependency upgrades, visual redesign, tests, build, Electron runtime, package generation, or release readiness claims.
+This stage does not include Windows expansion, Remote/Backup expansion, major
+dependency upgrades, visual redesign, signing, notarization, or release
+readiness claims. Focused development evidence does not replace the
+candidate-bound project-wide Electron, release, or independent experience
+gates.

@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-07-30
+
+- Closed EXP-COP-009 development acceptance: a completed grounded Ask exchange,
+  exact source/full-reader navigation, explicit return, canonical Todo receipt
+  and action entry survive route changes, renderer remount and same-userData
+  Electron quit/relaunch; stale, unsafe or mismatched restore state fails
+  closed.
+- Added a bounded main-process Ask conversation store and IPC contract with
+  serialized operations, atomic `0600` writes, same-handle `O_NOFOLLOW` reads,
+  source revalidation and canonical Todo receipt revalidation.
+- Added deterministic late-success/late-rejection coverage and same-run focused
+  Electron evidence. The controller current-byte receipt records main/renderer
+  TSC PASS and 28/28 focused tests PASS; the tests TSC baseline remains red and
+  R3c explicitly records `globalGate=NOT_RUN`.
+- Materialized the accepted P0+P1 product/test bytes at
+  `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
+- Status remains `BLOCKED / CLEAN_CANDIDATE_NOT_BUILT /
+  INDEPENDENT_RETEST_PENDING / RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`.
+
 ## 2026-07-29
 
 - Closed EXP-COP-008 development acceptance on current-source Electron:
