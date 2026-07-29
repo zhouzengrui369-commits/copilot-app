@@ -9,6 +9,7 @@ Current branch/base:
 - branch: `codex/p0-owner-gate`
 - Git baseline: GitHub `main@96c861706126317c27965fcb64c765973df9ac89`
 - latest materialized product commit: `0c69b8643ca4dcf20a86623f2528195a34f402a4`
+- latest status/evidence commit: `60497a5071b1c274255cf08237c02532a94f2d8b`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict

@@ -4,7 +4,7 @@ verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "0c69b8643ca4dcf20a86623f2528195a34f402a4"
+latest_commit: "60497a5071b1c274255cf08237c02532a94f2d8b"
 materialized_product_commit: "0c69b8643ca4dcf20a86623f2528195a34f402a4"
 artifact_sha256: null
 runtime_id: null
