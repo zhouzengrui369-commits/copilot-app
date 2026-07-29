@@ -10,6 +10,8 @@ Current branch/base:
 - Git baseline: GitHub `main@96c861706126317c27965fcb64c765973df9ac89`
 - latest materialized P0+P1 product/test commit:
   `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`
+- latest committed product head, including the macOS build-order repair:
+  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`
 - governance base commit: `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
@@ -32,6 +34,27 @@ Latest focused review facts:
 - verdict: `NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3`
 
 ## Open Gates
+
+macOS build-order contract repair (2026-07-30):
+
+- `apps/copilot-desktop/package.json` now defines one ordered
+  `build:workspace-deps` chain for `@copilot/llm-client`, `@copilot/kb`,
+  `@copilot/kg`, and `@copilot/rag`.
+- all four macOS distribution scripts invoke that chain before the desktop
+  build; the generic desktop build and all Windows distribution scripts remain
+  unchanged.
+- static contract RED was `5 failed / 1 passed`; after the package-only repair
+  it is `6/6 PASS`. Desktop main TSC also passes.
+- acceptance remains `BLOCKED_EXECUTOR_DEPENDENCY_RESOLUTION`: this S15C
+  checkout has no complete root `node_modules`. The first renderer TSC stopped
+  at missing `vite/client`; per first-failure policy, it was not retried and
+  tests TSC was not run. No build, package, Electron, Git or network action was
+  performed.
+- revalidate the repair from a new clean committed candidate after its exact
+  `npm ci`; this focused result is not candidate or release evidence.
+- the product repair is committed at
+  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`; no candidate was built from that
+  commit and the renderer/tests TSC blocker remains open.
 
 P0 development acceptance:
 
@@ -68,12 +91,13 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Materialize the accepted P0+P1 product/test commit and the separate governance
-commit, prove the resulting source tree clean, then build one new unsigned
-macOS focused-retest candidate. Bind the clean source commit, immutable source
-snapshot, artifact SHA256, runtime ID, deterministic test-data manifest,
-packaged Electron evidence and screenshots before asking the independent
-product-experience thread for Focused Retest.
+Commit this governance postimage after product commit
+`1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`, then create a clean candidate from
+that subsequent governance HEAD. Run exact `npm ci`, main/renderer/tests TSC,
+macOS package, focused Electron, runner list proving `>=50`, and the eligible
+full Electron gate. Only after those pass may the flow bind the clean source
+commit, immutable source snapshot, artifact SHA256, runtime ID, deterministic
+test-data manifest, packaged Electron evidence and screenshots.
 
 The release baseline remains red outside the accepted P0 slice. R3 classified
 30 existing baseline/evidence failure records; complete Electron package

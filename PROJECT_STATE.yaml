@@ -4,8 +4,8 @@ verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "bd82407dc63fd278c0523f46bcf0e96c5344fd9b"
-materialized_product_commit: "bd82407dc63fd278c0523f46bcf0e96c5344fd9b"
+latest_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
+materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
 ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
@@ -27,10 +27,10 @@ release_baseline: RED
 candidate_status: NOT_BUILT
 independent_retest: PENDING
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Build a fresh reproducible unsigned macOS candidate from the clean P0+P1 commits, bind source snapshot, artifact SHA256, runtime ID, test-data manifest and current Electron evidence, then request independent Focused Retest.
+next_single_action: From the subsequent governance HEAD, create a clean candidate; run exact npm ci, main/renderer/tests TSC, macOS package, focused Electron, list >=50 and eligible full Electron, then bind candidate evidence for independent Focused Retest.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-29T16:24:40Z"
+updated_at: "2026-07-29T21:30:41Z"

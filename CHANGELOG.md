@@ -2,6 +2,23 @@
 
 ## 2026-07-30
 
+- Added a single ordered `build:workspace-deps` contract and made every macOS
+  distribution script execute it before the desktop build. This closes the
+  clean-install ordering defect without changing Windows scripts or dependency
+  versions.
+- Committed the product/test portion of that repair at
+  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`. This commit is a source rollback
+  point only: no clean candidate, package, artifact SHA256, runtime ID or
+  independent retest is attached to it.
+- Added a static regression test covering the exact dependency order, all four
+  macOS distribution paths, and preservation of generic desktop/Windows
+  scripts. Evidence moved from `5 failed / 1 passed` to `6/6 PASS`; main TSC
+  passes.
+- The first renderer TSC stopped on missing `vite/client` because S15C has no
+  complete root dependency tree. Per first-failure policy, no retry or tests
+  TSC followed. Revalidation is required after exact `npm ci` on the next clean
+  committed candidate; no build, package, Electron, network or Git action was
+  performed.
 - Closed EXP-COP-009 development acceptance: a completed grounded Ask exchange,
   exact source/full-reader navigation, explicit return, canonical Todo receipt
   and action entry survive route changes, renderer remount and same-userData
