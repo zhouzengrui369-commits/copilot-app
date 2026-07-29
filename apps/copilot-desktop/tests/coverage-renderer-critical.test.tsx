@@ -1015,12 +1015,28 @@ function rendererTrashItem(
 }
 
 function todoApi(items: CopilotTodo[], dueItems: CopilotTodo[] = []): CopilotProductApi {
+  const state = items.map((item) => ({ ...item }));
   return makeProductApi({
     todos: {
-      list: vi.fn(async () => items),
+      list: vi.fn(async () => state.map((item) => ({ ...item }))),
       listDue: vi.fn(async () => dueItems),
-      create: vi.fn(async (input) => todo({ id: 'new', title: input.title, dueAt: input.dueAt, linkedNotePaths: input.linkedNotePaths })),
-      update: vi.fn(async (id, patch) => todo({ id, ...patch })),
+      create: vi.fn(async (input) => {
+        const created = todo({
+          id: 'new',
+          title: input.title,
+          dueAt: input.dueAt,
+          remindAt: input.remindAt,
+          linkedNotePaths: input.linkedNotePaths,
+        });
+        state.push(created);
+        return { ...created };
+      }),
+      update: vi.fn(async (id, patch) => {
+        const index = state.findIndex((item) => String(item.id) === String(id));
+        if (index < 0) return null;
+        state[index] = { ...state[index]!, ...patch };
+        return { ...state[index]! };
+      }),
       remove: vi.fn(async () => true),
       markReminderFired: vi.fn(async (id) => todo({ id })),
     },
@@ -1114,11 +1130,10 @@ describe('ScheduleWorkspace critical interaction', () => {
   it('shows the Demo-first calendar and empty truth, then creates without optional fields', async () => {
     const api = todoApi([]);
     render(<ScheduleWorkspace api={api} />);
-    expect(await screen.findByText('暂无待办')).toBeInTheDocument();
+    expect(await screen.findByText('选中日期暂无待办')).toBeInTheDocument();
     expect(screen.getByLabelText('月历')).toBeInTheDocument();
-    expect(screen.getByText('这一天还没有本地待办。')).toBeInTheDocument();
     expect(screen.getByText('选中日期没有时间线项目。')).toBeInTheDocument();
-    expect(screen.getByText('0 项当天待办 · 数据来自本地日程')).toBeInTheDocument();
+    expect(screen.getByText('0 条当天笔记 · 0 项当天待办 · 数据来自本地知识与日程')).toBeInTheDocument();
     expect(screen.getByText('0 项未完成')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
     const title = screen.getByRole('textbox', { name: '待办标题' });

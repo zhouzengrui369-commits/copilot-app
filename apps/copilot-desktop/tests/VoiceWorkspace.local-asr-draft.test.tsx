@@ -32,6 +32,8 @@ function api(): CopilotProductApi {
         ...input,
         path: 'inbox/voice-explicit',
         body: input.body,
+        localState: 'LOCAL_SAVED' as const,
+        knowledgeBuild: { state: 'queued' as const, revision: 'voice-explicit' },
       })),
       update: vi.fn(async () => null),
       remove: vi.fn(async () => false),
@@ -67,10 +69,8 @@ describe('VoiceWorkspace local draft ownership', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '保存为本地笔记' }));
     });
-    await waitFor(() => expect(productApi.kg.reindexNote).toHaveBeenCalledWith(
-      'inbox/voice-explicit',
-    ));
     expect(productApi.notes.create).toHaveBeenCalledTimes(1);
+    expect(productApi.kg.reindexNote).not.toHaveBeenCalled();
     expect(screen.getByText('已保存到本地笔记。')).toBeInTheDocument();
   });
 });

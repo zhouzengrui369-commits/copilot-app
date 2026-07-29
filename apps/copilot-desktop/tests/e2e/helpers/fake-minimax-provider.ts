@@ -488,11 +488,24 @@ function selectGroundedRagContent(rawBody: string): string | null {
   if (!isRecord(userPrompt) || typeof userPrompt.content !== 'string') {
     return null;
   }
-  const notePath = /\(\d+\) \[([^\]\r\n]+)\]/u.exec(userPrompt.content)?.[1]?.trim();
-  if (!notePath || notePath.length > 300 || /[\u0000-\u001f\u007f]/u.test(notePath)) {
-    return null;
+  const notePaths: string[] = [];
+  const seen = new Set<string>();
+  for (const match of userPrompt.content.matchAll(/\(\d+\) \[([^\]\r\n]+)\]/gu)) {
+    const notePath = match[1]?.trim() ?? '';
+    if (
+      !notePath
+      || notePath.length > 300
+      || /[\u0000-\u001f\u007f]/u.test(notePath)
+      || seen.has(notePath)
+    ) {
+      continue;
+    }
+    seen.add(notePath);
+    notePaths.push(notePath);
   }
-  return `该回答仅依据已完成索引的本地笔记。(来源: ${notePath})`;
+  if (notePaths.length === 0) return null;
+  return '该回答仅依据已完成索引的本地笔记。'
+    + notePaths.map((notePath) => `(来源: ${notePath})`).join(' ');
 }
 
 function buildSuccessResponse(content: string): object {

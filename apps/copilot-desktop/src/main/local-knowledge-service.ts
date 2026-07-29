@@ -478,7 +478,7 @@ export class LocalKnowledgeService {
         related: todo.note_links,
         body: serializeTodo(todo),
       });
-      return todo;
+      return requireCanonicalTodo(todo, this.readTodo(todo.id));
     },
 
     update: async (request: UpdateTodoRequest): Promise<TodoRecord | null> => {
@@ -494,7 +494,7 @@ export class LocalKnowledgeService {
         related: next.note_links,
         body: serializeTodo(next),
       });
-      return next;
+      return requireCanonicalTodo(next, this.readTodo(request.id));
     },
 
     remove: async (id: TodoId): Promise<boolean> => {
@@ -890,7 +890,6 @@ export class LocalKnowledgeService {
       && currentProjection.notePath === document.note.path
       && currentProjection.contentDigest === wiki.expectedContentDigest
     );
-    if (digestCurrent) return { state: 'ready', revision };
     let entry: ReturnType<NonNullable<KbPort['listKgPending']>>[number] | undefined;
     try {
       entry = this.kb.listKgPending?.()
@@ -901,9 +900,13 @@ export class LocalKnowledgeService {
     } catch {
       return { state: 'not-ready', revision };
     }
+    if (entry?.queued_at !== document.note.updatedAt) {
+      return { state: 'not-ready', revision };
+    }
     if (entry?.status === 'pending') return { state: 'queued', revision };
     if (entry?.status === 'processing') return { state: 'running', revision };
     if (entry?.status === 'failed') return { state: 'failed', revision };
+    if (entry?.status === 'done' && digestCurrent) return { state: 'ready', revision };
     return { state: 'not-ready', revision };
   }
 
@@ -2099,6 +2102,27 @@ function parseTodo(body: string): TodoRecord | null {
   } catch {
     return null;
   }
+}
+
+function requireCanonicalTodo(
+  expected: TodoRecord,
+  actual: TodoRecord | null,
+): TodoRecord {
+  const matches = actual !== null
+    && actual.id === expected.id
+    && actual.title === expected.title
+    && actual.body === expected.body
+    && actual.due_at_ms === expected.due_at_ms
+    && actual.status === expected.status
+    && equalStringArray(actual.note_links, expected.note_links);
+  if (!matches) {
+    throw new DomainServiceError('INTERNAL', 'TODO_CANONICAL_READBACK_FAILED');
+  }
+  return actual;
+}
+
+function equalStringArray(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function todoPath(id: TodoId): string {

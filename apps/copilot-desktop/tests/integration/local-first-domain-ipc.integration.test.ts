@@ -148,6 +148,62 @@ describe('Phase 1 local-first desktop domain IPC integration', () => {
     await reopened.service.close();
   });
 
+  it('persists canonical Todo body, due, and all source links across update and full service reopen', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-todo-canonical-int-'));
+    tempDirs.push(dir);
+    const first = createHarness(dir, false);
+    const create = first.handlers.get(IPC_CHANNELS.TODOS_CREATE)!;
+    const list = first.handlers.get(IPC_CHANNELS.TODOS_LIST)!;
+    const update = first.handlers.get(IPC_CHANNELS.TODOS_UPDATE)!;
+
+    const created = await create({}, {
+      title: '来源回答待办',
+      body: '不可丢失的最终回答正文',
+      due_at_ms: null,
+      remind_at_ms: null,
+      note_links: ['notes/source-a.md', 'notes/source-b.md'],
+    }) as { id: string | number };
+    await expect(list({}, undefined)).resolves.toContainEqual(expect.objectContaining({
+      id: created.id,
+      title: '来源回答待办',
+      body: '不可丢失的最终回答正文',
+      due_at_ms: null,
+      status: 'pending',
+      note_links: ['notes/source-a.md', 'notes/source-b.md'],
+    }));
+
+    const dueAt = 1_785_552_200_000;
+    await expect(update({}, {
+      id: created.id,
+      patch: {
+        title: '已编辑来源回答待办',
+        body: '重启前已编辑的正文',
+        due_at_ms: dueAt,
+        remind_at_ms: dueAt,
+        note_links: ['notes/source-a.md', 'notes/source-c.md'],
+      },
+    })).resolves.toMatchObject({
+      id: created.id,
+      title: '已编辑来源回答待办',
+      body: '重启前已编辑的正文',
+      due_at_ms: dueAt,
+      note_links: ['notes/source-a.md', 'notes/source-c.md'],
+    });
+    await first.service.close();
+
+    const reopened = createHarness(dir, false);
+    await expect(reopened.handlers.get(IPC_CHANNELS.TODOS_LIST)!({}, undefined))
+      .resolves.toContainEqual(expect.objectContaining({
+        id: created.id,
+        title: '已编辑来源回答待办',
+        body: '重启前已编辑的正文',
+        due_at_ms: dueAt,
+        status: 'pending',
+        note_links: ['notes/source-a.md', 'notes/source-c.md'],
+      }));
+    await reopened.service.close();
+  });
+
   it('exposes aligned KG/RAG sources, sends metadata-only backup events, and redacts failures', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-domain-int-'));
     tempDirs.push(dir);

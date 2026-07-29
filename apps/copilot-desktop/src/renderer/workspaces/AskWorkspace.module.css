@@ -267,6 +267,52 @@
   padding-left: 18px;
 }
 
+.answerActions,
+.todoComposer,
+.todoReceipt {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.answerActions {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.answerActions small,
+.todoComposer p {
+  margin: 0;
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
+}
+
+.todoComposer,
+.todoReceipt {
+  padding: 10px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 8px;
+  background: var(--surface-2, var(--prototype-surface-2));
+}
+
+.todoComposer label {
+  display: grid;
+  gap: 4px;
+}
+
+.todoComposer input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.todoComposer > div,
+.todoReceipt {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
+  justify-content: start;
+}
+
 @media (max-width: 1180px) {
   .chatGrid {
     grid-template-columns: 220px minmax(450px, 1fr) 280px;

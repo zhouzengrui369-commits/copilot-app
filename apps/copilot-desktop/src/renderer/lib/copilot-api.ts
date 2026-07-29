@@ -86,6 +86,7 @@ export type TodoStatus = 'pending' | 'done' | 'cancelled';
 export interface CopilotTodo {
   id: string | number;
   title: string;
+  body?: string;
   status: TodoStatus;
   dueAt?: number | null;
   remindAt?: number | null;
@@ -97,6 +98,7 @@ export interface CopilotTodo {
 
 export interface CopilotTodoInput {
   title: string;
+  body?: string;
   dueAt?: number | null;
   remindAt?: number | null;
   linkedNotePaths?: string[];
@@ -451,6 +453,7 @@ function noteCommitReceiptToProduct(
 function toCreateTodoRequest(input: CopilotTodoInput): CreateTodoRequest {
   return {
     title: input.title,
+    ...(input.body !== undefined ? { body: input.body } : {}),
     due_at_ms: input.dueAt,
     remind_at_ms: input.remindAt,
     note_links: input.linkedNotePaths,
@@ -460,6 +463,7 @@ function toCreateTodoRequest(input: CopilotTodoInput): CreateTodoRequest {
 function toUpdateTodoPatch(patch: Partial<CopilotTodo>): UpdateTodoRequest['patch'] {
   const output: UpdateTodoRequest['patch'] = {};
   if (patch.title !== undefined) output.title = patch.title;
+  if (patch.body !== undefined) output.body = patch.body;
   if (patch.status !== undefined) output.status = patch.status;
   const dueAt = patch.dueAt !== undefined ? patch.dueAt : patch.due_at_ms;
   if (dueAt !== undefined) output.due_at_ms = dueAt;
@@ -474,6 +478,7 @@ function todoRecordToTodo(record: TodoRecord): CopilotTodo {
   return {
     id: record.id,
     title: record.title,
+    body: record.body,
     status: record.status,
     due_at_ms: record.due_at_ms,
     remind_at_ms: record.remind_at_ms,

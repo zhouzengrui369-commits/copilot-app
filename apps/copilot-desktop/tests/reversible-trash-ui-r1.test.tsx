@@ -91,6 +91,7 @@ describe('reversible Trash renderer routing r1', () => {
     knowledge.unmount();
 
     const schedule = render(<ScheduleWorkspace api={product} />);
+    fireEvent.click(await screen.findByRole('button', { name: '未安排' }));
     fireEvent.click(await screen.findByRole('button', { name: '删除 Ship MVP' }));
     await waitFor(() => expect(product.trash?.moveTodo).toHaveBeenCalledWith('todo-1'));
     expect(product.todos.remove).not.toHaveBeenCalled();

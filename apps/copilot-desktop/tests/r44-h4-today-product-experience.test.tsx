@@ -9,6 +9,7 @@ vi.mock('../src/renderer/components/VoiceInput/index.js', () => ({
 }));
 
 function makeApi(items: CopilotTodo[] = []): CopilotProductApi {
+  const state = [...items];
   return {
     notes: {
       list: vi.fn(async () => []),
@@ -28,9 +29,18 @@ function makeApi(items: CopilotTodo[] = []): CopilotProductApi {
     },
     rag: { ask: vi.fn(async () => ({ text: '', sources: [] })) },
     todos: {
-      list: vi.fn(async () => items),
-      create: vi.fn(async (input) => ({ ...input, id: 'created', status: 'pending' as const })),
-      update: vi.fn(async () => null),
+      list: vi.fn(async () => [...state]),
+      create: vi.fn(async (input) => {
+        const created = { ...input, id: 'created', status: 'pending' as const };
+        state.push(created);
+        return created;
+      }),
+      update: vi.fn(async (id, patch) => {
+        const index = state.findIndex((todo) => String(todo.id) === String(id));
+        if (index < 0) return null;
+        state[index] = { ...state[index]!, ...patch };
+        return state[index]!;
+      }),
       remove: vi.fn(async () => false),
       listDue: vi.fn(async () => []),
       markReminderFired: vi.fn(async () => null),
@@ -156,9 +166,14 @@ describe('R44 H4B Today product experience', () => {
     expect(summary).toHaveTextContent('执行日志');
     expect(summary).toHaveTextContent('完成产品合同复核');
     expect(summary).toHaveTextContent('备注：Browser 复验后再进入 R 门');
+    expect(api.todos.update).toHaveBeenCalledWith('detail', expect.objectContaining({
+      body: expect.stringContaining('COPILOT_TODO_DETAIL_V1'),
+    }));
 
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 Today 卡片验收' }));
-    expect(screen.getByText('完成产品合同复核')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('todo-card-detail')).toHaveAttribute('data-focused', 'true'));
+    fireEvent.click(screen.getByRole('button', { name: '收起待办 Today 卡片验收' }));
+    fireEvent.click(await screen.findByRole('button', { name: '展开待办 Today 卡片验收' }));
+    expect(screen.getByTestId('todo-memory-summary-detail')).toHaveTextContent('完成产品合同复核');
     fireEvent.change(screen.getByLabelText('备注'), { target: { value: '未保存改动' } });
     fireEvent.click(screen.getByRole('button', { name: '取消编辑待办详情' }));
     fireEvent.click(screen.getByRole('button', { name: '展开待办 Today 卡片验收' }));

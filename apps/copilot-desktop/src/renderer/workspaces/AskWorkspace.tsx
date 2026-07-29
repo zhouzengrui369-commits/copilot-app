@@ -4,6 +4,7 @@ import type {
   CopilotProductApi,
   CopilotRagAnswer,
   CopilotRagStreamHandle,
+  CopilotTodo,
 } from '../lib/copilot-api.js';
 import { WorkspaceState } from './WorkspaceState.js';
 import styles from './AskWorkspace.module.css';
@@ -11,6 +12,7 @@ import styles from './AskWorkspace.module.css';
 interface AskWorkspaceProps {
   api: CopilotProductApi;
   onOpenSource?(path: string): void;
+  onOpenTodo?(id: string | number): void;
 }
 
 type SourceTruthState = 'CHECKING' | 'LOCAL_PRESENT' | 'MISSING' | 'UNAVAILABLE' | 'UNKNOWN';
@@ -39,13 +41,25 @@ interface RagErrorReceipt {
   reasonCode: string;
 }
 
+interface CompletedExchange {
+  question: string;
+  answer: CopilotRagAnswer;
+}
+
+interface FrozenTodoPayload {
+  question: string;
+  answer: string;
+  sourcePaths: string[];
+}
+
 const KNOWN_EVIDENCE = new Set<KnownEvidence>(['vector', 'kg-entity', 'kg-neighbor']);
 const PREVIEW_LIMIT = 240;
 
-export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactElement {
+export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProps): ReactElement {
   const [question, setQuestion] = useState('');
   const [lastQuery, setLastQuery] = useState('');
   const [answer, setAnswer] = useState<CopilotRagAnswer | null>(null);
+  const [completedExchange, setCompletedExchange] = useState<CompletedExchange | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RagErrorReceipt | null>(null);
   const [cancelled, setCancelled] = useState(false);
@@ -54,6 +68,12 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
     fingerprint: '',
     receipts: [],
   });
+  const [todoPayload, setTodoPayload] = useState<FrozenTodoPayload | null>(null);
+  const [todoTitle, setTodoTitle] = useState('');
+  const [todoDue, setTodoDue] = useState('');
+  const [todoSaving, setTodoSaving] = useState(false);
+  const [todoError, setTodoError] = useState<string | null>(null);
+  const [todoReceipt, setTodoReceipt] = useState<CopilotTodo | null>(null);
   const activeStream = useRef<CopilotRagStreamHandle | null>(null);
   const requestSequence = useRef(0);
   const sourceCheckSequence = useRef(0);
@@ -122,6 +142,10 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
     setCancelled(false);
     setCopyStates({});
     setAnswer(null);
+    setCompletedExchange(null);
+    setTodoPayload(null);
+    setTodoError(null);
+    setTodoReceipt(null);
     try {
       if (api.rag.stream) {
         const handle = api.rag.stream(query, (streamEvent) => {
@@ -135,18 +159,20 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
         activeStream.current = handle;
         const finalAnswer = await handle.done;
         if (requestSequence.current === sequence) {
-          setAnswer((current) => ({
-            ...finalAnswer,
-            sourceDetails: finalAnswer.sourceDetails ?? current?.sourceDetails,
-          }));
+          setAnswer(finalAnswer);
+          setCompletedExchange({ question: query, answer: finalAnswer });
         }
       } else {
         const finalAnswer = await api.rag.ask(query);
-        if (requestSequence.current === sequence) setAnswer(finalAnswer);
+        if (requestSequence.current === sequence) {
+          setAnswer(finalAnswer);
+          setCompletedExchange({ question: query, answer: finalAnswer });
+        }
       }
     } catch (cause) {
       if (requestSequence.current === sequence && !isAbortError(cause)) {
         setAnswer(null);
+        setCompletedExchange(null);
         setError(friendlyRagError(cause));
       }
     } finally {
@@ -172,6 +198,7 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
     activeStream.current = null;
     setLoading(false);
     setCancelled(true);
+    setCompletedExchange(null);
     await handle.cancel().catch(() => undefined);
   };
 
@@ -197,6 +224,64 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
     : answer && sourceSummary.state === 'CHECKING'
       ? 'checking'
       : 'unknown';
+  const sourcePaths = sourceReceipts.map((source) => source.notePath).filter(Boolean);
+  const todoEligible = Boolean(
+    completedExchange
+    && answer
+    && completedExchange.answer.text === answer.text
+    && sourceReceipts.length > 0
+    && sourceReceipts.every((source) => source.status === 'LOCAL_PRESENT' && source.notePath),
+  );
+
+  const openTodoComposer = () => {
+    if (!todoEligible || !completedExchange) return;
+    const frozen = {
+      question: completedExchange.question,
+      answer: completedExchange.answer.text,
+      sourcePaths: [...sourcePaths],
+    };
+    setTodoPayload(frozen);
+    setTodoTitle(frozen.question.slice(0, 120));
+    setTodoDue('');
+    setTodoError(null);
+    setTodoReceipt(null);
+  };
+
+  const createTodo = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!todoPayload || !todoTitle.trim() || todoSaving) return;
+    const dueAt = todoDue ? new Date(todoDue).getTime() : null;
+    if (todoDue && !Number.isFinite(dueAt)) {
+      setTodoError('截止时间无效，未创建待办。');
+      return;
+    }
+    setTodoSaving(true);
+    setTodoError(null);
+    try {
+      const created = await api.todos.create({
+        title: todoTitle.trim(),
+        body: todoPayload.answer,
+        dueAt,
+        remindAt: dueAt,
+        linkedNotePaths: todoPayload.sourcePaths,
+      });
+      const listed = await api.todos.list();
+      const canonical = listed.find((todo) => String(todo.id) === String(created.id));
+      assertTodoReadback(canonical, {
+        ...created,
+        title: todoTitle.trim(),
+        body: todoPayload.answer,
+        dueAt,
+        linkedNotePaths: todoPayload.sourcePaths,
+      });
+      setTodoReceipt(canonical);
+      setTodoPayload(null);
+    } catch (cause) {
+      setTodoError(`待办未创建：${errorMessage(cause)}`);
+    } finally {
+      setTodoSaving(false);
+    }
+  };
 
   const startNewConversation = () => {
     requestSequence.current += 1;
@@ -207,11 +292,15 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
     setQuestion('');
     setLastQuery('');
     setAnswer(null);
+    setCompletedExchange(null);
     setLoading(false);
     setError(null);
     setCancelled(false);
     setCopyStates({});
     setCheckedSources({ fingerprint: 'NO_ANSWER', receipts: [] });
+    setTodoPayload(null);
+    setTodoError(null);
+    setTodoReceipt(null);
   };
 
   return (
@@ -327,6 +416,55 @@ export function AskWorkspace({ api, onOpenSource }: AskWorkspaceProps): ReactEle
                   <CopyFeedback state={copyStates.answer} testId="copy-status-answer" />
                 </div>
                 <p className="answer-card__text" data-testid="rag-answer">{answerText}</p>
+                <div className={styles.answerActions}>
+                  <button
+                    type="button"
+                    data-testid="ask-create-todo"
+                    disabled={!todoEligible}
+                    onClick={openTodoComposer}
+                  >
+                    转为待办
+                  </button>
+                  {!todoEligible ? <small>全部来源核对为 LOCAL_PRESENT 后可创建</small> : null}
+                </div>
+                {todoPayload ? (
+                  <form className={styles.todoComposer} onSubmit={(event) => void createTodo(event)}>
+                    <strong>确认待办</strong>
+                    <p>回答正文与全部来源将原样保存；截止时间可留空，归入“未安排”。</p>
+                    <label>
+                      标题
+                      <input
+                        aria-label="待办标题"
+                        value={todoTitle}
+                        onChange={(event) => setTodoTitle(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      截止时间（可选）
+                      <input
+                        aria-label="待办截止时间"
+                        type="datetime-local"
+                        value={todoDue}
+                        onChange={(event) => setTodoDue(event.target.value)}
+                      />
+                    </label>
+                    <p data-testid="todo-source-count">保留 {todoPayload.sourcePaths.length} 条来源</p>
+                    {todoError ? <p role="alert">{todoError}</p> : null}
+                    <div>
+                      <button type="button" disabled={todoSaving} onClick={() => setTodoPayload(null)}>取消</button>
+                      <button type="submit" disabled={todoSaving || !todoTitle.trim()}>
+                        {todoSaving ? '正在创建…' : '创建待办'}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+                {todoReceipt ? (
+                  <div className={styles.todoReceipt} role="status" data-testid="ask-todo-success">
+                    <strong>待办已保存并完成本地回读</strong>
+                    <span>{todoReceipt.title}</span>
+                    <button type="button" onClick={() => onOpenTodo?.(todoReceipt.id)}>查看待办</button>
+                  </div>
+                ) : null}
               </article>
             ) : null}
           </div>
@@ -696,6 +834,28 @@ function CopyFeedback({ state, testId }: { state?: CopyTruthState; testId: strin
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function assertTodoReadback(
+  actual: CopilotTodo | undefined,
+  expected: CopilotTodo,
+): asserts actual is CopilotTodo {
+  const actualLinks = actual?.linkedNotePaths ?? actual?.note_links ?? [];
+  const expectedLinks = expected.linkedNotePaths ?? expected.note_links ?? [];
+  const actualDue = actual?.dueAt ?? actual?.due_at_ms ?? null;
+  const expectedDue = expected.dueAt ?? expected.due_at_ms ?? null;
+  const matches = actual
+    && String(actual.id) === String(expected.id)
+    && actual.title === expected.title
+    && (actual.body ?? '') === (expected.body ?? '')
+    && actual.status === expected.status
+    && actualDue === expectedDue
+    && JSON.stringify(actualLinks) === JSON.stringify(expectedLinks);
+  if (!matches) throw new Error('TODO_CANONICAL_READBACK_FAILED');
 }
 
 function friendlyRagError(error: unknown): RagErrorReceipt {

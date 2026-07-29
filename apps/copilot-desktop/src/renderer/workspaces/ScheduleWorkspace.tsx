@@ -26,6 +26,7 @@ interface ScheduleWorkspaceProps {
   captureDraft?: string;
   onCaptureDraftChange?(value: string): void;
   onAssistantContextChange?(context: GlobalAssistantContext): void;
+  requestedTodoId?: string | number | null;
   todoMemoryAdapter?(todo: CopilotTodo, memory: TodoMemory): Promise<void>;
 }
 
@@ -115,6 +116,23 @@ function uniqueTodos(items: ReadonlyArray<CopilotTodo>): CopilotTodo[] {
   return [...new Map(items.map((todo) => [todoKey(todo), todo])).values()];
 }
 
+function requireTodoReadback(
+  actual: CopilotTodo | undefined,
+  expected: CopilotTodo,
+): CopilotTodo {
+  const actualLinks = todoNoteLinks(actual ?? expected);
+  const expectedLinks = todoNoteLinks(expected);
+  const matches = actual
+    && String(actual.id) === String(expected.id)
+    && actual.title === expected.title
+    && (actual.body ?? '') === (expected.body ?? '')
+    && actual.status === expected.status
+    && todoDueAt(actual) === todoDueAt(expected)
+    && JSON.stringify(actualLinks) === JSON.stringify(expectedLinks);
+  if (!matches) throw new Error('TODO_CANONICAL_READBACK_FAILED');
+  return actual;
+}
+
 function toLocalInput(epoch: number | null): string {
   if (!epoch) return '';
   const date = new Date(epoch - new Date(epoch).getTimezoneOffset() * 60_000);
@@ -196,130 +214,201 @@ function trapDialogKeyboard(
   }
 }
 
-interface TodoLog {
-  id: string;
-  createdAt: number;
-  body: string;
-}
-
 interface TodoMemory {
-  logs: TodoLog[];
+  logs: Array<{ id: string; createdAt: number; body: string }>;
   note: string;
 }
 
-type TodoSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'failed';
+interface TodoBodyDetail extends TodoMemory {
+  content: string;
+}
 
-function todoSaveStateLabel(state: TodoSaveState): string {
-  switch (state) {
-    case 'idle':
-      return '未修改';
-    case 'dirty':
-      return '未保存';
-    case 'saving':
-      return '保存中';
-    case 'saved':
-      return '已保存';
-    case 'failed':
-      return '保存失败';
+const TODO_DETAIL_MARKER = '\n\n<!-- COPILOT_TODO_DETAIL_V1 ';
+const TODO_DETAIL_SUFFIX = ' -->';
+
+function parseTodoBody(value: string): TodoBodyDetail {
+  const markerIndex = value.lastIndexOf(TODO_DETAIL_MARKER);
+  if (markerIndex < 0 || !value.endsWith(TODO_DETAIL_SUFFIX)) {
+    return { content: value, logs: [], note: '' };
   }
+  try {
+    const encoded = value.slice(
+      markerIndex + TODO_DETAIL_MARKER.length,
+      value.length - TODO_DETAIL_SUFFIX.length,
+    );
+    const parsed = JSON.parse(encoded) as {
+      version?: unknown;
+      note?: unknown;
+      logs?: unknown;
+    };
+    if (
+      parsed.version !== 1
+      || typeof parsed.note !== 'string'
+      || !Array.isArray(parsed.logs)
+    ) {
+      return { content: value, logs: [], note: '' };
+    }
+    const logs = parsed.logs.filter((entry): entry is TodoMemory['logs'][number] => (
+      typeof entry === 'object'
+      && entry !== null
+      && typeof (entry as { id?: unknown }).id === 'string'
+      && typeof (entry as { createdAt?: unknown }).createdAt === 'number'
+      && Number.isFinite((entry as { createdAt: number }).createdAt)
+      && typeof (entry as { body?: unknown }).body === 'string'
+    ));
+    if (logs.length !== parsed.logs.length) {
+      return { content: value, logs: [], note: '' };
+    }
+    return {
+      content: value.slice(0, markerIndex),
+      logs,
+      note: parsed.note,
+    };
+  } catch {
+    return { content: value, logs: [], note: '' };
+  }
+}
+
+function serializeTodoBody(detail: TodoBodyDetail): string {
+  if (detail.logs.length === 0 && detail.note === '') return detail.content;
+  return detail.content
+    + TODO_DETAIL_MARKER
+    + JSON.stringify({
+      version: 1,
+      note: detail.note,
+      logs: detail.logs.map((entry) => ({
+        id: entry.id,
+        createdAt: entry.createdAt,
+        body: entry.body,
+      })),
+    })
+    + TODO_DETAIL_SUFFIX;
 }
 
 interface TodoRowProps {
   todo: CopilotTodo;
-  memory?: TodoMemory;
   onToggle(todo: CopilotTodo): void;
   onRemove(todo: CopilotTodo): void;
   onOpenNote?(path: string): void;
-  onSaveMemory(todo: CopilotTodo, memory: TodoMemory): void | Promise<void>;
+  onSave(todo: CopilotTodo, patch: Partial<CopilotTodo>): Promise<CopilotTodo>;
+  initialExpanded?: boolean;
+  focused?: boolean;
 }
 
 function TodoRow({
   todo,
-  memory,
   onToggle,
   onRemove,
   onOpenNote,
-  onSaveMemory,
+  onSave,
+  initialExpanded = false,
+  focused = false,
 }: TodoRowProps): ReactElement {
-  const [expanded, setExpanded] = useState(false);
-  const [logDraft, setLogDraft] = useState('');
-  const [note, setNote] = useState(memory?.note ?? '');
-  const [logSaveState, setLogSaveState] = useState<TodoSaveState>('idle');
-  const [noteSaveState, setNoteSaveState] = useState<TodoSaveState>('idle');
+  const initialDetail = parseTodoBody(todo.body ?? '');
+  const [expanded, setExpanded] = useState(initialExpanded);
+  const [title, setTitle] = useState(todo.title);
+  const [body, setBody] = useState(initialDetail.content);
+  const [logs, setLogs] = useState(initialDetail.logs);
+  const [note, setNote] = useState(initialDetail.note);
+  const [newLog, setNewLog] = useState('');
+  const [dueInput, setDueInput] = useState(toLocalInput(todoDueAt(todo)));
+  const [sourceInput, setSourceInput] = useState(todoNoteLinks(todo).join('\n'));
+  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'dirty' | 'saved' | 'failed'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const saveState: TodoSaveState = logSaveState === 'saving' || noteSaveState === 'saving'
-    ? 'saving'
-    : logSaveState === 'failed' || noteSaveState === 'failed'
-      ? 'failed'
-      : logSaveState === 'dirty' || noteSaveState === 'dirty'
-        ? 'dirty'
-        : 'idle';
-  const saving = saveState === 'saving';
 
   useEffect(() => {
-    if (!expanded) {
-      setLogDraft('');
-      setNote(memory?.note ?? '');
-      setLogSaveState('idle');
-      setNoteSaveState('idle');
-      setSaveError(null);
-    }
-  }, [expanded, memory]);
+    const detail = parseTodoBody(todo.body ?? '');
+    setTitle(todo.title);
+    setBody(detail.content);
+    setLogs(detail.logs);
+    setNote(detail.note);
+    setNewLog('');
+    setDueInput(toLocalInput(todoDueAt(todo)));
+    setSourceInput(todoNoteLinks(todo).join('\n'));
+  }, [todo]);
 
-  const saveMemory = async () => {
-    const nextLogs = [...(memory?.logs ?? [])];
-    const body = logDraft.trim();
-    const nextNote = note.trim();
-    const logChanged = body.length > 0;
-    const noteChanged = nextNote !== (memory?.note ?? '');
-    if (!logChanged && !noteChanged) return;
-    if (body) {
-      const createdAt = Date.now();
-      nextLogs.push({
-        id: String(createdAt) + '-' + String(nextLogs.length),
-        createdAt,
-        body,
-      });
+  useEffect(() => {
+    if (initialExpanded) setExpanded(true);
+  }, [initialExpanded]);
+
+  const save = async () => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle || saving) return;
+    const dueAt = dueInput ? new Date(dueInput).getTime() : null;
+    if (dueInput && !Number.isFinite(dueAt)) {
+      setSaveState('failed');
+      setSaveError('截止时间无效。');
+      return;
     }
-    if (logChanged) setLogSaveState('saving');
-    if (noteChanged) setNoteSaveState('saving');
+    const sourcePaths = sourceInput
+      .split(/\r?\n/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+    setSaving(true);
     setSaveError(null);
     try {
-      const result = onSaveMemory(todo, { logs: nextLogs, note: nextNote });
-      if (result && typeof result.then === 'function') await result;
-      if (logChanged) setLogSaveState('saved');
-      if (noteChanged) setNoteSaveState('saved');
-      setLogDraft('');
-      setExpanded(false);
+      const trimmedLog = newLog.trim();
+      const now = Date.now();
+      const nextLogs = trimmedLog
+        ? [...logs, {
+          id: `log-${String(now)}-${String(logs.length + 1)}`,
+          createdAt: now,
+          body: trimmedLog,
+        }]
+        : logs;
+      const saved = await onSave(todo, {
+        title: trimmedTitle,
+        body: serializeTodoBody({ content: body, logs: nextLogs, note }),
+        dueAt,
+        remindAt: dueAt,
+        linkedNotePaths: sourcePaths,
+      });
+      const savedDetail = parseTodoBody(saved.body ?? '');
+      setTitle(saved.title);
+      setBody(savedDetail.content);
+      setLogs(savedDetail.logs);
+      setNote(savedDetail.note);
+      setNewLog('');
+      setDueInput(toLocalInput(todoDueAt(saved)));
+      setSourceInput(todoNoteLinks(saved).join('\n'));
+      setSaveState('saved');
     } catch (cause) {
-      if (logChanged) setLogSaveState('failed');
-      if (noteChanged) setNoteSaveState('failed');
+      setSaveState('failed');
       setSaveError(errorMessage(cause));
+    } finally {
+      setSaving(false);
     }
   };
 
-  const cancelMemory = () => {
-    setLogDraft('');
-    setNote(memory?.note ?? '');
-    setLogSaveState('idle');
-    setNoteSaveState('idle');
+  const cancelEdit = () => {
+    const detail = parseTodoBody(todo.body ?? '');
+    setTitle(todo.title);
+    setBody(detail.content);
+    setLogs(detail.logs);
+    setNote(detail.note);
+    setNewLog('');
+    setDueInput(toLocalInput(todoDueAt(todo)));
+    setSourceInput(todoNoteLinks(todo).join('\n'));
+    setSaveState('idle');
     setSaveError(null);
     setExpanded(false);
   };
 
-  const toggleMemoryEditor = () => {
-    if (!expanded) {
-      setLogSaveState('idle');
-      setNoteSaveState('idle');
-      setSaveError(null);
-    }
+  const toggleEditor = () => {
+    setSaveError(null);
     setExpanded((current) => !current);
   };
 
-  const editorId = 'todo-memory-editor-' + todoKey(todo);
+  const editorId = 'todo-editor-' + todoKey(todo);
 
   return (
-    <li className="todo" data-status={todo.status} data-testid={'todo-card-' + todoKey(todo)}>
+    <li
+      className="todo"
+      data-status={todo.status}
+      data-focused={focused ? 'true' : 'false'}
+      data-testid={'todo-card-' + todoKey(todo)}
+    >
       <input
         type="checkbox"
         checked={todo.status === 'done'}
@@ -333,37 +422,11 @@ function TodoRow({
           aria-expanded={expanded}
           aria-controls={editorId}
           aria-label={(expanded ? '收起待办 ' : '展开待办 ') + todo.title}
-          onClick={toggleMemoryEditor}
+          onClick={toggleEditor}
         >
           <strong>{todo.title}</strong>
-          <small>{toLocalInput(todoDueAt(todo)) || '未设置时间'}</small>
+          <small>{toLocalInput(todoDueAt(todo)) || '未安排'}</small>
         </button>
-        {memory && !expanded ? (
-          <div
-            className={styles.todoMemorySummary}
-            data-testid={'todo-memory-summary-' + todoKey(todo)}
-            data-save-state="saved"
-            role="status"
-          >
-            {memory.logs.length > 0 ? (
-              <span>执行日志（{memory.logs.length}）：{memory.logs[memory.logs.length - 1]?.body}</span>
-            ) : null}
-            {memory.note ? <span>备注：{memory.note}</span> : null}
-            <span
-              data-testid={'todo-log-save-state-' + todoKey(todo)}
-              data-save-state="saved"
-            >
-              执行日志状态：已保存
-            </span>
-            <span
-              data-testid={'todo-note-save-state-' + todoKey(todo)}
-              data-save-state="saved"
-            >
-              备注状态：已保存
-            </span>
-            <small>已保存到当前页面内存 · PROTOTYPE / NOT_RUNTIME_PROOF</small>
-          </div>
-        ) : null}
         {expanded ? (
           <div
             id={editorId}
@@ -372,45 +435,65 @@ function TodoRow({
             data-save-state={saveState}
             data-assistant-avoid="critical"
           >
-            <div className={styles.prototypeLabel}>PROTOTYPE / NOT_RUNTIME_PROOF · 仅保存在当前页面内存</div>
-            <p>执行日志与备注仅保存在页面内存，不写入本地数据库或运行时。</p>
-            <div role="status" aria-live="polite" className={styles.todoSaveStates}>
-              <span
-                data-testid={'todo-log-save-state-' + todoKey(todo)}
-                data-save-state={logSaveState}
-              >
-                执行日志状态：{todoSaveStateLabel(logSaveState)}
-              </span>
-              <span
-                data-testid={'todo-note-save-state-' + todoKey(todo)}
-                data-save-state={noteSaveState}
-              >
-                备注状态：{todoSaveStateLabel(noteSaveState)}
-              </span>
-            </div>
+            <div className={styles.prototypeLabel}>本地持久化编辑 · 保存后执行 canonical readback</div>
             {saveError ? (
               <p role="alert">
-                保存失败：{saveError}。编辑内容已保留，可重试；未写入页面内存。
+                保存失败：{saveError}。编辑内容已保留，未显示成功。
               </p>
             ) : null}
-            {memory?.logs.length ? (
-              <ol className={styles.logHistory} aria-label="执行日志历史">
-                {memory.logs.map((log) => (
-                  <li key={log.id}>
-                    <time>{displayTime(log.createdAt)}</time>
-                    <span>{log.body}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : <p className={styles.emptyCopy}>还没有执行日志。</p>}
+            <label>
+              标题
+              <input
+                aria-label={'编辑待办标题 ' + todo.title}
+                value={title}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setSaveState('dirty');
+                  setSaveError(null);
+                }}
+              />
+            </label>
+            <label>
+              正文
+              <textarea
+                aria-label={'编辑待办内容 ' + todo.title}
+                value={body}
+                onChange={(event) => {
+                  setBody(event.target.value);
+                  setSaveState('dirty');
+                  setSaveError(null);
+                }}
+                rows={4}
+              />
+            </label>
+            <section
+              className={styles.todoMemorySummary}
+              data-testid={'todo-memory-summary-' + todoKey(todo)}
+              aria-label="待办执行记录"
+            >
+              <strong>执行日志</strong>
+              {logs.length > 0 ? (
+                <ol className={styles.logHistory}>
+                  {logs.map((entry) => (
+                    <li key={entry.id}>
+                      <time dateTime={new Date(entry.createdAt).toISOString()}>
+                        {new Date(entry.createdAt).toLocaleString('zh-CN', { hour12: false })}
+                      </time>
+                      <span>{entry.body}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : <p>暂无执行日志</p>}
+              <p>备注：{note || '暂无'}</p>
+            </section>
             <label>
               新增执行日志
               <textarea
-                value={logDraft}
+                aria-label="新增执行日志"
+                value={newLog}
                 onChange={(event) => {
-                  const value = event.target.value;
-                  setLogDraft(value);
-                  setLogSaveState(value.trim() ? 'dirty' : 'idle');
+                  setNewLog(event.target.value);
+                  setSaveState('dirty');
                   setSaveError(null);
                 }}
                 rows={2}
@@ -419,34 +502,62 @@ function TodoRow({
             <label>
               备注
               <textarea
+                aria-label="备注"
                 value={note}
                 onChange={(event) => {
-                  const value = event.target.value;
-                  setNote(value);
-                  setNoteSaveState(value.trim() === (memory?.note ?? '') ? 'idle' : 'dirty');
+                  setNote(event.target.value);
+                  setSaveState('dirty');
                   setSaveError(null);
                 }}
-                rows={2}
+                rows={3}
               />
             </label>
-            <div className={styles.knowledgeLinks} aria-label="关联知识">
-              <strong>关联知识</strong>
-              {todoNoteLinks(todo).length > 0 ? todoNoteLinks(todo).map((path) => (
-                <button key={path} type="button" className="tag" onClick={() => onOpenNote?.(path)}>{path}</button>
-              )) : <span>暂无关联知识</span>}
+            <label>
+              截止时间（可留空）
+              <input
+                aria-label={'编辑待办截止时间 ' + todo.title}
+                type="datetime-local"
+                value={dueInput}
+                onChange={(event) => {
+                  setDueInput(event.target.value);
+                  setSaveState('dirty');
+                  setSaveError(null);
+                }}
+              />
+            </label>
+            <label>
+              来源路径（每行一条）
+              <textarea
+                aria-label={'编辑待办来源 ' + todo.title}
+                value={sourceInput}
+                onChange={(event) => {
+                  setSourceInput(event.target.value);
+                  setSaveState('dirty');
+                  setSaveError(null);
+                }}
+                rows={Math.max(2, todoNoteLinks(todo).length)}
+              />
+            </label>
+            <div className={styles.knowledgeLinks} aria-label="当前来源">
+              {todoNoteLinks(todo).map((path) => (
+                <button key={path} type="button" className="tag" onClick={() => onOpenNote?.(path)}>
+                  打开来源：{path}
+                </button>
+              ))}
             </div>
             <div className={styles.todoMemoryActions}>
-              <button type="button" className="btn" aria-label="取消编辑待办详情" onClick={cancelMemory}>取消</button>
+              <button type="button" className="btn" aria-label="取消编辑待办详情" onClick={cancelEdit}>取消</button>
               <button
                 type="button"
                 className="btn primary"
                 aria-label={saveError ? '重试保存待办详情' : '保存待办详情'}
-                onClick={() => void saveMemory()}
+                onClick={() => void save()}
                 disabled={saving || saveState === 'idle'}
               >
                 {saving ? '保存中…' : saveError ? '重试保存' : '保存'}
               </button>
             </div>
+            {saveState === 'saved' ? <span role="status">已保存并完成本地回读</span> : null}
           </div>
         ) : null}
       </div>
@@ -470,7 +581,7 @@ export function ScheduleWorkspace({
   captureDraft = '',
   onCaptureDraftChange,
   onAssistantContextChange,
-  todoMemoryAdapter,
+  requestedTodoId = null,
 }: ScheduleWorkspaceProps): ReactElement {
   const browserPrototype = import.meta.env.VITE_COPILOT_BROWSER_PROTOTYPE === '1';
   const [todos, setTodos] = useState<CopilotTodo[]>([]);
@@ -486,7 +597,8 @@ export function ScheduleWorkspace({
   const [dateViewMonth, setDateViewMonth] = useState(() => new Date());
   const [notePath, setNotePath] = useState('');
   const [noteQuery, setNoteQuery] = useState('');
-  const [todoMemories, setTodoMemories] = useState<Record<string, TodoMemory>>({});
+  const [todoScope, setTodoScope] = useState<'day' | 'all' | 'unscheduled'>('day');
+  const [focusedTodoId, setFocusedTodoId] = useState<string | null>(null);
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [captureImmersiveOpen, setCaptureImmersiveOpen] = useState(false);
@@ -519,6 +631,7 @@ export function ScheduleWorkspace({
   const acknowledgedIds = useRef(new Set<string>());
   const permissionRequested = useRef(false);
   const activeNotifications = useRef(new Map<string, Notification>());
+  const handledRequestedTodoRef = useRef<string | null>(null);
   captureDraftRef.current = captureDraft;
   const modalOpen = todoDialogOpen || captureImmersiveOpen || discardDraftOpen;
 
@@ -709,12 +822,18 @@ export function ScheduleWorkspace({
       const epoch = dueAt !== '' && dueAt === confirmedDueAt
         ? new Date(confirmedDueAt).getTime()
         : null;
-      await api.todos.create({
+      const created = await api.todos.create({
         title: title.trim(),
         dueAt: epoch,
         remindAt: epoch,
         linkedNotePaths: notePath.trim() ? [notePath.trim()] : [],
       });
+      const listed = uniqueTodos(await api.todos.list());
+      requireTodoReadback(
+        listed.find((todo) => todoKey(todo) === todoKey(created)),
+        created,
+      );
+      setTodos(listed);
       setTitle('');
       setDueAt('');
       setConfirmedDueAt('');
@@ -727,7 +846,6 @@ export function ScheduleWorkspace({
       modalBackgroundRef.current?.removeAttribute('inert');
       modalBackgroundRef.current?.removeAttribute('aria-hidden');
       todoTriggerRef.current?.focus();
-      await refresh();
     } catch (cause) {
       setError(errorMessage(cause));
     }
@@ -747,26 +865,21 @@ export function ScheduleWorkspace({
     () => api.todos.update(todo.id, { status: todo.status === 'done' ? 'pending' : 'done' }),
   );
 
-  const saveTodoMemory = (todo: CopilotTodo, memory: TodoMemory): void | Promise<void> => {
-    if (
-      browserPrototype
-      && new URLSearchParams(window.location.search).get('todoMemoryFixture') === 'reject'
-    ) {
-      return Promise.resolve().then(() => {
-        throw new Error('PROTOTYPE_TODO_MEMORY_REJECT');
-      });
-    }
-    if (todoMemoryAdapter) {
-      return todoMemoryAdapter(todo, memory).then(() => {
-        setTodoMemories((current) => ({ ...current, [todoKey(todo)]: memory }));
-      });
-    }
-    return new Promise<void>((resolve) => {
-      window.requestAnimationFrame(() => {
-        setTodoMemories((current) => ({ ...current, [todoKey(todo)]: memory }));
-        resolve();
-      });
-    });
+  const saveTodo = async (
+    todo: CopilotTodo,
+    patch: Partial<CopilotTodo>,
+  ): Promise<CopilotTodo> => {
+    const updated = await api.todos.update(todo.id, patch);
+    if (!updated) throw new Error('TODO_UPDATE_NOT_FOUND');
+    const listed = uniqueTodos(await api.todos.list());
+    const canonical = requireTodoReadback(
+      listed.find((candidate) => todoKey(candidate) === todoKey(updated)),
+      updated,
+    );
+    setTodoScope(todoDueAt(canonical) === null ? 'unscheduled' : 'all');
+    setFocusedTodoId(todoKey(canonical));
+    setTodos(listed);
+    return canonical;
   };
 
   const remove = (todo: CopilotTodo) => void mutate(async () => {
@@ -954,6 +1067,11 @@ export function ScheduleWorkspace({
     const epoch = todoDueAt(todo);
     return epoch !== null && localDateKey(epoch) === selectedKey;
   }), [selectedKey, todos]);
+  const visibleTodos = useMemo(() => {
+    if (todoScope === 'all') return todos;
+    if (todoScope === 'unscheduled') return todos.filter((todo) => todoDueAt(todo) === null);
+    return dayTodos;
+  }, [dayTodos, todoScope, todos]);
   const dayNotes = useMemo(() => notes.filter((note) => {
     const epoch = note.updatedAt ?? note.updated_at;
     return typeof epoch === 'number' && localDateKey(epoch) === selectedKey;
@@ -978,6 +1096,27 @@ export function ScheduleWorkspace({
       || (note.tags ?? []).some((tag) => tag.toLocaleLowerCase().includes(query))
     )).slice(0, 8);
   }, [noteQuery, notes]);
+
+  useEffect(() => {
+    if (requestedTodoId === null) return;
+    const requestedKey = String(requestedTodoId);
+    if (handledRequestedTodoRef.current === requestedKey) return;
+    if (loading) return;
+    const requested = todos.find((todo) => todoKey(todo) === requestedKey);
+    handledRequestedTodoRef.current = requestedKey;
+    if (!requested) {
+      setError('TODO_CANONICAL_READBACK_FAILED：未找到请求的待办。');
+      return;
+    }
+    setTodoScope(todoDueAt(requested) === null ? 'unscheduled' : 'all');
+    setFocusedTodoId(requestedKey);
+    window.requestAnimationFrame(() => {
+      const card = document.querySelector<HTMLElement>(
+        `[data-testid="todo-card-${CSS.escape(requestedKey)}"]`,
+      );
+      if (typeof card?.scrollIntoView === 'function') card.scrollIntoView({ block: 'center' });
+    });
+  }, [loading, requestedTodoId, todos]);
 
   useEffect(() => {
     onAssistantContextChange?.({
@@ -1126,7 +1265,10 @@ export function ScheduleWorkspace({
                   aria-label={'选择日期 ' + key}
                   aria-pressed={selected}
                   aria-current={today ? 'date' : undefined}
-                  onClick={() => setSelectedDate(date)}
+                  onClick={() => {
+                    setSelectedDate(date);
+                    setTodoScope('day');
+                  }}
                   onKeyDown={(event) => handleMainCalendarKey(event, date)}
                 >
                   {date.getDate()}
@@ -1382,14 +1524,6 @@ export function ScheduleWorkspace({
               <span>{dayNotes.length} 条</span>
             </div>
             {loading ? <WorkspaceState kind="loading" title="正在读取当日笔记…" /> : null}
-            {error ? (
-              <WorkspaceState
-                kind="error"
-                title="当日笔记读取失败"
-                detail={error}
-                action={<button onClick={() => void refresh()}>重试</button>}
-              />
-            ) : null}
             {!loading && !error && dayNotes.length === 0 ? (
               <p className={styles.timelineEmpty}>
                 {browserPrototype
@@ -1462,7 +1596,30 @@ export function ScheduleWorkspace({
           <section className="day-section" aria-labelledby="today-todos-title">
             <div className="section-title">
               <h3 id="today-todos-title">待办</h3>
-              <span>{dayTodos.filter((todo) => todo.status === 'pending').length} 项未完成</span>
+              <span>{visibleTodos.filter((todo) => todo.status === 'pending').length} 项未完成</span>
+              <div className={styles.todoScopes} role="group" aria-label="待办范围">
+                <button
+                  type="button"
+                  aria-pressed={todoScope === 'day'}
+                  onClick={() => setTodoScope('day')}
+                >
+                  所选日期
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={todoScope === 'all'}
+                  onClick={() => setTodoScope('all')}
+                >
+                  全部
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={todoScope === 'unscheduled'}
+                  onClick={() => setTodoScope('unscheduled')}
+                >
+                  未安排
+                </button>
+              </div>
               <button
                 ref={todoTriggerRef}
                 type="button"
@@ -1481,21 +1638,41 @@ export function ScheduleWorkspace({
               ) : null}
               {error ? (
                 <li className={styles.todoState} data-testid="today-todo-error">
-                  <WorkspaceState kind="error" title="日程操作失败" detail={error} action={<button onClick={() => void refresh()}>重试</button>} />
-                </li>
-              ) : null}
-              {!loading && !error && dayTodos.length === 0 ? (
-                <li className={styles.todoState} data-testid="today-todo-empty">
                   <WorkspaceState
-                    kind="empty"
-                    title="暂无待办"
-                    detail={browserPrototype
-                      ? '选中日期暂无待办 · PROTOTYPE / NOT_RUNTIME_PROOF；不是本地数据库空状态。'
-                      : '选中日期暂无待办；这是真实的本地空状态；可添加一个带提醒的待办开始使用。'}
+                    kind="error"
+                    title="本地日程操作失败"
+                    detail={error}
+                    action={<button onClick={() => void refresh()}>重试</button>}
                   />
                 </li>
               ) : null}
-              {dayTodos.map((todo) => <TodoRow key={todoKey(todo)} todo={todo} memory={todoMemories[todoKey(todo)]} onToggle={toggle} onRemove={remove} onOpenNote={onOpenNote} onSaveMemory={saveTodoMemory} />)}
+              {!loading && !error && visibleTodos.length === 0 ? (
+                <li className={styles.todoState} data-testid="today-todo-empty">
+                  <WorkspaceState
+                    kind="empty"
+                    title={todoScope === 'unscheduled'
+                      ? '暂无未安排待办'
+                      : todoScope === 'day'
+                        ? '选中日期暂无待办'
+                        : '暂无待办'}
+                    detail={browserPrototype
+                      ? '当前范围暂无待办 · PROTOTYPE / NOT_RUNTIME_PROOF；不是本地数据库空状态。'
+                      : '当前范围暂无待办；这是真实的本地空状态。'}
+                  />
+                </li>
+              ) : null}
+              {visibleTodos.map((todo) => (
+                <TodoRow
+                  key={todoKey(todo)}
+                  todo={todo}
+                  onToggle={toggle}
+                  onRemove={remove}
+                  onOpenNote={onOpenNote}
+                  onSave={saveTodo}
+                  focused={focusedTodoId === todoKey(todo)}
+                  initialExpanded={focusedTodoId === todoKey(todo)}
+                />
+              ))}
             </ul>
           </section>
 

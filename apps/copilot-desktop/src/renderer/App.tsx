@@ -138,6 +138,7 @@ export function App({
   const [view, setView] = useState<View>(prototypeView);
   const activeViewRef = useRef<View>(prototypeView);
   const [requestedNotePath, setRequestedNotePath] = useState<string | null>(null);
+  const [requestedTodoId, setRequestedTodoId] = useState<string | number | null>(null);
   const [captureDraft, setCaptureDraft] = useState('');
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantDock, setAssistantDock] = useState<AssistantDock>('right');
@@ -206,7 +207,14 @@ export function App({
           onAssistantContextChange: handleAssistantContextChange,
         };
       case 'ask':
-        return { api: product.api, onOpenSource: openNote };
+        return {
+          api: product.api,
+          onOpenSource: openNote,
+          onOpenTodo: (id: string | number) => {
+            setRequestedTodoId(id);
+            navigateTo('schedule');
+          },
+        };
       case 'voice':
         return { api: product.api };
       case 'schedule':
@@ -218,6 +226,7 @@ export function App({
           captureDraft,
           onCaptureDraftChange: setCaptureDraft,
           onAssistantContextChange: handleAssistantContextChange,
+          requestedTodoId,
         };
       case 'settings':
         return {};
@@ -228,6 +237,7 @@ export function App({
     navigateTo,
     product.api,
     requestedNotePath,
+    requestedTodoId,
     view,
   ]);
   const canRenderRoute = view === 'settings' || product.api !== null;

@@ -201,7 +201,7 @@ describe('background local note build preserves WIKI-before-RAG truth', () => {
     await service.close();
   });
 
-  it('exposes exact current WIKI before slow RAG settles and preserves it after RAG failure', async () => {
+  it('keeps exact current WIKI running until slow RAG settles and failed after RAG failure', async () => {
     let releaseRag!: () => void;
     const ragGate = new Promise<void>((resolve) => { releaseRag = resolve; });
     const { service, kb, rag } = createService({
@@ -226,7 +226,7 @@ describe('background local note build preserves WIKI-before-RAG truth', () => {
         .toBe('processing');
       await expect(service.wiki.getForNote('inbox/wiki-before-slow-rag')).resolves.toMatchObject({
         truth: 'current',
-        knowledgeBuild: { state: 'ready' },
+        knowledgeBuild: { state: 'running' },
       });
 
       releaseRag();
@@ -237,10 +237,43 @@ describe('background local note build preserves WIKI-before-RAG truth', () => {
       );
       await expect(service.wiki.getForNote('inbox/wiki-before-slow-rag')).resolves.toMatchObject({
         truth: 'current',
-        knowledgeBuild: { state: 'ready' },
+        knowledgeBuild: { state: 'failed' },
       });
     } finally {
       releaseRag();
+      await service.close();
+    }
+  });
+
+  it('keeps a completed row for an older queued revision fail-closed', async () => {
+    const notePath = 'inbox/stale-completed-revision';
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-wiki-rag-revision-'));
+    tempDirs.push(dir);
+    let now = 1_753_100_000_000;
+    const sqlite = new SqliteStore({ dbPath: path.join(dir, 'kb.sqlite') });
+    const kb = new KbClient({
+      sqlite,
+      md: new MdFileStore({ rootDir: path.join(dir, 'notes') }),
+      clock: () => now,
+    });
+    kb.createNote({ path: notePath, title: 'Revision', body: 'older bytes' });
+    kb.setKgStatus(notePath, 'done');
+    const { service } = createService({ kb });
+
+    try {
+      await expect(service.wiki.getForNote(notePath)).resolves.toMatchObject({
+        truth: 'current',
+        knowledgeBuild: { state: 'ready' },
+      });
+
+      now += 1_000;
+      kb.updateNote(notePath, { body: 'newer bytes' });
+      sqlite.queueKg(notePath, now - 1_000, 'done');
+      await expect(service.wiki.getForNote(notePath)).resolves.toMatchObject({
+        truth: 'current',
+        knowledgeBuild: { state: 'not-ready' },
+      });
+    } finally {
       await service.close();
     }
   });

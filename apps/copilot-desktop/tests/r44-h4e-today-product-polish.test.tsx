@@ -31,6 +31,7 @@ function makeApi(
   todos: CopilotTodo[] = [],
   notes: CopilotNoteSummary[] = [],
 ): CopilotProductApi {
+  const state = [...todos];
   return {
     notes: {
       list: vi.fn(async () => notes),
@@ -50,9 +51,18 @@ function makeApi(
     },
     rag: { ask: vi.fn(async () => ({ text: '', sources: [] })) },
     todos: {
-      list: vi.fn(async () => todos),
-      create: vi.fn(async (input) => ({ ...input, id: 'created', status: 'pending' as const })),
-      update: vi.fn(async () => null),
+      list: vi.fn(async () => [...state]),
+      create: vi.fn(async (input) => {
+        const created = { ...input, id: 'created', status: 'pending' as const };
+        state.push(created);
+        return created;
+      }),
+      update: vi.fn(async (id, patch) => {
+        const index = state.findIndex((todo) => String(todo.id) === String(id));
+        if (index < 0) return null;
+        state[index] = { ...state[index]!, ...patch };
+        return state[index]!;
+      }),
       remove: vi.fn(async () => false),
       listDue: vi.fn(async () => []),
       markReminderFired: vi.fn(async () => null),
@@ -109,7 +119,7 @@ describe('R44 H4E Today product polish', () => {
     );
 
     const pressFromSelected = async (key: string, expected: Date) => {
-      const selected = screen.getByRole('button', { pressed: true });
+      const selected = screen.getByRole('button', { name: /选择日期 /u, pressed: true });
       selected.focus();
       fireEvent.keyDown(selected, { key });
       const expectedKey = localDateKey(expected);
@@ -209,120 +219,73 @@ describe('R44 H4E Today product polish', () => {
     );
   });
 
-  it('shows separate log and note states through dirty, saving, saved, and cancel', async () => {
+  it('persists title and body through update plus canonical list readback', async () => {
     const todo: CopilotTodo = {
       id: 'h4e-memory',
       title: '保存状态验收',
+      body: '原始正文',
       status: 'pending',
       dueAt: Date.now(),
+      linkedNotePaths: ['notes/original.md'],
     };
-    let resolveSave: (() => void) | undefined;
-    const todoMemoryAdapter = vi.fn(() => new Promise<void>((resolve) => {
-      resolveSave = resolve;
-    }));
     const api = makeApi([todo]);
-    render(<Harness api={api} todoMemoryAdapter={todoMemoryAdapter} />);
+    render(<Harness api={api} />);
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole('button', { name: '展开待办 保存状态验收' }));
-    const editor = screen.getByTestId('todo-memory-editor-h4e-memory');
+    const editor = screen.getByTestId('todo-editor-h4e-memory');
     expect(editor).toHaveAttribute('data-save-state', 'idle');
-    fireEvent.change(screen.getByLabelText('新增执行日志'), {
-      target: { value: '完成一次真实操作' },
+    fireEvent.change(screen.getByLabelText('编辑待办标题 保存状态验收'), {
+      target: { value: '保存状态已编辑' },
     });
-    fireEvent.change(screen.getByLabelText('备注'), {
-      target: { value: '保存后再验收' },
+    fireEvent.change(screen.getByLabelText('编辑待办内容 保存状态验收'), {
+      target: { value: '保存后的真实正文' },
     });
     expect(editor).toHaveAttribute('data-save-state', 'dirty');
-    expect(screen.getByTestId('todo-log-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'dirty',
-    );
-    expect(screen.getByTestId('todo-note-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'dirty',
-    );
-
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
-    expect(screen.getByTestId('todo-log-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'saving',
-    );
-    expect(screen.getByTestId('todo-note-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'saving',
-    );
-    expect(screen.getByRole('button', { name: '保存待办详情' })).toBeDisabled();
-    resolveSave?.();
-
-    const summary = await screen.findByTestId('todo-memory-summary-h4e-memory');
-    expect(todoMemoryAdapter).toHaveBeenCalledTimes(1);
-    expect(summary).toHaveAttribute('data-save-state', 'saved');
-    expect(summary).toHaveTextContent('已保存到当前页面内存');
-    expect(screen.getByTestId('todo-log-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'saved',
-    );
-    expect(screen.getByTestId('todo-note-save-state-h4e-memory')).toHaveAttribute(
-      'data-save-state',
-      'saved',
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 保存状态验收' }));
-    expect(screen.getByText('完成一次真实操作')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('备注'), {
-      target: { value: '取消这次修改' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: '取消编辑待办详情' }));
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 保存状态验收' }));
-    expect(screen.getByLabelText('备注')).toHaveValue('保存后再验收');
+    expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
+    expect(api.todos.update).toHaveBeenCalledWith('h4e-memory', expect.objectContaining({
+      title: '保存状态已编辑',
+      body: '保存后的真实正文',
+      linkedNotePaths: ['notes/original.md'],
+    }));
+    expect(screen.getByLabelText('编辑待办标题 保存状态已编辑')).toHaveValue('保存状态已编辑');
   });
 
-  it('keeps the actual no-adapter page-memory route visibly saving before commit', async () => {
+  it('persists explicit due time and every source path', async () => {
     const todo: CopilotTodo = {
       id: 'h4e-actual-route',
       title: '实际路由保存验收',
+      body: '正文',
       status: 'pending',
-      dueAt: Date.now(),
+      dueAt: null,
+      linkedNotePaths: ['notes/a.md'],
     };
     const api = makeApi([todo]);
-    render(<Harness api={api} />);
+    render(<ScheduleWorkspace api={api} requestedTodoId="h4e-actual-route" />);
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 实际路由保存验收' }));
-    fireEvent.change(screen.getByLabelText('新增执行日志'), {
-      target: { value: '实际路由保存日志' },
+    expect(await screen.findByTestId('todo-editor-h4e-actual-route')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('编辑待办截止时间 实际路由保存验收'), {
+      target: { value: '2026-08-01T09:30' },
     });
-    fireEvent.change(screen.getByLabelText('备注'), {
-      target: { value: '实际路由保存备注' },
+    fireEvent.change(screen.getByLabelText('编辑待办来源 实际路由保存验收'), {
+      target: { value: 'notes/a.md\nnotes/b.md' },
     });
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
 
-    expect(screen.getByTestId('todo-memory-editor-h4e-actual-route')).toHaveAttribute(
-      'data-save-state',
-      'saving',
-    );
-    expect(screen.getByTestId('todo-log-save-state-h4e-actual-route')).toHaveAttribute(
-      'data-save-state',
-      'saving',
-    );
-    expect(screen.getByTestId('todo-note-save-state-h4e-actual-route')).toHaveAttribute(
-      'data-save-state',
-      'saving',
-    );
-    expect(screen.getByRole('button', { name: '保存待办详情' })).toBeDisabled();
-    expect(screen.queryByTestId('todo-memory-summary-h4e-actual-route')).not.toBeInTheDocument();
-
-    const summary = await screen.findByTestId('todo-memory-summary-h4e-actual-route');
-    expect(summary).toHaveAttribute('data-save-state', 'saved');
-    expect(summary).toHaveTextContent('执行日志（1）：实际路由保存日志');
-    expect(summary).toHaveTextContent('实际路由保存备注');
+    expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
+    expect(api.todos.update).toHaveBeenCalledWith('h4e-actual-route', expect.objectContaining({
+      dueAt: new Date('2026-08-01T09:30').getTime(),
+      linkedNotePaths: ['notes/a.md', 'notes/b.md'],
+    }));
   });
 
-  it('exposes a real Browser failure fixture, retains edits, and retries without overwriting history', async () => {
+  it('retains edits and never shows success when canonical update readback fails', async () => {
     const todo: CopilotTodo = {
       id: 'h4e-failure',
       title: '失败保留验收',
+      body: '原始正文',
       status: 'pending',
       dueAt: Date.now(),
     };
@@ -331,47 +294,14 @@ describe('R44 H4E Today product polish', () => {
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole('button', { name: '展开待办 失败保留验收' }));
-    fireEvent.change(screen.getByLabelText('新增执行日志'), {
-      target: { value: '已经保存的第一条历史' },
-    });
-    fireEvent.change(screen.getByLabelText('备注'), {
-      target: { value: '已经保存的备注' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
-    expect(await screen.findByTestId('todo-memory-summary-h4e-failure')).toHaveTextContent(
-      '执行日志（1）：已经保存的第一条历史',
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 失败保留验收' }));
-    window.history.replaceState(null, '', '/?prototype=ready&todoMemoryFixture=reject');
-    fireEvent.change(screen.getByLabelText('新增执行日志'), {
-      target: { value: '失败时不能覆盖历史' },
-    });
-    fireEvent.change(screen.getByLabelText('备注'), {
+    fireEvent.change(screen.getByLabelText('编辑待办内容 失败保留验收'), {
       target: { value: '编辑内容必须保留' },
     });
+    api.todos.list = vi.fn(async () => []);
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('保存失败');
-    expect(screen.getByText('已经保存的第一条历史')).toBeInTheDocument();
-    expect(screen.getByLabelText('新增执行日志')).toHaveValue('失败时不能覆盖历史');
-    expect(screen.getByLabelText('备注')).toHaveValue('编辑内容必须保留');
-    expect(screen.queryByTestId('todo-memory-summary-h4e-failure')).not.toBeInTheDocument();
-    expect(screen.getByTestId('todo-log-save-state-h4e-failure')).toHaveAttribute(
-      'data-save-state',
-      'failed',
-    );
-    expect(screen.getByTestId('todo-note-save-state-h4e-failure')).toHaveAttribute(
-      'data-save-state',
-      'failed',
-    );
-
-    window.history.replaceState(null, '', '/?prototype=ready');
-    fireEvent.click(screen.getByRole('button', { name: '重试保存待办详情' }));
-    const summary = await screen.findByTestId('todo-memory-summary-h4e-failure');
-    expect(summary).toHaveTextContent('执行日志（2）：失败时不能覆盖历史');
-    fireEvent.click(screen.getByRole('button', { name: '展开待办 失败保留验收' }));
-    expect(screen.getByText('已经保存的第一条历史')).toBeInTheDocument();
-    expect(screen.getByText('失败时不能覆盖历史')).toBeInTheDocument();
+    expect(screen.getByLabelText('编辑待办内容 失败保留验收')).toHaveValue('编辑内容必须保留');
+    expect(screen.queryByText('已保存并完成本地回读')).not.toBeInTheDocument();
   });
 });

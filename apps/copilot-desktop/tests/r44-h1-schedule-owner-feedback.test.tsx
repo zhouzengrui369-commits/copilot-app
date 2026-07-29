@@ -19,6 +19,7 @@ function localInput(date: Date): string {
 }
 
 function makeApi(items: CopilotTodo[]): CopilotProductApi {
+  const state = [...items];
   return {
     notes: {
       list: vi.fn(async () => []),
@@ -40,9 +41,18 @@ function makeApi(items: CopilotTodo[]): CopilotProductApi {
       ask: vi.fn(async () => ({ text: '', sources: [] })),
     },
     todos: {
-      list: vi.fn(async () => items),
-      create: vi.fn(async (input) => ({ ...input, id: 'new', status: 'pending' as const })),
-      update: vi.fn(async () => null),
+      list: vi.fn(async () => [...state]),
+      create: vi.fn(async (input) => {
+        const created = { ...input, id: 'new', status: 'pending' as const };
+        state.push(created);
+        return created;
+      }),
+      update: vi.fn(async (id, patch) => {
+        const index = state.findIndex((todo) => String(todo.id) === String(id));
+        if (index < 0) return null;
+        state[index] = { ...state[index]!, ...patch };
+        return state[index]!;
+      }),
       remove: vi.fn(async () => false),
       listDue: vi.fn(async () => []),
       markReminderFired: vi.fn(async () => null),
@@ -136,7 +146,46 @@ describe('R44 H1 Schedule owner feedback', () => {
     expect(screen.queryByText('第二天待办')).not.toBeInTheDocument();
   });
 
-  it('expands a todo card and supports page-memory record and notes save/cancel', async () => {
+  it('switches from Unscheduled to the selected-day scope when a calendar date is clicked', async () => {
+    const scheduledDate = todayAt(10);
+    scheduledDate.setDate(scheduledDate.getDate() + 1);
+    const api = makeApi([
+      { id: 'unscheduled', title: '未安排验收', status: 'pending', dueAt: null },
+      {
+        id: 'scheduled',
+        title: '指定日期验收',
+        status: 'pending',
+        dueAt: scheduledDate.getTime(),
+      },
+    ]);
+    render(<Harness api={api} />);
+    await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: '未安排' }));
+    expect(screen.getByRole('button', { name: '未安排' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const todoList = screen.getByTestId('today-todo-list');
+    expect(within(todoList).getByText('未安排验收')).toBeInTheDocument();
+    expect(within(todoList).queryByText('指定日期验收')).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: `选择日期 ${dateKey(scheduledDate)}` }),
+    );
+    expect(screen.getByRole('button', { name: '所选日期' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: '未安排' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(within(todoList).getByText('指定日期验收')).toBeInTheDocument();
+    expect(within(todoList).queryByText('未安排验收')).not.toBeInTheDocument();
+  });
+
+  it('persists execution log and notes through canonical Todo body readback', async () => {
     const api = makeApi([
       { id: 'detail', title: '展开记录测试', status: 'pending', dueAt: todayAt(11).getTime() },
     ]);
@@ -144,23 +193,28 @@ describe('R44 H1 Schedule owner feedback', () => {
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole('button', { name: '展开待办 展开记录测试' }));
-    expect(screen.getByText('PROTOTYPE / NOT_RUNTIME_PROOF · 仅保存在当前页面内存')).toBeInTheDocument();
+    expect(screen.getByText('本地持久化编辑 · 保存后执行 canonical readback')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('新增执行日志'), { target: { value: '已完成资料整理' } });
     fireEvent.change(screen.getByLabelText('备注'), { target: { value: '明天继续复核' } });
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
     const summary = await screen.findByTestId('todo-memory-summary-detail');
-    expect(summary).toHaveTextContent('已保存到当前页面内存');
+    expect(api.todos.update).toHaveBeenCalledWith('detail', expect.objectContaining({
+      body: expect.stringContaining('COPILOT_TODO_DETAIL_V1'),
+    }));
+    expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
     expect(summary).toHaveTextContent('已完成资料整理');
+    expect(summary).toHaveTextContent('备注：明天继续复核');
 
+    fireEvent.click(screen.getByRole('button', { name: '收起待办 展开记录测试' }));
     fireEvent.click(screen.getByRole('button', { name: '展开待办 展开记录测试' }));
-    expect(screen.getByText('已完成资料整理')).toBeInTheDocument();
+    expect(screen.getByTestId('todo-memory-summary-detail')).toHaveTextContent('已完成资料整理');
     expect(screen.getByLabelText('备注')).toHaveValue('明天继续复核');
     fireEvent.change(screen.getByLabelText('备注'), { target: { value: '未保存改动' } });
     fireEvent.click(screen.getByRole('button', { name: '取消编辑待办详情' }));
     expect(screen.queryByLabelText('备注')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '展开待办 展开记录测试' }));
-    expect(screen.getByText('已完成资料整理')).toBeInTheDocument();
+    expect(screen.getByTestId('todo-memory-summary-detail')).toHaveTextContent('已完成资料整理');
     expect(screen.getByLabelText('备注')).toHaveValue('明天继续复核');
   });
 });

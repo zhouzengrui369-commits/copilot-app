@@ -459,6 +459,23 @@
   list-style: none;
 }
 
+.todoScopes {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.todoScopes button[aria-pressed='true'] {
+  border-color: var(--accent, var(--prototype-accent));
+  background: var(--accent-soft, #e8efff);
+  color: var(--accent, var(--prototype-accent));
+}
+
+:global(.todo[data-focused='true']) {
+  outline: 2px solid var(--accent, var(--prototype-accent));
+  outline-offset: 2px;
+}
+
 .todoCardBody {
   min-width: 0;
   display: grid;
@@ -508,7 +525,8 @@
   font-size: 10px;
 }
 
-.todoMemoryEditor textarea {
+.todoMemoryEditor textarea,
+.todoMemoryEditor input {
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
