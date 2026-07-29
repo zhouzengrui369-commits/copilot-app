@@ -759,7 +759,11 @@ describe('AskWorkspace critical interaction', () => {
     const source = screen.getByRole('button', { name: 'notes/kg.md' });
     expect(source).toBeEnabled();
     fireEvent.click(source);
-    expect(onOpenSource).toHaveBeenCalledWith('notes/kg.md');
+    expect(onOpenSource).toHaveBeenCalledWith({
+      exchangeId: expect.any(String),
+      intent: 'full-reader',
+      notePath: 'notes/kg.md',
+    });
     fireEvent.click(screen.getByRole('button', { name: '复制回答' }));
     expect(await screen.findByTestId('copy-status-answer')).toHaveTextContent('已复制');
     expect(writeText).toHaveBeenCalledWith('知识库内未找到相关笔记。');
@@ -826,7 +830,11 @@ describe('AskWorkspace critical interaction', () => {
     fireEvent.click(missing);
     fireEvent.click(unavailable);
     expect(onOpenSource).toHaveBeenCalledTimes(1);
-    expect(onOpenSource).toHaveBeenCalledWith('notes/present.md');
+    expect(onOpenSource).toHaveBeenCalledWith({
+      exchangeId: expect.any(String),
+      intent: 'full-reader',
+      notePath: 'notes/present.md',
+    });
   });
 
   it('suppresses a late source read after a newer question', async () => {

@@ -236,6 +236,29 @@ export interface RagSourceDetail {
   score: number;
 }
 
+export interface AskSourceOrigin {
+  exchangeId: string;
+  intent: 'full-reader';
+  notePath: string;
+}
+
+export interface AskConversationSaveRequest {
+  exchangeId: string;
+  phase: 'completed';
+  question: string;
+  answer: RagAnswer;
+  todoReceipt: TodoRecord | null;
+  completedAt: number;
+}
+
+export type AskConversationSourceTruth = 'current' | 'stale' | 'missing';
+
+/** Main-process validated latest completed exchange. */
+export interface AskConversationSnapshot extends AskConversationSaveRequest {
+  schemaVersion: 1;
+  sourceTruth: AskConversationSourceTruth;
+}
+
 export interface RagStreamChunk {
   delta: string;
   sourceDetails: RagSourceDetail[];
@@ -371,6 +394,15 @@ export interface DomainIpcContract {
   [IPC_CHANNELS.RAG_ASK]: { request: string; response: RagAnswer };
   [IPC_CHANNELS.RAG_STREAM_START]: { request: RagStreamRequest; response: RagStreamStartResult };
   [IPC_CHANNELS.RAG_STREAM_CANCEL]: { request: string; response: RagStreamCancelResult };
+  [IPC_CHANNELS.ASK_CONVERSATION_SAVE]: {
+    request: AskConversationSaveRequest;
+    response: AskConversationSnapshot;
+  };
+  [IPC_CHANNELS.ASK_CONVERSATION_LOAD]: {
+    request: undefined;
+    response: AskConversationSnapshot | null;
+  };
+  [IPC_CHANNELS.ASK_CONVERSATION_CLEAR]: { request: undefined; response: void };
   [IPC_CHANNELS.TODOS_LIST]: { request: ListTodosRequest | undefined; response: TodoRecord[] };
   [IPC_CHANNELS.TODOS_CREATE]: { request: CreateTodoRequest; response: TodoRecord };
   [IPC_CHANNELS.TODOS_UPDATE]: { request: UpdateTodoRequest; response: TodoRecord | null };
@@ -411,6 +443,11 @@ export interface CopilotDomainBridge {
     startStream(request: RagStreamRequest): Promise<RagStreamStartResult>;
     cancelStream(requestId: string): Promise<RagStreamCancelResult>;
     onStreamEvent(listener: (event: RagStreamEvent) => void): () => void;
+  };
+  askConversation?: {
+    save(request: AskConversationSaveRequest): Promise<AskConversationSnapshot>;
+    load(): Promise<AskConversationSnapshot | null>;
+    clear(): Promise<void>;
   };
   todos: {
     list(request?: ListTodosRequest): Promise<TodoRecord[]>;

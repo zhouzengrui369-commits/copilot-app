@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import type {
+  AskSourceOrigin,
   KnowledgeBuildStatusReceipt,
   RendererTrashItem,
   WikiProjectionReceipt,
@@ -23,6 +24,8 @@ import styles from './KnowledgeWorkspace.module.css';
 interface KnowledgeWorkspaceProps {
   api: CopilotProductApi;
   requestedPath?: string | null;
+  sourceOrigin?: AskSourceOrigin | null;
+  onReturnToAsk?(exchangeId: string): void;
   onOpenAsk?(): void;
   onAssistantContextChange?(context: GlobalAssistantContext): void;
 }
@@ -281,6 +284,8 @@ interface MocReturnState {
 export function KnowledgeWorkspace({
   api,
   requestedPath,
+  sourceOrigin,
+  onReturnToAsk,
   onAssistantContextChange,
 }: KnowledgeWorkspaceProps): ReactElement {
   const browserPrototype = import.meta.env.VITE_COPILOT_BROWSER_PROTOTYPE === '1'
@@ -415,10 +420,15 @@ export function KnowledgeWorkspace({
       setSelectedPath(requestedPath);
       setSelectedFolderPath(parentFolderPath(requestedPath));
       setSelectedTopic(null);
-      setDocumentReaderPath(null);
+      setDocumentReaderPath(
+        sourceOrigin?.intent === 'full-reader'
+          && sourceOrigin.notePath === requestedPath
+          ? requestedPath
+          : null,
+      );
       setInspectorMode('detail');
     }
-  }, [requestedPath]);
+  }, [requestedPath, sourceOrigin]);
 
   const cancelWikiPoll = useCallback(() => {
     wikiPollGenerationRef.current += 1;
@@ -964,6 +974,17 @@ export function KnowledgeWorkspace({
               <button type="button" onClick={() => void openEditor(documentReaderPath)}>
                 查看 / 编辑原始笔记
               </button>
+              {sourceOrigin?.exchangeId
+                && sourceOrigin.notePath === documentReaderPath
+                && sourceOrigin.intent === 'full-reader'
+                && onReturnToAsk ? (
+                  <button
+                    type="button"
+                    onClick={() => onReturnToAsk(sourceOrigin.exchangeId)}
+                  >
+                    返回本轮回答
+                  </button>
+                ) : null}
             </header>
             <NoteDetail
               noteId={documentReaderPath}

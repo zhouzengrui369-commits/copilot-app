@@ -19,6 +19,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { IPC_CHANNELS } from '../shared/ipc-channels.js';
 import { registerDomainIpc } from './domain-ipc.js';
+import { registerAskConversationIpc } from './ask-conversation-ipc.js';
+import { AskConversationStore } from './ask-conversation-store.js';
 import {
   DesktopApprovalBroker,
   registerRemoteIpc,
@@ -127,6 +129,7 @@ let mainWindow: BrowserWindow | null = null;
 let storage: SettingsStorage | null = null;
 let modelCredentials: ModelCredentialStore | null = null;
 let knowledgeServicePromise: Promise<LocalKnowledgeService> | null = null;
+let askConversationStore: AskConversationStore | null = null;
 let telemetry: LocalTelemetry | null = null;
 let directPerformanceProbe: DirectPerformanceProbe | null = null;
 let startupCoordinator: StartupCoordinator | null = null;
@@ -362,6 +365,13 @@ function getKnowledgeService(): Promise<LocalKnowledgeService> {
     }));
     throw error;
   });
+}
+
+function getAskConversationStore(): AskConversationStore {
+  if (!askConversationStore) {
+    askConversationStore = new AskConversationStore(app.getPath('userData'));
+  }
+  return askConversationStore;
 }
 
 function getRemoteRuntime(): RemoteRuntime {
@@ -727,6 +737,11 @@ function registerIpc(): void {
     ipcMain,
     getKnowledgeService,
     (operation) => telemetry?.recordOperation(operation),
+  );
+  registerAskConversationIpc(
+    ipcMain,
+    getAskConversationStore,
+    getKnowledgeService,
   );
   registerRemoteIpc(ipcMain, getRemoteRuntime, isCurrentWindowSender);
   registerBackupIpc(ipcMain, getBackupRuntime, isCurrentWindowSender, (response) => {

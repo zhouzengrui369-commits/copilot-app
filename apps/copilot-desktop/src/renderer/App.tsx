@@ -12,6 +12,7 @@ import { useSettingsStore } from './stores/settings.js';
 import { resolveCopilotProductApi } from './lib/copilot-api.js';
 import { WorkspaceState } from './workspaces/WorkspaceState.js';
 import type { StartupView } from './startup-shell.js';
+import type { AskSourceOrigin } from '../shared/domain-api.js';
 import { RemoteApprovalModal } from './components/RemoteManagement/RemoteApprovalModal.js';
 import { GlobalAssistant } from './components/Assistant/GlobalAssistant.js';
 import type {
@@ -138,6 +139,7 @@ export function App({
   const [view, setView] = useState<View>(prototypeView);
   const activeViewRef = useRef<View>(prototypeView);
   const [requestedNotePath, setRequestedNotePath] = useState<string | null>(null);
+  const [askSourceOrigin, setAskSourceOrigin] = useState<AskSourceOrigin | null>(null);
   const [requestedTodoId, setRequestedTodoId] = useState<string | number | null>(null);
   const [captureDraft, setCaptureDraft] = useState('');
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -182,7 +184,14 @@ export function App({
   );
 
   const openNote = (path: string) => {
+    setAskSourceOrigin(null);
     setRequestedNotePath(path);
+    navigateTo('knowledge');
+  };
+
+  const openAskSource = (origin: AskSourceOrigin) => {
+    setAskSourceOrigin(origin);
+    setRequestedNotePath(origin.notePath);
     navigateTo('knowledge');
   };
 
@@ -203,13 +212,19 @@ export function App({
         return {
           api: product.api,
           requestedPath: requestedNotePath,
+          sourceOrigin: askSourceOrigin,
+          onReturnToAsk: (exchangeId: string) => {
+            if (askSourceOrigin?.exchangeId !== exchangeId) return;
+            setAskSourceOrigin(null);
+            navigateTo('ask');
+          },
           onOpenAsk: () => navigateTo('ask'),
           onAssistantContextChange: handleAssistantContextChange,
         };
       case 'ask':
         return {
           api: product.api,
-          onOpenSource: openNote,
+          onOpenSource: openAskSource,
           onOpenTodo: (id: string | number) => {
             setRequestedTodoId(id);
             navigateTo('schedule');
@@ -236,6 +251,7 @@ export function App({
     handleAssistantContextChange,
     navigateTo,
     product.api,
+    askSourceOrigin,
     requestedNotePath,
     requestedTodoId,
     view,

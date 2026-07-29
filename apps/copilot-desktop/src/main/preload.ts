@@ -54,6 +54,7 @@ import {
 } from '../shared/local-asr.js';
 
 export interface CopilotBridge extends CopilotDomainBridge {
+  askConversation: NonNullable<CopilotDomainBridge['askConversation']>;
   trash: NonNullable<CopilotDomainBridge['trash']>;
   settings: {
     get(): Promise<RendererSafeCopilotSettings>;
@@ -318,6 +319,11 @@ const bridge: CopilotBridge = {
       ipcRenderer.on(IPC_CHANNELS.RAG_STREAM_EVENT, wrapped);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.RAG_STREAM_EVENT, wrapped);
     },
+  },
+  askConversation: {
+    save: (request) => invokeDomain(IPC_CHANNELS.ASK_CONVERSATION_SAVE, request),
+    load: () => invokeDomain(IPC_CHANNELS.ASK_CONVERSATION_LOAD, undefined),
+    clear: () => invokeDomain(IPC_CHANNELS.ASK_CONVERSATION_CLEAR, undefined),
   },
   todos: {
     list: (request?: unknown) => invokeDomain(IPC_CHANNELS.TODOS_LIST, request as never),

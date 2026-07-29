@@ -1,4 +1,6 @@
 import type {
+  AskConversationSaveRequest,
+  AskConversationSnapshot,
   CopilotDomainBridge,
   CreateNoteRequest,
   CreateTodoRequest,
@@ -132,6 +134,11 @@ export interface CopilotProductApi {
       onEvent: (event: RagStreamEvent) => void,
     ): CopilotRagStreamHandle;
   };
+  askConversation?: {
+    save(request: AskConversationSaveRequest): Promise<AskConversationSnapshot>;
+    load(): Promise<AskConversationSnapshot | null>;
+    clear(): Promise<void>;
+  };
   todos: {
     list(): Promise<ReadonlyArray<CopilotTodo>>;
     create(input: CopilotTodoInput): Promise<CopilotTodo>;
@@ -179,6 +186,7 @@ export function resolveCopilotProductApi(
   const kg = value.kg;
   const rag = value.rag;
   const todos = value.todos;
+  const askConversation = value.askConversation;
   const trash = value.trash;
   if (!hasFunctions(notes, ['list', 'get', 'create', 'update', 'remove', 'getBacklinks'])) {
     return { api: null, error: '知识库 IPC 尚未就绪。' };
@@ -197,6 +205,8 @@ export function resolveCopilotProductApi(
   const hasWiki = hasFunctions(wiki, ['getForNote']);
   const hasRagStream = hasFunctions(rag, ['startStream', 'cancelStream', 'onStreamEvent']);
   const hasTrash = hasFunctions(trash, ['moveNote', 'moveTodo', 'list', 'restore', 'purge']);
+  const hasAskConversation = hasFunctions(askConversation, ['save', 'load', 'clear']);
+  const askConversationBridge = bridge.askConversation;
   const trashBridge = bridge.trash;
   const api: CopilotProductApi = {
     notes: {
@@ -274,6 +284,13 @@ export function resolveCopilotProductApi(
           startRagStream(bridge, question, onEvent),
       } : {}),
     },
+    ...(hasAskConversation && askConversationBridge ? {
+      askConversation: {
+        save: (request: AskConversationSaveRequest) => askConversationBridge.save(request),
+        load: () => askConversationBridge.load(),
+        clear: () => askConversationBridge.clear(),
+      },
+    } : {}),
     todos: {
       list: async () => (await bridge.todos.list()).map(todoRecordToTodo),
       create: async (input) => todoRecordToTodo(await bridge.todos.create(toCreateTodoRequest(input))),

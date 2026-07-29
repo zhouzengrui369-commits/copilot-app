@@ -126,7 +126,10 @@ describe('Ask Demo direct-source adoption R1', () => {
     expect(screen.getByTestId('answer-source-truth')).toHaveAttribute('data-truth-state', 'LOCAL_PRESENT');
 
     fireEvent.click(screen.getByRole('button', { name: 'notes/local-source.md' }));
-    expect(onOpenSource).toHaveBeenCalledWith('notes/local-source.md');
+    expect(onOpenSource).toHaveBeenCalledWith(expect.objectContaining({
+      intent: 'full-reader',
+      notePath: 'notes/local-source.md',
+    }));
 
     fireEvent.click(screen.getByRole('button', { name: '复制来源诊断' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(

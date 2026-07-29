@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import type {
+  AskConversationSnapshot,
+  AskConversationSourceTruth,
+  AskSourceOrigin,
+  TodoRecord,
+} from '../../shared/domain-api.js';
+import type {
   CopilotProductApi,
   CopilotRagAnswer,
   CopilotRagStreamHandle,
@@ -11,7 +17,7 @@ import styles from './AskWorkspace.module.css';
 
 interface AskWorkspaceProps {
   api: CopilotProductApi;
-  onOpenSource?(path: string): void;
+  onOpenSource?(origin: AskSourceOrigin): void;
   onOpenTodo?(id: string | number): void;
 }
 
@@ -42,8 +48,10 @@ interface RagErrorReceipt {
 }
 
 interface CompletedExchange {
+  exchangeId: string;
   question: string;
   answer: CopilotRagAnswer;
+  completedAt: number;
 }
 
 interface FrozenTodoPayload {
@@ -74,9 +82,37 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
   const [todoSaving, setTodoSaving] = useState(false);
   const [todoError, setTodoError] = useState<string | null>(null);
   const [todoReceipt, setTodoReceipt] = useState<CopilotTodo | null>(null);
+  const [restoredSourceTruth, setRestoredSourceTruth] =
+    useState<AskConversationSourceTruth | null>(null);
+  const [persistenceReady, setPersistenceReady] = useState(!api.askConversation);
   const activeStream = useRef<CopilotRagStreamHandle | null>(null);
   const requestSequence = useRef(0);
   const sourceCheckSequence = useRef(0);
+
+  useEffect(() => {
+    if (!api.askConversation) return;
+    let active = true;
+    void api.askConversation.load().then((snapshot) => {
+      if (!active || requestSequence.current !== 0 || !snapshot) return;
+      setQuestion(snapshot.question);
+      setLastQuery(snapshot.question);
+      setAnswer(snapshot.answer);
+      setCompletedExchange({
+        exchangeId: snapshot.exchangeId,
+        question: snapshot.question,
+        answer: snapshot.answer,
+        completedAt: snapshot.completedAt,
+      });
+      setTodoReceipt(snapshot.todoReceipt ? todoRecordToCopilot(snapshot.todoReceipt) : null);
+      setRestoredSourceTruth(snapshot.sourceTruth);
+      setPersistenceReady(true);
+    }).catch(() => {
+      // Corrupt, unsafe, or unavailable persisted state remains fail-closed.
+    });
+    return () => {
+      active = false;
+    };
+  }, [api.askConversation]);
 
   useEffect(() => () => {
     requestSequence.current += 1;
@@ -144,8 +180,12 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
     setAnswer(null);
     setCompletedExchange(null);
     setTodoPayload(null);
+    setTodoSaving(false);
     setTodoError(null);
     setTodoReceipt(null);
+    setRestoredSourceTruth(null);
+    setPersistenceReady(!api.askConversation);
+    const exchangeId = createExchangeId();
     try {
       if (api.rag.stream) {
         const handle = api.rag.stream(query, (streamEvent) => {
@@ -160,13 +200,37 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
         const finalAnswer = await handle.done;
         if (requestSequence.current === sequence) {
           setAnswer(finalAnswer);
-          setCompletedExchange({ question: query, answer: finalAnswer });
+          const exchange = {
+            exchangeId,
+            question: query,
+            answer: finalAnswer,
+            completedAt: Date.now(),
+          };
+          setCompletedExchange(exchange);
+          void persistExchange(api, exchange, null).then((snapshot) => {
+            if (requestSequence.current === sequence && snapshot) {
+              setRestoredSourceTruth(snapshot.sourceTruth);
+              setPersistenceReady(true);
+            }
+          }).catch(() => setPersistenceReady(false));
         }
       } else {
         const finalAnswer = await api.rag.ask(query);
         if (requestSequence.current === sequence) {
           setAnswer(finalAnswer);
-          setCompletedExchange({ question: query, answer: finalAnswer });
+          const exchange = {
+            exchangeId,
+            question: query,
+            answer: finalAnswer,
+            completedAt: Date.now(),
+          };
+          setCompletedExchange(exchange);
+          void persistExchange(api, exchange, null).then((snapshot) => {
+            if (requestSequence.current === sequence && snapshot) {
+              setRestoredSourceTruth(snapshot.sourceTruth);
+              setPersistenceReady(true);
+            }
+          }).catch(() => setPersistenceReady(false));
         }
       }
     } catch (cause) {
@@ -215,11 +279,16 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
 
   const answerText = answer?.text || '知识库内未找到相关笔记。';
   const sourceSummary = summarizeSources(sourceReceipts);
-  const sourceTruthState = answer ? sourceSummary.state : 'NOT_PROBED';
+  const restoredDowngrade = restoredSourceTruth === 'stale'
+    ? 'STALE'
+    : restoredSourceTruth === 'missing'
+      ? 'MISSING'
+      : null;
+  const sourceTruthState = answer ? (restoredDowngrade ?? sourceSummary.state) : 'NOT_PROBED';
   const sourceTruthLabel = answer
-    ? `${sourceReceipts.length} source${sourceReceipts.length === 1 ? '' : 's'} · ${sourceSummary.state}`
+    ? `${sourceReceipts.length} source${sourceReceipts.length === 1 ? '' : 's'} · ${restoredDowngrade ?? sourceSummary.state}`
     : '模型与来源 · NOT_PROBED';
-  const sourceTruthBadge = answer && sourceSummary.state === 'LOCAL_PRESENT'
+  const sourceTruthBadge = answer && persistenceReady && !restoredDowngrade && sourceSummary.state === 'LOCAL_PRESENT'
     ? 'ok'
     : answer && sourceSummary.state === 'CHECKING'
       ? 'checking'
@@ -227,6 +296,8 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
   const sourcePaths = sourceReceipts.map((source) => source.notePath).filter(Boolean);
   const todoEligible = Boolean(
     completedExchange
+    && persistenceReady
+    && !restoredDowngrade
     && answer
     && completedExchange.answer.text === answer.text
     && sourceReceipts.length > 0
@@ -255,8 +326,17 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
       setTodoError('截止时间无效，未创建待办。');
       return;
     }
+    const submitSequence = requestSequence.current;
+    const submitExchange = completedExchange;
+    const submitExchangeId = submitExchange?.exchangeId;
+    if (!submitExchange || !submitExchangeId) {
+      setTodoError('当前回答尚未形成可持久化会话，未创建待办。');
+      return;
+    }
     setTodoSaving(true);
     setTodoError(null);
+    setTodoReceipt(null);
+    let createdAndReadBack = false;
     try {
       const created = await api.todos.create({
         title: todoTitle.trim(),
@@ -274,12 +354,29 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
         dueAt,
         linkedNotePaths: todoPayload.sourcePaths,
       });
-      setTodoReceipt(canonical);
+      createdAndReadBack = true;
+      const record = copilotTodoToRecord(canonical);
+      if (!api.askConversation) throw new Error('ASK_CONVERSATION_BRIDGE_UNAVAILABLE');
+      const snapshot = await persistExchange(api, submitExchange, record);
+      assertPersistedTodoSnapshot(snapshot, submitExchange, record);
+      if (
+        requestSequence.current !== submitSequence
+        || snapshot.exchangeId !== submitExchangeId
+      ) return;
+      setRestoredSourceTruth(snapshot.sourceTruth);
+      setTodoReceipt(todoRecordToCopilot(snapshot.todoReceipt));
       setTodoPayload(null);
     } catch (cause) {
-      setTodoError(`待办未创建：${errorMessage(cause)}`);
+      if (requestSequence.current !== submitSequence) return;
+      setTodoReceipt(null);
+      if (createdAndReadBack) {
+        setTodoPayload(null);
+        setTodoError('待办已创建，但会话回执未能安全持久化。');
+      } else {
+        setTodoError(`待办未创建：${errorMessage(cause)}`);
+      }
     } finally {
-      setTodoSaving(false);
+      if (requestSequence.current === submitSequence) setTodoSaving(false);
     }
   };
 
@@ -299,8 +396,12 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
     setCopyStates({});
     setCheckedSources({ fingerprint: 'NO_ANSWER', receipts: [] });
     setTodoPayload(null);
+    setTodoSaving(false);
     setTodoError(null);
     setTodoReceipt(null);
+    setRestoredSourceTruth(null);
+    setPersistenceReady(!api.askConversation);
+    void api.askConversation?.clear().catch(() => undefined);
   };
 
   return (
@@ -458,6 +559,7 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
                     </div>
                   </form>
                 ) : null}
+                {!todoPayload && todoError ? <p role="alert">{todoError}</p> : null}
                 {todoReceipt ? (
                   <div className={styles.todoReceipt} role="status" data-testid="ask-todo-success">
                     <strong>待办已保存并完成本地回读</strong>
@@ -536,9 +638,27 @@ export function AskWorkspace({ api, onOpenSource, onOpenTodo }: AskWorkspaceProp
                   <div className="source-receipt__heading">
                     <button
                       type="button"
-                      disabled={source.status !== 'LOCAL_PRESENT' || !onOpenSource || !source.notePath}
+                      disabled={
+                        Boolean(restoredDowngrade)
+                        || !persistenceReady
+                        || !completedExchange
+                        || source.status !== 'LOCAL_PRESENT'
+                        || !onOpenSource
+                        || !source.notePath
+                      }
                       onClick={() => {
-                        if (source.status === 'LOCAL_PRESENT' && source.notePath) onOpenSource?.(source.notePath);
+                        if (
+                          !restoredDowngrade
+                          && completedExchange
+                          && source.status === 'LOCAL_PRESENT'
+                          && source.notePath
+                        ) {
+                          onOpenSource?.({
+                            exchangeId: completedExchange.exchangeId,
+                            intent: 'full-reader',
+                            notePath: source.notePath,
+                          });
+                        }
                       }}
                     >
                       {source.displayPath}
@@ -856,6 +976,87 @@ function assertTodoReadback(
     && actualDue === expectedDue
     && JSON.stringify(actualLinks) === JSON.stringify(expectedLinks);
   if (!matches) throw new Error('TODO_CANONICAL_READBACK_FAILED');
+}
+
+async function persistExchange(
+  api: CopilotProductApi,
+  exchange: CompletedExchange,
+  todoReceipt: TodoRecord | null,
+) {
+  if (!api.askConversation) return null;
+  return api.askConversation.save({
+    exchangeId: exchange.exchangeId,
+    phase: 'completed',
+    question: exchange.question,
+    answer: exchange.answer,
+    todoReceipt,
+    completedAt: exchange.completedAt,
+  });
+}
+
+function assertPersistedTodoSnapshot(
+  snapshot: AskConversationSnapshot | null,
+  exchange: CompletedExchange,
+  expectedTodo: TodoRecord,
+): asserts snapshot is AskConversationSnapshot & { todoReceipt: TodoRecord } {
+  const sameExchange = snapshot
+    && snapshot.sourceTruth === 'current'
+    && snapshot.exchangeId === exchange.exchangeId
+    && snapshot.question === exchange.question
+    && snapshot.completedAt === exchange.completedAt
+    && snapshot.answer.text === exchange.answer.text
+    && JSON.stringify(snapshot.answer.sources) === JSON.stringify(exchange.answer.sources)
+    && JSON.stringify(snapshot.answer.sourceDetails) === JSON.stringify(exchange.answer.sourceDetails);
+  if (!sameExchange || !snapshot.todoReceipt || !sameTodoRecord(snapshot.todoReceipt, expectedTodo)) {
+    throw new Error('ASK_CONVERSATION_TODO_RECEIPT_NOT_CURRENT');
+  }
+}
+
+function sameTodoRecord(actual: TodoRecord, expected: TodoRecord): boolean {
+  return String(actual.id) === String(expected.id)
+    && actual.title === expected.title
+    && actual.body === expected.body
+    && actual.status === expected.status
+    && actual.due_at_ms === expected.due_at_ms
+    && actual.remind_at_ms === expected.remind_at_ms
+    && JSON.stringify(actual.note_links) === JSON.stringify(expected.note_links);
+}
+
+function copilotTodoToRecord(todo: CopilotTodo): TodoRecord {
+  const now = Date.now();
+  return {
+    id: todo.id,
+    title: todo.title,
+    body: todo.body ?? '',
+    due_at_ms: todo.dueAt ?? todo.due_at_ms ?? null,
+    remind_at_ms: todo.remindAt ?? todo.remind_at_ms ?? null,
+    status: todo.status,
+    priority: 'normal',
+    note_links: [...(todo.linkedNotePaths ?? todo.note_links ?? [])],
+    reminder_fired: 0,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+function todoRecordToCopilot(todo: TodoRecord): CopilotTodo {
+  return {
+    id: todo.id,
+    title: todo.title,
+    body: todo.body,
+    status: todo.status,
+    due_at_ms: todo.due_at_ms,
+    remind_at_ms: todo.remind_at_ms,
+    note_links: [...todo.note_links],
+  };
+}
+
+let exchangeSequence = 0;
+function createExchangeId(): string {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (random) return random;
+  exchangeSequence += 1;
+  return `exchange-${Date.now()}-${exchangeSequence}`;
 }
 
 function friendlyRagError(error: unknown): RagErrorReceipt {

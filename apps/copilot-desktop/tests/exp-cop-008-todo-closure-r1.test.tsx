@@ -6,6 +6,7 @@ import type {
   CopilotProductApi,
   CopilotTodo,
 } from '../src/renderer/lib/copilot-api.js';
+import type { AskConversationSnapshot } from '../src/shared/domain-api.js';
 import { AskWorkspace } from '../src/renderer/workspaces/AskWorkspace.js';
 import { ScheduleWorkspace } from '../src/renderer/workspaces/ScheduleWorkspace.js';
 
@@ -19,6 +20,7 @@ function makeStatefulApi(initial: CopilotTodo[] = []): {
 } {
   const state = [...initial];
   let sequence = 1;
+  let latestConversation: AskConversationSnapshot | null = null;
   const api: CopilotProductApi = {
     notes: {
       list: vi.fn(async () => []),
@@ -76,6 +78,21 @@ function makeStatefulApi(initial: CopilotTodo[] = []): {
       listDue: vi.fn(async () => []),
       markReminderFired: vi.fn(async () => null),
     },
+    askConversation: {
+      save: vi.fn(async (request) => {
+        const snapshot: AskConversationSnapshot = {
+          schemaVersion: 1,
+          ...request,
+          sourceTruth: 'current',
+        };
+        latestConversation = snapshot;
+        return snapshot;
+      }),
+      load: vi.fn(async () => latestConversation),
+      clear: vi.fn(async () => {
+        latestConversation = null;
+      }),
+    },
   };
   return { api, state };
 }
@@ -107,7 +124,11 @@ describe('EXP-COP-008 canonical Todo closure R1', () => {
     await waitFor(() => expect(screen.getByTestId('answer-source-truth'))
       .toHaveAttribute('data-truth-state', 'LOCAL_PRESENT'));
     fireEvent.click(screen.getByRole('button', { name: 'notes/source-a.md' }));
-    expect(openSource).toHaveBeenCalledWith('notes/source-a.md');
+    expect(openSource).toHaveBeenCalledWith({
+      exchangeId: expect.any(String),
+      intent: 'full-reader',
+      notePath: 'notes/source-a.md',
+    });
     fireEvent.change(screen.getByLabelText('问题'), { target: { value: '尚未发送的后续草稿' } });
     const createAction = screen.getByTestId('ask-create-todo');
     expect(createAction).toBeEnabled();

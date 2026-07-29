@@ -44,6 +44,7 @@ interface ExposedBridge {
   rag: MethodGroup & {
     onStreamEvent(listener: (event: unknown) => void): () => void;
   };
+  askConversation: MethodGroup;
   todos: MethodGroup;
 }
 
@@ -147,6 +148,17 @@ describe('preload domain bridge behavior', () => {
     unsubscribe();
     expect(electron.removeListener).toHaveBeenCalledWith('copilot:rag:stream-event', streamWrapper);
 
+    await bridge.askConversation.save({
+      exchangeId: 'exchange-1',
+      phase: 'completed',
+      question: 'question',
+      answer: { text: 'answer', sources: ['notes/a'], sourceDetails: [] },
+      todoReceipt: null,
+      completedAt: 1,
+    });
+    await bridge.askConversation.load();
+    await bridge.askConversation.clear();
+
     await bridge.todos.list({ status: 'pending' });
     await bridge.todos.create({ title: 'Todo' });
     await bridge.todos.update({ id: 't1', patch: { status: 'done' } });
@@ -154,7 +166,7 @@ describe('preload domain bridge behavior', () => {
     await bridge.todos.listDue(123);
     await bridge.todos.markReminderFired('t1');
 
-    expect(electron.invoke).toHaveBeenCalledTimes(34);
+    expect(electron.invoke).toHaveBeenCalledTimes(37);
     expect(electron.invoke).toHaveBeenCalledWith('copilot:settings:set-window-bounds', {
       x: 1, y: 2, width: 800, height: 600,
     });
