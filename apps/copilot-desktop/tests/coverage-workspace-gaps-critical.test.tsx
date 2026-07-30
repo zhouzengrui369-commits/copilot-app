@@ -209,10 +209,10 @@ describe('ScheduleWorkspace remaining calendar functions', () => {
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     const mainCalendar = screen.getByLabelText('月历');
-    const mainSelected = mainCalendar.querySelector<HTMLButtonElement>('[tabindex="0"]');
+    const mainSelected = mainCalendar.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
     expect(mainSelected).not.toBeNull();
     for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'Enter']) {
-      const active = mainCalendar.querySelector<HTMLButtonElement>('[tabindex="0"]') ?? mainSelected!;
+      const active = mainCalendar.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? mainSelected!;
       fireEvent.keyDown(active, { key });
     }
 
