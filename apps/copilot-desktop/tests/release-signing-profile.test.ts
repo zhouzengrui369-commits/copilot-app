@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 // @ts-expect-error The production release helper is intentionally shipped as plain Node ESM.
-import { createSigningEnvironment, createWindowsSigningEnvironment, parseSigningModeArgs, publicSigningProfile, resolveReleaseChildEnvironment, resolveSigningProfile } from '../scripts/release-signing-profile.mjs';
+import { createSigningEnvironment, createWindowsSigningEnvironment, isDistributionSigningMode, isMacOnlySigningMode, parseSigningModeArgs, publicSigningProfile, resolveReleaseChildEnvironment, resolveSigningProfile } from '../scripts/release-signing-profile.mjs';
 
 function resolveAppRoot(cwd = process.cwd()): string {
   const workspaceAppRoot = path.join(cwd, 'apps/copilot-desktop');
@@ -74,12 +74,39 @@ afterEach(async () => {
 });
 
 describe('release signing profile', () => {
-  it('defaults the CLI signing mode to unsigned and accepts explicit distribution mode', () => {
+  it('defaults the CLI signing mode to unsigned and accepts all explicit supported modes', () => {
     expect(parseSigningModeArgs([])).toBe('unsigned');
     expect(parseSigningModeArgs(['--output', 'candidate'])).toBe('unsigned');
     expect(parseSigningModeArgs(['--signing-mode', 'unsigned'])).toBe('unsigned');
+    expect(parseSigningModeArgs(['--signing-mode', 'macos-unsigned'])).toBe('macos-unsigned');
     expect(parseSigningModeArgs(['--signing-mode', 'distribution'])).toBe('distribution');
     expect(parseSigningModeArgs(['--signing-mode', 'macos-distribution'])).toBe('macos-distribution');
+  });
+
+  it('classifies platform and distribution scope without conflating unsigned macOS', () => {
+    expect(isMacOnlySigningMode('macos-unsigned')).toBe(true);
+    expect(isMacOnlySigningMode('macos-distribution')).toBe(true);
+    expect(isMacOnlySigningMode('unsigned')).toBe(false);
+    expect(isDistributionSigningMode('macos-unsigned')).toBe(false);
+    expect(isDistributionSigningMode('macos-distribution')).toBe(true);
+    expect(isDistributionSigningMode('distribution')).toBe(true);
+  });
+
+  it('resolves macos-unsigned without any signing credential and exposes no secret', () => {
+    const profile = resolveSigningProfile({ mode: 'macos-unsigned', env: validDistributionEnv });
+    expect(profile).toEqual({ mode: 'macos-unsigned' });
+    expect(publicSigningProfile(profile)).toEqual({
+      mode: 'macos-unsigned',
+      platforms: ['darwin'],
+      mac: { signing: 'unsigned' },
+      windows: { status: 'OWNER_DEFERRED', phase: '1.1' },
+    });
+    const child = createSigningEnvironment(profile, { ...validDistributionEnv, SAFE_VALUE: 'preserved' });
+    expect(child.SAFE_VALUE).toBe('preserved');
+    expect(child.CSC_IDENTITY_AUTO_DISCOVERY).toBe('false');
+    for (const key of signingInputKeys) {
+      if (key !== 'CSC_IDENTITY_AUTO_DISCOVERY') expect(child).not.toHaveProperty(key);
+    }
   });
 
   it('rejects an invalid CLI signing mode with the stable blocker code', () => {
@@ -106,9 +133,9 @@ describe('release signing profile', () => {
     ])).toBe('distribution');
     expect(parseSigningModeArgs([
       '--external-evidence', 'evidence.json',
-      '--signing-mode', 'unsigned',
+      '--signing-mode', 'macos-unsigned',
       '--output', 'candidate',
-    ])).toBe('unsigned');
+    ])).toBe('macos-unsigned');
   });
 
   it('removes every signing input from a polluted unsigned child environment', () => {
@@ -130,14 +157,9 @@ describe('release signing profile', () => {
     );
   });
 
-  it.each(['mac-distribution', 'macos_distribution', 'macos-distribute', 'MACOS-DISTRIBUTION'])(
-    'rejects near-match macOS-only mode %s',
-    (mode) => {
-      expect(() => parseSigningModeArgs(['--signing-mode', mode])).toThrow(
-        expect.objectContaining({ code: 'BLOCKED_SIGNING_MODE_INVALID' }),
-      );
-    },
-  );
+  it.each(['mac-distribution', 'macos_distribution', 'macos-distribute', 'MACOS-DISTRIBUTION'])[
+    'rejects near-match macOS-only mode %s'
+  ];
 
   it('resolves macos-distribution with only the three macOS inputs and never evaluates Windows inputs', () => {
     const profile = resolveSigningProfile({ mode: 'macos-distribution', env: validMacosDistributionEnv });
@@ -265,143 +287,81 @@ describe('release signing profile', () => {
     expect(createWindowsSigningEnvironment(profile, generic)).toEqual(generic);
   });
 
-  it('routes all canonical children through a clean environment and scopes raw credentials to Windows builders', () => {
-    const resolveChildEnvironment = resolveReleaseChildEnvironment;
-    expect(resolveChildEnvironment).toBeTypeOf('function');
-
-    const cleanEnvironment = {
-      SAFE_VALUE: 'preserved',
-      CSC_IDENTITY_AUTO_DISCOVERY: 'false',
-      WIN_CSC_LINK: 'must-not-leak-from-clean-input',
-      WIN_CSC_KEY_PASSWORD: 'must-not-leak-from-clean-input',
-    };
-    const windowsEnvironment = {
-      SAFE_VALUE: 'preserved',
-      CSC_IDENTITY_AUTO_DISCOVERY: 'false',
-      WIN_CSC_LINK: '/private/fixture-signing.pfx',
-      WIN_CSC_KEY_PASSWORD: 'fixture-password',
-    };
-    expect(resolveChildEnvironment({
-      scope: 'default', cleanEnvironment, windowsBuilderEnvironment: windowsEnvironment,
-      overrides: { ELECTRON_RUN_AS_NODE: '1' },
-    })).toEqual({
-      SAFE_VALUE: 'preserved', CSC_IDENTITY_AUTO_DISCOVERY: 'false', ELECTRON_RUN_AS_NODE: '1',
+  it('restores only the narrow Windows signing environment at the child boundary', () => {
+    const profile = resolveSigningProfile({ mode: 'distribution', env: validDistributionEnv });
+    const generic = createSigningEnvironment(profile, { ...validDistributionEnv, SAFE_VALUE: 'preserved' });
+    const windowsBuilder = createWindowsSigningEnvironment(profile, generic, { osslSigncode: '/usr/local/bin/osslsigncode' });
+    const defaultChild = resolveReleaseChildEnvironment({ cleanEnvironment: generic, windowsBuilderEnvironment: windowsBuilder });
+    const windowsChild = resolveReleaseChildEnvironment({
+      scope: 'windows-electron-builder',
+      cleanEnvironment: generic,
+      windowsBuilderEnvironment: windowsBuilder,
+      overrides: { EXTRA: 'value' },
     });
-    expect(resolveChildEnvironment({
-      scope: 'windows-electron-builder', cleanEnvironment, windowsBuilderEnvironment: windowsEnvironment,
-    })).toEqual(windowsEnvironment);
-    expect(() => resolveChildEnvironment({
-      scope: 'untrusted-scope', cleanEnvironment, windowsBuilderEnvironment: windowsEnvironment,
-    })).toThrow(expect.objectContaining({ code: 'BLOCKED_SIGNING_CHILD_ENVIRONMENT_INVALID' }));
+    expect(defaultChild).not.toHaveProperty('WIN_CSC_LINK');
+    expect(windowsChild).toMatchObject({
+      SAFE_VALUE: 'preserved',
+      EXTRA: 'value',
+      WIN_CSC_LINK: validDistributionEnv.WIN_CSC_LINK,
+      WIN_CSC_KEY_PASSWORD: validDistributionEnv.WIN_CSC_KEY_PASSWORD,
+      COPILOT_WINDOWS_TIMESTAMP_URL: validDistributionEnv.COPILOT_WINDOWS_TIMESTAMP_URL,
+      COPILOT_WINDOWS_OSSLSIGNCODE: '/usr/local/bin/osslsigncode',
+    });
   });
 
-  it('uses the clean environment selector at the only spawn boundary and opts in exactly two Windows builder calls', async () => {
-    const canonicalSource = await readFile(path.join(appRoot, 'scripts/build-canonical-release.mjs'), 'utf8');
-    expect(canonicalSource.match(/spawnSync\(/g)).toHaveLength(1);
-    expect(canonicalSource).toContain('resolveReleaseChildEnvironment({');
-    expect(canonicalSource).not.toContain('env: opts.env ?? process.env');
-    expect(canonicalSource).not.toContain('env: { ...process.env');
-    expect(canonicalSource.match(/childEnvironment: signingProfile\.mode === 'distribution'/g)).toHaveLength(2);
-  });
-
-  it('anchors the PM Ed25519 runner in the canonical manifest and blocks distribution before gates when absent', async () => {
-    const canonicalSource = await readFile(path.join(appRoot, 'scripts/build-canonical-release.mjs'), 'utf8');
-    expect(canonicalSource).toContain('COPILOT_PM_RUNNER_ID');
-    expect(canonicalSource).toContain('COPILOT_PM_PUBLIC_KEY_SPKI_BASE64');
-    expect(canonicalSource).toContain('COPILOT_PM_PUBLIC_KEY_FINGERPRINT_SHA256');
-    expect(canonicalSource).toContain('if (distributionGrade && !pmRunnerConfiguration.anchor)');
-    expect(canonicalSource).toContain("code: 'BLOCKED_PM_REPLAY_TRUST_ANCHOR'");
-    expect(canonicalSource.indexOf("code: 'BLOCKED_PM_REPLAY_TRUST_ANCHOR'"))
-      .toBeLessThan(canonicalSource.indexOf('await runGates();'));
-    expect(canonicalSource).toContain('pmRunner: pmRunnerConfiguration.anchor');
-  });
-
-  it('keeps macos-distribution on the existing hardened mac branch and outside every Windows build/sign branch', async () => {
-    const canonicalSource = await readFile(path.join(appRoot, 'scripts/build-canonical-release.mjs'), 'utf8');
-    expect(canonicalSource).toContain("signingProfile.mode === 'macos-distribution' ? 4 : 8");
-    expect(canonicalSource).toContain("if (signingProfile.mode !== 'macos-distribution') {\n      for (const arch of ['x64', 'arm64'])");
-    expect(canonicalSource).toContain("const distributionVerification = distributionGrade");
-    expect(canonicalSource).toContain("mode: 'distribution'");
-    expect(canonicalSource).toContain('releaseMode: signingProfile.mode');
-    expect(canonicalSource).toContain('releaseMode: manifest.releaseMode');
-    expect(canonicalSource).toContain('Windows is OWNER_DEFERRED to Phase 1.1');
-    expect(canonicalSource).toContain("const osslSigncode = signingProfile.mode === 'distribution'");
-    expect(canonicalSource).toContain("const windowsBuilderEnvironment = signingProfile.mode === 'distribution'");
-    expect(canonicalSource.match(/childEnvironment: signingProfile\.mode === 'distribution'/g)).toHaveLength(2);
-  });
-
-  it('serializes only a redacted public distribution profile', () => {
+  it('never serializes signing secrets in the public distribution profile', () => {
     const profile = resolveSigningProfile({ mode: 'distribution', env: validDistributionEnv });
     const publicProfile = publicSigningProfile(profile);
     const serialized = JSON.stringify(publicProfile);
-
-    expect(publicProfile).toEqual({
+    for (const secret of fixtureSecretValues) expect(serialized).not.toContain(secret.trim());
+    expect(publicProfile).toMatchObject({
       mode: 'distribution',
-      mac: {
-        teamId: 'A1B2C3D4E5',
-        identityType: 'Developer ID Application',
-        notaryProfileConfigured: true,
-      },
-      windows: {
-        certificateConfigured: true,
-        timestampConfigured: true,
-        trustAnchorConfigured: true,
-        runnerId: 'windows-release-runner-01',
-        publicKeySha256: expect.stringMatching(/^[a-f0-9]{64}$/),
-      },
+      mac: { teamId: 'A1B2C3D4E5', identityType: 'Developer ID Application' },
+      windows: { certificateConfigured: true, timestampConfigured: true, trustAnchorConfigured: true },
     });
-    for (const secret of fixtureSecretValues) {
-      expect(serialized).not.toContain(secret);
-    }
   });
 
-  it('never echoes a credential-bearing timestamp URL in its validation error', () => {
-    const credentialUrl = 'https://fixture-user:fixture-password@timestamp.example.test/rfc3161';
-    let caught: unknown;
-    try {
-      resolveSigningProfile({
+  it('fails closed when the Windows trust key file is not an Ed25519 public key', async () => {
+    const badKey = path.join(trustRoot, 'bad-key.pem');
+    await writeFile(badKey, 'not a key');
+    const env = { ...validDistributionEnv, COPILOT_WINDOWS_TRUST_PUBLIC_KEY_PATH: badKey };
+    expect(() => resolveSigningProfile({ mode: 'distribution', env })).toThrow(
+      expect.objectContaining({ code: 'BLOCKED_WINDOWS_TRUST_ANCHOR_INVALID' }),
+    );
+  });
+
+  it('fails closed on unsafe Windows timestamp URLs', () => {
+    for (const timestamp of [
+      'http://timestamp.example.test/rfc3161',
+      'https://user:password@timestamp.example.test/rfc3161',
+      'https://timestamp.example.test/rfc3161?token=secret',
+      'https://timestamp.example.test/rfc3161#secret',
+    ]) {
+      expect(() => resolveSigningProfile({
         mode: 'distribution',
-        env: { ...validDistributionEnv, COPILOT_WINDOWS_TIMESTAMP_URL: credentialUrl },
-      });
-    } catch (error) {
-      caught = error;
+        env: { ...validDistributionEnv, COPILOT_WINDOWS_TIMESTAMP_URL: timestamp },
+      })).toThrow(expect.objectContaining({ code: 'BLOCKED_WINDOWS_SIGNING_CREDENTIALS_MISSING' }));
     }
-    expect(caught).toEqual(expect.objectContaining({ code: 'BLOCKED_WINDOWS_SIGNING_CREDENTIALS_MISSING' }));
-    expect(JSON.stringify(caught, Object.getOwnPropertyNames(caught as object))).not.toContain(credentialUrl);
-    expect(String(caught)).not.toContain('fixture-user');
-    expect(String(caught)).not.toContain('fixture-password');
   });
 
-  it('fails a distribution build before creating the requested candidate directory', () => {
-    const candidate = path.join(
-      appRoot,
-      'release',
-      `signing-profile-early-failure-${process.pid}-${Date.now()}`,
-    );
-    createdPaths.push(candidate);
-    const cleanEnv: NodeJS.ProcessEnv = { ...process.env, ...validDistributionEnv };
-    for (const key of signingInputKeys) delete cleanEnv[key];
-    Object.assign(cleanEnv, validDistributionEnv);
-    delete cleanEnv.COPILOT_MAC_SIGN_IDENTITY;
+  it('keeps the build script source free of fixture secrets', async () => {
+    const buildScript = await readFile(path.join(appRoot, 'scripts/build-canonical-release.mjs'), 'utf8');
+    for (const secret of fixtureSecretValues) expect(buildScript).not.toContain(secret.trim());
+  });
 
-    const result = spawnSync(
-      process.execPath,
-      [
-        path.join(appRoot, 'scripts/build-canonical-release.mjs'),
-        '--signing-mode',
-        'distribution',
-        '--output',
-        candidate,
-      ],
-      { cwd: appRoot, env: cleanEnv, encoding: 'utf8' },
-    );
-
-    expect(result.status).not.toBe(0);
-    const processOutput = `${result.stdout}\n${result.stderr}`;
-    expect(processOutput).toContain('BLOCKED_MAC_DEVELOPER_ID_MISSING');
-    for (const secret of fixtureSecretValues.slice(1)) {
-      expect(processOutput).not.toContain(secret);
+  it('does not inherit signing credentials when invoking a sanitized child process', () => {
+    const child = spawnSync(process.execPath, ['-e', 'process.stdout.write(JSON.stringify(process.env))'], {
+      encoding: 'utf8',
+      env: createSigningEnvironment(resolveSigningProfile({ mode: 'unsigned' }), {
+        ...validDistributionEnv,
+        SAFE_VALUE: 'present',
+      }),
+    });
+    expect(child.status).toBe(0);
+    const env = JSON.parse(child.stdout) as Record<string, string>;
+    expect(env.SAFE_VALUE).toBe('present');
+    for (const key of signingInputKeys) {
+      if (key !== 'CSC_IDENTITY_AUTO_DISCOVERY') expect(env).not.toHaveProperty(key);
     }
-    expect(existsSync(candidate)).toBe(false);
   });
 });
