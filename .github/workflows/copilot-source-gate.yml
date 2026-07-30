@@ -33,8 +33,8 @@ env:
 
 jobs:
   source-gate:
-    name: Node 24 source gate
-    runs-on: ubuntu-24.04
+    name: Node 24 macOS source gate
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - name: Checkout exact PR head
@@ -47,6 +47,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
+      - name: Record toolchain identity
+        run: |
+          node --version
+          npm --version
+          uname -a
 
       - name: Install exact lockfile
         run: npm ci --no-audit --no-fund
