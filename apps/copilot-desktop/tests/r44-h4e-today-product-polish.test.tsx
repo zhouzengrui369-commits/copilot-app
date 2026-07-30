@@ -1,7 +1,7 @@
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CopilotNoteSummary,
@@ -266,12 +266,19 @@ describe('R44 H4E Today product polish', () => {
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     expect(await screen.findByTestId('todo-editor-h4e-actual-route')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('编辑待办截止时间 实际路由保存验收'), {
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const dueInput = screen.getByLabelText('编辑待办截止时间 实际路由保存验收');
+    const sourceInput = screen.getByLabelText('编辑待办来源 实际路由保存验收');
+    fireEvent.change(dueInput, {
       target: { value: '2026-08-01T09:30' },
     });
-    fireEvent.change(screen.getByLabelText('编辑待办来源 实际路由保存验收'), {
+    fireEvent.change(sourceInput, {
       target: { value: 'notes/a.md\nnotes/b.md' },
     });
+    expect(dueInput).toHaveValue('2026-08-01T09:30');
+    expect(sourceInput).toHaveValue('notes/a.md\nnotes/b.md');
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
 
     expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
