@@ -4,10 +4,24 @@ import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import {
   NETWORK_PROFILE, bindCommit, block, buildLedger, classifyInstall, cleanStatus, generatedInputsAbsent,
+  trackedFilesFromGit,
 } from './contract.mjs';
 import {
   artifactSet, desktopRoot, findExecutable, git, privateJson, recorded, repoRoot, sha256File, sha256Path,
 } from './io.mjs';
+
+const WORKSPACES = Object.freeze([
+  '@copilot/llm-client',
+  '@copilot/kb',
+  '@copilot/kg',
+  '@copilot/rag',
+  '@copilot/desktop',
+]);
+
+async function npmRun({ gate, name, script, workspace, npm, evidenceDir, extra = [] }) {
+  return recorded({ gate, name, command: npm,
+    args: ['run', script, '--workspace', workspace, ...extra], evidenceDir });
+}
 
 export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) {
   const root = path.resolve(git(['rev-parse', '--show-toplevel']));
@@ -31,15 +45,35 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     sandbox: '/usr/bin/sandbox-exec', profileSha256: createHash('sha256').update(NETWORK_PROFILE).digest('hex'), result: 'PASS',
   });
 
-  const ledger = await buildLedger(repoRoot, sourceCommit);
+  const trackedFiles = trackedFilesFromGit(git(['ls-files', '-z']));
+  const ledger = await buildLedger(repoRoot, sourceCommit, trackedFiles);
   await privateJson(path.join(evidenceDir, 'gates/gate-03-sha256-ledger.json'), ledger);
 
-  await recorded({ gate: 4, name: 'workspace-deps-build', command: npm,
-    args: ['run', 'build:workspace-deps', '--workspace', '@copilot/desktop'], evidenceDir });
-  await recorded({ gate: 5, name: 'desktop-check', command: npm,
-    args: ['run', 'check', '--workspace', '@copilot/desktop'], evidenceDir });
-  await recorded({ gate: 5, name: 'desktop-build', command: npm,
-    args: ['run', 'build', '--workspace', '@copilot/desktop'], evidenceDir });
+  const nodeTests = trackedFilesFromGit(git(['ls-files', '-z', 'scripts/candidate-r30/*.test.mjs']));
+  await recorded({ gate: 4, name: 'candidate-source-contracts', command: process.execPath,
+    args: ['--test', ...nodeTests], evidenceDir });
+  await npmRun({ gate: 4, name: 'workspace-deps-build', script: 'build:workspace-deps',
+    workspace: '@copilot/desktop', npm, evidenceDir });
+
+  for (const workspace of WORKSPACES) {
+    await npmRun({ gate: 5, name: `check-${workspace}`, script: 'check', workspace, npm, evidenceDir });
+  }
+  for (const workspace of WORKSPACES) {
+    await npmRun({ gate: 5, name: `unit-${workspace}`, script: 'test', workspace, npm, evidenceDir });
+  }
+  for (const workspace of WORKSPACES) {
+    await npmRun({ gate: 5, name: `integration-${workspace}`, script: 'test:integration', workspace, npm, evidenceDir });
+  }
+  for (const workspace of WORKSPACES) {
+    await npmRun({ gate: 5, name: `coverage-global-${workspace}`, script: 'test:coverage:global', workspace, npm, evidenceDir });
+    await npmRun({ gate: 5, name: `coverage-critical-${workspace}`, script: 'test:coverage:critical', workspace, npm, evidenceDir });
+  }
+  await npmRun({ gate: 5, name: 'desktop-build', script: 'build', workspace: '@copilot/desktop', npm, evidenceDir });
+  cleanStatus(git(['status', '--porcelain=v1', '--untracked-files=all']));
+  await privateJson(path.join(evidenceDir, 'gates/gate-05-source-quality.json'), {
+    schemaVersion: 1, gate: 5, workspaces: WORKSPACES, checks: 'PASS', unit: 'PASS', integration: 'PASS',
+    coverageGlobal: 'PASS', coverageCritical: 'PASS', desktopBuild: 'PASS', networkAuthority: 'offline-only',
+  });
 
   const packageOutput = path.join(evidenceDir, 'package-output');
   try { await lstat(packageOutput); block('BLOCKED_GATE_06_PACKAGE_OUTPUT_EXISTS', 6, packageOutput); }
@@ -58,8 +92,9 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     args: ['archive', '--format=tar', `--output=${sourceSnapshotPath}`, sourceCommit], evidenceDir });
   const artifacts = await artifactSet(packageOutput);
   const identity = {
-    schemaVersion: 1, gate: 7, candidateId, sourceCommit, sourceSnapshotPath,
-    sourceSnapshotSha256: await sha256File(sourceSnapshotPath),
+    schemaVersion: 1, gate: 7, candidateId, sourceCommit, sourceLedgerPath: path.join(evidenceDir, 'gates/gate-03-sha256-ledger.json'),
+    sourceLedgerAggregateSha256: ledger.aggregateSha256, sourceLedgerFileCount: ledger.fileCount,
+    sourceSnapshotPath, sourceSnapshotSha256: await sha256File(sourceSnapshotPath),
     zipPath: artifacts.zipPath, zipSha256: await sha256File(artifacts.zipPath),
     dmgPath: artifacts.dmgPath, dmgSha256: await sha256File(artifacts.dmgPath),
     appPath: artifacts.appPath, appSha256: await sha256Path(artifacts.appPath),
