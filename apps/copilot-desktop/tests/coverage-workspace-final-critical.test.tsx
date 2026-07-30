@@ -230,13 +230,17 @@ describe('ScheduleWorkspace final critical callbacks', () => {
     });
     expect(onCaptureDraftChange).toHaveBeenCalledWith('inline changed');
     fireEvent.click(screen.getByRole('button', { name: '展开编辑' }));
-    const immersive = await screen.findByRole('dialog', { name: '沉浸式快速记录' });
+    await screen.findByRole('dialog', { name: '沉浸式快速记录' });
     fireEvent.change(screen.getByLabelText('沉浸式快速记录草稿'), {
       target: { value: 'immersive changed' },
     });
     expect(onCaptureDraftChange).toHaveBeenCalledWith('immersive changed');
+
     fireEvent.click(screen.getByRole('button', { name: '取消沉浸式草稿' }));
-    expect(immersive).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '沉浸式快速记录' })).not.toBeInTheDocument();
+    expect(screen.getByRole('alertdialog', { name: '放弃本地草稿？' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '继续编辑' }));
+    await screen.findByRole('dialog', { name: '沉浸式快速记录' });
     fireEvent.click(screen.getByRole('button', { name: '关闭' }));
     expect(screen.queryByRole('dialog', { name: '沉浸式快速记录' })).not.toBeInTheDocument();
   });
