@@ -285,7 +285,7 @@ describe('complete Domain IPC critical surface', () => {
     const { handlers } = register(service);
 
     await expect(handlers.get(IPC_CHANNELS.TRASH_RESTORE)!({}, {
-      trashId: '323e4567-e89b-42d3-a456-426614174000',
+      trashId: '523e4567-e89b-42d3-a456-426614174000',
       revision: 'trash:missing',
     })).rejects.toThrow('[NOT_FOUND] local trash item was not found');
 
