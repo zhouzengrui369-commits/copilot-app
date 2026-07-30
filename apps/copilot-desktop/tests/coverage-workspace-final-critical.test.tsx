@@ -160,6 +160,48 @@ describe('AskWorkspace final critical callbacks', () => {
     fireEvent.click(screen.getByRole('button', { name: '查看待办' }));
     expect(onOpenTodo).toHaveBeenCalledWith('todo-1');
   });
+
+  it('truncates long local previews and reports non-Error Todo failures deterministically', async () => {
+    const longBody = `LONG_PREVIEW_${'x'.repeat(400)}`;
+    const api = baseApi({
+      notes: {
+        get: vi.fn(async () => ({
+          path: NOTE_PATH,
+          title: 'Long source',
+          body: longBody,
+          tags: ['local'],
+        })),
+      },
+      rag: {
+        ask: vi.fn(async () => ({
+          text: 'Grounded long-preview answer',
+          sources: [NOTE_PATH],
+          sourceDetails: [{ notePath: NOTE_PATH, evidence: ['vector'], score: 0.99 }],
+        })),
+      },
+      todos: {
+        create: vi.fn(async (): Promise<CopilotTodo> => Promise.reject('STRING_CREATE_FAILURE')),
+      },
+    });
+
+    render(<AskWorkspace api={api} />);
+    fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'Long preview question' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+
+    await waitFor(() => expect(screen.getByTestId('answer-source-truth'))
+      .toHaveAttribute('data-truth-state', 'LOCAL_PRESENT'));
+    const preview = screen.getByText(/^预览：LONG_PREVIEW_/u);
+    expect(preview.textContent).toMatch(/…$/u);
+    expect(preview.textContent?.length).toBeLessThan(longBody.length);
+
+    await waitFor(() => expect(screen.getByTestId('ask-create-todo')).toBeEnabled());
+    fireEvent.click(screen.getByTestId('ask-create-todo'));
+    fireEvent.click(screen.getByRole('button', { name: '创建待办' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '待办未创建：STRING_CREATE_FAILURE',
+    );
+  });
 });
 
 describe('ScheduleWorkspace final critical callbacks', () => {
