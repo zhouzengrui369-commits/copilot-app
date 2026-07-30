@@ -5,6 +5,7 @@
 ## P0 — Remote Source Closure
 
 - [x] Read `goal.md`, `plan.md`, `rules.md`, `delivery.md` v6.2 and the detailed root handoff.
+- [x] Preserve exact pre-R30 root state/status/TODO/changelog/architecture under `docs/history/`.
 - [x] Reconcile the six generic `main` documents without replacing detailed architecture or fail-closed truth.
 - [x] Create bounded branch `agent/r30-github-bound-candidate-runner` from `6aa6b8c0792c5549b818107a0f64e4f32651dacd`.
 - [x] Implement a brand-new R30 runner; do not execute, repair, or reuse R28.
