@@ -4,7 +4,7 @@ import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CONTROL_FILES, EXACT_FILES, EXACT_TESTS, NETWORK_PROFILE, CandidateBlocked, block, fullCommit, resolveEvidenceTarget,
+  CONTROL_FILES, EXACT_FILES, EXACT_TESTS, LEDGER_SCOPE, NETWORK_PROFILE, block, fullCommit, resolveEvidenceTarget,
 } from './contract.mjs';
 import { asBlocked, privateJson, repoRoot } from './io.mjs';
 import { runBuildGates } from './gates-build.mjs';
@@ -34,21 +34,23 @@ export function parseArgs(argv) {
 }
 export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
   return {
-    schemaVersion: 1, runner: 'copilot-r30-github-bound-candidate-runner', sourceCommit,
+    schemaVersion: 2, runner: 'copilot-r30-github-bound-candidate-runner', sourceCommit,
     candidateId: candidateId(sourceCommit), evidenceDir: path.resolve(evidenceDir),
     executionStatus: dryRun ? 'PLAN_ONLY_NOT_A_CANDIDATE' : 'NOT_RUN', mvpStatus: 'MVP_NOT_COMPLETE',
     networkAuthority: 'offline-only', automaticRegistryFallback: false, distributionTruth: 'UNSIGNED_DIAGNOSTIC_ONLY',
     gates: [
       { id: 1, name: 'source-and-clean-preimage', assertion: 'exact full commit; no tracked/untracked drift or stale ignored generated inputs' },
       { id: 2, name: 'offline-install', command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline --no-audit --no-fund` },
-      { id: 3, name: 'sha256-ledger', files: [...CONTROL_FILES], digest: '64 lower-case hex' },
-      { id: 4, name: 'ordered-workspace-builds' }, { id: 5, name: 'desktop-check-and-build' },
+      { id: 3, name: 'sha256-ledger', scope: LEDGER_SCOPE, source: 'git ls-files -z',
+        criticalControlFiles: [...CONTROL_FILES], digest: '64 lower-case hex per file plus aggregate SHA256' },
+      { id: 4, name: 'candidate-source-contracts-and-ordered-workspace-builds' },
+      { id: 5, name: 'all-local-workspace-checks-tests-integration-coverage-and-desktop-build' },
       { id: 6, name: 'unsigned-macos-arm64-package' }, { id: 7, name: 'source-and-artifact-identity' },
       { id: 8, name: 'focused-packaged-electron', expectedTests: 2, specs: [...FOCUSED_SPECS] },
-      { id: 9, name: 'exact-discovery', exactDiscovery: { tests: EXACT_TESTS, files: EXACT_FILES } },
+      { id: 9, name: 'exact-discovery-and-complete-test-data-manifest', exactDiscovery: { tests: EXACT_TESTS, files: EXACT_FILES },
       { id: 10, name: 'full-packaged-electron', exactResult: { expected: EXACT_TESTS, passed: EXACT_TESTS,
         skipped: 0, unexpected: 0, flaky: 0, cleanProcessExit: true } },
-      { id: 11, name: 'candidate-receipt', assertion: 'source snapshot, artifact SHA256, runtime ID, test data, commands, screenshots, terminal state' },
+      { id: 11, name: 'candidate-receipt', assertion: 'source snapshot and all-tracked ledger; artifact SHA256; runtime ID; hashed E2E specs/fixtures/helpers; commands; screenshots; terminal state' },
     ],
   };
 }
@@ -62,7 +64,7 @@ export async function execute(options) {
   catch (error) { if (error?.code === 'EEXIST') block('BLOCKED_EVIDENCE_DIR_ALREADY_EXISTS', 0, evidenceDir); throw error; }
   const id = candidateId(options.sourceCommit); const plan = staticPlan(options);
   await privateJson(path.join(evidenceDir, 'R30-PLAN.json'), plan);
-  await privateJson(path.join(evidenceDir, 'R30-START.json'), { schemaVersion: 1, candidateId: id,
+  await privateJson(path.join(evidenceDir, 'R30-START.json'), { schemaVersion: 2, candidateId: id,
     sourceCommit: options.sourceCommit, status: 'IN_PROGRESS', mvpStatus: 'MVP_NOT_COMPLETE', startedAt: new Date().toISOString() });
   if (process.platform !== 'darwin') block('BLOCKED_NETWORK_SANDBOX_UNAVAILABLE', 2, process.platform);
   try { await access('/usr/bin/sandbox-exec', fsConstants.X_OK); }
@@ -80,7 +82,7 @@ async function main() {
   } catch (error) {
     const blocked = asBlocked(error); const evidenceDir = options?.evidenceDir;
     if (evidenceDir && ownedEvidenceDirectories.has(evidenceDir)) {
-      try { await privateJson(path.join(evidenceDir, 'R30-BLOCKED.json'), { schemaVersion: 1, status: 'BLOCKED',
+      try { await privateJson(path.join(evidenceDir, 'R30-BLOCKED.json'), { schemaVersion: 2, status: 'BLOCKED',
         mvpStatus: 'MVP_NOT_COMPLETE', code: blocked.code, gate: blocked.gate, detail: blocked.detail,
         context: blocked.context, automaticRetry: false, endedAt: new Date().toISOString() }); } catch { /* preserve original */ }
     }
