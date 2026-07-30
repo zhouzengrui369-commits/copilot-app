@@ -10,6 +10,25 @@ The macOS build-order product repair is committed at
 The independently accepted Electron receipt/TSC repair is committed at
 `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
 
+R18 packaged successfully through the supported offline `electronDist` path,
+but its focused packaged Electron gate failed before settings credential save;
+no candidate was established. R19 now has an independently rereviewed
+test-only harness repair:
+
+- fixture SHA256:
+  `b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`;
+- unit-test SHA256:
+  `ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`;
+- rereview: `PASS / P0=0 / P1=0 / P2=0`;
+- `PACKAGED_E2E_MOCK_KEYCHAIN`;
+- `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`;
+- initial wrapper: `RESOURCE_DEFER_NO_TEST` before command start; no attempt
+  consumed;
+- focused unit GREEN: exact command ran once, exit `0`,
+  `1 file / 15 tests PASS`, `GREEN_15_OF_15_PASS`; no retry and no Electron.
+- exact two-file test-only repair commit:
+  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`.
+
 - `EXP-COP-008` (P0, DEVELOPMENT ACCEPTANCE PASS; INDEPENDENT RETEST PENDING):
   canonical persistence/readback, All/Unscheduled discoverability, exact
   “查看待办”, two-source retention, full source reading, durable log/notes,
@@ -33,8 +52,12 @@ Receipt repair status:
 
 ## Required Before Human Owner Gate
 
-- Commit this separate governance update after
-  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+- [x] Preserve the initial resource-defer receipt, then run the single R19
+  focused unit GREEN command once: `GREEN_15_OF_15_PASS`.
+- Obtain independent review of the current governance postimage.
+- Commit only this separate governance update after the R19 test-only commit
+  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`, before any new candidate
+  attempt.
 - Prove the committed source tree is clean and contains no execution bridge or
   untracked candidate input.
 - Reuse the existing candidate worktree. From the subsequent governance HEAD,

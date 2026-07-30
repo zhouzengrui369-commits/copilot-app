@@ -97,3 +97,25 @@ Bind the independently accepted nine-file repair commit
 then reuse the existing candidate worktree to create a clean candidate from
 the resulting governance HEAD. Do not create a new worktree or reuse old
 artifact/runtime identity.
+
+## D-2026-07-30-05: Mock Keychain Is Test-Harness Isolation, Not Runtime Proof
+
+For macOS Electron E2E only, add exactly one `--use-mock-keychain` switch when
+and only when Darwin, `NODE_ENV=test`, and `COPILOT_E2E=1` are all true. This
+keeps synthetic packaged-E2E credentials out of the real user Keychain without
+changing production `safeStorage` behavior.
+
+The resulting evidence is labeled `PACKAGED_E2E_MOCK_KEYCHAIN`. It must never
+be presented as proof of ordinary packaged runtime Keychain behavior, which
+remains `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`. Independent implementation
+rereview PASS did not replace GREEN. The initial controller wrapper recorded
+`RESOURCE_DEFER_NO_TEST` before command start and consumed no attempt; its
+successor ran the exact focused unit command once and returned
+`GREEN_15_OF_15_PASS` (`1 file / 15 tests`, exit `0`, no retry). This does not
+replace packaged Electron, real macOS Keychain runtime, candidate, independent
+Focused Retest, owner-gate, or release evidence.
+
+The exact two-file test-only repair is committed at
+`54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`. Governance remains a separate
+postimage that requires independent review and its own bounded commit before a
+new candidate attempt.

@@ -1,10 +1,10 @@
 project: copilot-app
-stage: Clean Candidate Materialization / Receipt Governance Bind
+stage: R19 Packaged E2E Harness Repair / Focused Unit GREEN
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "ee8e207b44fc5091564f292ac130d8f0bd9a492b"
+latest_commit: "54cd07ec631872f9b1fd45a5c426a4fe57f3d92b"
 materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
@@ -29,6 +29,23 @@ electron_receipt_repair:
   tests_tsc: PASS
   focused_tests: PASS
   independent_source_review: PASS / P1_CLOSED / MVP_NOT_COMPLETE
+r18_candidate_attempt:
+  offline_package: PASS / SUPPORTED_ELECTRON_DIST
+  focused_packaged_electron: FAIL / SETTINGS_CREDENTIAL_SAVE_NOT_REACHED
+  candidate_status: NOT_ESTABLISHED
+r19_packaged_e2e_harness:
+  production_code_changed: false
+  fixture_sha256: "b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5"
+  unit_test_sha256: "ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9"
+  implementation_rereview: PASS / P0=0 / P1=0 / P2=0
+  packaged_e2e_protection: PACKAGED_E2E_MOCK_KEYCHAIN
+  production_protection: REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN
+  initial_wrapper_resource_gate: RESOURCE_DEFER_NO_TEST
+  initial_wrapper_attempt_consumed: false
+  green_command: /usr/local/bin/npm run test --workspace @copilot/desktop -- tests/electron-fixture-window-readiness.test.ts --minWorkers=1 --maxWorkers=1
+  green_result: GREEN_15_OF_15_PASS
+  green_exit_code: 0
+  green_attempts: 1
 r3_snapshot:
   manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
   aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
@@ -41,10 +58,10 @@ release_baseline: RED
 candidate_status: NOT_BUILT
 independent_retest: PENDING
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Commit this governance postimage, then reuse the existing candidate worktree to create a clean candidate from that governance HEAD; run exact npm ci, main/renderer/tests TSC, macOS package, focused Electron, list >=50 and eligible full Electron, then bind candidate evidence for independent Focused Retest.
+next_single_action: Obtain independent review of this governance postimage, commit only the governance update, then start a new clean candidate attempt from that governance HEAD.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-30T07:21:00+08:00"
+updated_at: "2026-07-30T10:39:00+08:00"

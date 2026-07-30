@@ -125,6 +125,42 @@ create a candidate identity. Candidate commit, artifact SHA256, runtime ID,
 package proof, full Electron evidence, and independent product-experience
 retest remain unset.
 
+## Packaged E2E Credential-Protection Boundary
+
+R18 proved offline packaging through the supported
+`--config.electronDist` path, then failed in focused packaged Electron before
+the synthetic settings credential save completed. It did not establish a
+candidate.
+
+R19 changes only the Electron E2E launch harness and its unit contract.
+Production preload, main IPC, settings persistence, credential binding, and
+Electron `safeStorage` code are unchanged. On macOS, the harness adds exactly
+one mock-keychain switch only when all three conditions hold:
+
+1. platform is Darwin;
+2. `NODE_ENV=test`;
+3. `COPILOT_E2E=1`.
+
+This boundary is `PACKAGED_E2E_MOCK_KEYCHAIN`. It isolates synthetic E2E
+credentials from real user Keychain state. It does not prove normal packaged
+runtime Keychain behavior; that truth remains
+`REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
+
+The exact rereviewed test-only postimages are fixture
+`b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`
+and unit test
+`ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
+Independent implementation rereview returned
+`PASS / P0=0 / P1=0 / P2=0`. The initial controller wrapper preserved
+`RESOURCE_DEFER_NO_TEST` before command start and consumed no attempt. Its
+successor ran the exact focused unit command once and returned
+`GREEN_15_OF_15_PASS` (`1 file / 15 tests`, exit `0`, no retry). This unit
+GREEN did not run Electron and does not change
+`REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
+The exact two-file test-only repair is committed at
+`54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`; this is still not a candidate
+identity.
+
 ## Explicit Non-Goals
 
 This stage does not include Windows expansion, Remote/Backup expansion, major

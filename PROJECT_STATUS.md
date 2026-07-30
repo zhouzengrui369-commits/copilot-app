@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Clean Candidate Materialization / Receipt Governance Bind.
+R19 Packaged E2E Harness Repair / Focused Unit GREEN.
 
 Current branch/base:
 
@@ -14,14 +14,17 @@ Current branch/base:
   `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`
 - latest committed receipt/TSC repair:
   `ee8e207b44fc5091564f292ac130d8f0bd9a492b`
+- latest committed R19 test-only harness repair:
+  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`
 - governance base commit: `d9ee8f5fc5cc6a07a441a0131afd2324f1b7b6bb`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict
 
-`BLOCKED / EXP-COP-008_DEVELOPMENT_ACCEPTANCE_PASS /
-EXP-COP-009_DEVELOPMENT_ACCEPTANCE_PASS / CLEAN_CANDIDATE_NOT_BUILT /
-INDEPENDENT_RETEST_PENDING / RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
+`BLOCKED / R18_FOCUSED_PACKAGED_ELECTRON_FAILED /
+R19_IMPLEMENTATION_REREVIEW_PASS / R19_GREEN_15_OF_15_PASS /
+CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
+RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
 
 r3 remains frozen at commit `2b832c20b93e07ee68b6b325dc3ad758986b7f69`
 as a Desktop product-layer input. Accepted EXP-COP-008 and EXP-COP-009
@@ -34,6 +37,34 @@ Latest focused review facts:
 - PR: `https://github.com/zhouzengrui369-commits/copilot-app/pull/9`
 - focused report: `https://github.com/zhouzengrui369-commits/copilot-app/blob/31dfd0c7f9feca77da82f4a02bf359d85818742c/reports/product-review/2026-07-28-copilot-focused-retest.md`
 - verdict: `NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3`
+
+## R18/R19 Current Truth
+
+- R18 proved the supported offline package path:
+  `--config.electronDist=$RUN/electron-dist`. Packaging passed, but the focused
+  packaged Electron gate hung before settings credential save completed.
+  Therefore R18 did not establish an accepted candidate, artifact SHA256, or
+  runtime ID.
+- R19 diagnosed a test-harness asymmetry: packaged E2E omitted
+  `--use-mock-keychain`, so a synthetic E2E credential entered the real macOS
+  `safeStorage`/Keychain path and left the settings IPC unresolved.
+- R19 changes only two test-harness files; production code is unchanged:
+  - fixture:
+    `b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`;
+  - unit test:
+    `ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
+- Independent implementation rereview:
+  `PASS / P0=0 / P1=0 / P2=0`.
+- Truth labels:
+  `PACKAGED_E2E_MOCK_KEYCHAIN` and
+  `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
+- The initial controller wrapper recorded `RESOURCE_DEFER_NO_TEST` before the
+  command started, so that wrapper consumed no GREEN attempt.
+- The successor then ran the exact command once:
+  `/usr/local/bin/npm run test --workspace @copilot/desktop --
+  tests/electron-fixture-window-readiness.test.ts --minWorkers=1
+  --maxWorkers=1`. It exited `0` with `1 file / 15 tests PASS`;
+  current status is `GREEN_15_OF_15_PASS`, with no retry and no Electron run.
 
 ## Open Gates
 
@@ -122,14 +153,16 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Commit this governance postimage after receipt/TSC repair commit
-`ee8e207b44fc5091564f292ac130d8f0bd9a492b`, then reuse the existing candidate
-worktree to create a clean candidate from that governance HEAD. Run exact
-`npm ci`, main/renderer/tests TSC, macOS package, focused Electron, runner list
-proving `>=50`, and the eligible full Electron gate. Only after those pass may
-the flow bind the clean source commit, immutable source snapshot, artifact
-SHA256, runtime ID, deterministic test-data manifest, packaged Electron
-evidence and screenshots.
+Obtain independent review of this governance postimage, then create one bounded
+commit containing only the governance update before starting a new clean
+candidate attempt from that governance HEAD. The exact R19 test-only repair is
+already committed at `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`.
+The later candidate must rerun exact `npm ci`, main/renderer/tests TSC, macOS
+package, focused Electron, runner list proving `>=50`, and the eligible full
+Electron gate.
+Only those candidate-bound receipts may bind source commit, immutable source
+snapshot, artifact SHA256, runtime ID, deterministic test-data manifest,
+packaged Electron evidence and screenshots.
 
 The release baseline remains red outside the accepted P0 slice. R3 classified
 30 existing baseline/evidence failure records; complete Electron package

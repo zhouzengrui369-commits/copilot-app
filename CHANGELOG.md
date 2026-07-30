@@ -2,6 +2,27 @@
 
 ## 2026-07-30
 
+- Recorded R18 truth: supported offline `electronDist` packaging passed, but
+  focused packaged Electron failed before settings credential save completed;
+  no candidate, artifact SHA256, or runtime ID was established.
+- Diagnosed and repaired the R19 packaged-E2E launch harness without changing
+  production code. Exact postimages are fixture
+  `b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`
+  and unit test
+  `ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
+- Independent implementation rereview returned
+  `PASS / P0=0 / P1=0 / P2=0`.
+- Bound the evidence labels `PACKAGED_E2E_MOCK_KEYCHAIN` and
+  `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`. The initial controller wrapper
+  preserved `RESOURCE_DEFER_NO_TEST` before command start and consumed no
+  attempt. Its successor ran
+  `/usr/local/bin/npm run test --workspace @copilot/desktop --
+  tests/electron-fixture-window-readiness.test.ts --minWorkers=1
+  --maxWorkers=1` exactly once: exit `0`, `1 file / 15 tests PASS`,
+  `GREEN_15_OF_15_PASS`, no retry and no Electron.
+- Committed the exact two-file R19 test-only repair at
+  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`; candidate, artifact SHA256 and
+  runtime ID remain unset.
 - Committed the exact nine-file Electron receipt/TSC repair at
   `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
 - R1 established the fixed focused receipt contract and moved its bounded
