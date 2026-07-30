@@ -16,6 +16,8 @@ import type {
 import { AskWorkspace } from '../src/renderer/workspaces/AskWorkspace.js';
 import { ScheduleWorkspace } from '../src/renderer/workspaces/ScheduleWorkspace.js';
 
+const ORIGINAL_CRYPTO = globalThis.crypto;
+
 const NOTE: NoteRecord = {
   id: 1,
   path: 'notes/source.md',
@@ -41,6 +43,14 @@ const TODO: CopilotTodo = {
   linkedNotePaths: [NOTE.path],
 };
 
+type ApiOverrides = {
+  notes?: Partial<CopilotProductApi['notes']>;
+  kg?: Partial<CopilotProductApi['kg']>;
+  rag?: Partial<CopilotProductApi['rag']>;
+  todos?: Partial<CopilotProductApi['todos']>;
+  askConversation?: CopilotProductApi['askConversation'];
+};
+
 function snapshot(request: AskConversationSaveRequest): AskConversationSnapshot {
   return {
     ...request,
@@ -49,7 +59,7 @@ function snapshot(request: AskConversationSaveRequest): AskConversationSnapshot 
   };
 }
 
-function makeApi(overrides: Partial<CopilotProductApi> = {}): CopilotProductApi {
+function makeApi(overrides: ApiOverrides = {}): CopilotProductApi {
   const base: CopilotProductApi = {
     notes: {
       list: vi.fn(async () => [NOTE]),
@@ -77,22 +87,22 @@ function makeApi(overrides: Partial<CopilotProductApi> = {}): CopilotProductApi 
   };
   return {
     ...base,
-    ...overrides,
     notes: { ...base.notes, ...overrides.notes },
     kg: { ...base.kg, ...overrides.kg },
     rag: { ...base.rag, ...overrides.rag },
     todos: { ...base.todos, ...overrides.todos },
+    ...(overrides.askConversation ? { askConversation: overrides.askConversation } : {}),
   };
 }
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
+  Object.defineProperty(globalThis, 'crypto', { configurable: true, value: ORIGINAL_CRYPTO });
 });
 
 describe('AskWorkspace remaining critical branches', () => {
   it('uses the deterministic exchange id fallback and fails closed after a stale Todo persistence receipt', async () => {
-    const originalCrypto = globalThis.crypto;
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} });
     vi.spyOn(Date, 'now').mockReturnValue(1_753_000_000_000);
 
@@ -159,8 +169,6 @@ describe('AskWorkspace remaining critical branches', () => {
     });
     expect(save).toHaveBeenCalledTimes(2);
     expect(save.mock.calls[1]?.[0].todoReceipt).toEqual(todoRecord);
-
-    Object.defineProperty(globalThis, 'crypto', { configurable: true, value: originalCrypto });
   });
 
   it('clears and cancels an active conversation without surfacing bridge failures', async () => {
