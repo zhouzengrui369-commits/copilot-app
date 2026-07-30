@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "copilot",
+  "scope": "Phase 1 macOS-first MVP",
+  "mode": "weighted_gates",
+  "source": "README.md + delivery.md Owner Amendment",
+  "confidence": "low",
+  "confidence_label": "低可信基线",
+  "updated_at": "2026-07-16",
+  "gates": [
+    {"id": "baseline", "title": "架构与源码基线", "weight": 20, "status": "done"},
+    {"id": "local-core", "title": "本地数据与核心闭环", "weight": 20, "status": "partial"},
+    {"id": "minimax", "title": "MiniMax 真实能力闭环", "weight": 15, "status": "partial"},
+    {"id": "asr", "title": "内嵌本地 ASR candidate-bound", "weight": 15, "status": "blocked"},
+    {"id": "quality", "title": "覆盖率 / 集成 / E2E", "weight": 15, "status": "blocked"},
+    {"id": "signing", "title": "签名 / 公证 / 安装", "weight": 10, "status": "blocked"},
+    {"id": "owner", "title": "Owner 验收", "weight": 5, "status": "pending"}
+  ]
+}
