@@ -216,11 +216,14 @@ describe('ScheduleWorkspace remaining calendar functions', () => {
       fireEvent.keyDown(active, { key });
     }
 
+    const dateTrigger = () => screen.getByRole('button', {
+      name: /选择日期与提醒|已选择/u,
+    });
     fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/u }));
     fireEvent.change(screen.getByRole('textbox', { name: '待办标题' }), {
       target: { value: 'Calendar task' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(dateTrigger());
 
     const dialog = screen.getByTestId('todo-date-confirmation');
     expect(dialog.querySelector('[aria-current="date"]')).not.toBeNull();
@@ -240,14 +243,14 @@ describe('ScheduleWorkspace remaining calendar functions', () => {
     fireEvent.click(firstCell);
     fireEvent.click(within(dialog).getByRole('button', { name: '使用此时间' }));
 
-    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(dateTrigger());
     const reopened = screen.getByTestId('todo-date-confirmation');
     expect(within(reopened).getByText(/已选择：/u)).toBeInTheDocument();
     fireEvent.click(within(reopened).getByRole('button', { name: '明天 09:00' }));
     fireEvent.keyDown(reopened, { key: 'Escape' });
     expect(screen.queryByTestId('todo-date-confirmation')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
+    fireEvent.click(dateTrigger());
     const noDateDialog = screen.getByTestId('todo-date-confirmation');
     fireEvent.click(within(noDateDialog).getByRole('button', { name: '无日期' }));
     expect(within(noDateDialog).getByText('待确认：无日期')).toBeInTheDocument();
