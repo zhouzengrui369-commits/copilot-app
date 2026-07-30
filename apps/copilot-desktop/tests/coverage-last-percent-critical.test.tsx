@@ -148,8 +148,10 @@ describe('last local knowledge branches', () => {
       todoIds: ['import-a-todo-missing'],
     })).resolves.toBeUndefined();
     expect(kb.deleteNote).not.toHaveBeenCalled();
-    expect(kg.removeNote).not.toHaveBeenCalled();
-    expect(rag.deleteNote).not.toHaveBeenCalled();
+    expect(kg.removeNote).toHaveBeenCalledOnce();
+    expect(kg.removeNote).toHaveBeenCalledWith('import-a/notes/missing');
+    expect(rag.deleteNote).toHaveBeenCalledOnce();
+    expect(rag.deleteNote).toHaveBeenCalledWith('import-a/notes/missing');
   });
 });
 
