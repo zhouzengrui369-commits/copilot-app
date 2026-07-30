@@ -9,6 +9,7 @@ import {
 import {
   artifactSet, desktopRoot, findExecutable, git, privateJson, recorded, repoRoot, sha256File, sha256Path,
 } from './io.mjs';
+import { parseAndValidateCycloneDxSbom } from './sbom.mjs';
 
 const WORKSPACES = Object.freeze([
   '@copilot/llm-client',
@@ -69,10 +70,30 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     await npmRun({ gate: 5, name: `coverage-critical-${workspace}`, script: 'test:coverage:critical', workspace, npm, evidenceDir });
   }
   await npmRun({ gate: 5, name: 'desktop-build', script: 'build', workspace: '@copilot/desktop', npm, evidenceDir });
+
+  const sbomResult = await recorded({
+    gate: 5,
+    name: 'production-cyclonedx-sbom',
+    command: npm,
+    args: ['sbom', '--sbom-format=cyclonedx', '--sbom-type=application', '--omit=dev'],
+    evidenceDir,
+  });
+  const { parsed: sbomDocument, identity: sbomPublicIdentity } = parseAndValidateCycloneDxSbom(sbomResult.stdout ?? '');
+  const sbomPath = path.join(evidenceDir, 'software-bill-of-materials.cdx.json');
+  await privateJson(sbomPath, sbomDocument);
+  const sbom = {
+    schemaVersion: 1,
+    gate: 5,
+    path: sbomPath,
+    sha256: await sha256File(sbomPath, { gate: 5, code: 'BLOCKED_GATE_05_SBOM_FILE_NOT_REGULAR' }),
+    ...sbomPublicIdentity,
+  };
+  await privateJson(path.join(evidenceDir, 'gates/gate-05-sbom.json'), sbom);
   cleanStatus(git(['status', '--porcelain=v1', '--untracked-files=all']));
   await privateJson(path.join(evidenceDir, 'gates/gate-05-source-quality.json'), {
     schemaVersion: 1, gate: 5, workspaces: WORKSPACES, checks: 'PASS', unit: 'PASS', integration: 'PASS',
-    coverageGlobal: 'PASS', coverageCritical: 'PASS', desktopBuild: 'PASS', networkAuthority: 'offline-only',
+    coverageGlobal: 'PASS', coverageCritical: 'PASS', desktopBuild: 'PASS', cyclonedxSbom: 'PASS',
+    networkAuthority: 'offline-only',
   });
 
   const packageOutput = path.join(evidenceDir, 'package-output');
@@ -103,5 +124,5 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
   };
   await privateJson(path.join(evidenceDir, 'gates/gate-07-artifact-identity.json'), identity);
   cleanStatus(git(['status', '--porcelain=v1', '--untracked-files=all']));
-  return { npm, sourceSnapshotPath, artifacts, identity };
+  return { npm, sourceSnapshotPath, artifacts, identity, sbom };
 }
