@@ -1,9 +1,14 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const packagePath = fileURLToPath(new URL('../package.json', import.meta.url));
+function resolveAppRoot(cwd = process.cwd()): string {
+  const workspaceRoot = path.join(cwd, 'apps/copilot-desktop');
+  return existsSync(path.join(workspaceRoot, 'package.json')) ? workspaceRoot : cwd;
+}
+
+const packagePath = path.join(resolveAppRoot(), 'package.json');
 
 function readScripts(): Record<string, string> {
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as {
@@ -48,6 +53,12 @@ describe('macOS distribution workspace build order contract', () => {
     );
     expect(scripts['dist:win:arm64']).toBe(
       'npm run build && electron-builder --win --arm64 --config electron-builder.yml',
+    );
+  });
+
+  it('exposes the explicit Phase 1 release source gate', () => {
+    expect(readScripts()['test:phase1-release']).toBe(
+      'vitest run --config tests/vitest.phase1-release.config.ts',
     );
   });
 });
