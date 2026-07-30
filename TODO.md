@@ -6,6 +6,7 @@
 
 - [x] Verify PR #12 source identity: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd` against `main@e91cafaa22ea100428b404b371aa35dce535c5bf`.
 - [x] Read the complete v6.2 baseline and current detailed handoff.
+- [x] Preserve the exact pre-R30 root state/status/TODO/changelog/architecture under `docs/history/`.
 - [x] Audit all six low-confidence `main` documents.
 - [x] Preserve detailed architecture and fail-closed state instead of accepting generic placeholders.
 - [x] Create bounded branch `agent/r30-github-bound-candidate-runner`.
