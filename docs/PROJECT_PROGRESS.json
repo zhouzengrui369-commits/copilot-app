@@ -1,66 +1,55 @@
 {
-  "schema_version": "2.0.0",
-  "project_id": "copilot-app",
-  "authority_chain": [
-    "AGENTS.md",
-    "goal.md",
-    "plan.md",
-    "rules.md",
-    "delivery.md",
-    "PROJECT_STATE.yaml",
-    "PROJECT_STATUS.md",
-    "TODO.md"
-  ],
+  "schema_version": 4,
+  "project": "copilot-app",
+  "updated_at": "2026-07-30",
   "confidence": "authoritative_mirror",
+  "authority": {
+    "root_baseline": [
+      "AGENTS.md",
+      "goal.md",
+      "plan.md",
+      "rules.md",
+      "delivery.md"
+    ],
+    "root_current_truth": [
+      "PROJECT_STATE.yaml",
+      "PROJECT_STATUS.md",
+      "TODO.md",
+      "DECISIONS.md",
+      "CHANGELOG.md"
+    ],
+    "mirror_only": true
+  },
   "status": "BLOCKED",
   "mvp_status": "MVP_NOT_COMPLETE",
-  "updated_at": "2026-07-30",
+  "release_status": "RELEASE_NOT_READY",
+  "experience_status": "EXPERIENCE_NOT_READY",
+  "github_source_status": "SOURCE_COMPLETE",
   "source": {
     "repository": "zhouzengrui369-commits/copilot-app",
-    "parent_branch": "codex/p0-owner-gate",
-    "parent_commit": "6aa6b8c0792c5549b818107a0f64e4f32651dacd",
-    "main_observed": "e91cafaa22ea100428b404b371aa35dce535c5bf",
-    "successor_branch": "agent/r30-github-bound-candidate-runner",
-    "final_commit_binding": "runner --source-commit must equal git HEAD"
-  },
-  "candidate": {
-    "established": false,
-    "candidate_id": null,
-    "source_snapshot_sha256": null,
-    "artifact_sha256": null,
-    "runtime_id": null,
-    "screenshots": null,
-    "process_terminal_state": null
+    "original_takeover": {
+      "branch": "codex/p0-owner-gate",
+      "commit": "6aa6b8c0792c5549b818107a0f64e4f32651dacd",
+      "pull_request": 12
+    },
+    "runner_parent": {
+      "branch": "agent/r30-github-bound-candidate-runner",
+      "pull_request": 13
+    },
+    "active": {
+      "branch": "agent/r31-source-completion",
+      "pull_request": 14,
+      "final_commit_source": "external final 40-hex PR #14 HEAD after final documentation CI"
+    }
   },
   "r28": {
     "status": "NEVER_RUN_PERMANENTLY_REJECTED",
-    "reusable": false,
-    "blockers": [
-      "Gate 3 malformed/incomplete SHA ledger",
-      "Gate 2 unresolved network authority",
-      "Gate 9 weaker than exact 113 tests in 9 files"
-    ]
+    "reusable": false
   },
   "r30": {
-    "source_implementation": "COMPLETE_REMOTE",
+    "role": "github_bound_candidate_runner",
+    "runner": "scripts/candidate-r30/run-candidate.mjs",
     "local_execution": "NOT_RUN",
-    "electron_runtime": "NOT_RUN",
-    "unit_contract_tests": {
-      "status": "PASS",
-      "count": 23,
-      "electron_launched": false
-    },
-    "gate_2": {
-      "authority": "offline-only",
-      "network_sandbox": "macOS sandbox-exec deny network",
-      "automatic_registry_fallback": false,
-      "cache_miss": "BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED"
-    },
-    "gate_3": {
-      "algorithm": "sha256",
-      "digest_format": "64 lower-case hex",
-      "ledger_generated_at_runtime": true
-    },
     "gate_9": {
       "exact_discovery": {
         "tests": 113,
@@ -68,13 +57,75 @@
       }
     }
   },
-  "remaining_release_gates": [
-    "MiniMax Code exact-commit local execution and receipts",
-    "Codex independent real-computer product-experience acceptance",
-    "Developer ID signing",
-    "Apple notarization, stapling, and validation",
-    "candidate-bound performance and three verify-fix rounds",
-    "Human Owner Gate"
-  ],
-  "conclusion": "BLOCKED / MVP_NOT_COMPLETE"
+  "r31": {
+    "status": "SOURCE_COMPLETE",
+    "local_execution": "NOT_RUN",
+    "source_features": {
+      "embedding_default": "embedded-local-hash-v1",
+      "ollama": "explicit_opt_in_local_service_only",
+      "vector_model_scope": "single_model_preserve_durable_text",
+      "candidate_gate_count": 12
+    },
+    "source_validation_checkpoint": {
+      "node": 24,
+      "platform": "macOS",
+      "workflow": "copilot-source-gate",
+      "workflow_steps": 17,
+      "desktop_phase1_tests": {
+        "passed": 1106,
+        "total": 1106
+      },
+      "strict_global_coverage": "PASS",
+      "strict_critical_coverage": "PASS",
+      "critical_file_minimum_percent": 90,
+      "local_knowledge_service_branch_percent": 90,
+      "cyclonedx_sbom": "PASS",
+      "electron_list_only": {
+        "tests": 113,
+        "files": 9,
+        "exact": true
+      },
+      "tracked_source_unchanged": "PASS"
+    },
+    "gates": {
+      "1": "exact source and clean preimage",
+      "2": "absolute npm under deny-network offline sandbox",
+      "3": "all tracked regular files and aggregate SHA256",
+      "4": "candidate contracts and ordered workspace build",
+      "5": "checks tests coverage build and CycloneDX SBOM",
+      "6": "canonical unsigned macOS arm64 ZIP and DMG",
+      "7": "snapshot and artifact runtime identities",
+      "8": "focused packaged Electron 2 of 2",
+      "9": "exact 113 tests in 9 files plus complete E2E source manifest",
+      "10": "full packaged Electron 113 of 113 and clean exit",
+      "11": "three candidate-bound r31-v1 performance runs and aggregate",
+      "12": "final receipt SBOM screenshots commands identities and terminal state"
+    }
+  },
+  "candidate": {
+    "established": false,
+    "candidate_id": null,
+    "source_snapshot_sha256": null,
+    "artifact_sha256": null,
+    "app_asar_sha256": null,
+    "runtime_id": null,
+    "test_data_manifest": null,
+    "performance_receipt": null,
+    "screenshots": null,
+    "process_terminal_state": null
+  },
+  "independent_acceptance": {
+    "minimax_receipt": "NOT_RECEIVED",
+    "codex_focused_retest": "NOT_RUN",
+    "codex_release_gate": "NOT_RUN"
+  },
+  "release_gates": {
+    "developer_id_signing": "BLOCKED",
+    "apple_notarization": "BLOCKED",
+    "staple_validate_gatekeeper": "BLOCKED",
+    "verify_fix_rounds": "0/3",
+    "embedded_local_asr_runtime": "BLOCKED",
+    "human_owner_gate": "BLOCKED"
+  },
+  "next_single_action": "MiniMax Code executes the exact externally reported final PR #14 HEAD in a new clean detached worktree with a new absolute outside-repository evidence directory, returns the complete twelve-gate receipt, and does not retry online on an npm cache blocker. Codex starts only after the receipt exists."
 }
