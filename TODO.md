@@ -11,6 +11,10 @@ The independently accepted Electron receipt/TSC repair is committed at
 `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
 The independently accepted R22 producer userData isolation repair is committed
 at `92510816932d0683e95a148789227c6cda0d55a3`.
+The R23 governance binding is committed at
+`2595860e3bf880ea6e357fb197153abf30b09652`.
+The independently accepted R26 static full-suite E2E contract repair is
+committed at `deaa24fade215f0581a30f6e617bdb4362d5f22d`.
 
 R20 is rejected: Gates 1–7 passed, Gate 8 focused Electron returned
 `1 passed / 1 failed`, Gates 9–11 did not run, and retry remained zero. Its
@@ -29,6 +33,17 @@ own restart path. Independent review is `PASS / P0=0 / P1=0 / P2=0`; RED was
 `1 file / 19 tests PASS`, exit `0`, once, `3.45s`; main/renderer/tests TSC
 passed once, exit `0`. This is test-harness evidence only and does not alter
 product persistence.
+
+R24 is rejected: Gates 1–9 passed, Gate 10 returned
+`33 passed / 7 failed / 73 not run`, exit `1`, Gate 11 did not run, and retry
+remained zero. Its intermediate artifact
+`03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527`
+is not a candidate artifact. R25 classified the failures as six stale E2E
+contracts plus one screenshot environment omission, with no production
+regression. R26 repaired exactly seven specs; independent review is
+`PASS / P0=0 / P1=0 / P2=0`; desktop TSC passed once and list-only discovery
+returned exactly `113 tests in 9 files`, exit `0`, once. R26 did not run
+Electron.
 
 R18 packaged successfully through the supported offline `electronDist` path,
 but its focused packaged Electron gate failed before settings credential save;
@@ -74,17 +89,21 @@ Receipt repair status:
 
 - [x] Preserve the initial resource-defer receipt, then run the single R19
   focused unit GREEN command once: `GREEN_15_OF_15_PASS`.
-- Obtain independent review of the current R23 governance postimage.
-- Commit only these six governance files after the R22 test-only commit
-  `92510816932d0683e95a148789227c6cda0d55a3`, before any new candidate
+- [x] Independently review and commit the R23 governance postimage.
+- [x] Execute the R24 clean attempt once and preserve its Gate 10 failure with
+  zero retry and no candidate promotion.
+- [x] Independently diagnose R24 Gate 10 and commit the exact seven-file R26
+  static contract repair after TSC and `113 tests in 9 files` list-only PASS.
+- Commit this R24–R26 governance-only postimage before any new candidate
   attempt.
 - Prove the committed source tree is clean and contains no execution bridge or
   untracked candidate input.
-- Reuse the existing candidate worktree. From the subsequent governance HEAD,
+- Reuse the existing candidate worktree. From the new governance HEAD,
   build a fresh macOS candidate only after exact `npm ci` and all three desktop
   TSC checks pass; then run macOS package, focused Electron, runner list
-  `>=50`, and eligible full Electron. This is a new candidate attempt, not an
-  R20 retry. Do not reuse current-source `dist/` or any old source/runtime ID.
+  `113 tests in 9 files`, and eligible full Electron. This is a new R28
+  candidate attempt, not an R24 retry. Do not reuse current-source `dist/` or
+  any old source/runtime ID.
 - Bind source commit/snapshot, artifact SHA256, runtime ID, deterministic
   test-data manifest, packaged Electron evidence and current screenshots.
 - Run the required candidate-bound checks, including the project-wide real

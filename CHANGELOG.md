@@ -2,6 +2,27 @@
 
 ## 2026-07-30
 
+- Rejected the one-shot R24 candidate: Gates 1–9 passed, Gate 10 stopped at
+  `33 passed / 7 failed / 73 not run`, exit `1`, Gate 11 did not run, retry
+  remained zero, and no candidate was established. Its intermediate artifact
+  SHA256
+  `03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527`
+  is not a candidate artifact.
+- Recorded agreeing R25 primary and independent diagnoses: six stale
+  full-Electron E2E contracts plus one missing screenshot-output environment;
+  no production/provider regression. Diagnosis SHA256 values are
+  `ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088`
+  and
+  `fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea`.
+- Repaired exactly seven R26 E2E specs without production, fixture, config,
+  package, or lockfile changes. Independent review returned
+  `PASS / P0=0 / P1=0 / P2=0`.
+- Ran the authorized R26 static gates once each: desktop main/renderer/tests
+  TSC passed, exit `0`; list-only discovery passed exactly
+  `113 tests in 9 files`, exit `0`. No Electron test case ran.
+- Committed the exact seven-file R26 test repair at
+  `deaa24fade215f0581a30f6e617bdb4362d5f22d`. A new clean candidate and
+  independent product-experience retest remain required.
 - Rejected the R20 candidate attempt: Gates 1–7 passed, Gate 8 focused Electron
   returned `1 passed / 1 failed`, Gates 9–11 did not run, retry remained zero,
   and no candidate was established. Source snapshot SHA256 is

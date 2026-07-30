@@ -1,10 +1,10 @@
 project: copilot-app
-stage: R23 Governance Binding / R22 Producer UserData Isolation GREEN
+stage: R28 Clean Candidate Preparation / R26 Static Full-Suite Contract PASS
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "92510816932d0683e95a148789227c6cda0d55a3"
+latest_commit: "deaa24fade215f0581a30f6e617bdb4362d5f22d"
 materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
@@ -76,6 +76,33 @@ r22_producer_userdata_isolation:
   scope: TEST_HARNESS_ONLY
   user_data_contract: "<workerRoot>/producers/<producer>"
   product_persistence_changed: false
+r24_candidate_attempt:
+  source_commit: "2595860e3bf880ea6e357fb197153abf30b09652"
+  source_snapshot_sha256: "c9bdd37c443dd696e1771244db063b33afef3c95c50e742b4938d512a7a798f0"
+  gates_1_to_9: PASS
+  gate_10_full_electron: FAIL / 33_PASSED_7_FAILED_73_NOT_RUN
+  gate_10_exit_code: 1
+  gate_11: NOT_RUN
+  retry: ZERO
+  intermediate_artifact_sha256: "03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527"
+  intermediate_artifact_truth: NOT_A_CANDIDATE_ARTIFACT
+  candidate_status: REJECTED_NO_CANDIDATE
+r25_gate10_diagnosis:
+  primary_sha256: "ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088"
+  independent_sha256: "fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea"
+  verdict: SIX_STALE_E2E_CONTRACTS_PLUS_ONE_SCREENSHOT_ENV_OMISSION
+  production_regression: false
+r26_full_suite_contract_repair:
+  commit: "deaa24fade215f0581a30f6e617bdb4362d5f22d"
+  production_code_changed: false
+  independent_review: PASS / P0=0 / P1=0 / P2=0
+  desktop_check: MAIN_RENDERER_TESTS_TSC_PASS
+  desktop_check_exit_code: 0
+  desktop_check_attempts: 1
+  list_only_result: 113_TESTS_IN_9_FILES
+  list_only_exit_code: 0
+  list_only_attempts: 1
+  electron_runtime: NOT_RUN
 r3_snapshot:
   manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
   aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
@@ -85,13 +112,13 @@ r3_snapshot:
   role: product_layer_input_only
 release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
 release_baseline: RED
-candidate_status: NOT_ESTABLISHED_R20_REJECTED
+candidate_status: NOT_ESTABLISHED_R24_REJECTED
 independent_retest: PENDING_NEW_CANDIDATE
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Obtain independent review of this R23 governance postimage, create a separate governance-only commit, then start a new clean candidate attempt from that governance HEAD; it is not an R20 retry.
+next_single_action: Commit this governance-only state, independently review a fresh R28 clean-candidate runner derived from R24 plus the exact R26 Gate 10 screenshot environment, then execute that candidate once with zero retry.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-30T12:18:05+08:00"
+updated_at: "2026-07-30T14:20:15+08:00"

@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-R23 Governance Binding / R22 Producer UserData Isolation GREEN.
+R28 Clean Candidate Preparation / R26 Static Full-Suite Contract PASS.
 
 Current branch/base:
 
@@ -18,14 +18,16 @@ Current branch/base:
   `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`
 - latest committed R22 focused-Electron producer-isolation repair:
   `92510816932d0683e95a148789227c6cda0d55a3`
-- R23 governance preimage commit:
-  `92510816932d0683e95a148789227c6cda0d55a3`
+- R23 governance commit:
+  `2595860e3bf880ea6e357fb197153abf30b09652`
+- latest committed R26 full-suite E2E contract repair:
+  `deaa24fade215f0581a30f6e617bdb4362d5f22d`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict
 
-`BLOCKED / R20_REJECTED_GATE_8_FOCUSED_FAILED /
-R22_INDEPENDENT_REVIEW_PASS / R22_GREEN_19_OF_19_PASS /
+`BLOCKED / R24_REJECTED_GATE_10_FULL_ELECTRON_FAILED /
+R26_INDEPENDENT_REVIEW_PASS / R26_STATIC_113_OF_113_DISCOVERED /
 NEW_CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
 RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
 
@@ -69,7 +71,7 @@ Latest focused review facts:
   --maxWorkers=1`. It exited `0` with `1 file / 15 tests PASS`;
   current status is `GREEN_15_OF_15_PASS`, with no retry and no Electron run.
 
-## R20/R21/R22 Current Truth
+## R20–R26 Current Truth
 
 - R20 is rejected. Gates 1–7 passed, but Gate 8 focused Electron returned
   `1 passed / 1 failed`; Gates 9–11 did not run, retry remained zero, and no
@@ -93,6 +95,31 @@ Latest focused review facts:
   exit `0`.
 - R22 changes only test-harness data ownership. It does not change product
   persistence or provide candidate-bound Electron runtime proof.
+- R23 bound the R20 rejection and R22 repair into governance commit
+  `2595860e3bf880ea6e357fb197153abf30b09652`.
+- R24 was a new clean candidate attempt from R23. Gates 1–9 passed, including
+  offline arm64 packaging and focused packaged Electron `2/2 PASS`. Gate 10
+  stopped on `33 passed / 7 failed / 73 not run`, exit `1`; Gate 11 did not
+  run and retry remained zero. No candidate was established.
+- R24 source snapshot SHA256 is
+  `c9bdd37c443dd696e1771244db063b33afef3c95c50e742b4938d512a7a798f0`.
+  Its intermediate artifact SHA256
+  `03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527`
+  is explicitly not a candidate artifact.
+- R25 primary and independent diagnoses agreed that Gate 10 exposed six stale
+  E2E contracts and one missing screenshot-output environment, not a
+  production/provider regression. Diagnosis SHA256 values are
+  `ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088`
+  and
+  `fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea`.
+- R26 repaired exactly seven E2E specs, with no production, fixture, config,
+  package, or lockfile change. Independent review returned
+  `PASS / P0=0 / P1=0 / P2=0`.
+- R26 controller static gates ran once each: desktop main/renderer/tests TSC
+  passed, exit `0`; list-only discovery passed exactly
+  `113 tests in 9 files`, exit `0`. No Electron test case ran in R26.
+- The seven-file R26 repair is committed at
+  `deaa24fade215f0581a30f6e617bdb4362d5f22d`.
 - Candidate commit, candidate artifact SHA256, runtime ID, deterministic
   candidate test-data manifest, independent candidate retest, Human Owner Gate,
   release, and MVP completion remain unset or blocked.
@@ -184,12 +211,13 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Obtain independent review of this R23 governance postimage, then create one
-separate bounded commit containing only these six governance files before
-starting a new clean candidate attempt from that governance HEAD. The next
-attempt is a new candidate attempt and must not be called an R20 retry.
-The exact R22 test-only repair is committed at
-`92510816932d0683e95a148789227c6cda0d55a3`.
+Commit this R24–R26 governance postimage separately from the already committed
+seven-file test repair. Then create and independently review a fresh R28
+clean-candidate runner derived mechanically from R24, changing only candidate
+identity/lineage and the exact R26 Gate 10 screenshot environment. The next
+attempt is not an R24 retry and must execute once with zero retry.
+The exact R26 test-only repair is committed at
+`deaa24fade215f0581a30f6e617bdb4362d5f22d`.
 The later candidate must rerun exact `npm ci`, main/renderer/tests TSC, macOS
 package, focused Electron, runner list proving `>=50`, and the eligible full
 Electron gate.
@@ -197,12 +225,11 @@ Only those candidate-bound receipts may bind source commit, immutable source
 snapshot, artifact SHA256, runtime ID, deterministic test-data manifest,
 packaged Electron evidence and screenshots.
 
-The release baseline remains red outside the accepted P0 slice. R3 classified
-30 existing baseline/evidence failure records; complete Electron package
-resolution exposed one additional existing r22 literal-shell assertion. These
-remain release blockers and are not hidden by the focused P0/P1 development
-passes. The active R3c receipt also states `globalGate=NOT_RUN`; the required
-project-wide real Electron minimum of 50 has not been run.
+The release baseline remains red outside the accepted P0 slice. R24 did run the
+project-wide full Electron gate, but it failed before completion and therefore
+did not replace the older `globalGate=NOT_RUN` development receipt with a
+passing candidate-bound receipt. The next clean candidate must rerun the full
+eligible gate and reach all 113 discovered tests before independent retest.
 
 ## Deferred Scope
 
