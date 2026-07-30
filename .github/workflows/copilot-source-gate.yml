@@ -114,7 +114,13 @@ jobs:
         run: |
           set -euo pipefail
           npm run test:coverage:global --workspace @copilot/desktop
+          set +e
           npm run test:coverage:critical --workspace @copilot/desktop
+          critical_status=$?
+          set -e
+          node apps/copilot-desktop/scripts/report-critical-coverage-gaps.mjs \
+            apps/copilot-desktop/coverage/critical/coverage-final.json || true
+          exit "$critical_status"
 
       - name: Generate and validate production CycloneDX SBOM
         shell: bash
