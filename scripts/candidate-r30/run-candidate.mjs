@@ -13,7 +13,7 @@ import {
   fullCommit,
   resolveEvidenceTarget,
 } from './contract.mjs';
-import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release.mjs';
+import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release-r31.mjs';
 import { asBlocked, privateJson, repoRoot } from './io.mjs';
 import { runBuildGates } from './gates-build.mjs';
 import { FOCUSED_SPECS, runElectronGates } from './gates-electron.mjs';
@@ -91,8 +91,12 @@ export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
       },
       {
         id: 6,
-        name: 'existing-canonical-unsigned-release-builder',
+        name: 'r31-macos-arm64-authority-over-legacy-canonical-builder',
+        authorityWrapper: 'scripts/candidate-r30/canonical-release-r31.mjs',
+        legacyBuilder: 'apps/copilot-desktop/scripts/build-canonical-release.mjs',
+        authority: 'macos-arm64-only',
         canonicalCandidateAlias: CANONICAL_CANDIDATE_ALIAS,
+        assertion: 'selected arm64 ZIP/DMG, release identity, artifact reports, source snapshot, bytes and SHA256 must pass independently; arm64 blockers are fatal',
       },
       { id: 7, name: 'canonical-source-artifact-and-runtime-identity' },
       { id: 8, name: 'focused-packaged-electron', expectedTests: 2, specs: [...FOCUSED_SPECS] },
