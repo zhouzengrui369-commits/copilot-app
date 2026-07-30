@@ -71,9 +71,6 @@ describe('Copilot product API remaining critical wrappers', () => {
       id: 'todo-1',
       title: 'Todo',
       status: 'pending',
-      dueAt: null,
-      remindAt: null,
-      linkedNotePaths: [],
     });
     expect(source.todos.markReminderFired).toHaveBeenCalledWith('todo-1');
 
