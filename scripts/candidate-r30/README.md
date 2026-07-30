@@ -25,7 +25,7 @@ Before a candidate receipt may be emitted, the runner must pass under the same f
 3. a same-handle, no-follow SHA256 ledger for every path returned by `git ls-files -z`, including an aggregate digest;
 4. all candidate source-contract tests and the existing ordered LLM → KB → KG → RAG build chain;
 5. check, unit, explicit integration, strict global coverage, strict critical coverage, desktop build, and production CycloneDX SBOM gates for the local-first Phase 1 scope;
-6. the existing canonical builder producing the exact unsigned macOS arm64 ZIP and DMG for `v6.2-phase1-candidate-r31`;
+6. the R31 arm64-authority wrapper running the existing canonical builder, then independently requiring the exact unsigned macOS arm64 ZIP and DMG, canonical release identity, per-artifact identity reports, stable hashes, and source snapshot. Legacy macOS x64/Windows matrix blockers are quarantined only after those arm64 checks pass; any authoritative arm64 blocker remains fatal;
 7. canonical source snapshot, artifact, app, executable, `app.asar`, and runtime identity;
 8. exact focused packaged Electron `2/2`;
 9. exact discovery `113 tests in 9 files` plus hashes for every E2E spec, fixture, and helper;
@@ -58,6 +58,7 @@ MiniMax returns:
 - exact source commit, branch/detached-HEAD truth, and final clean status;
 - Gate 3 all-tracked-file ledger, aggregate SHA256, file count, and ledger SHA256;
 - canonical source snapshot, canonical manifest, release identity, SBOM, ZIP, DMG, app, executable, and `app.asar` SHA256 values;
+- Gate 6 arm64-authority receipt, including the legacy builder status/blockers and the two selected authoritative artifact paths;
 - runtime ID and packaged runtime identity;
 - `SYNTHETIC_E2E_FIXTURE_ONLY` test-data manifest with every E2E source hash;
 - focused `2/2`, discovery `113 tests in 9 files`, and full `113/113` Electron evidence;
