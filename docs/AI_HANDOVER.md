@@ -12,7 +12,7 @@ Read in this order before changing code:
 4. `docs/ARCHITECTURE.md` and `docs/DEVELOPMENT_WORKFLOW.md` — architecture and development workflow.
 5. `docs/PROJECT_STATUS.md`, `docs/PROJECT_PROGRESS.json`, `docs/RISKS.md`, `docs/TODO.md` — mirrors for navigation and automation only.
 
-A shorter or newer-looking document must not override a higher-authority source. Conflicts fail closed and must be reported.
+A shorter or newer-looking document must not override a higher-authority source. Conflicts fail closed and must be reported. The exact pre-R30 root state, status, TODO, changelog, and architecture remain available under `docs/history/` for evidence continuity.
 
 ## Exact Remote Source
 
