@@ -101,6 +101,11 @@ function fakeBlob(size: number, bytes: ArrayBuffer): Blob {
   return { size, arrayBuffer: async () => bytes } as Blob;
 }
 
+function validBlob(...bytes: number[]): Blob {
+  const value = Uint8Array.from(bytes.length ? bytes : [1]);
+  return fakeBlob(value.byteLength, value.buffer);
+}
+
 async function expectCode(promise: Promise<unknown>, code: AudioPcmError['code']): Promise<void> {
   await expect(promise).rejects.toEqual(expect.objectContaining({
     name: 'AudioPcmError',
@@ -115,7 +120,7 @@ describe('local ASR PCM conversion critical edges', () => {
     const rendered = buffer([[1.5, -1.5]], LOCAL_ASR_SAMPLE_RATE);
     const deps = contexts(decoded, rendered);
 
-    const request = await buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1, 2, 3)]), {
+    const request = await buildLocalAsrDecodeRequest(validBlob(1, 2, 3), {
       createDecodeContext: deps.createDecodeContext,
       createOfflineContext: deps.createOfflineContext,
       crypto: cryptoMock(),
@@ -172,7 +177,7 @@ describe('local ASR PCM conversion critical edges', () => {
       value: cryptoMock(),
     });
 
-    await expect(buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1)])))
+    await expect(buildLocalAsrDecodeRequest(validBlob(1)))
       .resolves.toMatchObject({ sampleCount: 2, sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) });
   });
 
@@ -185,14 +190,16 @@ describe('local ASR PCM conversion critical edges', () => {
       'CAPTURE_TOO_LARGE',
     );
 
-    const noFactories = new Blob([Uint8Array.of(1)]);
     Reflect.deleteProperty(window, 'AudioContext');
     Reflect.deleteProperty(window, 'OfflineAudioContext');
-    await expectCode(buildLocalAsrDecodeRequest(noFactories, { crypto: cryptoMock() }), 'CAPTURE_UNSUPPORTED');
+    await expectCode(
+      buildLocalAsrDecodeRequest(validBlob(1), { crypto: cryptoMock() }),
+      'CAPTURE_UNSUPPORTED',
+    );
   });
 
   it('normalizes decode construction, source-byte, decode and close failures', async () => {
-    const blob = fakeBlob(1, Uint8Array.of(1).buffer);
+    const blob = validBlob(1);
     await expectCode(buildLocalAsrDecodeRequest(blob, {
       createDecodeContext: () => { throw new Error('constructor'); },
       createOfflineContext: contexts().createOfflineContext,
@@ -240,7 +247,7 @@ describe('local ASR PCM conversion critical edges', () => {
     [buffer([[1]], 16_000, { duration: 0.5 }), 'INVALID_AUDIO'],
   ] as const)('rejects malformed decoded audio %#', async (decoded, code) => {
     const deps = contexts(decoded);
-    await expectCode(buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1)]), {
+    await expectCode(buildLocalAsrDecodeRequest(validBlob(1), {
       createDecodeContext: deps.createDecodeContext,
       createOfflineContext: deps.createOfflineContext,
       crypto: cryptoMock(),
@@ -254,7 +261,7 @@ describe('local ASR PCM conversion critical edges', () => {
       getChannelData: () => Float32Array.of(1),
     });
     const shortDeps = contexts(short);
-    await expectCode(buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1)]), {
+    await expectCode(buildLocalAsrDecodeRequest(validBlob(1), {
       createDecodeContext: shortDeps.createDecodeContext,
       createOfflineContext: shortDeps.createOfflineContext,
       crypto: cryptoMock(),
@@ -262,7 +269,7 @@ describe('local ASR PCM conversion critical edges', () => {
 
     const invalid = buffer([[Number.NaN]], 16_000);
     const invalidDeps = contexts(invalid);
-    await expectCode(buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1)]), {
+    await expectCode(buildLocalAsrDecodeRequest(validBlob(1), {
       createDecodeContext: invalidDeps.createDecodeContext,
       createOfflineContext: invalidDeps.createOfflineContext,
       crypto: cryptoMock(),
@@ -271,7 +278,7 @@ describe('local ASR PCM conversion critical edges', () => {
 
   it('normalizes offline setup, rendering and rendered-envelope failures', async () => {
     const decoded = buffer([[0.25, -0.25]]);
-    const blob = new Blob([Uint8Array.of(1)]);
+    const blob = validBlob(1);
     const setup = contexts(decoded, buffer([[0, 0]]), { setup: () => { throw new Error('setup'); } });
     await expectCode(buildLocalAsrDecodeRequest(blob, {
       createDecodeContext: setup.createDecodeContext,
@@ -305,7 +312,7 @@ describe('local ASR PCM conversion critical edges', () => {
 
   it('rejects rendered sample corruption and cryptographic failures', async () => {
     const decoded = buffer([[0.25, -0.25]]);
-    const blob = new Blob([Uint8Array.of(1)]);
+    const blob = validBlob(1);
     const shortRendered = buffer([[0]], 16_000, {
       length: 2,
       duration: 2 / 16_000,
