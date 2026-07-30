@@ -12,6 +12,7 @@ import {
 } from './contract.mjs';
 import { runCanonicalRelease } from './canonical-release.mjs';
 import {
+  findExecutable,
   git,
   privateJson,
   recorded,
@@ -54,7 +55,7 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     ignoredGeneratedInputsAbsent: true,
   });
 
-  const npm = 'npm';
+  const npm = await findExecutable('npm');
   const install = await recorded({
     gate: 2,
     name: 'npm-ci-offline',
@@ -72,6 +73,7 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     authority: 'offline-only',
     automaticRegistryFallback: false,
     sandbox: '/usr/bin/sandbox-exec',
+    npmExecutable: npm,
     profileSha256: createHash('sha256').update(NETWORK_PROFILE).digest('hex'),
     result: 'PASS',
   });
