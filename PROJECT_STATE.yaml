@@ -1,10 +1,10 @@
 project: copilot-app
-stage: R19 Packaged E2E Harness Repair / Focused Unit GREEN
+stage: R23 Governance Binding / R22 Producer UserData Isolation GREEN
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "54cd07ec631872f9b1fd45a5c426a4fe57f3d92b"
+latest_commit: "92510816932d0683e95a148789227c6cda0d55a3"
 materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
@@ -46,6 +46,36 @@ r19_packaged_e2e_harness:
   green_result: GREEN_15_OF_15_PASS
   green_exit_code: 0
   green_attempts: 1
+r20_candidate_attempt:
+  source_commit: "c0a3cf32bb13b50fbc0a0eb31ee6f787e0243f33"
+  source_snapshot_sha256: "bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec"
+  gates_1_to_7: PASS
+  gate_8_focused_electron: FAIL / 1_PASSED_1_FAILED
+  gates_9_to_11: NOT_RUN
+  retry: ZERO
+  intermediate_artifact_sha256: "2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b"
+  intermediate_artifact_truth: NOT_A_CANDIDATE_ARTIFACT
+  candidate_status: REJECTED_NO_CANDIDATE
+r21_isolation_diagnosis:
+  verdict: TEST_HARNESS_ISOLATION_DEFECT
+  cause: SHARED_WORKER_USERDATA_CONTAMINATED_EXP008_WITH_EXP009_NOTE_TODO
+  diagnosis_sha256: "55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4"
+r22_producer_userdata_isolation:
+  commit: "92510816932d0683e95a148789227c6cda0d55a3"
+  independent_review: PASS / P0=0 / P1=0 / P2=0
+  red_result: 4_FAILED_15_PASSED
+  red_exit_code: 1
+  red_attempts: 1
+  green_result: 1_FILE_19_TESTS_PASS
+  green_exit_code: 0
+  green_attempts: 1
+  green_duration_seconds: 3.45
+  desktop_check: MAIN_RENDERER_TESTS_TSC_PASS
+  desktop_check_exit_code: 0
+  desktop_check_attempts: 1
+  scope: TEST_HARNESS_ONLY
+  user_data_contract: "<workerRoot>/producers/<producer>"
+  product_persistence_changed: false
 r3_snapshot:
   manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
   aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
@@ -55,13 +85,13 @@ r3_snapshot:
   role: product_layer_input_only
 release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
 release_baseline: RED
-candidate_status: NOT_BUILT
-independent_retest: PENDING
+candidate_status: NOT_ESTABLISHED_R20_REJECTED
+independent_retest: PENDING_NEW_CANDIDATE
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Obtain independent review of this governance postimage, commit only the governance update, then start a new clean candidate attempt from that governance HEAD.
+next_single_action: Obtain independent review of this R23 governance postimage, create a separate governance-only commit, then start a new clean candidate attempt from that governance HEAD; it is not an R20 retry.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-30T10:39:00+08:00"
+updated_at: "2026-07-30T12:18:05+08:00"

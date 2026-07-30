@@ -2,6 +2,28 @@
 
 ## 2026-07-30
 
+- Rejected the R20 candidate attempt: Gates 1–7 passed, Gate 8 focused Electron
+  returned `1 passed / 1 failed`, Gates 9–11 did not run, retry remained zero,
+  and no candidate was established. Source snapshot SHA256 is
+  `bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec`;
+  intermediate artifact SHA256
+  `2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b`
+  is not a candidate artifact.
+- Recorded R21 `TEST_HARNESS_ISOLATION_DEFECT`: shared worker userData allowed
+  EXP-COP-009 note/Todo state to contaminate EXP-COP-008's exact-source
+  assertion. Diagnosis SHA256:
+  `55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4`.
+- Added R22 producer-scoped test userData at
+  `<workerRoot>/producers/<producer>` without changing product persistence.
+  Independent review returned `PASS / P0=0 / P1=0 / P2=0`.
+- Preserved the accepted R22 RED-to-GREEN receipts: RED once at
+  `4 failed / 15 passed`, exit `1`; GREEN once at
+  `1 file / 19 tests PASS`, exit `0`, `3.45s`; desktop
+  main/renderer/tests TSC PASS once, exit `0`.
+- Committed the exact four-file R22 test-harness repair at
+  `92510816932d0683e95a148789227c6cda0d55a3`. Candidate identity, candidate
+  artifact SHA256, runtime ID, independent candidate retest, Human Owner Gate,
+  release, and MVP remain unset or blocked.
 - Recorded R18 truth: supported offline `electronDist` packaging passed, but
   focused packaged Electron failed before settings credential save completed;
   no candidate, artifact SHA256, or runtime ID was established.

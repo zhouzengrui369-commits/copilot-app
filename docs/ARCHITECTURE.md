@@ -125,6 +125,30 @@ create a candidate identity. Candidate commit, artifact SHA256, runtime ID,
 package proof, full Electron evidence, and independent product-experience
 retest remain unset.
 
+## Focused Electron Producer UserData Isolation
+
+The R20 focused run was rejected after EXP-COP-009 and EXP-COP-008 shared the
+worker-scoped userData directory. EXP-COP-009's persisted note and Todo then
+appeared in EXP-COP-008's exact source result. R21 classified this as
+`TEST_HARNESS_ISOLATION_DEFECT`, not a product retrieval or persistence defect.
+
+The R22 test harness keeps the wrapper-owned worker root but derives one
+validated producer path:
+
+`<workerRoot>/producers/<producer>`
+
+Producer slugs use the same fail-closed contract as receipt ownership. Each
+manual spec creates its producer directory once and reuses that exact directory
+across its own quit/relaunch journey; EXP-COP-008 and EXP-COP-009 never share
+the same child directory. No test deletes another producer's data to
+manufacture isolation, and exact source assertions remain unchanged.
+
+This is test-harness isolation only. It does not change the Electron product's
+userData selection or any product persistence, retrieval, RAG, WIKI, Todo, or
+Ask behavior. R22 RED-to-GREEN and desktop TSC receipts therefore do not create
+a candidate identity or runtime proof. The exact repair is committed at
+`92510816932d0683e95a148789227c6cda0d55a3`.
+
 ## Packaged E2E Credential-Protection Boundary
 
 R18 proved offline packaging through the supported

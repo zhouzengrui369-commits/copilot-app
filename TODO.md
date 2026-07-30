@@ -9,6 +9,26 @@ The macOS build-order product repair is committed at
 `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`.
 The independently accepted Electron receipt/TSC repair is committed at
 `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+The independently accepted R22 producer userData isolation repair is committed
+at `92510816932d0683e95a148789227c6cda0d55a3`.
+
+R20 is rejected: Gates 1–7 passed, Gate 8 focused Electron returned
+`1 passed / 1 failed`, Gates 9–11 did not run, and retry remained zero. Its
+source snapshot is
+`bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec`;
+the intermediate artifact
+`2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b`
+is not a candidate artifact.
+
+R21 bound the failure to `TEST_HARNESS_ISOLATION_DEFECT`, diagnosis SHA256
+`55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4`.
+R22 isolates EXP-COP-008 and EXP-COP-009 under distinct
+`<workerRoot>/producers/<producer>` directories while preserving each spec's
+own restart path. Independent review is `PASS / P0=0 / P1=0 / P2=0`; RED was
+`4 failed / 15 passed`, exit `1`, once; GREEN was
+`1 file / 19 tests PASS`, exit `0`, once, `3.45s`; main/renderer/tests TSC
+passed once, exit `0`. This is test-harness evidence only and does not alter
+product persistence.
 
 R18 packaged successfully through the supported offline `electronDist` path,
 but its focused packaged Electron gate failed before settings credential save;
@@ -54,17 +74,17 @@ Receipt repair status:
 
 - [x] Preserve the initial resource-defer receipt, then run the single R19
   focused unit GREEN command once: `GREEN_15_OF_15_PASS`.
-- Obtain independent review of the current governance postimage.
-- Commit only this separate governance update after the R19 test-only commit
-  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`, before any new candidate
+- Obtain independent review of the current R23 governance postimage.
+- Commit only these six governance files after the R22 test-only commit
+  `92510816932d0683e95a148789227c6cda0d55a3`, before any new candidate
   attempt.
 - Prove the committed source tree is clean and contains no execution bridge or
   untracked candidate input.
 - Reuse the existing candidate worktree. From the subsequent governance HEAD,
   build a fresh macOS candidate only after exact `npm ci` and all three desktop
   TSC checks pass; then run macOS package, focused Electron, runner list
-  `>=50`, and eligible full Electron. Do not reuse current-source `dist/` or
-  any old source/runtime ID.
+  `>=50`, and eligible full Electron. This is a new candidate attempt, not an
+  R20 retry. Do not reuse current-source `dist/` or any old source/runtime ID.
 - Bind source commit/snapshot, artifact SHA256, runtime ID, deterministic
   test-data manifest, packaged Electron evidence and current screenshots.
 - Run the required candidate-bound checks, including the project-wide real

@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-R19 Packaged E2E Harness Repair / Focused Unit GREEN.
+R23 Governance Binding / R22 Producer UserData Isolation GREEN.
 
 Current branch/base:
 
@@ -16,14 +16,17 @@ Current branch/base:
   `ee8e207b44fc5091564f292ac130d8f0bd9a492b`
 - latest committed R19 test-only harness repair:
   `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`
-- governance base commit: `d9ee8f5fc5cc6a07a441a0131afd2324f1b7b6bb`
+- latest committed R22 focused-Electron producer-isolation repair:
+  `92510816932d0683e95a148789227c6cda0d55a3`
+- R23 governance preimage commit:
+  `92510816932d0683e95a148789227c6cda0d55a3`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict
 
-`BLOCKED / R18_FOCUSED_PACKAGED_ELECTRON_FAILED /
-R19_IMPLEMENTATION_REREVIEW_PASS / R19_GREEN_15_OF_15_PASS /
-CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
+`BLOCKED / R20_REJECTED_GATE_8_FOCUSED_FAILED /
+R22_INDEPENDENT_REVIEW_PASS / R22_GREEN_19_OF_19_PASS /
+NEW_CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
 RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
 
 r3 remains frozen at commit `2b832c20b93e07ee68b6b325dc3ad758986b7f69`
@@ -65,6 +68,34 @@ Latest focused review facts:
   tests/electron-fixture-window-readiness.test.ts --minWorkers=1
   --maxWorkers=1`. It exited `0` with `1 file / 15 tests PASS`;
   current status is `GREEN_15_OF_15_PASS`, with no retry and no Electron run.
+
+## R20/R21/R22 Current Truth
+
+- R20 is rejected. Gates 1–7 passed, but Gate 8 focused Electron returned
+  `1 passed / 1 failed`; Gates 9–11 did not run, retry remained zero, and no
+  candidate was established.
+- R20 source snapshot SHA256 is
+  `bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec`.
+  Its intermediate artifact SHA256
+  `2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b`
+  is explicitly not a candidate artifact.
+- R21 identified `TEST_HARNESS_ISOLATION_DEFECT`: worker-scoped shared
+  userData let EXP-COP-009's note and Todo contaminate EXP-COP-008's exact
+  source assertion. Diagnosis SHA256:
+  `55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4`.
+- R22 added test-producer isolation at
+  `<workerRoot>/producers/<producer>` and committed the exact four-file repair
+  at `92510816932d0683e95a148789227c6cda0d55a3`.
+- R22 independent review returned `PASS / P0=0 / P1=0 / P2=0`.
+  Controller RED ran once and returned `4 failed / 15 passed`, exit `1`.
+  Controller GREEN ran once and returned `1 file / 19 tests PASS`, exit `0`,
+  duration `3.45s`. The desktop main/renderer/tests TSC check also passed once,
+  exit `0`.
+- R22 changes only test-harness data ownership. It does not change product
+  persistence or provide candidate-bound Electron runtime proof.
+- Candidate commit, candidate artifact SHA256, runtime ID, deterministic
+  candidate test-data manifest, independent candidate retest, Human Owner Gate,
+  release, and MVP completion remain unset or blocked.
 
 ## Open Gates
 
@@ -153,10 +184,12 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Obtain independent review of this governance postimage, then create one bounded
-commit containing only the governance update before starting a new clean
-candidate attempt from that governance HEAD. The exact R19 test-only repair is
-already committed at `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`.
+Obtain independent review of this R23 governance postimage, then create one
+separate bounded commit containing only these six governance files before
+starting a new clean candidate attempt from that governance HEAD. The next
+attempt is a new candidate attempt and must not be called an R20 retry.
+The exact R22 test-only repair is committed at
+`92510816932d0683e95a148789227c6cda0d55a3`.
 The later candidate must rerun exact `npm ci`, main/renderer/tests TSC, macOS
 package, focused Electron, runner list proving `>=50`, and the eligible full
 Electron gate.

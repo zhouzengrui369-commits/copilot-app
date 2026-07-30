@@ -119,3 +119,24 @@ The exact two-file test-only repair is committed at
 `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`. Governance remains a separate
 postimage that requires independent review and its own bounded commit before a
 new candidate attempt.
+
+## D-2026-07-30-06: Restart Persistence Is Per Test Producer
+
+R20 proved that one worker-scoped userData directory cannot be shared by the
+EXP-COP-008 and EXP-COP-009 manual restart journeys: the first producer's
+persisted note and Todo contaminated the second producer's exact-source
+assertion.
+
+Keep the wrapper-owned worker root, validate each producer with the existing
+slug contract, and derive exactly
+`<workerRoot>/producers/<producer>`. Each spec creates its producer directory
+once and reuses it for both launches within that spec. Different producers must
+never share the child directory, and tests must not delete another producer's
+data or weaken exact source assertions to hide contamination.
+
+This choice preserves the intended same-userData quit/relaunch proof while
+isolating test ownership. It is a test-harness decision only and does not alter
+product persistence. The accepted repair commit is
+`92510816932d0683e95a148789227c6cda0d55a3`; it does not establish a candidate,
+runtime ID, artifact SHA256, independent retest, owner-gate eligibility,
+release, or MVP completion.
