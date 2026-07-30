@@ -5,6 +5,7 @@
 Status remains `BLOCKED / MVP_NOT_COMPLETE`.
 
 - Reconciled all six low-confidence `main` handoff documents. `docs/ARCHITECTURE.md` now routes to the byte-preserved detailed architecture at `docs/history/ARCHITECTURE_PRE_R30.md`; generic placeholders cannot override root v6.2 truth.
+- Preserved the exact pre-R30 root `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `CHANGELOG.md`, and detailed architecture under `docs/history/`; R30 current-state updates do not erase accepted evidence or prior blockers.
 - Added a brand-new R30 successor. R28 remains `NEVER_RUN / PERMANENTLY_REJECTED` and is not copied, repaired, executed, or reused.
 - Gate 1 binds the full GitHub commit, clean tracked/untracked state, absence of stale ignored build/test outputs, and a new realpath-validated evidence directory outside the repository.
 - Gate 2 uses macOS `sandbox-exec` with `(deny network*)`, strips proxy/registry authority, and permits only `npm ci --offline --no-audit --no-fund`. Cache miss stops for separate approval; no online retry exists.
@@ -17,4 +18,4 @@ Rollback: revert the bounded R30 PR. No database migration, product feature rewr
 
 ## Preserved history
 
-The complete pre-R30 changelog from `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd` is preserved byte-for-byte at [`docs/history/CHANGELOG_PRE_R30.md`](docs/history/CHANGELOG_PRE_R30.md).
+The complete pre-R30 root governance record from `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd` is preserved byte-for-byte at `docs/history/PROJECT_STATE_PRE_R30.yaml`, `docs/history/PROJECT_STATUS_PRE_R30.md`, `docs/history/TODO_PRE_R30.md`, [`docs/history/CHANGELOG_PRE_R30.md`](docs/history/CHANGELOG_PRE_R30.md), and `docs/history/ARCHITECTURE_PRE_R30.md`.
