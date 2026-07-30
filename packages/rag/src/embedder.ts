@@ -258,8 +258,11 @@ function assertText(text: string): void {
 }
 
 function validDimensions(value: number): number {
-  if (!Number.isSafeInteger(value) || value < 8 || value > 16_384) {
-    throw new Error('rag.Embedder: dimensions must be an integer between 8 and 16384');
+  // Small positive dimensions are intentionally supported by deterministic
+  // tests and explicit compatibility adapters; production still defaults to
+  // 1024 and never derives its dimension from untrusted model output.
+  if (!Number.isSafeInteger(value) || value < 1 || value > 16_384) {
+    throw new Error('rag.Embedder: dimensions must be an integer between 1 and 16384');
   }
   return value;
 }
