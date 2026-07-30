@@ -1,194 +1,56 @@
-# ARCHITECTURE
+# Copilot App Architecture Authority
 
-## Authority Model
+**Status: `BLOCKED / MVP_NOT_COMPLETE`.** This file is subordinate to `goal.md`, `plan.md`, `rules.md`, `delivery.md` v6.2, `AGENTS.md`, and root `PROJECT_STATE.yaml`.
 
-Copilot Desktop is the local-first product authority for notes, KB, KG, Todo, schedule, RAG source references, and user-visible review flows. Cloud or remote paths are optional support surfaces and cannot replace local truth.
+The detailed pre-R30 architecture from `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd` is preserved byte-for-byte at [`docs/history/ARCHITECTURE_PRE_R30.md`](history/ARCHITECTURE_PRE_R30.md). The 15-line generic `main` placeholder is not authoritative and does not replace that record.
 
-## Stage 0 Baseline
+## Local-First Product Authority
 
-- Git baseline: GitHub `main@96c861706126317c27965fcb64c765973df9ac89`.
-- Active branch: `codex/p0-owner-gate`.
-- Current accepted P0+P1 product/test commit:
-  `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
-- r3 snapshot: Desktop product-layer input only, verified as `414 files / 7 tracked deletions / 51,347,389 bytes`.
-- r3 aggregate: `026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311`.
+Copilot Desktop remains the authority for local notes and KB content, WIKI/KG/RAG state, source-grounded Ask answers, canonical Todo and schedule state, user-visible model configuration, and local ASR evidence. Renderer code receives typed preload capabilities, not unrestricted filesystem/database access. Missing, stale, unsafe, symlinked, corrupt, or mismatched state fails closed.
 
-Review artifacts remain independent fact references. They are not product code and must not be copied into product source as fixes.
+The accepted product chain remains:
 
-## Current Product Gates
+1. local note/KB persistence;
+2. revision-bound WIKI/KG/RAG processing;
+3. grounded Ask with validated local sources;
+4. immutable answer/source receipt before Todo conversion;
+5. canonical Todo readback, discovery, editing, and same-userData restart recovery;
+6. independent packaged-Electron verification before any owner gate.
 
-P0 is `EXP-COP-008`. P1 first is `EXP-COP-009`. Old source/runtime IDs are not reproducible and must not be reused for candidate, release, or owner-gate evidence.
+No cloud path may replace local truth. Windows, Tencent deployment, Remote/live, optional backup, 3D graph, and broad feature expansion remain deferred under the latest owner amendments.
 
-EXP-COP-008 and EXP-COP-009 have development-acceptance implementations.
-Neither is independently closed until both are materialized into one clean,
-reproducible candidate and pass the independent Focused Retest. Candidate,
-release and owner-gate identities remain unset until that boundary.
+## Electron Trust and Evidence Boundary
 
-Current-source focused Electron evidence is development evidence only; a clean
-commit, packaged artifact SHA256, runtime ID and test-data manifest are required
-for candidate identity.
+Current-source tests are development evidence, not candidate evidence. A candidate requires one exact GitHub commit, a clean checkout, immutable source snapshot, package SHA256, runtime identity, deterministic test-data manifest, command receipts, screenshots, and process terminal state. Synthetic E2E data must remain labelled `SYNTHETIC_E2E_FIXTURE_ONLY` and cannot be presented as real-user truth.
 
-## Canonical Grounded-Answer Todo Flow
+R28 is `NEVER_RUN / PERMANENTLY_REJECTED`. Its path, scripts, SHA ledger, network assumptions, candidate identity, artifacts, runtime IDs, and evidence are not executable or reusable.
 
-The focused EXP-COP-008 implementation uses one local canonical chain:
+## R30 GitHub-Bound Successor
 
-1. Ask exposes “转为待办” only after a terminal answer whose complete source
-   receipt set is `LOCAL_PRESENT`.
-2. The question, final answer, and source paths are frozen before confirmation.
-3. Main create/update performs an immediate canonical storage readback and
-   rejects absent, wrong-ID, or mismatched title/body/due/status/source truth.
-4. Renderer performs exactly one list/readback by returned ID before showing
-   success.
-5. A null due date is a supported Unscheduled Todo, discoverable in both
-   `未安排` and `全部`.
-6. “查看待办” routes the exact ID, focuses and expands it; title, body, due,
-   and source paths are persisted edits with another canonical readback.
-7. Same-userData Electron quit/relaunch is the persistence boundary. Renderer
-   remount or browser fixture evidence cannot replace it.
+R30 is a new repository implementation under `scripts/candidate-r30/`. It is parameterized by the final approved full GitHub commit; MiniMax Code must pass that commit as `--source-commit`, and execution fails unless it equals `git HEAD`.
 
-Todo notes and execution logs reuse the canonical persisted Todo body through a
-deterministic, backward-compatible structured encoding. They are not stored in
-renderer page memory. Editing, append-log, readback, and restart recovery use
-the same main-process canonical comparison as title, due date, and sources.
+### Gate 1 — clean preimage
 
-Calendar date selection is a navigation action: it sets the selected date and
-switches the list to the selected-day scope. `全部` and `未安排` remain explicit
-alternate scopes.
+The checkout must have no tracked or untracked drift and no pre-existing ignored candidate outputs (`dist`, `.vite`, `release`, `coverage`, `test-results`, or `playwright-report`). R30 does not silently delete stale generated bytes. The new evidence path is resolved through existing symlink ancestors, must land outside the repository, and must not already exist. An existing evidence directory is never modified.
 
-## Grounded Ask Continuity
+### Gate 2 — fail-closed network authority
 
-The latest completed grounded Ask exchange is a versioned local main-process
-projection under Electron `userData`; it is not renderer page memory,
-localStorage, sessionStorage or cloud truth.
+Every install, build, package, list, and Electron child runs through macOS `/usr/bin/sandbox-exec` with `(deny network*)`. Proxy and registry variables are removed. Installation is only `npm ci --offline --no-audit --no-fund`. A cache miss stops at `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`; the runner contains no online retry. Any future registry exception requires a separately reviewed source revision and minimum read-only authority.
 
-The persisted projection contains one immutable completed exchange: exchange
-ID, submitted question, terminal answer, aligned source/sourceDetails, optional
-canonical Todo receipt and completion time. Main IPC serializes save, load and
-clear operations. Writes are atomic and owner-only (`0600`); load uses
-`O_NOFOLLOW`, validates the opened handle as bounded, regular, owner-controlled
-and single-link, then reads from that same handle.
+### Gate 3 — complete SHA256 control ledger
 
-Before exposing source or Todo actions after restore, the main process
-revalidates every local source against current note bytes and re-reads the Todo
-canonically. Missing, changed, stale, corrupt, unsafe, nonterminal or mismatched
-state loses current/success actions. Ask-to-Knowledge navigation carries the
-exact exchange ID, note path and full-reader intent; return restores only the
-still-matching exchange.
+The ledger binds every R30 execution module plus the directly controlling package, Electron-builder, Playwright, and Electron-E2E inputs. Entries must be unique canonical regular files, not symlinks. Every digest is computed from bytes at runtime and must be exactly 64 lower-case hexadecimal characters. Missing, duplicate, unknown, 63-character, symlinked, or nonregular entries fail closed.
 
-## Knowledge Build Readiness
+### Gates 4–8 — build, package, identity, focused journeys
 
-`knowledgeBuild.ready` is revision-bound and fail-closed:
+R30 performs ordered workspace builds, Desktop checks/build, one unsigned macOS arm64 package using locally installed Electron bytes, a Git source archive, and ZIP/DMG/app/executable SHA256 binding. It then runs the exact two focused packaged-Electron journeys for EXP-COP-008 and EXP-COP-009.
 
-- missing or stale pending row: `not-ready`;
-- exact pending row: `queued`;
-- exact processing row: `running`;
-- exact failed row: `failed`;
-- exact done row plus current WIKI digest: `ready`.
+### Gate 9 — exact suite discovery
 
-WIKI digest current alone is not KG/RAG readiness. Retrieval ranking and
-production citation filtering remain unchanged; answer sources contain only
-paths actually cited by the model and validated against retrieval hits.
+List-only discovery must produce one exact summary: `113 tests in 9 files`. The historical broad `>=50` floor is insufficient. Any count or file drift blocks before the full run.
 
-## Electron Candidate Receipt Architecture
+### Gates 10–11 — exact runtime and final receipt
 
-Electron evidence has two explicit profiles:
+The full packaged-Electron run must be 113/113 with zero skipped, unexpected, or flaky results and clean Playwright/Electron terminal state. The final private receipt binds source snapshot, artifact SHA256, runtime ID, deterministic synthetic test-data manifest, commands and exit codes, screenshots and SHA256, and process terminal state.
 
-- `exp-cop-008-009-focused` is fixed to exactly two tests and the exact
-  producers `exp-cop-008` and `exp-cop-009`.
-- the full candidate gate is unchanged: it must list and run at least 50 real
-  Electron tests and include the required manual and fixture-worker producers.
-
-Each producer owns an exclusive runtime/process receipt pair in its absolute
-receipt directory. Producer slugs are validated before file creation and
-receipt files use exclusive owner-only creation. Aggregation rejects duplicate
-or mismatched producers, count/index disagreement, inconsistent runtime
-identity, and unclean process exit. Compatibility top-level process fields are
-retained for existing evidence consumers.
-
-Manual Electron launch uses one shared launch/receipt owner. It records runtime
-identity immediately after process creation, before page readiness. If
-readiness fails, the shared owner closes the launched application, records the
-process postimage, and rethrows the original error; the caller's `finally`
-boundary flushes receipts. Successful callers receive the application, page,
-and already-recorded runtime without adding a duplicate runtime row. Provider
-cleanup remains in an outer `finally` boundary even when receipt flushing
-fails.
-
-The initial independent review (R5) rejected the launch ownership and cleanup
-gaps. R6 closed them with focused TSC/tests and failure injection; R7
-independent read-only re-review returned
-`PASS / P1_CLOSED / MVP_NOT_COMPLETE`. The exact nine-file repair is committed
-at `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
-
-This architecture validates source-side evidence ownership only. It does not
-create a candidate identity. Candidate commit, artifact SHA256, runtime ID,
-package proof, full Electron evidence, and independent product-experience
-retest remain unset.
-
-## Focused Electron Producer UserData Isolation
-
-The R20 focused run was rejected after EXP-COP-009 and EXP-COP-008 shared the
-worker-scoped userData directory. EXP-COP-009's persisted note and Todo then
-appeared in EXP-COP-008's exact source result. R21 classified this as
-`TEST_HARNESS_ISOLATION_DEFECT`, not a product retrieval or persistence defect.
-
-The R22 test harness keeps the wrapper-owned worker root but derives one
-validated producer path:
-
-`<workerRoot>/producers/<producer>`
-
-Producer slugs use the same fail-closed contract as receipt ownership. Each
-manual spec creates its producer directory once and reuses that exact directory
-across its own quit/relaunch journey; EXP-COP-008 and EXP-COP-009 never share
-the same child directory. No test deletes another producer's data to
-manufacture isolation, and exact source assertions remain unchanged.
-
-This is test-harness isolation only. It does not change the Electron product's
-userData selection or any product persistence, retrieval, RAG, WIKI, Todo, or
-Ask behavior. R22 RED-to-GREEN and desktop TSC receipts therefore do not create
-a candidate identity or runtime proof. The exact repair is committed at
-`92510816932d0683e95a148789227c6cda0d55a3`.
-
-## Packaged E2E Credential-Protection Boundary
-
-R18 proved offline packaging through the supported
-`--config.electronDist` path, then failed in focused packaged Electron before
-the synthetic settings credential save completed. It did not establish a
-candidate.
-
-R19 changes only the Electron E2E launch harness and its unit contract.
-Production preload, main IPC, settings persistence, credential binding, and
-Electron `safeStorage` code are unchanged. On macOS, the harness adds exactly
-one mock-keychain switch only when all three conditions hold:
-
-1. platform is Darwin;
-2. `NODE_ENV=test`;
-3. `COPILOT_E2E=1`.
-
-This boundary is `PACKAGED_E2E_MOCK_KEYCHAIN`. It isolates synthetic E2E
-credentials from real user Keychain state. It does not prove normal packaged
-runtime Keychain behavior; that truth remains
-`REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
-
-The exact rereviewed test-only postimages are fixture
-`b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`
-and unit test
-`ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
-Independent implementation rereview returned
-`PASS / P0=0 / P1=0 / P2=0`. The initial controller wrapper preserved
-`RESOURCE_DEFER_NO_TEST` before command start and consumed no attempt. Its
-successor ran the exact focused unit command once and returned
-`GREEN_15_OF_15_PASS` (`1 file / 15 tests`, exit `0`, no retry). This unit
-GREEN did not run Electron and does not change
-`REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
-The exact two-file test-only repair is committed at
-`54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`; this is still not a candidate
-identity.
-
-## Explicit Non-Goals
-
-This stage does not include Windows expansion, Remote/Backup expansion, major
-dependency upgrades, visual redesign, signing, notarization, or release
-readiness claims. Focused development evidence does not replace the
-candidate-bound project-wide Electron, release, or independent experience
-gates.
+Even a successful R30 run is only `PASS_UNSIGNED_DIAGNOSTIC_CANDIDATE`; it remains `MVP_NOT_COMPLETE` and `BLOCKED_UNSIGNED_NOT_NOTARIZED` pending independent Codex acceptance, performance/verify-fix closure, embedded local-ASR runtime proof, Developer ID signing, notarization/stapling/validation, and Human Owner Gate.
