@@ -2,21 +2,48 @@ import { describe, expect, it } from 'vitest';
 import {
   PHASE1_RELEASE_EXCLUSIONS,
   PHASE1_RELEASE_EXCLUSION_RATIONALE,
+  PHASE1_RELEASE_SOURCE_EXCLUSIONS,
+  PHASE1_RELEASE_SOURCE_EXCLUSION_RATIONALE,
 } from './phase1-release-scope.js';
 
-describe('Phase 1 release test scope', () => {
-  it('uses one sorted, duplicate-free, fully explained exclusion set', () => {
-    expect(PHASE1_RELEASE_EXCLUSIONS).toEqual([...PHASE1_RELEASE_EXCLUSIONS].sort());
-    expect(new Set(PHASE1_RELEASE_EXCLUSIONS).size).toBe(PHASE1_RELEASE_EXCLUSIONS.length);
-    expect(Object.keys(PHASE1_RELEASE_EXCLUSION_RATIONALE).sort())
-      .toEqual([...PHASE1_RELEASE_EXCLUSIONS]);
-    for (const reason of Object.values(PHASE1_RELEASE_EXCLUSION_RATIONALE)) {
-      expect(reason.length).toBeGreaterThan(30);
-    }
+function expectGovernedScope(
+  exclusions: readonly string[],
+  rationale: Readonly<Record<string, string>>,
+): void {
+  expect(exclusions).toEqual([...exclusions].sort());
+  expect(new Set(exclusions).size).toBe(exclusions.length);
+  expect(Object.keys(rationale).sort()).toEqual([...exclusions]);
+  for (const reason of Object.values(rationale)) {
+    expect(reason.length).toBeGreaterThan(60);
+  }
+}
+
+describe('Phase 1 release scope', () => {
+  it('uses sorted, duplicate-free, fully explained test and source exclusion sets', () => {
+    expectGovernedScope(PHASE1_RELEASE_EXCLUSIONS, PHASE1_RELEASE_EXCLUSION_RATIONALE);
+    expectGovernedScope(
+      PHASE1_RELEASE_SOURCE_EXCLUSIONS,
+      PHASE1_RELEASE_SOURCE_EXCLUSION_RATIONALE,
+    );
   });
 
-  it('never excludes packaged Electron, current candidate runner, RAG or source-scope contracts', () => {
+  it('never excludes packaged Electron, current candidate runner, RAG or scope governance', () => {
     const serialized = JSON.stringify(PHASE1_RELEASE_EXCLUSIONS);
     expect(serialized).not.toMatch(/e2e|candidate-r30|rag|phase1-release-scope/u);
+  });
+
+  it('keeps every Phase 1 critical product source inside global coverage', () => {
+    const serialized = JSON.stringify(PHASE1_RELEASE_SOURCE_EXCLUSIONS);
+    expect(serialized).not.toMatch(
+      /local-knowledge-service|domain-ipc|preload|media-permission|VoiceInput|AskWorkspace|KnowledgeWorkspace|ScheduleWorkspace|copilot-api/u,
+    );
+  });
+
+  it('limits source exclusions to explicit owner-deferred, bootstrap or evidence infrastructure', () => {
+    for (const source of PHASE1_RELEASE_SOURCE_EXCLUSIONS) {
+      expect(source).toMatch(
+        /backup|remote|prototype|main\.tsx|main\.ts|local-asr-worker|local-telemetry|direct-performance-probe/u,
+      );
+    }
   });
 });
