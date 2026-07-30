@@ -19,10 +19,11 @@ This report covers GitHub-source work only. ChatGPT did not execute a local Elec
 ## Scope
 
 1. Reconcile the six low-confidence documents added to `main` without allowing them to replace detailed v6.2/local-first/fail-closed truth.
-2. Create a brand-new successor to rejected R28.
-3. Close the source contracts for Gate 2, Gate 3, and Gate 9.
-4. Define the remaining candidate-bound receipt path for MiniMax Code.
-5. Preserve `BLOCKED / MVP_NOT_COMPLETE` and the GitHub → MiniMax Code → Codex role split.
+2. Preserve the exact pre-R30 root state/status/TODO/changelog/architecture so concise current mirrors cannot erase accepted evidence.
+3. Create a brand-new successor to rejected R28.
+4. Close the source contracts for Gate 2, Gate 3, and Gate 9.
+5. Define the remaining candidate-bound receipt path for MiniMax Code.
+6. Preserve `BLOCKED / MVP_NOT_COMPLETE` and the GitHub → MiniMax Code → Codex role split.
 
 No product feature, data schema, provider behavior, dependency version, Windows scope, Tencent deployment, Remote/live, backup, signing, or notarization implementation changed.
 
@@ -39,17 +40,20 @@ No product feature, data schema, provider behavior, dependency version, Windows 
 9. `docs/RISKS.md`
 10. `docs/TODO.md`
 11. `docs/development/R30_REMOTE_DEVELOPMENT_REPORT_2026-07-30.md`
-12. `docs/history/ARCHITECTURE_PRE_R30.md` (exact pre-R30 blob preserved)
-13. `docs/history/CHANGELOG_PRE_R30.md` (exact pre-R30 blob preserved)
-14. `scripts/candidate-r30/README.md`
-15. `scripts/candidate-r30/contract.mjs`
-16. `scripts/candidate-r30/contract.test.mjs`
-17. `scripts/candidate-r30/document-authority.test.mjs`
-18. `scripts/candidate-r30/io.mjs`
-19. `scripts/candidate-r30/gates-build.mjs`
-20. `scripts/candidate-r30/gates-electron.mjs`
-21. `scripts/candidate-r30/run-candidate.mjs`
-22. `scripts/candidate-r30/runner.test.mjs`
+12. `docs/history/PROJECT_STATE_PRE_R30.yaml` (exact pre-R30 blob preserved)
+13. `docs/history/PROJECT_STATUS_PRE_R30.md` (exact pre-R30 blob preserved)
+14. `docs/history/TODO_PRE_R30.md` (exact pre-R30 blob preserved)
+15. `docs/history/ARCHITECTURE_PRE_R30.md` (exact pre-R30 blob preserved)
+16. `docs/history/CHANGELOG_PRE_R30.md` (exact pre-R30 blob preserved)
+17. `scripts/candidate-r30/README.md`
+18. `scripts/candidate-r30/contract.mjs`
+19. `scripts/candidate-r30/contract.test.mjs`
+20. `scripts/candidate-r30/document-authority.test.mjs`
+21. `scripts/candidate-r30/io.mjs`
+22. `scripts/candidate-r30/gates-build.mjs`
+23. `scripts/candidate-r30/gates-electron.mjs`
+24. `scripts/candidate-r30/run-candidate.mjs`
+25. `scripts/candidate-r30/runner.test.mjs`
 
 ## RED→GREEN Commands and Exit Codes
 
