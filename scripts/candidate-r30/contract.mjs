@@ -1,11 +1,15 @@
 import { createHash } from 'node:crypto';
-import { lstat, readFile, realpath } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { lstat, open, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 export const EXACT_TESTS = 113;
 export const EXACT_FILES = 9;
 export const NETWORK_PROFILE = '(version 1)\n(allow default)\n(deny network*)\n';
+export const LEDGER_SCOPE = 'all-git-tracked-regular-files-v1';
+/** Critical runner inputs are named in the plan; the executed ledger covers every tracked file. */
 export const CONTROL_FILES = Object.freeze([
+  '.github/workflows/copilot-source-gate.yml',
   'apps/copilot-desktop/electron-builder.yml',
   'apps/copilot-desktop/package.json',
   'apps/copilot-desktop/playwright.electron.config.ts',
@@ -117,12 +121,24 @@ export async function resolveEvidenceTarget(repoRoot, evidenceDir) {
   return target;
 }
 function relativeFile(value) {
-  if (!value || path.isAbsolute(value) || value.includes('\\') || value.split('/').includes('..')) {
+  if (!value || path.isAbsolute(value) || value.includes('\\') || /[\u0000-\u001f\u007f]/u.test(value)
+    || value.split('/').includes('..')) {
     block('BLOCKED_GATE_3_LEDGER_PATH_INVALID', 3, String(value));
   }
   const normalized = path.posix.normalize(value);
   if (normalized !== value || normalized === '.') block('BLOCKED_GATE_3_LEDGER_PATH_INVALID', 3, value);
   return normalized;
+}
+export function trackedFilesFromGit(output) {
+  if (typeof output !== 'string' || output.length === 0 || !output.endsWith('\0')) {
+    block('BLOCKED_GATE_3_TRACKED_FILE_LIST_INVALID', 3);
+  }
+  const raw = output.split('\0');
+  raw.pop();
+  const files = raw.map(relativeFile);
+  if (files.length === 0) block('BLOCKED_GATE_3_TRACKED_FILE_LIST_EMPTY', 3);
+  if (new Set(files).size !== files.length) block('BLOCKED_GATE_3_LEDGER_DUPLICATE', 3);
+  return files.sort();
 }
 export async function generatedInputsAbsent(repoRoot, paths = GENERATED_INPUTS) {
   for (const value of paths) {
@@ -136,13 +152,39 @@ export async function generatedInputsAbsent(repoRoot, paths = GENERATED_INPUTS) 
   }
   return true;
 }
-async function fileDigest(repoRoot, relative) {
-  const absolute = path.resolve(repoRoot, relative); const stat = await lstat(absolute);
-  if (!stat.isFile() || stat.isSymbolicLink()) block('BLOCKED_GATE_3_CONTROL_FILE_NOT_REGULAR', 3, relative);
-  return createHash('sha256').update(await readFile(absolute)).digest('hex');
+async function fileIdentity(repoRoot, relative) {
+  const absolute = path.resolve(repoRoot, relative);
+  if (!inside(repoRoot, absolute)) block('BLOCKED_GATE_3_LEDGER_PATH_OUTSIDE_REPO', 3, relative);
+  let handle;
+  try {
+    handle = await open(absolute, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+  } catch (error) {
+    block('BLOCKED_GATE_3_CONTROL_FILE_OPEN', 3, relative, { code: error?.code ?? null });
+  }
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.nlink !== 1) {
+      block('BLOCKED_GATE_3_CONTROL_FILE_NOT_REGULAR', 3, relative, { nlink: stat.nlink });
+    }
+    const bytes = await handle.readFile();
+    return { path: relative, bytes: stat.size, sha256: createHash('sha256').update(bytes).digest('hex') };
+  } finally {
+    await handle.close();
+  }
 }
-export function validateLedger(ledger, expected = CONTROL_FILES) {
-  if (ledger?.schemaVersion !== 1 || ledger?.algorithm !== 'sha256' || !Array.isArray(ledger.files)) {
+function aggregateLedger(files) {
+  const hash = createHash('sha256');
+  hash.update(`${LEDGER_SCOPE}\0`);
+  for (const entry of files) hash.update(`${entry.path}\0${entry.bytes}\0${entry.sha256}\0`);
+  return hash.digest('hex');
+}
+export function validateLedger(ledger, expected) {
+  if (!Array.isArray(expected) || expected.length === 0 || new Set(expected).size !== expected.length) {
+    block('BLOCKED_GATE_3_EXPECTED_FILE_SET_INVALID', 3);
+  }
+  if (ledger?.schemaVersion !== 2 || ledger?.algorithm !== 'sha256' || ledger?.scope !== LEDGER_SCOPE
+    || !Array.isArray(ledger.files) || !Number.isSafeInteger(ledger.fileCount)
+    || !SHA256.test(ledger.aggregateSha256 ?? '')) {
     block('BLOCKED_GATE_3_LEDGER_SCHEMA', 3);
   }
   fullCommit(ledger.sourceCommit, 'ledger');
@@ -150,19 +192,28 @@ export function validateLedger(ledger, expected = CONTROL_FILES) {
   for (const entry of ledger.files) {
     const relative = relativeFile(entry?.path);
     if (seen.has(relative)) block('BLOCKED_GATE_3_LEDGER_DUPLICATE', 3, relative);
+    if (!Number.isSafeInteger(entry?.bytes) || entry.bytes < 0) block('BLOCKED_GATE_3_FILE_SIZE_INVALID', 3, relative);
     if (!SHA256.test(entry?.sha256 ?? '')) block('BLOCKED_GATE_3_SHA256_INVALID', 3, relative);
     seen.add(relative); paths.push(relative);
   }
   const wanted = expected.map(relativeFile).sort(); paths.sort();
-  if (JSON.stringify(paths) !== JSON.stringify(wanted)) block('BLOCKED_GATE_3_LEDGER_FILE_SET', 3);
+  if (ledger.fileCount !== ledger.files.length || JSON.stringify(paths) !== JSON.stringify(wanted)) {
+    block('BLOCKED_GATE_3_LEDGER_FILE_SET', 3);
+  }
+  if (ledger.aggregateSha256 !== aggregateLedger([...ledger.files].sort((a, b) => a.path.localeCompare(b.path)))) {
+    block('BLOCKED_GATE_3_AGGREGATE_INVALID', 3);
+  }
   return true;
 }
-export async function buildLedger(repoRoot, sourceCommit, expected = CONTROL_FILES) {
+export async function buildLedger(repoRoot, sourceCommit, expected) {
   fullCommit(sourceCommit, 'ledger');
-  if (new Set(expected).size !== expected.length) block('BLOCKED_GATE_3_LEDGER_DUPLICATE', 3);
+  if (!Array.isArray(expected) || expected.length === 0 || new Set(expected).size !== expected.length) {
+    block('BLOCKED_GATE_3_EXPECTED_FILE_SET_INVALID', 3);
+  }
   const files = [];
-  for (const relative of [...expected].map(relativeFile).sort()) files.push({ path: relative, sha256: await fileDigest(repoRoot, relative) });
-  const ledger = { schemaVersion: 1, algorithm: 'sha256', sourceCommit, files };
+  for (const relative of [...expected].map(relativeFile).sort()) files.push(await fileIdentity(repoRoot, relative));
+  const ledger = { schemaVersion: 2, algorithm: 'sha256', scope: LEDGER_SCOPE, sourceCommit,
+    fileCount: files.length, aggregateSha256: aggregateLedger(files), files };
   validateLedger(ledger, expected); return ledger;
 }
 export function exactDiscovery(output) {
