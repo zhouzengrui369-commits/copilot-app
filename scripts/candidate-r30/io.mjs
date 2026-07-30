@@ -119,10 +119,10 @@ export function canonical(value) {
 }
 export async function screenshotManifest(evidenceDir) {
   const root = path.join(evidenceDir, 'screenshots'); let entries;
-  try { entries = await walk(root); } catch (error) { if (error?.code === 'ENOENT') block('BLOCKED_GATE_11_SCREENSHOTS_MISSING', 11); throw error; }
+  try { entries = await walk(root); } catch (error) { if (error?.code === 'ENOENT') block('BLOCKED_GATE_12_SCREENSHOTS_MISSING', 12); throw error; }
   const result = [];
-  for (const { absolute, entry } of entries) if (entry.isFile() && entry.name.endsWith('.png')) result.push({ path: path.relative(evidenceDir, absolute).split(path.sep).join('/'), sha256: await sha256File(absolute, { gate: 11 }) });
-  if (!result.length) block('BLOCKED_GATE_11_SCREENSHOTS_MISSING', 11);
+  for (const { absolute, entry } of entries) if (entry.isFile() && entry.name.endsWith('.png')) result.push({ path: path.relative(evidenceDir, absolute).split(path.sep).join('/'), sha256: await sha256File(absolute, { gate: 12 }) });
+  if (!result.length) block('BLOCKED_GATE_12_SCREENSHOTS_MISSING', 12);
   return result.sort((a, b) => a.path.localeCompare(b.path));
 }
 export function asBlocked(error) {
