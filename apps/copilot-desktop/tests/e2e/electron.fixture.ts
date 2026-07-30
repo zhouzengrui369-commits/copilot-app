@@ -267,6 +267,19 @@ interface ElectronReceiptDirectories {
   processExitReceiptDirectory: string | undefined;
 }
 
+export function resolveElectronProducerUserDataPath(
+  workerRoot: string,
+  producer: string,
+): string {
+  if (!path.isAbsolute(workerRoot)) {
+    throw new Error('BLOCKED_ELECTRON_USER_DATA_ROOT_INVALID');
+  }
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(producer)) {
+    throw new Error('BLOCKED_ELECTRON_USER_DATA_PRODUCER_INVALID');
+  }
+  return path.join(workerRoot, 'producers', producer);
+}
+
 export function resolveElectronReceiptPaths(
   producer: string,
   {

@@ -1,3 +1,4 @@
+import { mkdir } from 'node:fs/promises';
 import {
   _electron as electron,
   type ElectronApplication,
@@ -10,6 +11,7 @@ import {
   launchElectronWithReceipt,
   openView,
   resolveElectronLaunchContract,
+  resolveElectronProducerUserDataPath,
   test,
   waitForElectronFirstWindow,
   type ElectronRuntimeIdentity,
@@ -20,6 +22,7 @@ test.describe.configure({ mode: 'serial' });
 
 const TIMEOUT = 30_000;
 const CREDENTIAL = 'exp-cop-009-loopback-only';
+const PRODUCER = 'exp-cop-009';
 
 async function launch(
   userDataPath: string,
@@ -74,6 +77,8 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
   e2eUserData,
 }) => {
   test.setTimeout(120_000);
+  const producerUserData = resolveElectronProducerUserDataPath(e2eUserData, PRODUCER);
+  await mkdir(producerUserData, { recursive: true });
   const provider = await startFakeMiniMaxProvider({ profile: 'success' });
   const token = `EXP COP 009 continuity ${Date.now()}`;
   const notePath = 'e2e/exp-cop-009-source';
@@ -81,10 +86,10 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
   let first: ElectronApplication | null = null;
   let second: ElectronApplication | null = null;
   let firstRuntimeIdentity: ElectronRuntimeIdentity | null = null;
-  const recorder = createElectronReceiptRecorder('exp-cop-009');
+  const recorder = createElectronReceiptRecorder(PRODUCER);
   try {
     ({ app: first, runtimeIdentity: firstRuntimeIdentity } = await launch(
-      e2eUserData,
+      producerUserData,
       recorder,
     ));
     let page = await first.firstWindow();
@@ -183,7 +188,7 @@ test('EXP-COP-009 keeps Ask, exact source, action receipt, and return state thro
       signalCode: null,
       error: null,
     });
-    const secondLaunch = await launch(e2eUserData, recorder);
+    const secondLaunch = await launch(producerUserData, recorder);
     second = secondLaunch.app;
     page = secondLaunch.page;
     expect(secondLaunch.runtimeIdentity).toEqual(firstRuntimeIdentity);

@@ -1,3 +1,4 @@
+import { mkdir } from 'node:fs/promises';
 import {
   _electron as electron,
   type ElectronApplication,
@@ -10,6 +11,7 @@ import {
   launchElectronWithReceipt,
   openView,
   resolveElectronLaunchContract,
+  resolveElectronProducerUserDataPath,
   test,
   waitForElectronFirstWindow,
 } from './electron.fixture.js';
@@ -19,6 +21,7 @@ test.describe.configure({ mode: 'serial' });
 
 const TERMINAL_TIMEOUT_MS = 30_000;
 const SYNTHETIC_LOOPBACK_CREDENTIAL = 'exp-cop-008-loopback-only';
+const PRODUCER = 'exp-cop-008';
 
 function localInput(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
@@ -87,6 +90,8 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
   e2eUserData,
 }) => {
   test.setTimeout(120_000);
+  const producerUserData = resolveElectronProducerUserDataPath(e2eUserData, PRODUCER);
+  await mkdir(producerUserData, { recursive: true });
   const provider = await startFakeMiniMaxProvider({ profile: 'success' });
   const notePaths = [
     'e2e/exp-cop-008-source-a',
@@ -108,10 +113,10 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
   let second: ElectronApplication | null = null;
   let unscheduledTodoId = '';
   let explicitTodoId = '';
-  const recorder = createElectronReceiptRecorder('exp-cop-008');
+  const recorder = createElectronReceiptRecorder(PRODUCER);
 
   try {
-    ({ app: first } = await launchIsolatedElectron(e2eUserData, recorder));
+    ({ app: first } = await launchIsolatedElectron(producerUserData, recorder));
     const firstPage = await first.firstWindow();
     await firstPage.evaluate(
       async ({ baseUrl, credential }: { baseUrl: string; credential: string }) => {
@@ -303,7 +308,7 @@ test('EXP-COP-008 preserves two sources, unscheduled and explicit-due Todos, mem
     });
     first = null;
 
-    ({ app: second } = await launchIsolatedElectron(e2eUserData, recorder));
+    ({ app: second } = await launchIsolatedElectron(producerUserData, recorder));
     const secondPage = await second.firstWindow();
     await openView(secondPage, 'schedule');
     await secondPage.getByRole('button', { name: '未安排' }).click();

@@ -1,4 +1,6 @@
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
+import * as electronFixture from './e2e/electron.fixture.js';
 import {
   buildElectronLaunchArgs,
   launchElectronWithReceipt,
@@ -27,6 +29,59 @@ function identity(
 const canonicalizeSame = async (expected: string, actual: string) => ({
   expected,
   actual,
+});
+
+type ProducerUserDataPathResolver = (
+  workerRoot: string,
+  producer: string,
+) => string;
+
+function requireProducerUserDataPathResolver(): ProducerUserDataPathResolver {
+  const resolver = (
+    electronFixture as unknown as {
+      resolveElectronProducerUserDataPath?: ProducerUserDataPathResolver;
+    }
+  ).resolveElectronProducerUserDataPath;
+  expect(resolver).toBeTypeOf('function');
+  return resolver as ProducerUserDataPathResolver;
+}
+
+describe('Electron per-producer user-data isolation', () => {
+  it('resolves the same stable path for the same producer', () => {
+    const resolveProducerUserDataPath = requireProducerUserDataPathResolver();
+
+    expect(resolveProducerUserDataPath('/isolated/user-data', 'exp-cop-008')).toBe(
+      path.join('/isolated/user-data', 'producers', 'exp-cop-008'),
+    );
+    expect(resolveProducerUserDataPath('/isolated/user-data', 'exp-cop-008')).toBe(
+      path.join('/isolated/user-data', 'producers', 'exp-cop-008'),
+    );
+  });
+
+  it('resolves EXP-COP-008 and EXP-COP-009 to distinct sibling paths', () => {
+    const resolveProducerUserDataPath = requireProducerUserDataPathResolver();
+    const exp008 = resolveProducerUserDataPath('/isolated/user-data', 'exp-cop-008');
+    const exp009 = resolveProducerUserDataPath('/isolated/user-data', 'exp-cop-009');
+
+    expect(exp008).toBe(path.join('/isolated/user-data', 'producers', 'exp-cop-008'));
+    expect(exp009).toBe(path.join('/isolated/user-data', 'producers', 'exp-cop-009'));
+    expect(exp008).not.toBe(exp009);
+    expect(path.dirname(exp008)).toBe(path.dirname(exp009));
+  });
+
+  it('fails closed on a relative worker root with the exact code', () => {
+    const resolveProducerUserDataPath = requireProducerUserDataPathResolver();
+
+    expect(() => resolveProducerUserDataPath('relative/user-data', 'exp-cop-008'))
+      .toThrow('BLOCKED_ELECTRON_USER_DATA_ROOT_INVALID');
+  });
+
+  it('fails closed on an unsafe producer slug with the exact code', () => {
+    const resolveProducerUserDataPath = requireProducerUserDataPathResolver();
+
+    expect(() => resolveProducerUserDataPath('/isolated/user-data', '../shared'))
+      .toThrow('BLOCKED_ELECTRON_USER_DATA_PRODUCER_INVALID');
+  });
 });
 
 describe('Electron fixture bounded first-window readiness', () => {
