@@ -1,3 +1,4 @@
+import { randomUUID, webcrypto } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AudioPcmError,
@@ -6,11 +7,12 @@ import {
   type AudioBufferLike,
   type AudioPcmCryptoLike,
   type DecodeAudioContextLike,
+  type OfflineAudioBufferLike,
   type OfflineAudioContextLike,
+  type OfflineAudioSourceLike,
 } from '../src/renderer/components/VoiceInput/audio-pcm.js';
 import { LOCAL_ASR_SAMPLE_RATE } from '../src/shared/local-asr.js';
 
-const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const originalAudioContext = Object.getOwnPropertyDescriptor(window, 'AudioContext');
 const originalOfflineAudioContext = Object.getOwnPropertyDescriptor(window, 'OfflineAudioContext');
 const originalCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
@@ -46,9 +48,9 @@ function buffer(
 
 function cryptoMock(overrides: Partial<AudioPcmCryptoLike> = {}): AudioPcmCryptoLike {
   return {
-    randomUUID: () => REQUEST_ID,
+    randomUUID,
     subtle: {
-      digest: async () => Uint8Array.from({ length: 32 }, (_, index) => index).buffer,
+      digest: (algorithm, data) => webcrypto.subtle.digest(algorithm, data),
     },
     ...overrides,
   } as AudioPcmCryptoLike;
@@ -67,14 +69,15 @@ function contexts(
   const decodeAudioData = vi.fn(async () => decoded);
   const createDecodeContext = () => ({ decodeAudioData, close } satisfies DecodeAudioContextLike);
   const copyToChannel = vi.fn();
-  const source = {
+  const input: OfflineAudioBufferLike = { copyToChannel };
+  const source: OfflineAudioSourceLike = {
     buffer: null,
     connect: vi.fn(),
     start: vi.fn(),
   };
   const offline: OfflineAudioContextLike = {
     destination: {},
-    createBuffer: vi.fn(() => ({ copyToChannel })),
+    createBuffer: vi.fn(() => input),
     createBufferSource: vi.fn(() => source),
     startRendering: vi.fn(overrides.startRendering ?? (async () => rendered)),
   };
@@ -87,6 +90,7 @@ function contexts(
     decodeAudioData,
     createDecodeContext,
     copyToChannel,
+    input,
     source,
     offline,
     createOfflineContext,
@@ -118,7 +122,7 @@ describe('local ASR PCM conversion critical edges', () => {
     });
 
     expect(request).toMatchObject({
-      requestId: REQUEST_ID,
+      requestId: expect.stringMatching(/^[0-9a-f-]{36}$/iu),
       format: 'PCM16LE',
       sampleRate: 16_000,
       channels: 1,
@@ -128,6 +132,7 @@ describe('local ASR PCM conversion critical edges', () => {
     });
     expect(Array.from(request.pcm)).toEqual([255, 127, 0, 128]);
     expect(deps.copyToChannel).toHaveBeenCalledWith(Float32Array.from([0.75, -0.75]), 0);
+    expect(deps.source.buffer).toBe(deps.input);
     expect(deps.source.connect).toHaveBeenCalledWith(deps.offline.destination);
     expect(deps.source.start).toHaveBeenCalledWith(0);
     expect(deps.close).toHaveBeenCalledTimes(1);
@@ -147,10 +152,10 @@ describe('local ASR PCM conversion critical edges', () => {
         public readonly length: number,
         public readonly sampleRate: number,
       ) {}
-      createBuffer() {
+      createBuffer(): OfflineAudioBufferLike {
         return { copyToChannel: vi.fn() };
       }
-      createBufferSource() {
+      createBufferSource(): OfflineAudioSourceLike {
         return { buffer: null, connect: vi.fn(), start: vi.fn() };
       }
       async startRendering() {
@@ -168,7 +173,7 @@ describe('local ASR PCM conversion critical edges', () => {
     });
 
     await expect(buildLocalAsrDecodeRequest(new Blob([Uint8Array.of(1)])))
-      .resolves.toMatchObject({ requestId: REQUEST_ID, sampleCount: 2 });
+      .resolves.toMatchObject({ sampleCount: 2, sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) });
   });
 
   it('rejects unsupported, empty and oversized capture envelopes before decoding', async () => {
