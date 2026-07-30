@@ -85,6 +85,7 @@ r31:
     vector_model_invariant: "one embedding model at a time; incompatible vectors rotate while durable local text remains"
     local_asr: "source and package contracts retained; real offline packaged runtime remains an acceptance gate"
     candidate_runner: "12 fail-closed gates"
+    canonical_arm64_authority: "selected arm64 ZIP/DMG and identity reports are independently revalidated; legacy x64/Windows blockers are quarantined only after arm64 authority passes"
   github_validation:
     runtime: Node_24_macOS
     workflow: copilot-source-gate
@@ -101,7 +102,7 @@ r31:
     gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
     gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
     gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
-    gate_6: "canonical unsigned macOS arm64 ZIP and DMG"
+    gate_6: "arm64-authority wrapper requires exact canonical unsigned macOS arm64 ZIP/DMG, release identity, artifact identity reports and hashes; non-authoritative x64/Windows blockers cannot promote or block arm64 after independent validation"
     gate_7: "canonical source snapshot and ZIP/DMG/app/executable/app.asar identities"
     gate_8: "focused packaged Electron 2/2"
     gate_9: "exact discovery 113 tests in 9 files and complete E2E source manifest"
