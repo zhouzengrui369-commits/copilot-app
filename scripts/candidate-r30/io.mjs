@@ -85,7 +85,14 @@ export async function walk(root) {
   const result = [];
   async function visit(directory) {
     const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name));
-    for (const entry of entries) { const absolute = path.join(directory, entry.name); result.push({ absolute, entry }); if (entry.isDirectory()) await visit(absolute); }
+    for (const entry of entries) {
+      const absolute = path.join(directory, entry.name);
+      result.push({ absolute, entry });
+      // Treat macOS application bundles as atomic artifacts. Electron helper
+      // applications live inside the main .app and must not be mistaken for
+      // additional top-level candidates.
+      if (entry.isDirectory() && !entry.name.endsWith('.app')) await visit(absolute);
+    }
   }
   await visit(root); return result;
 }
