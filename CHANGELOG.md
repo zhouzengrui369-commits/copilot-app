@@ -25,7 +25,8 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 - Gate 2 now resolves and records an absolute npm executable before entering the fail-closed macOS network sandbox.
 - Gate 3 now hashes every Git-tracked regular file with no-follow reads and records an aggregate SHA256.
 - Gate 5 now includes the complete Phase 1 source suite, strict global/critical coverage, desktop build, and production CycloneDX SBOM.
-- Gate 6 reuses the canonical unsigned macOS arm64 release builder; Gate 7 binds snapshot, ZIP, DMG, app, executable, and `app.asar` identities.
+- Gate 6 now routes the legacy canonical builder through an R31 macOS-arm64 authority wrapper. The wrapper independently revalidates the selected arm64 ZIP, DMG, release identity, per-artifact identity reports, source snapshot, byte sizes, and SHA256 values. Legacy x64/Windows matrix blockers are quarantined only after those arm64 checks pass; an arm64 build/DMG/identity blocker remains fatal.
+- Gate 7 binds snapshot, ZIP, DMG, app, executable, and `app.asar` identities.
 - Gate 9 hashes every E2E spec, fixture, and helper in addition to exact `113 tests in 9 files` discovery.
 - Gate 11 requires three distinct candidate-bound `r31-v1` performance records plus one hash-bound aggregate.
 - Gate 12 owns screenshots and the final candidate manifest/receipt.
