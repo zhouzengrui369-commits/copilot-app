@@ -19,6 +19,10 @@ The owner-approved baseline remains `goal.md`, `plan.md`, `rules.md`, and `deliv
 - Parent Draft PR: `#12`
 - Bounded successor branch: `agent/r30-github-bound-candidate-runner`
 
+## Preserved Detailed Handoff
+
+The complete pre-R30 root state, status, TODO, changelog, and architecture are preserved byte-for-byte under `docs/history/PROJECT_STATE_PRE_R30.yaml`, `docs/history/PROJECT_STATUS_PRE_R30.md`, `docs/history/TODO_PRE_R30.md`, `docs/history/CHANGELOG_PRE_R30.md`, and `docs/history/ARCHITECTURE_PRE_R30.md`. R30 updates current fields only; it does not erase accepted development evidence or historical blockers.
+
 ## Phase 1 — Documentation Reconciliation
 
 The six low-confidence documents added on `main` were reviewed against the detailed root handoff. The generic architecture/status/risk/todo language was not accepted as a new baseline. The successor supplies explicit authority mirrors and preserves detailed strict local-first, fail-closed, Electron trust, grounded Ask/Todo, candidate receipt, and deferred-scope truth.
