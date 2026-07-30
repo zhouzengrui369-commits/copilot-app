@@ -4,8 +4,9 @@ import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs
 import os from 'node:os';
 import path from 'node:path';
 import {
-  CONTROL_FILES, GENERATED_INPUTS, NETWORK_PROFILE, bindCommit, buildLedger, classifyInstall, cleanStatus,
-  exactDiscovery, fullCommit, generatedInputsAbsent, offlineEnv, resolveEvidenceTarget, sandboxPlan, validateLedger,
+  CONTROL_FILES, GENERATED_INPUTS, LEDGER_SCOPE, NETWORK_PROFILE, bindCommit, buildLedger, classifyInstall, cleanStatus,
+  exactDiscovery, fullCommit, generatedInputsAbsent, offlineEnv, resolveEvidenceTarget, sandboxPlan, trackedFilesFromGit,
+  validateLedger,
 } from './contract.mjs';
 
 test('Gate 1 rejects abbreviated, uppercase, malformed, and mismatched commit identities', () => {
@@ -38,28 +39,39 @@ test('Gate 2 cache miss requires separate approval and never retries automatical
   });
   assert.equal(classifyInstall(0), null);
 });
-test('Gate 3 builds a sorted complete ledger of real 64-character SHA256 values', async () => {
+test('Gate 3 parses one complete NUL-delimited git tracked-file set', () => {
+  assert.deepEqual(trackedFilesFromGit('b.txt\0a.txt\0'), ['a.txt', 'b.txt']);
+  for (const value of ['', 'a.txt', 'a.txt\0a.txt\0', '../escape\0', 'bad\nname\0']) {
+    assert.throws(() => trackedFilesFromGit(value), /BLOCKED_GATE_3_/);
+  }
+});
+test('Gate 3 builds a sorted all-byte ledger with exact aggregate identity', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'r30-ledger-'));
   for (const relative of CONTROL_FILES) { const file = path.join(root, relative); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, `${relative}\n`); }
-  const ledger = await buildLedger(root, 'a'.repeat(40));
+  const ledger = await buildLedger(root, 'a'.repeat(40), CONTROL_FILES);
+  assert.equal(ledger.schemaVersion, 2);
+  assert.equal(ledger.scope, LEDGER_SCOPE);
+  assert.equal(ledger.fileCount, CONTROL_FILES.length);
   assert.deepEqual(ledger.files.map((entry) => entry.path), [...CONTROL_FILES].sort());
-  assert.equal(ledger.files.every((entry) => /^[0-9a-f]{64}$/u.test(entry.sha256)), true);
-  assert.equal(validateLedger(ledger), true);
+  assert.equal(ledger.files.every((entry) => Number.isSafeInteger(entry.bytes) && entry.bytes > 0 && /^[0-9a-f]{64}$/u.test(entry.sha256)), true);
+  assert.match(ledger.aggregateSha256, /^[0-9a-f]{64}$/u);
+  assert.equal(validateLedger(ledger, CONTROL_FILES), true);
+
+  const shortDigest = structuredClone(ledger); shortDigest.files[0].sha256 = 'a'.repeat(63);
+  assert.throws(() => validateLedger(shortDigest, CONTROL_FILES), /BLOCKED_GATE_3_SHA256_INVALID/);
+  const duplicate = structuredClone(ledger); duplicate.files.push({ ...duplicate.files[0] }); duplicate.fileCount += 1;
+  assert.throws(() => validateLedger(duplicate, CONTROL_FILES), /BLOCKED_GATE_3_LEDGER_DUPLICATE/);
+  const missing = structuredClone(ledger); missing.files.pop(); missing.fileCount -= 1;
+  assert.throws(() => validateLedger(missing, CONTROL_FILES), /BLOCKED_GATE_3_LEDGER_FILE_SET/);
+  const tamperedAggregate = structuredClone(ledger); tamperedAggregate.aggregateSha256 = 'b'.repeat(64);
+  assert.throws(() => validateLedger(tamperedAggregate, CONTROL_FILES), /BLOCKED_GATE_3_AGGREGATE_INVALID/);
 });
-test('Gate 3 rejects 63-character, missing, duplicate, and unknown entries', () => {
-  const files = CONTROL_FILES.map((entry) => ({ path: entry, sha256: 'a'.repeat(64) }));
-  const base = { schemaVersion: 1, algorithm: 'sha256', sourceCommit: 'a'.repeat(40), files };
-  assert.throws(() => validateLedger({ ...base, files: [{ ...files[0], sha256: 'a'.repeat(63) }, ...files.slice(1)] }), /BLOCKED_GATE_3_SHA256_INVALID/);
-  assert.throws(() => validateLedger({ ...base, files: files.slice(1) }), /BLOCKED_GATE_3_LEDGER_FILE_SET/);
-  assert.throws(() => validateLedger({ ...base, files: [...files, files[0]] }), /BLOCKED_GATE_3_LEDGER_DUPLICATE/);
-  assert.throws(() => validateLedger({ ...base, files: [...files.slice(0, -1), { path: 'unknown', sha256: 'b'.repeat(64) }] }), /BLOCKED_GATE_3_LEDGER_FILE_SET/);
-});
-test('Gate 3 rejects symlinked control files', async () => {
+test('Gate 3 rejects symlinked tracked files through no-follow open', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'r30-ledger-link-'));
   for (const relative of CONTROL_FILES) { const file = path.join(root, relative); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, 'ok\n'); }
   const first = path.join(root, CONTROL_FILES[0]); await chmod(first, 0o600); await rm(first); await writeFile(path.join(root, 'outside'), 'x');
   await symlink(path.join(root, 'outside'), first);
-  await assert.rejects(() => buildLedger(root, 'a'.repeat(40)), /BLOCKED_GATE_3_CONTROL_FILE_NOT_REGULAR/);
+  await assert.rejects(() => buildLedger(root, 'a'.repeat(40), CONTROL_FILES), /BLOCKED_GATE_3_CONTROL_FILE_(?:OPEN|NOT_REGULAR)/u);
 });
 test('Gate 9 accepts only exactly 113 tests in 9 files', () => {
   assert.deepEqual(exactDiscovery('Listing tests:\nTotal: 113 tests in 9 files\n'), { tests: 113, files: 9 });
