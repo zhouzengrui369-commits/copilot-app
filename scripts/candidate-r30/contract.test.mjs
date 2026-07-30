@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -71,7 +71,8 @@ test('Gate 9 accepts only exactly 113 tests in 9 files', () => {
 test('evidence path resolution rejects symlink aliases that land inside the repository', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'r30-evidence-')); const repo = path.join(root, 'repo'); const outside = path.join(root, 'outside');
   await mkdir(repo); await mkdir(outside);
-  assert.equal(await resolveEvidenceTarget(repo, path.join(outside, 'receipt')), path.join(outside, 'receipt'));
+  const canonicalOutside = await realpath(outside);
+  assert.equal(await resolveEvidenceTarget(repo, path.join(outside, 'receipt')), path.join(canonicalOutside, 'receipt'));
   const alias = path.join(root, 'alias'); await symlink(repo, alias);
   await assert.rejects(() => resolveEvidenceTarget(repo, path.join(alias, 'receipt')), /BLOCKED_EVIDENCE_DIR_INSIDE_REPO/);
 });
