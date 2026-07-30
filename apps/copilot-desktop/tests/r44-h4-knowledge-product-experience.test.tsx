@@ -26,7 +26,7 @@ describe('R44 H4 Knowledge product experience', () => {
     renderReadyKnowledge();
 
     const map = await screen.findByRole('navigation', { name: '知识地图' });
-    const projects = within(map).getByRole('button', {
+    const projects = await within(map).findByRole('button', {
       name: /projects.*1 条笔记/u,
     });
     fireEvent.click(projects);
@@ -51,7 +51,7 @@ describe('R44 H4 Knowledge product experience', () => {
     renderReadyKnowledge();
 
     const map = await screen.findByRole('navigation', { name: '知识地图' });
-    fireEvent.click(within(map).getByRole('button', { name: /inbox.*1 条笔记/u }));
+    fireEvent.click(await within(map).findByRole('button', { name: /inbox.*1 条笔记/u }));
 
     const moc = await screen.findByTestId('knowledge-folder-moc');
     expect(moc).toHaveAttribute('data-folder-path', 'inbox');
@@ -70,7 +70,7 @@ describe('R44 H4 Knowledge product experience', () => {
     renderReadyKnowledge();
 
     const map = await screen.findByRole('navigation', { name: '知识地图' });
-    fireEvent.click(within(map).getByRole('button', { name: /projects.*1 条笔记/u }));
+    fireEvent.click(await within(map).findByRole('button', { name: /projects.*1 条笔记/u }));
     fireEvent.click(
       await screen.findByTestId('moc-topic-note-projects/copilot-html-first'),
     );
@@ -96,7 +96,7 @@ describe('R44 H4 Knowledge product experience', () => {
       'projects',
     );
 
-    fireEvent.click(within(map).getByRole('button', { name: /inbox.*1 条笔记/u }));
+    fireEvent.click(await within(map).findByRole('button', { name: /inbox.*1 条笔记/u }));
     fireEvent.click(await screen.findByTestId('moc-topic-note-inbox/mvp-acceptance'));
 
     const htmlReader = await screen.findByTestId('knowledge-document-reader');
