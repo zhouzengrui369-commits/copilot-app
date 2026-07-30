@@ -1,0 +1,115 @@
+name: copilot-source-gate
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/copilot-source-gate.yml"
+      - "apps/copilot-desktop/**"
+      - "packages/kb/**"
+      - "packages/kg/**"
+      - "packages/llm-client/**"
+      - "packages/rag/**"
+      - "scripts/candidate-r30/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - "PROJECT_STATE.yaml"
+      - "PROJECT_STATUS.md"
+      - "TODO.md"
+      - "CHANGELOG.md"
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: copilot-source-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  CI: "true"
+
+jobs:
+  source-gate:
+    name: Node 24 source gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install exact lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: R30 fail-closed source contracts
+        run: node --test scripts/candidate-r30/*.test.mjs
+
+      - name: R31 embedded RAG RED-to-GREEN slice
+        run: >-
+          npm run test --workspace @copilot/rag --
+          tests/embedded-local-provider.test.ts
+          tests/vector-model-rotation.test.ts
+
+      - name: Check local-first workspaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+            npm run check --workspace "$workspace"
+          done
+
+      - name: Unit and integration suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+            npm run test --workspace "$workspace"
+          done
+          npm run test:integration --workspace @copilot/desktop
+
+      - name: Strict coverage gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:coverage:global --workspace @copilot/rag
+          npm run test:coverage:critical --workspace @copilot/rag
+          npm run test:coverage:global --workspace @copilot/desktop
+          npm run test:coverage:critical --workspace @copilot/desktop
+
+      - name: Build ordered local-first dependencies and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build:workspace-deps --workspace @copilot/desktop
+          npm run build --workspace @copilot/desktop
+
+      - name: Require exact Electron suite discovery without launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_file="${RUNNER_TEMP}/electron-list.txt"
+          npm run test:e2e:electron --workspace @copilot/desktop -- --list 2>&1 | tee "$output_file"
+          node --input-type=module - "$output_file" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { exactDiscovery } from './scripts/candidate-r30/contract.mjs';
+          const file = process.argv[2];
+          const result = exactDiscovery(await readFile(file, 'utf8'));
+          if (result.tests !== 113 || result.files !== 9) process.exit(1);
+          console.log(`EXACT_DISCOVERY_PASS ${result.tests} tests in ${result.files} files`);
+          NODE
+
+      - name: Verify source tree stayed clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
