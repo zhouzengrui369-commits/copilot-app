@@ -176,7 +176,7 @@ describe('AskWorkspace final critical callbacks', () => {
         ask: vi.fn(async () => ({
           text: 'Grounded long-preview answer',
           sources: [NOTE_PATH],
-          sourceDetails: [{ notePath: NOTE_PATH, evidence: ['vector'], score: 0.99 }],
+          sourceDetails: [{ notePath: NOTE_PATH, evidence: ['vector' as const], score: 0.99 }],
         })),
       },
       todos: {
