@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -16,7 +16,7 @@ afterEach(() => {
 
 describe('source SQLite native binding final critical branch', () => {
   it('uses the current process uid when no explicit uid is injected', () => {
-    const root = mkdtempSync(path.join(os.tmpdir(), 'copilot-native-binding-'));
+    const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'copilot-native-binding-')));
     roots.push(root);
     const allowedTaskRoot = path.join(root, 'tasks');
     const sharedNodeModulesRoot = path.join(root, 'shared-node-modules');
