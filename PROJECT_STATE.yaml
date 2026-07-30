@@ -14,6 +14,12 @@ authority:
     - TODO.md
     - DECISIONS.md
     - CHANGELOG.md
+  preserved_pre_r30_detail:
+    - docs/history/PROJECT_STATE_PRE_R30.yaml
+    - docs/history/PROJECT_STATUS_PRE_R30.md
+    - docs/history/TODO_PRE_R30.md
+    - docs/history/CHANGELOG_PRE_R30.md
+    - docs/history/ARCHITECTURE_PRE_R30.md
   docs_mirrors:
     - docs/AI_HANDOVER.md
     - docs/ARCHITECTURE.md
