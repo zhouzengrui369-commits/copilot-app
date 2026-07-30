@@ -10,7 +10,7 @@ import {
   generatedInputsAbsent,
   trackedFilesFromGit,
 } from './contract.mjs';
-import { runCanonicalRelease } from './canonical-release.mjs';
+import { runCanonicalReleaseR31 } from './canonical-release-r31.mjs';
 import {
   findExecutable,
   git,
@@ -154,7 +154,7 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     networkAuthority: 'offline-only',
   });
 
-  const canonicalResult = await runCanonicalRelease({ sourceCommit, candidateId, evidenceDir });
+  const canonicalResult = await runCanonicalReleaseR31({ sourceCommit, candidateId, evidenceDir });
   cleanStatus(git(['status', '--porcelain=v1', '--untracked-files=all']));
   return {
     npm,
