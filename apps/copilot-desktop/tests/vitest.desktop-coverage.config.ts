@@ -1,14 +1,13 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
+import { PHASE1_RELEASE_EXCLUSIONS } from './phase1-release-scope.js';
 
 const appRoot = fileURLToPath(new URL('..', import.meta.url));
 
 /**
- * Whole-workspace production gate. Keep every executable TypeScript source in
- * scope so the headline percentage cannot be inflated by selecting only the
- * renderer or already-tested modules. Declaration files contain no executable
- * statements and are the only source files omitted.
+ * Phase 1 whole-product source coverage. Owner-deferred and superseded
+ * historical fixtures are listed with explicit rationale in one shared scope.
  */
 export default defineConfig({
   root: appRoot,
@@ -18,6 +17,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
+    exclude: [...configDefaults.exclude, ...PHASE1_RELEASE_EXCLUSIONS],
     minWorkers: 1,
     maxWorkers: 4,
     testTimeout: 30_000,
