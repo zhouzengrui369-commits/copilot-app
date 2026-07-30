@@ -179,8 +179,7 @@ export function buildElectronLaunchArgs({
     ? [`--user-data-dir=${e2eUserData}`]
     : [appRoot, `--user-data-dir=${e2eUserData}`];
   const useMockKeychain = (
-    !packagedExecutablePath
-    && platform === 'darwin'
+    platform === 'darwin'
     && nodeEnv === 'test'
     && copilotE2E === '1'
   );

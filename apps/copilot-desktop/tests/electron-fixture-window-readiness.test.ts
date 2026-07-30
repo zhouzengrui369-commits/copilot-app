@@ -172,8 +172,8 @@ describe('Electron fixture launch arguments', () => {
     expect(args.filter((arg) => arg === '--use-mock-keychain')).toHaveLength(1);
   });
 
-  it('keeps packaged release launch arguments free of the mock-keychain switch', () => {
-    expect(buildElectronLaunchArgs({
+  it('adds exactly one mock-keychain switch for a darwin packaged-release E2E test launch', () => {
+    const args = buildElectronLaunchArgs({
       appRoot,
       e2eUserData,
       packagedExecutablePath: '/Applications/Copilot.app/Contents/MacOS/Copilot',
@@ -181,11 +181,17 @@ describe('Electron fixture launch arguments', () => {
       platform: 'darwin',
       nodeEnv: 'test',
       copilotE2E: '1',
-    })).toEqual([`--user-data-dir=${e2eUserData}`]);
+    });
+
+    expect(args).toEqual([
+      `--user-data-dir=${e2eUserData}`,
+      '--use-mock-keychain',
+    ]);
+    expect(args.filter((arg) => arg === '--use-mock-keychain')).toHaveLength(1);
   });
 
-  it('keeps packaged non-release launch arguments free of the mock-keychain switch', () => {
-    expect(buildElectronLaunchArgs({
+  it('adds exactly one mock-keychain switch for a darwin packaged source-like E2E test launch', () => {
+    const args = buildElectronLaunchArgs({
       appRoot,
       e2eUserData,
       packagedExecutablePath: '/tmp/Copilot.app/Contents/MacOS/Copilot',
@@ -193,7 +199,14 @@ describe('Electron fixture launch arguments', () => {
       platform: 'darwin',
       nodeEnv: 'test',
       copilotE2E: '1',
-    })).toEqual([appRoot, `--user-data-dir=${e2eUserData}`]);
+    });
+
+    expect(args).toEqual([
+      appRoot,
+      `--user-data-dir=${e2eUserData}`,
+      '--use-mock-keychain',
+    ]);
+    expect(args.filter((arg) => arg === '--use-mock-keychain')).toHaveLength(1);
   });
 
   it('keeps non-darwin source-test launch arguments free of the mock-keychain switch', () => {
@@ -220,7 +233,31 @@ describe('Electron fixture launch arguments', () => {
     })).toEqual([appRoot, `--user-data-dir=${e2eUserData}`]);
   });
 
-  it('resolves a configured release executable without source or mock-keychain arguments', () => {
+  it('keeps darwin non-test E2E launch arguments free of the mock-keychain switch', () => {
+    expect(buildElectronLaunchArgs({
+      appRoot,
+      e2eUserData,
+      packagedExecutablePath: '/Applications/Copilot.app/Contents/MacOS/Copilot',
+      e2eMode: 'release',
+      platform: 'darwin',
+      nodeEnv: 'production',
+      copilotE2E: '1',
+    })).toEqual([`--user-data-dir=${e2eUserData}`]);
+  });
+
+  it('keeps darwin test launch arguments free of the mock-keychain switch outside E2E', () => {
+    expect(buildElectronLaunchArgs({
+      appRoot,
+      e2eUserData,
+      packagedExecutablePath: '/Applications/Copilot.app/Contents/MacOS/Copilot',
+      e2eMode: 'release',
+      platform: 'darwin',
+      nodeEnv: 'test',
+      copilotE2E: undefined,
+    })).toEqual([`--user-data-dir=${e2eUserData}`]);
+  });
+
+  it('resolves a configured release executable with PACKAGED_E2E_MOCK_KEYCHAIN test isolation', () => {
     const executablePath = '/Applications/Copilot.app/Contents/MacOS/Copilot';
     expect(resolveElectronLaunchContract({
       appRoot,
@@ -235,7 +272,10 @@ describe('Electron fixture launch arguments', () => {
       },
     })).toEqual({
       executablePath,
-      args: [`--user-data-dir=${e2eUserData}`],
+      args: [
+        `--user-data-dir=${e2eUserData}`,
+        '--use-mock-keychain',
+      ],
     });
   });
 
