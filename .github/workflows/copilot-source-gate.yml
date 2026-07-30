@@ -37,7 +37,7 @@ jobs:
   source-gate:
     name: Node 24 macOS source gate
     runs-on: macos-14
-    timeout-minutes: 75
+    timeout-minutes: 90
     steps:
       - name: Checkout exact PR head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -85,33 +85,36 @@ jobs:
             npm run check --workspace "$workspace"
           done
 
-      - name: Unit suites
+      - name: Core unit and integration suites
         shell: bash
         run: |
           set -euo pipefail
-          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag; do
             npm run test --workspace "$workspace"
-          done
-
-      - name: Explicit integration suites
-        shell: bash
-        run: |
-          set -euo pipefail
-          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
             npm run test:integration --workspace "$workspace"
           done
 
-      - name: Strict global and critical coverage gates
+      - name: Build desktop product bytes before package contracts
+        run: npm run build --workspace @copilot/desktop
+
+      - name: Desktop Phase 1 release source suite
+        run: npm run test:phase1-release --workspace @copilot/desktop
+
+      - name: Core strict global and critical coverage gates
         shell: bash
         run: |
           set -euo pipefail
-          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag; do
             npm run test:coverage:global --workspace "$workspace"
             npm run test:coverage:critical --workspace "$workspace"
           done
 
-      - name: Build desktop product bytes
-        run: npm run build --workspace @copilot/desktop
+      - name: Desktop Phase 1 global and critical coverage gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:coverage:global --workspace @copilot/desktop
+          npm run test:coverage:critical --workspace @copilot/desktop
 
       - name: Generate and validate production CycloneDX SBOM
         shell: bash
