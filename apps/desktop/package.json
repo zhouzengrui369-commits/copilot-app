@@ -29,7 +29,7 @@
     "dist:mac:x64": "PYTHON_PATH=/usr/bin/python3 npm run build && PYTHON_PATH=/usr/bin/python3 electron-builder --mac --x64 --config electron-builder.yml"
   },
   "dependencies": {
-    "electron-store": "^8.2.0"
+    "electron-store": "^11.0.2"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
