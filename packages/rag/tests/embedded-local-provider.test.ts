@@ -57,23 +57,22 @@ describe('embedded-local default embedding provider', () => {
   });
 
   it('keeps Ollama as an explicit local-service compatibility provider', async () => {
+    const values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
     const fetchImpl: typeof fetch = (async () => new Response(
-      JSON.stringify({ embedding: [0.1, 0.2, 0.3, 0.4] }),
+      JSON.stringify({ embedding: values }),
       { status: 200, headers: { 'content-type': 'application/json' } },
     )) as typeof fetch;
     const embedder = new Embedder({
       provider: 'ollama',
       fetchImpl,
       model: 'test-model',
-      dimensions: 4,
+      dimensions: 8,
     });
 
     expect(embedder.providerId).toBe('ollama-local-service');
     expect(embedder.privacyClass).toBe('local-service');
-    expect(embedder.modelId).toBe('ollama:test-model:4');
-    await expect(embedder.embed('test')).resolves.toEqual(
-      Float32Array.from([0.1, 0.2, 0.3, 0.4]),
-    );
+    expect(embedder.modelId).toBe('test-model');
+    await expect(embedder.embed('test')).resolves.toEqual(Float32Array.from(values));
   });
 
   it('fails closed on empty input and caller cancellation', async () => {
