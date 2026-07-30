@@ -1,3 +1,68 @@
+<!-- owner-github-remote-development-mode:start -->
+# Owner Mode: GitHub Remote Development And Independent Local Acceptance
+
+## Precedence
+
+This owner-approved mode is the highest-precedence development rule for this
+repository. It supersedes the older OpenClaw-first, MiniMax-primary, and
+Codex-to-Mavis routing blocks below for all future product development.
+Those older blocks remain only as historical/fallback documentation and must
+not be used to author product changes unless the owner explicitly reinstates
+them.
+
+This override changes who performs work, not what counts as delivery. The v6.2
+product scope, macOS-first boundary, strict local-first truth, test and evidence
+requirements, signing/notarization gates, independent Focused Retest, and
+fail-closed status rules remain unchanged.
+
+## Source Authority
+
+- GitHub PRs and commits are the only product-source authority.
+- ChatGPT is the remote product-code developer. It works on a bounded GitHub
+  branch/PR and must bind every implementation claim to exact committed bytes.
+- Uncommitted local files, browser prototypes, worker narratives, runtime
+  leftovers, and ignored task evidence are not product source.
+
+## Local Deployment Executor
+
+- MiniMax Code deploys one exact approved Git commit locally.
+- It may install exact dependencies, build, package, launch, and collect the
+  approved evidence for that commit.
+- It must not silently author or repair product code during deployment. Any
+  source defect returns to a new GitHub PR.
+- Its receipt must bind the source commit, immutable source snapshot, artifact
+  SHA256, runtime ID, deterministic test-data manifest, commands, exit codes,
+  screenshots, and process terminal state.
+
+## Independent Acceptance And Release Gate
+
+- Codex is the independent local product-experience auditor and Release Gate
+  reviewer.
+- Codex performs real-computer acceptance on the exact MiniMax-deployed
+  candidate and must fail closed on source/runtime drift or missing evidence.
+- Codex must not make a self-authored product fix and then use its own result as
+  independent acceptance. Defects return to the GitHub development PR.
+- Only an independent Focused Retest with P0=0 can make the Human Owner Gate
+  eligible. It does not by itself satisfy signing, notarization, release, or
+  MVP completion.
+
+## Current Transition Guard
+
+The R28 runner was never executed and established no candidate. Its independent
+review returned `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`: the persisted
+Gate 3 SHA ledger value was malformed, Gate 2 did not enforce the claimed
+offline/no-network contract, and Gate 9 did not fail closed on exactly
+`113 tests in 9 files`.
+
+The R29 workflow-governance postimage supersedes R28's frozen source target.
+R28 cannot be promoted or executed. After R29 is independently reviewed and
+committed, any later candidate runner must bind the new Git commit and obtain a
+fresh review of its exact SHA ledger, network authority, and `113 / 9`
+discovery assertions before execution.
+
+Current truth remains `MVP_NOT_COMPLETE`.
+<!-- owner-github-remote-development-mode:end -->
+
 <!-- project-agents-rules:start -->
 # Project Rules: OpenClaw-first Codex Development
 

@@ -140,3 +140,45 @@ product persistence. The accepted repair commit is
 `92510816932d0683e95a148789227c6cda0d55a3`; it does not establish a candidate,
 runtime ID, artifact SHA256, independent retest, owner-gate eligibility,
 release, or MVP completion.
+
+## D-2026-07-30-07: GitHub Is Product Source Authority; Local Roles Are Separated
+
+### Background
+
+The prior repository rules routed ordinary product implementation through
+OpenClaw or MiniMax/Mavis and left Codex both close to implementation and
+acceptance. That mode made local dirty bytes, deployment execution, and
+independent product judgment harder to separate.
+
+### Options
+
+1. Keep OpenClaw/Mavis-first product authoring and continue separating evidence
+   by task convention.
+2. Make GitHub commits/PRs the source authority, assign remote product
+   development to ChatGPT, exact-commit local deployment to MiniMax Code, and
+   independent real-computer acceptance to Codex.
+
+### Decision
+
+Choose option 2. The new owner mode at the top of `AGENTS.md` supersedes the
+older OpenClaw/Mavis-first product-development routing. Historical blocks
+remain for provenance and explicit fallback only.
+
+### Impact
+
+- Product changes originate in bounded GitHub branches/PRs.
+- MiniMax Code deploys the exact approved commit and cannot silently repair
+  product source.
+- Codex remains independent, fail-closed, and cannot use self-authored product
+  fixes as acceptance.
+- v6.2 scope, macOS-first/local-first boundaries, tests, evidence,
+  signing/notarization, independent Focused Retest, and Human Owner Gate remain
+  unchanged.
+- R28 was never executed and produced no candidate. Independent review returned
+  `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0` because the Gate 3 evidence
+  ledger contained a malformed SHA, Gate 2 did not enforce offline/no-network,
+  and Gate 9 did not bind exactly `113 tests in 9 files`.
+- R28 is rejected rather than repaired or promoted. Its frozen target is
+  superseded by the R29 governance transition; a later runner must bind the
+  eventual R29 Git commit and independently close those three pre-execution
+  contracts.

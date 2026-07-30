@@ -2,6 +2,25 @@
 
 ## Next Single Action
 
+Independently review the exact eight-file R29 governance postimage. On PASS,
+the controller commits and pushes that governance-only change, opens a Draft
+PR, and gives ChatGPT the exact GitHub head and
+`docs/DEVELOPMENT_WORKFLOW.md`. No product implementation starts from local
+dirty bytes.
+
+The R28 runner was never executed and cannot be promoted. Its frozen source
+target is superseded by the R29 workflow transition; any later candidate
+runner must bind the new governance/product commit before execution.
+R28 independent review is
+`FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`, not a pending PASS:
+
+- P0: repair and independently verify the malformed 63-hex Gate 3 SHA ledger
+  entry while freezing every actual runner byte.
+- P1: make Gate 2 offline/no-network behavior fail closed, or obtain separate
+  explicit narrow registry-egress authority.
+- P1: require exactly `113 tests in 9 files` before Gate 10 and promotion;
+  `>=50` alone is insufficient.
+
 Stage 0 input is frozen at `2b832c20b93e07ee68b6b325dc3ad758986b7f69`.
 Accepted P0+P1 product/test bytes are committed at
 `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
@@ -87,6 +106,18 @@ Receipt repair status:
 
 ## Required Before Human Owner Gate
 
+- [ ] Independently review the R29 eight-file governance postimage.
+- [ ] Controller-only after review PASS: commit, push, and open the Draft PR.
+- [x] Reject R28 permanently; do not execute, repair in place, or promote it.
+- [ ] For any successor runner, independently review the complete exact SHA
+  ledger, Gate 2 network authority, and exact `113 / 9` fail-closed assertions.
+- [ ] ChatGPT develops future product changes through a bounded GitHub
+  branch/PR whose exact commit is the source authority.
+- [ ] MiniMax Code deploys an approved exact commit without authoring product
+  changes and binds source snapshot, artifact SHA256, runtime ID, deterministic
+  test-data manifest, commands, screenshots, and terminal process state.
+- [ ] Codex independently performs real-computer acceptance on that same
+  deployed candidate; P0 must be zero before Human Owner Gate eligibility.
 - [x] Preserve the initial resource-defer receipt, then run the single R19
   focused unit GREEN command once: `GREEN_15_OF_15_PASS`.
 - [x] Independently review and commit the R23 governance postimage.
@@ -98,12 +129,12 @@ Receipt repair status:
   attempt.
 - Prove the committed source tree is clean and contains no execution bridge or
   untracked candidate input.
-- Reuse the existing candidate worktree. From the new governance HEAD,
-  build a fresh macOS candidate only after exact `npm ci` and all three desktop
-  TSC checks pass; then run macOS package, focused Electron, runner list
-  `113 tests in 9 files`, and eligible full Electron. This is a new R28
-  candidate attempt, not an R24 retry. Do not reuse current-source `dist/` or
-  any old source/runtime ID.
+- Reuse the existing candidate worktree only after a future successor runner is
+  independently reviewed and bound to the exact post-R29 GitHub head. Build a
+  fresh macOS candidate only after exact `npm ci` and all three desktop TSC
+  checks pass; then run macOS package, focused Electron, runner list exactly
+  `113 tests in 9 files`, and eligible full Electron. Do not reuse R28,
+  current-source `dist/`, or any old source/runtime ID.
 - Bind source commit/snapshot, artifact SHA256, runtime ID, deterministic
   test-data manifest, packaged Electron evidence and current screenshots.
 - Run the required candidate-bound checks, including the project-wide real

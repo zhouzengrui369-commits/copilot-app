@@ -4,6 +4,28 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`IN_PROGRESS / PARTIAL_BLOCKED`。Phase 1 MVP 采用 macOS-first 验收；Windows 为 `OWNER-DEFERRED`，转入 MVP 后的 Phase 1.1。本仓库当前没有声明已完成签名、公证、final-candidate coverage、Electron E2E、性能、截图或三轮 verify-fix 门禁。
 
+## 开发与验收工作流
+
+Owner 当前批准的仓库级工作流是：
+
+1. ChatGPT 通过 GitHub 分支和 PR 开发产品代码；GitHub commit 是唯一产品
+   源码权威。
+2. MiniMax Code 只部署一个已批准的精确 commit，绑定 source snapshot、
+   artifact SHA256、runtime ID、test-data manifest、命令与终态证据；部署时
+   不静默修改产品代码。
+3. Codex 在本机对同一候选执行独立、fail-closed 的真实电脑体验验收和
+   Release Gate 复核，不用自写修复替代独立验收。
+
+此工作流取代仓库内旧的 OpenClaw/Mavis-first 产品开发路由，但不改变
+v6.2、macOS-first、local-first、测试、证据、签名、公证或独立 Focused
+Retest 门。完整合同见
+[`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。
+
+R28 runner 从未执行，独立复核结果为
+`FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`，不得晋级。后续 runner
+必须绑定 R29 之后的新 GitHub commit，并重新关闭 SHA ledger、离线网络边界
+和精确 `113 tests in 9 files` 三项前置门。
+
 ## 项目基线
 
 唯一项目基线是根目录 v6.2 文档及 2026-07-15 macOS-first owner amendment：

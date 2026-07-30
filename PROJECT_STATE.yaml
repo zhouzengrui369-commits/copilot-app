@@ -1,15 +1,45 @@
 project: copilot-app
-stage: R28 Clean Candidate Preparation / R26 Static Full-Suite Contract PASS
+stage: R29 GitHub Remote Development Handoff / Independent Review Pending
 verdict: BLOCKED
 default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
 active_branch: codex/p0-owner-gate
 active_candidate_commit: null
-latest_commit: "deaa24fade215f0581a30f6e617bdb4362d5f22d"
+latest_commit: "ce21c3f4f29fff8a2f8426e36c22306c6f282583"
 materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
 artifact_sha256: null
 runtime_id: null
 ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
 ecosystem_baseline_version: "0.2.0"
+development_mode:
+  authority: OWNER_APPROVED
+  product_source_authority: GITHUB_COMMIT_AND_PR
+  remote_product_developer: CHATGPT
+  local_deployment_executor: MINIMAX_CODE_EXACT_COMMIT_ONLY
+  independent_acceptance_owner: CODEX
+  supersedes:
+    - OPENCLAW_FIRST_PRODUCT_DEVELOPMENT
+    - MINIMAX_PRIMARY_PRODUCT_AUTHORING
+    - CODEX_TO_MAVIS_PRODUCT_AUTHORING
+  v6_2_gates_changed: false
+workflow_governance:
+  postimage: AWAITING_INDEPENDENT_REVIEW
+  commit: null
+  push: NOT_RUN
+  draft_pr: NOT_CREATED
+r28_runner:
+  execution: NEVER_RUN
+  candidate_established: false
+  frozen_source_target: "ce21c3f4f29fff8a2f8426e36c22306c6f282583"
+  independent_review: FAIL / STAGE_B_REJECTED
+  review_p0: 1
+  review_p1: 2
+  review_p2: 0
+  blockers:
+    - GATE_3_SHA_LEDGER_MALFORMED_63_HEX
+    - GATE_2_OFFLINE_NO_NETWORK_NOT_ENFORCED
+    - GATE_9_NOT_EXACTLY_113_TESTS_IN_9_FILES
+  promotion: FORBIDDEN
+  next_runner_requirement: REBIND_TO_POST_R29_GOVERNANCE_COMMIT
 current_p0: EXP-COP-008_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
 current_p1:
   primary: EXP-COP-009_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
@@ -115,10 +145,10 @@ release_baseline: RED
 candidate_status: NOT_ESTABLISHED_R24_REJECTED
 independent_retest: PENDING_NEW_CANDIDATE
 mvp_status: MVP_NOT_COMPLETE
-next_single_action: Commit this governance-only state, independently review a fresh R28 clean-candidate runner derived from R24 plus the exact R26 Gate 10 screenshot environment, then execute that candidate once with zero retry.
+next_single_action: Independently review the exact eight-file R29 governance postimage; if PASS, commit and push it, open a Draft PR, then hand the exact GitHub head to ChatGPT. Any later runner must bind that head and close the SHA-ledger, offline-network, and exact-113/9 blockers before execution.
 not_doing:
   - Windows expansion
   - Remote or Backup expansion
   - major dependency upgrade
   - visual redesign
-updated_at: "2026-07-30T14:20:15+08:00"
+updated_at: "2026-07-30T15:04:02+08:00"

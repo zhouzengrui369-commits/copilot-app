@@ -2,6 +2,24 @@
 
 ## 2026-07-30
 
+- Added the owner-approved GitHub remote-development workflow across exactly
+  eight governance/handoff files. ChatGPT is the remote product developer,
+  MiniMax Code is the exact-commit local deployment executor, and Codex is the
+  independent local product-experience and Release Gate reviewer.
+- Added a highest-precedence `AGENTS.md` override that supersedes older
+  OpenClaw/Mavis-first product authoring while preserving the complete v6.2,
+  macOS-first, local-first, test, evidence, signing/notarization, and
+  independent Focused Retest gates.
+- Recorded that R28 was never executed, established no candidate, and cannot
+  be promoted. Its independent review returned
+  `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`: malformed Gate 3 SHA
+  evidence, no fail-closed Gate 2 offline contract, and no exact
+  `113 tests in 9 files` Gate 9 assertion. A later runner must bind the
+  post-R29 Git head and independently close all three blockers.
+- This R29 lane changes governance/docs only. It does not change product,
+  tests, fixtures, config, package/lockfiles, or v6.2 baselines, and performs
+  no Git write, test, Electron, build, package, network, signing, or release.
+  The postimage remains `AWAITING_INDEPENDENT_REVIEW / MVP_NOT_COMPLETE`.
 - Rejected the one-shot R24 candidate: Gates 1–9 passed, Gate 10 stopped at
   `33 passed / 7 failed / 73 not run`, exit `1`, Gate 11 did not run, retry
   remained zero, and no candidate was established. Its intermediate artifact

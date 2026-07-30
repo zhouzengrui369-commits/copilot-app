@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-R28 Clean Candidate Preparation / R26 Static Full-Suite Contract PASS.
+R29 GitHub Remote Development Handoff / Independent Review Pending.
 
 Current branch/base:
 
@@ -22,12 +22,14 @@ Current branch/base:
   `2595860e3bf880ea6e357fb197153abf30b09652`
 - latest committed R26 full-suite E2E contract repair:
   `deaa24fade215f0581a30f6e617bdb4362d5f22d`
+- current governance HEAD before the uncommitted R29 postimage:
+  `ce21c3f4f29fff8a2f8426e36c22306c6f282583`
 - worktree: `/Users/njx/openclaw/copilot.wt-S15C`
 
 ## Verdict
 
-`BLOCKED / R24_REJECTED_GATE_10_FULL_ELECTRON_FAILED /
-R26_INDEPENDENT_REVIEW_PASS / R26_STATIC_113_OF_113_DISCOVERED /
+`BLOCKED / R29_GOVERNANCE_AWAITING_INDEPENDENT_REVIEW /
+R28_STAGE_B_REJECTED_P0_1_P1_2_P2_0 / R28_RUNNER_NEVER_EXECUTED /
 NEW_CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
 RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
 
@@ -42,6 +44,32 @@ Latest focused review facts:
 - PR: `https://github.com/zhouzengrui369-commits/copilot-app/pull/9`
 - focused report: `https://github.com/zhouzengrui369-commits/copilot-app/blob/31dfd0c7f9feca77da82f4a02bf359d85818742c/reports/product-review/2026-07-28-copilot-focused-retest.md`
 - verdict: `NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3`
+
+## Owner-Approved Development Mode
+
+- ChatGPT is the remote product-code developer and works only through bounded
+  GitHub branches and PRs. Exact GitHub commits are the product-source
+  authority.
+- MiniMax Code is the local deployment executor for one exact approved commit.
+  It may build, package, run, and collect evidence, but it must not silently
+  author product fixes during deployment.
+- Codex is the independent local product-experience auditor and Release Gate
+  reviewer. It performs real-computer acceptance on the exact deployed
+  candidate and fails closed on drift or incomplete evidence.
+- This owner mode supersedes the older OpenClaw/Mavis-first product-development
+  routing in `AGENTS.md`. The v6.2 scope, macOS-first and local-first
+  boundaries, tests, evidence, signing/notarization, and independent Focused
+  Retest gates are unchanged.
+- The R28 runner was never executed. Independent review returned
+  `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`: its evidence ledger records
+  a malformed 63-hex Gate 3 SHA, Gate 2 does not enforce offline/no-network
+  behavior and still names the npm registry, and Gate 9 accepts `>=50` instead
+  of exactly `113 tests in 9 files`.
+- R28 established no candidate and cannot be promoted. Its frozen source target
+  is superseded by this governance transition, so a later runner must bind the
+  eventual R29 governance commit and independently close all three blockers.
+- The R29 eight-file postimage is currently uncommitted and awaiting
+  independent review. No push or PR has been performed in this lane.
 
 ## R18/R19 Current Truth
 
@@ -211,19 +239,21 @@ Old source/runtime IDs are not reproducible and must not be reused. New candidat
 
 ## Next Single Action
 
-Commit this R24–R26 governance postimage separately from the already committed
-seven-file test repair. Then create and independently review a fresh R28
-clean-candidate runner derived mechanically from R24, changing only candidate
-identity/lineage and the exact R26 Gate 10 screenshot environment. The next
-attempt is not an R24 retry and must execute once with zero retry.
-The exact R26 test-only repair is committed at
-`deaa24fade215f0581a30f6e617bdb4362d5f22d`.
-The later candidate must rerun exact `npm ci`, main/renderer/tests TSC, macOS
-package, focused Electron, runner list proving `>=50`, and the eligible full
-Electron gate.
-Only those candidate-bound receipts may bind source commit, immutable source
+Independently review the exact eight-file R29 governance postimage. If and only
+if that review passes, the controller may create the governance commit, push
+the branch, open a Draft PR, and provide the exact GitHub head plus
+`docs/DEVELOPMENT_WORKFLOW.md` to ChatGPT for the next bounded product-code PR.
+
+After an approved product commit exists, MiniMax Code may deploy exactly that
+commit. Any candidate runner must be newly rebound to the post-R29 Git head and
+must have a correct complete SHA ledger, explicit fail-closed network authority,
+and exact `113 tests in 9 files` discovery/promotion assertions. It then
+must rerun exact `npm ci`, main/renderer/tests TSC, macOS package, focused
+Electron, runner list proving exactly `113 tests in 9 files` (and therefore the
+unchanged `>=50` minimum), and the eligible full Electron gate.
+Only candidate-bound receipts may bind source commit, immutable source
 snapshot, artifact SHA256, runtime ID, deterministic test-data manifest,
-packaged Electron evidence and screenshots.
+packaged Electron evidence, screenshots, and process terminal state.
 
 The release baseline remains red outside the accepted P0 slice. R24 did run the
 project-wide full Electron gate, but it failed before completion and therefore
