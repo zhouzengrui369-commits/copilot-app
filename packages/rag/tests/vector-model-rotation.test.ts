@@ -67,15 +67,18 @@ describe('single-model vector-store rotation', () => {
     expect(store.embeddingModel()).toBe('embedded-local-hash-v1:4');
     expect(store.vectorCount()).toBe(1);
     expect(store.textCount()).toBe(2);
-    expect(store.listChunksForNote('notes/old')).toEqual([
-      expect.objectContaining({
-        id: 'notes/old#0',
-        notePath: 'notes/old',
-        text: 'legacy vector text',
-        embedding: undefined,
-        model: undefined,
-      }),
-    ]);
+
+    const oldChunks = store.listChunksForNote('notes/old');
+    expect(oldChunks).toHaveLength(1);
+    expect(oldChunks[0]).toMatchObject({
+      id: 'notes/old#0',
+      notePath: 'notes/old',
+      text: 'legacy vector text',
+    });
+    expect(oldChunks[0]).not.toHaveProperty('embedding');
+    expect(oldChunks[0]).not.toHaveProperty('model');
+    expect(oldChunks[0]).not.toHaveProperty('embeddedAt');
+
     expect(store.listChunksForNote('notes/new')).toEqual([
       expect.objectContaining({
         id: 'notes/new#0',
