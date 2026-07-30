@@ -29,7 +29,7 @@ function restoreProperty(target: object, key: PropertyKey, descriptor?: Property
 
 function buffer(
   channels: readonly (readonly number[])[] = [[0, 0.25, -0.25, 1]],
-  sampleRate = LOCAL_ASR_SAMPLE_RATE,
+  sampleRate: number = LOCAL_ASR_SAMPLE_RATE,
   overrides: Partial<AudioBufferLike> = {},
 ): AudioBufferLike {
   const arrays = channels.map((values) => Float32Array.from(values));
@@ -68,7 +68,7 @@ function contexts(
   const createDecodeContext = () => ({ decodeAudioData, close } satisfies DecodeAudioContextLike);
   const copyToChannel = vi.fn();
   const source = {
-    buffer: null as unknown,
+    buffer: null,
     connect: vi.fn(),
     start: vi.fn(),
   };
