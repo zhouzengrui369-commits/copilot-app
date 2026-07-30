@@ -17,6 +17,7 @@ import { AskWorkspace } from '../src/renderer/workspaces/AskWorkspace.js';
 import { ScheduleWorkspace } from '../src/renderer/workspaces/ScheduleWorkspace.js';
 
 const ORIGINAL_CRYPTO = globalThis.crypto;
+const FROZEN_NOW = 1_753_000_000_000;
 
 const NOTE: NoteRecord = {
   id: 1,
@@ -104,7 +105,7 @@ afterEach(() => {
 describe('AskWorkspace remaining critical branches', () => {
   it('uses the deterministic exchange id fallback and fails closed after a stale Todo persistence receipt', async () => {
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} });
-    vi.spyOn(Date, 'now').mockReturnValue(1_753_000_000_000);
+    vi.spyOn(Date, 'now').mockReturnValue(FROZEN_NOW);
 
     const answer: CopilotRagAnswer = {
       text: 'answer',
@@ -121,8 +122,8 @@ describe('AskWorkspace remaining critical branches', () => {
       priority: 'normal',
       note_links: [NOTE.path],
       reminder_fired: 0,
-      created_at: 1,
-      updated_at: 1,
+      created_at: FROZEN_NOW,
+      updated_at: FROZEN_NOW,
     };
     const save = vi.fn()
       .mockImplementationOnce(async (request: AskConversationSaveRequest) => snapshot(request))
