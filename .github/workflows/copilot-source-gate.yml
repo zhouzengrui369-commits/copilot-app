@@ -31,7 +31,6 @@ env:
   NODE_VERSION: "24"
   CI: "true"
   PYTHON: "/usr/bin/python3"
-  npm_config_python: "/usr/bin/python3"
 
 jobs:
   source-gate:
@@ -70,6 +69,9 @@ jobs:
           tests/embedded-local-provider.test.ts
           tests/vector-model-rotation.test.ts
 
+      - name: Build existing ordered workspace dependency chain
+        run: npm run build:workspace-deps --workspace @copilot/desktop
+
       - name: Check local-first workspaces
         shell: bash
         run: |
@@ -96,12 +98,8 @@ jobs:
           npm run test:coverage:global --workspace @copilot/desktop
           npm run test:coverage:critical --workspace @copilot/desktop
 
-      - name: Build ordered local-first dependencies and desktop
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm run build:workspace-deps --workspace @copilot/desktop
-          npm run build --workspace @copilot/desktop
+      - name: Build desktop product bytes
+        run: npm run build --workspace @copilot/desktop
 
       - name: Require exact Electron suite discovery without launch
         shell: bash
