@@ -30,6 +30,8 @@ concurrency:
 env:
   NODE_VERSION: "24"
   CI: "true"
+  PYTHON: "/usr/bin/python3"
+  npm_config_python: "/usr/bin/python3"
 
 jobs:
   source-gate:
@@ -52,6 +54,8 @@ jobs:
         run: |
           node --version
           npm --version
+          "$PYTHON" --version
+          "$PYTHON" -c 'import distutils; print(distutils.__file__)'
           uname -a
 
       - name: Install exact lockfile
