@@ -58,14 +58,20 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
     }));
   });
 
-  test('30 Knowledge renders its local note and graph workspace', async ({ appPage }) => {
+  test('30 Knowledge renders its local MOC and disabled post-MVP 3D boundary', async ({ appPage }) => {
     await openView(appPage, 'knowledge');
     await expect(appPage.getByTestId('knowledge-workspace')).toBeVisible();
     await expect(appPage.locator('.note-list')).toBeVisible();
     await expect(appPage.getByTestId('knowledge-moc-reader')).toBeVisible();
-    await appPage.getByRole('tab', { name: '2D 关系' }).click();
-    await expect(appPage.getByTestId('kg-root')).toBeVisible();
-    await appPage.getByRole('button', { name: '返回 MOC 阅读' }).click();
+    await expect(appPage.getByRole('tab', { name: '2D MOC 阅读' }))
+      .toHaveAttribute('aria-selected', 'true');
+    const postMvpGraph = appPage.getByText(
+      '3D 节点可视化知识图谱 · MVP 后',
+      { exact: true },
+    );
+    await expect(postMvpGraph).toBeVisible();
+    await expect(postMvpGraph).toHaveAttribute('aria-disabled', 'true');
+    await expect(appPage.getByTestId('knowledge-graph-view')).toHaveCount(0);
   });
 
   test('31 New note starts from a clean editor', async ({ appPage }) => {
@@ -191,10 +197,14 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
     }));
   });
 
-  test('45 graph UI reports production data rather than the 100-node fixture', async ({ appPage }) => {
+  test('45 Knowledge UI does not restore the retired graph or 100-node fixture', async ({ appPage }) => {
     await openView(appPage, 'knowledge');
-    await appPage.getByRole('tab', { name: '2D 关系' }).click();
-    await expect(appPage.getByTestId('kg-toolbar-meta')).not.toHaveText(/100 \/ 100 nodes/);
+    await expect(appPage.getByRole('tab', { name: '2D MOC 阅读' }))
+      .toHaveAttribute('aria-selected', 'true');
+    await expect(appPage.getByText('3D 节点可视化知识图谱 · MVP 后', { exact: true }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await expect(appPage.getByTestId('kg-toolbar-meta')).toHaveCount(0);
+    await expect(appPage.getByTestId('knowledge-graph-view')).toHaveCount(0);
   });
 
   test('46 invalid empty note is rejected by main with a curated error', async ({ appPage }) => {
@@ -343,7 +353,7 @@ test.describe('Knowledge local-first persistence and graph boundary', () => {
         uiPath,
       )).toMatchObject({
         note: { path: uiPath, title: uiTitle },
-        body: uiBody,
+        body: `${uiBody}\n`,
       });
       await expect(appPage.getByTestId('wiki-truth-chip')).toHaveText('CURRENT', {
         timeout: 30_000,

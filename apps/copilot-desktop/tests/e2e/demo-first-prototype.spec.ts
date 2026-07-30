@@ -58,100 +58,57 @@ test('Demo-first primary journey stays truthful and captures four real Electron 
   await expect(appPage.getByTestId('today-todo-empty')).toContainText('暂无待办');
   await expect(appPage.getByTestId('today-todo-empty')).toContainText('真实的本地空状态');
   await expect(appPage.getByTestId('today-timeline-empty')).toContainText('选中日期没有时间线项目');
-  const todayAssistant = appPage.getByTestId('today-context-ai');
-  const todayAssistantSummary = todayAssistant.locator(':scope > summary');
-  await expect(todayAssistant).not.toHaveAttribute('open', '');
-  await expect(todayAssistant).toContainText('NOT_PROBED');
-  await expect(todayAssistant).toContainText('NO_SOURCE');
-  const collapsedAssistantGeometry = await todayAssistant.evaluate((details) => {
-    const summary = details.querySelector(':scope > summary');
-    const badge = summary?.querySelector('.badge');
-    const title = Array.from(summary?.childNodes ?? []).find(
-      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.includes('今日 AI 助手'),
-    );
-    if (!(summary instanceof HTMLElement) || !(badge instanceof HTMLElement) || !title) {
-      throw new Error('TODAY_ASSISTANT_GEOMETRY_TARGET_MISSING');
+  const todayAssistant = appPage.getByTestId('global-assistant');
+  const todayAssistantLauncher = appPage.getByTestId('global-assistant-launcher');
+  const todayAssistantTruth = appPage.getByTestId('global-assistant-truth');
+  await expect(todayAssistant).toHaveAttribute('data-open', 'false');
+  await expect(todayAssistant).toHaveAttribute('data-placement', 'safe');
+  await expect(todayAssistantLauncher).toHaveAttribute('aria-expanded', 'false');
+  await expect(todayAssistantLauncher).toContainText('AI 助手');
+  await expect(todayAssistantTruth).toHaveText('NOT_PROBED');
+  await expect(appPage.getByTestId('global-assistant-sheet')).toHaveCount(0);
+  const collapsedAssistantGeometry = await todayAssistant.evaluate((root) => {
+    const launcher = root.querySelector('[data-testid="global-assistant-launcher"]');
+    const truth = root.querySelector('[data-testid="global-assistant-truth"]');
+    if (!(launcher instanceof HTMLElement) || !(truth instanceof HTMLElement)) {
+      throw new Error('GLOBAL_ASSISTANT_GEOMETRY_TARGET_MISSING');
     }
-    const titleRange = document.createRange();
-    titleRange.selectNodeContents(title);
-    const titleLines = new Set(
-      Array.from(titleRange.getClientRects())
-        .filter((rect) => rect.width > 0 && rect.height > 0)
-        .map((rect) => Math.round(rect.top)),
-    );
-    const detailsRect = details.getBoundingClientRect();
-    const summaryRect = summary.getBoundingClientRect();
-    const badgeRect = badge.getBoundingClientRect();
-    const detailsStyle = getComputedStyle(details);
+    const rootRect = root.getBoundingClientRect();
+    const launcherRect = launcher.getBoundingClientRect();
+    const truthRect = truth.getBoundingClientRect();
     return {
-      titleLineCount: titleLines.size,
-      summaryHeight: summaryRect.height,
-      collapsedWidth: detailsRect.width,
-      badgeInside: (
-        badgeRect.left >= summaryRect.left
-        && badgeRect.right <= summaryRect.right
-        && badgeRect.top >= summaryRect.top
-        && badgeRect.bottom <= summaryRect.bottom
+      width: rootRect.width,
+      launcherHeight: launcherRect.height,
+      truthInside: (
+        truthRect.left >= launcherRect.left
+        && truthRect.right <= launcherRect.right
+        && truthRect.top >= launcherRect.top
+        && truthRect.bottom <= launcherRect.bottom
       ),
-      horizontalOverflow: summary.scrollWidth - summary.clientWidth,
-      position: detailsStyle.position,
-      right: detailsStyle.right,
-      bottom: detailsStyle.bottom,
-      disclosure: getComputedStyle(summary, '::after').content,
+      horizontalOverflow: launcher.scrollWidth - launcher.clientWidth,
+      position: getComputedStyle(root).position,
     };
   });
-  expect(collapsedAssistantGeometry.titleLineCount).toBe(1);
-  expect(collapsedAssistantGeometry.summaryHeight).toBeLessThanOrEqual(46);
-  expect(collapsedAssistantGeometry.collapsedWidth).toBeGreaterThan(230);
-  expect(collapsedAssistantGeometry.collapsedWidth).toBeLessThan(356);
-  expect(collapsedAssistantGeometry.badgeInside).toBe(true);
+  expect(collapsedAssistantGeometry.width).toBeGreaterThanOrEqual(300);
+  expect(collapsedAssistantGeometry.width).toBeLessThanOrEqual(320);
+  expect(collapsedAssistantGeometry.launcherHeight).toBeGreaterThanOrEqual(56);
+  expect(collapsedAssistantGeometry.truthInside).toBe(true);
   expect(collapsedAssistantGeometry.horizontalOverflow).toBeLessThanOrEqual(0);
   expect(collapsedAssistantGeometry.position).toBe('fixed');
-  expect(collapsedAssistantGeometry.right).toBe('22px');
-  expect(collapsedAssistantGeometry.bottom).toBe('82px');
-  expect(collapsedAssistantGeometry.disclosure).toBe('"展开"');
 
-  await todayAssistantSummary.click();
-  await expect(todayAssistant).toHaveAttribute('open', '');
-  await expect(todayAssistant).toContainText('NOT_PROBED');
-  await expect(todayAssistant.getByText('NO_SOURCE')).toBeVisible();
-  const openAssistantGeometry = await todayAssistant.evaluate((details) => {
-    const summary = details.querySelector(':scope > summary');
-    if (!(summary instanceof HTMLElement)) throw new Error('TODAY_ASSISTANT_SUMMARY_MISSING');
-    return {
-      width: details.getBoundingClientRect().width,
-      disclosure: getComputedStyle(summary, '::after').content,
-    };
-  });
-  expect(openAssistantGeometry.width).toBe(356);
-  expect(openAssistantGeometry.disclosure).toBe('"收起"');
+  await todayAssistantLauncher.click();
+  await expect(todayAssistant).toHaveAttribute('data-open', 'true');
+  await expect(todayAssistantLauncher).toHaveAttribute('aria-expanded', 'true');
+  await expect(todayAssistantTruth).toHaveText('NOT_PROBED');
+  const todayAssistantSheet = appPage.getByTestId('global-assistant-sheet');
+  await expect(todayAssistantSheet).toBeVisible();
+  await expect(todayAssistantSheet.getByText('NO_SOURCE')).toBeVisible();
 
-  await todayAssistantSummary.click();
-  await expect(todayAssistant).not.toHaveAttribute('open', '');
-  await expect(todayAssistant).toContainText('NOT_PROBED');
-  const reclosedAssistantGeometry = await todayAssistant.evaluate((details) => {
-    const summary = details.querySelector(':scope > summary');
-    const title = Array.from(summary?.childNodes ?? []).find(
-      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.includes('今日 AI 助手'),
-    );
-    if (!(summary instanceof HTMLElement) || !title) {
-      throw new Error('TODAY_ASSISTANT_RECLOSE_TARGET_MISSING');
-    }
-    const titleRange = document.createRange();
-    titleRange.selectNodeContents(title);
-    return {
-      titleLineCount: new Set(
-        Array.from(titleRange.getClientRects())
-          .filter((rect) => rect.width > 0 && rect.height > 0)
-          .map((rect) => Math.round(rect.top)),
-      ).size,
-      summaryHeight: summary.getBoundingClientRect().height,
-      disclosure: getComputedStyle(summary, '::after').content,
-    };
-  });
-  expect(reclosedAssistantGeometry.titleLineCount).toBe(1);
-  expect(reclosedAssistantGeometry.summaryHeight).toBeLessThanOrEqual(46);
-  expect(reclosedAssistantGeometry.disclosure).toBe('"展开"');
+  await todayAssistantLauncher.click();
+  await expect(todayAssistant).toHaveAttribute('data-open', 'false');
+  await expect(todayAssistantLauncher).toHaveAttribute('aria-expanded', 'false');
+  await expect(todayAssistantTruth).toHaveText('NOT_PROBED');
+  await expect(appPage.getByTestId('global-assistant-sheet')).toHaveCount(0);
   await expect(appPage.getByTestId('view-schedule')).not.toContainText(/DEMO FIXTURE|SIMULATED|录音中|3D 星辰大海/u);
   const todayPng = await appPage.screenshot({ path: screenshotPath('01-today-1440x900.png') });
   expectPng1440x900(todayPng);
@@ -171,9 +128,12 @@ test('Demo-first primary journey stays truthful and captures four real Electron 
   await expect(appPage.getByTestId('knowledge-moc-reader')).toBeVisible();
   const knowledgePng = await appPage.screenshot({ path: screenshotPath('02-knowledge-1440x900.png') });
   expectPng1440x900(knowledgePng);
-  await appPage.getByRole('tab', { name: '2D 关系' }).click();
-  await expect(appPage.getByTestId('knowledge-graph-view')).toBeVisible();
-  await appPage.getByRole('button', { name: '返回 MOC 阅读' }).click();
+  await expect(appPage.getByRole('tab', { name: '2D MOC 阅读' }))
+    .toHaveAttribute('aria-selected', 'true');
+  const postMvpGraph = appPage.getByText('3D 节点可视化知识图谱 · MVP 后', { exact: true });
+  await expect(postMvpGraph).toBeVisible();
+  await expect(postMvpGraph).toHaveAttribute('aria-disabled', 'true');
+  await expect(appPage.getByTestId('knowledge-graph-view')).toHaveCount(0);
 
   await openView(appPage, 'ask');
   await expect(appPage.getByTestId('view-ask')).toBeVisible();

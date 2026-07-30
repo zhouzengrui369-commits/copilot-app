@@ -176,7 +176,7 @@ test.describe('Voice failure-safe capture surface', () => {
       receiptPath,
     );
     expect(savedNote.note.path).toBe(receiptPath);
-    expect(savedNote.body).toBe(draftText);
+    expect(savedNote.body).toBe(`${draftText}\n`);
     await expect(draft).toHaveValue('');
     await expect.poll(() => appPage.evaluate(async () => (await (window as any).copilot.notes.list({ limit: 1000 })).total)).toBe(before + 1);
   });

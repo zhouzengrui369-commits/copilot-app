@@ -104,7 +104,7 @@ test.describe('Persisted settings through the Electron bridge', () => {
   });
 
   test('19 metadata-only cloud boundary is reported as unavailable', async ({ appPage }) => {
-    await expect(appPage.getByTestId('status-cloud-backup')).toContainText('OFF · POST-MVP');
+    await expect(appPage.getByTestId('status-cloud-backup')).toHaveText('Cloud backup: OFF / POST-MVP');
   });
 
   test('20 unsupported cloud opt-in fails closed and remains OFF', async ({ appPage }) => {

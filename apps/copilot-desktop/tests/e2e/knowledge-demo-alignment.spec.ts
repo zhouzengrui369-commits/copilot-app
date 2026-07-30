@@ -155,15 +155,20 @@ test.describe('Knowledge Workspace — MOC primary view (K-01 / K-02)', () => {
     await expect(appPage.getByTestId('knowledge-moc-reader')).toBeVisible();
     await expect(appPage.getByTestId('moc-truth-chip')).toHaveText('LOCAL_DERIVED');
 
-    // The reading path contains the task-owned group label
-    // (the first tag) and the real title-driven count text.
+    // The reading path contains the task-owned title and its
+    // truthful raw-note WIKI state.
     const step = appPage.getByTestId('moc-reading-step-0');
     await expect(step).toBeVisible();
-    await expect(step).toContainText(TASK_NOTE_TAGS[0]);
+    await expect(step).toContainText(TASK_NOTE_TITLE);
+    await expect(step).toContainText('待 WIKI 整理');
 
-    // Topic card per group is visible and contains the task-owned
-    // title; the topic-note button carries the real path.
-    const topicNote = appPage.getByTestId(`moc-topic-note-${TASK_NOTE_PATH}`);
+    // Classification belongs to the real first-tag topic group;
+    // the card contains the task-owned title and path action.
+    const topicGroup = appPage.getByTestId(`moc-topic-${TASK_NOTE_TAGS[0]}`);
+    await expect(topicGroup).toBeVisible();
+    await expect(topicGroup).toContainText(TASK_NOTE_TAGS[0]);
+    await expect(topicGroup).toContainText(TASK_NOTE_TITLE);
+    const topicNote = topicGroup.getByTestId(`moc-topic-note-${TASK_NOTE_PATH}`);
     await expect(topicNote).toBeVisible();
     await expect(topicNote).toContainText(TASK_NOTE_TITLE);
 
@@ -198,24 +203,26 @@ test.describe('Knowledge Workspace — MOC primary view (K-01 / K-02)', () => {
   });
 });
 
-test.describe('Knowledge Workspace — 2D secondary view (K-03)', () => {
+test.describe('Knowledge Workspace — current MOC and post-MVP 3D boundary (K-03)', () => {
   test.afterAll(async ({ appPage }) => {
     await ensureTaskNoteRemoved(appPage);
   });
 
-  test('switches to the 2D secondary view and back to MOC without leaving the page', async ({ appPage }) => {
+  test('keeps 2D MOC active and exposes 3D node visualization only as disabled post-MVP', async ({ appPage }) => {
     await ensureTaskNoteRemoved(appPage);
     await createTaskNote(appPage);
     await reloadKnowledge(appPage);
 
-    await appPage.getByRole('tab', { name: '2D 关系' }).click();
-    await expect(appPage.getByTestId('knowledge-graph-view')).toBeVisible();
-    // No fixture strings in the graph panel.
-    const panel = appPage.getByTestId('knowledge-graph-view');
-    await expect(panel).not.toContainText(FORBIDDEN_FIXTURE_PATTERN);
-
-    await appPage.getByRole('button', { name: '返回 MOC 阅读' }).click();
+    await expect(appPage.getByRole('tab', { name: '2D MOC 阅读' }))
+      .toHaveAttribute('aria-selected', 'true');
     await expect(appPage.getByTestId('knowledge-moc-reader')).toBeVisible();
+    const postMvpGraph = appPage.getByText(
+      '3D 节点可视化知识图谱 · MVP 后',
+      { exact: true },
+    );
+    await expect(postMvpGraph).toBeVisible();
+    await expect(postMvpGraph).toHaveAttribute('aria-disabled', 'true');
+    await expect(appPage.getByTestId('knowledge-graph-view')).toHaveCount(0);
   });
 });
 
