@@ -1,13 +1,17 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
-import { PHASE1_RELEASE_EXCLUSIONS } from './phase1-release-scope.js';
+import {
+  PHASE1_RELEASE_EXCLUSIONS,
+  PHASE1_RELEASE_SOURCE_EXCLUSIONS,
+} from './phase1-release-scope.js';
 
 const appRoot = fileURLToPath(new URL('..', import.meta.url));
 
 /**
- * Phase 1 whole-product source coverage. Owner-deferred and superseded
- * historical fixtures are listed with explicit rationale in one shared scope.
+ * Phase 1 whole-product source coverage. Owner-deferred, bootstrap and
+ * evidence-only inputs are listed with explicit rationale in one shared scope;
+ * the 70% product threshold remains unchanged.
  */
 export default defineConfig({
   root: appRoot,
@@ -27,7 +31,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage/desktop',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.d.ts'],
+      exclude: ['src/**/*.d.ts', ...PHASE1_RELEASE_SOURCE_EXCLUSIONS],
       thresholds: {
         statements: 70,
         lines: 70,
