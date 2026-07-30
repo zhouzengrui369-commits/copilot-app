@@ -1,40 +1,47 @@
-# Copilot App TODO Mirror
+# Copilot App TODO — Mirror
 
-**Status: `BLOCKED / MVP_NOT_COMPLETE`.** Root `TODO.md` and `PROJECT_STATE.yaml` are authoritative; this file is a synchronized navigation mirror.
+`BLOCKED / MVP_NOT_COMPLETE`
 
-## P0 — Remote Source Closure
+Root `TODO.md` and `PROJECT_STATE.yaml` are authoritative. This file mirrors the exact next handoff.
 
-- [x] Read `goal.md`, `plan.md`, `rules.md`, `delivery.md` v6.2 and the detailed root handoff.
-- [x] Preserve exact pre-R30 root state/status/TODO/changelog/architecture under `docs/history/`.
-- [x] Reconcile the six generic `main` documents without replacing detailed architecture or fail-closed truth.
-- [x] Create bounded branch `agent/r30-github-bound-candidate-runner` from `6aa6b8c0792c5549b818107a0f64e4f32651dacd`.
-- [x] Implement a brand-new R30 runner; do not execute, repair, or reuse R28.
-- [x] Close Gate 2 source contract: offline-only network sandbox; cache miss stops for owner approval.
-- [x] Close Gate 3 source contract: complete real 64-character SHA256 ledger.
-- [x] Close Gate 9 source contract: exactly `113 tests in 9 files`, not `>=50`.
-- [x] Add and run pure Node RED→GREEN tests; no Electron candidate launched.
-- [ ] Review the bounded PR and record its exact final GitHub commit.
+## GitHub Source — Complete
 
-## P0 — MiniMax Code Local Deployment
+- [x] Preserve pre-R30 authority/history and permanently reject never-run R28.
+- [x] Build the bounded R30 GitHub-bound candidate runner on PR #13.
+- [x] Complete R31 product/source work on `agent/r31-source-completion`, Draft PR #14.
+- [x] Add embedded-local deterministic RAG default and explicit Ollama opt-in.
+- [x] Enforce one vector model while retaining durable local text.
+- [x] Close fail-closed product/source branches and strict per-file critical coverage.
+- [x] Pass Node 24 source gate, production CycloneDX SBOM, and exact `113 tests in 9 files` list discovery.
+- [x] Expand the candidate runner to twelve gates and synchronize governance.
 
-- [ ] Checkout the exact final PR commit in a clean worktree with no pre-existing ignored candidate outputs.
-- [ ] Run the R30 runner once with a new absolute evidence directory outside the repository.
-- [ ] If npm cache is insufficient, stop at `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`; do not grant network or edit source.
-- [ ] Return source snapshot SHA256, artifact SHA256, runtime ID, test-data manifest, command receipts/exit codes, screenshots, and process terminal state.
-- [ ] Confirm no source modification and provide final `git status`.
+## MiniMax Code — Next
 
-## P0 — Codex Independent Acceptance
+- [ ] Use the externally reported exact final 40-character PR #14 HEAD, not a mutable branch tip.
+- [ ] Create a new clean detached worktree; do not reuse dirty/stale candidate inputs.
+- [ ] Use a new absolute evidence directory outside the repository; it must not exist.
+- [ ] Run `node --test scripts/candidate-r30/*.test.mjs`.
+- [ ] Run the candidate dry-run and confirm `PLAN_ONLY_NOT_A_CANDIDATE`.
+- [ ] Execute `scripts/candidate-r30/run-candidate.mjs` once.
+- [ ] On cache blocker, stop; no online retry or silent source edit.
+- [ ] Return all-tracked SHA256 ledger/aggregate, canonical snapshot/SBOM/package identities, focused 2/2, exact 113/9, full 113/113, complete E2E source manifest, three performance raws/aggregate, runtime ID, commands, screenshots, process terminal state, `CANDIDATE-MANIFEST.json`, `R30-COMPLETE.json`, exact commit, and clean Git status.
 
-- [ ] Start only after complete MiniMax candidate-bound receipts exist.
-- [ ] Independently operate the packaged app on the real computer.
-- [ ] Execute focused product-experience retest and Release Gate review.
-- [ ] Report P0/P1/P2 findings and accept/reject; do not fix source.
+Detailed command sequence: `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`.
 
-## Remaining Release Gates
+## Codex — After Complete Receipt
 
-- [ ] Candidate-bound performance and three verify-fix rounds.
-- [ ] Embedded local ASR real offline candidate chain.
-- [ ] Developer ID signing, Apple notarization, staple, and validation.
-- [ ] Human Owner Gate and one-week usage evidence.
+- [ ] Verify source/artifact/runtime bindings independently.
+- [ ] Operate the packaged app on the real computer.
+- [ ] Run focused product-experience and Release Gate acceptance.
+- [ ] Verify real packaged offline local-ASR.
+- [ ] Report P0/P1/P2 and exact verdict without repairing source.
 
-Windows Phase 1.1 and Tencent/Remote/backup remain owner-deferred. Current conclusion stays `BLOCKED / MVP_NOT_COMPLETE`.
+## Still Blocking MVP/Release
+
+- [ ] Candidate-bound local execution and performance.
+- [ ] Three verify-fix rounds on the same final candidate.
+- [ ] Developer ID signing and Apple notarization/stapling/validation.
+- [ ] Gatekeeper install/launch evidence.
+- [ ] Human Owner Gate and required use evidence.
+
+Windows is Phase 1.1. Tencent deployment, Remote/live, optional Backup, and 3D graph remain post-MVP/owner-deferred.
