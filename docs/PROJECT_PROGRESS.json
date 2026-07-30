@@ -64,7 +64,8 @@
       "embedding_default": "embedded-local-hash-v1",
       "ollama": "explicit_opt_in_local_service_only",
       "vector_model_scope": "single_model_preserve_durable_text",
-      "candidate_gate_count": 12
+      "candidate_gate_count": 12,
+      "canonical_arm64_authority": "independent selected ZIP/DMG and identity-report validation; legacy x64/Windows blockers quarantined only after arm64 authority passes"
     },
     "source_validation_checkpoint": {
       "node": 24,
@@ -93,7 +94,7 @@
       "3": "all tracked regular files and aggregate SHA256",
       "4": "candidate contracts and ordered workspace build",
       "5": "checks tests coverage build and CycloneDX SBOM",
-      "6": "canonical unsigned macOS arm64 ZIP and DMG",
+      "6": "arm64-authority wrapper revalidates canonical unsigned macOS arm64 ZIP DMG release identity artifact reports and hashes while quarantining only non-authoritative legacy matrix blockers",
       "7": "snapshot and artifact runtime identities",
       "8": "focused packaged Electron 2 of 2",
       "9": "exact 113 tests in 9 files plus complete E2E source manifest",
