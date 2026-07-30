@@ -1,56 +1,28 @@
 /**
- * @copilot/rag — Public API surface (Sprint 1.3 T-1.3.1 worker β).
+ * @copilot/rag — public local-first RAG surface.
  *
- * Frozen cross-package contract (see SCHEMA-FROZEN-1.2.md at end of wave 3):
- *   - `Embedder`               — Ollama HTTP embedding wrapper (bge-m3 default)
- *   - `VectorStore` / `createVectorStore` — sql.js + brute-force cosine
- *                                          (sqlite-vss upgrade path documented)
- *   - `chunkNote`              — 512-token paragraph-bound chunker
- *   - `Indexer`                — chunk + embed + insert pipeline
- *   - `Answerer`               — retrieval → LLM answer with note_path citations
- *
- * RAG is 100% local (goal.md R5 + decision red line #2):
- *   - Embedding runs against the user's local Ollama endpoint
- *     (default http://127.0.0.1:11434, bge-m3:latest, 1024 dim).
- *   - LLM answer streaming goes through `@copilot/llm-client`
- *     (default provider = local MiniMax-M3 endpoint); cloud OpenAI / Claude
- *     are configurable via Sprint 1.2 settings panel but **never** the
- *     default RAG path.
- *
- * Usage:
- *   import { Embedder, createVectorStore, Indexer, Answerer } from '@copilot/rag';
- *   import { LLMClient } from '@copilot/llm-client';
- *
- *   const embedder = new Embedder();
- *   const store = await createVectorStore({ dbPath: '/abs/.cache/rag.db' });
- *   const indexer = new Indexer(embedder, store);
- *   await indexer.indexNotes([
- *     { path: 'inbox/quick', body: 'OPC 是 ...' },
- *   ]);
- *
- *   const client = new LLMClient();
- *   const answerer = new Answerer(embedder, store, async (messages, { model }) =>
- *     client.chatStream({ model, messages, stream: true }),
- *   );
- *
- *   let final;
- *   for await (const delta of answerer.answer('OPC 是什么')) {
- *     process.stdout.write(delta.delta);
- *     final = delta;
- *   }
- *   console.log('sources:', final.citedSources);
+ * Production now defaults to an embedded, deterministic no-egress provider.
+ * Ollama remains an explicit local-service compatibility option. The exported
+ * vector-store factory enforces one embedding model at a time while retaining
+ * durable local text for fallback/re-indexing.
  */
 
 export { Embedder } from './embedder.js';
 
 export {
-  createVectorStore,
-  generateChunkId,
-  type VectorStore,
-} from './vector-store.js';
+  createModelScopedVectorStore as createVectorStore,
+  type ModelScopedVectorStore as VectorStore,
+} from './model-scoped-vector-store.js';
+
+export { generateChunkId } from './vector-store.js';
 
 export type {
   EmbedderConfig,
+  EmbeddingHealth,
+  EmbeddingHealthStatus,
+  EmbeddingPrivacyClass,
+  EmbeddingProvider,
+  EmbeddingProviderKind,
   VectorStoreConfig,
   VectorSearchOptions,
 } from './types.js';
