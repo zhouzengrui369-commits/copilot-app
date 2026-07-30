@@ -219,7 +219,7 @@ describe('ScheduleWorkspace final critical callbacks', () => {
     expect(onOpenKnowledge).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: '回到今天' }));
-    fireEvent.click(screen.getByRole('button', { name: '打开笔记 Source' }));
+    fireEvent.click(screen.getAllByRole('button', { name: '打开笔记 Source' })[0]!);
     expect(onOpenNote).toHaveBeenCalledWith(NOTE_PATH);
 
     fireEvent.click(screen.getByRole('button', { name: `打开来源：${NOTE_PATH}` }));
