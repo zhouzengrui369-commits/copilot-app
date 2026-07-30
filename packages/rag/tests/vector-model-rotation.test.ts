@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createVectorStore, type VectorStore } from '../src/vector-store.js';
+import {
+  createModelScopedVectorStore,
+  type ModelScopedVectorStore,
+} from '../src/model-scoped-vector-store.js';
 import type { EmbeddedChunk, NoteChunk } from '../src/types.js';
 
 const DIMENSIONS = 4;
@@ -31,18 +34,19 @@ function vectorChunk(
 }
 
 describe('single-model vector-store rotation', () => {
-  let store: VectorStore;
+  let store: ModelScopedVectorStore;
 
   beforeEach(async () => {
-    store = await createVectorStore({ dbPath: ':memory:', dimensions: DIMENSIONS });
+    store = await createModelScopedVectorStore({ dbPath: ':memory:', dimensions: DIMENSIONS });
   });
 
   afterEach(async () => {
     await store.close();
   });
 
-  it('uses schema v3 and exposes the active embedding model', () => {
-    expect(store.schemaVersion()).toBe('3');
+  it('retains the existing SQL schema and exposes the model-scope contract', () => {
+    expect(store.schemaVersion()).toBe('2');
+    expect(store.modelScopeVersion()).toBe('1');
     expect(store.embeddingModel()).toBeNull();
   });
 
