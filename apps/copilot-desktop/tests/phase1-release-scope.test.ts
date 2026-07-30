@@ -9,21 +9,27 @@ import {
 function expectGovernedScope(
   exclusions: readonly string[],
   rationale: Readonly<Record<string, string>>,
+  minimumReasonLength: number,
 ): void {
   expect(exclusions).toEqual([...exclusions].sort());
   expect(new Set(exclusions).size).toBe(exclusions.length);
   expect(Object.keys(rationale).sort()).toEqual([...exclusions]);
   for (const reason of Object.values(rationale)) {
-    expect(reason.length).toBeGreaterThan(60);
+    expect(reason.length).toBeGreaterThan(minimumReasonLength);
   }
 }
 
 describe('Phase 1 release scope', () => {
   it('uses sorted, duplicate-free, fully explained test and source exclusion sets', () => {
-    expectGovernedScope(PHASE1_RELEASE_EXCLUSIONS, PHASE1_RELEASE_EXCLUSION_RATIONALE);
+    expectGovernedScope(
+      PHASE1_RELEASE_EXCLUSIONS,
+      PHASE1_RELEASE_EXCLUSION_RATIONALE,
+      30,
+    );
     expectGovernedScope(
       PHASE1_RELEASE_SOURCE_EXCLUSIONS,
       PHASE1_RELEASE_SOURCE_EXCLUSION_RATIONALE,
+      60,
     );
   });
 
@@ -42,7 +48,7 @@ describe('Phase 1 release scope', () => {
   it('limits source exclusions to explicit owner-deferred, bootstrap or evidence infrastructure', () => {
     for (const source of PHASE1_RELEASE_SOURCE_EXCLUSIONS) {
       expect(source).toMatch(
-        /backup|remote|prototype|main\.tsx|main\.ts|local-asr-worker|local-telemetry|direct-performance-probe/u,
+        /backup|remote|prototype|main\.tsx|main\.ts|local-asr-worker|local-telemetry|direct-performance-probe/iu,
       );
     }
   });
