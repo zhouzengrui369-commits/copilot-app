@@ -36,21 +36,25 @@ jobs:
   source-gate:
     name: Node 24 macOS source gate
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Checkout exact PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Setup Node 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Record toolchain identity
+      - name: Record exact source and toolchain identity
+        shell: bash
         run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
           node --version
           npm --version
           "$PYTHON" --version
@@ -60,7 +64,7 @@ jobs:
       - name: Install exact lockfile
         run: npm ci --no-audit --no-fund
 
-      - name: R30 fail-closed source contracts
+      - name: Candidate fail-closed source contracts
         run: node --test scripts/candidate-r30/*.test.mjs
 
       - name: R31 embedded RAG RED-to-GREEN slice
@@ -80,23 +84,30 @@ jobs:
             npm run check --workspace "$workspace"
           done
 
-      - name: Unit and integration suites
+      - name: Unit suites
         shell: bash
         run: |
           set -euo pipefail
           for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
             npm run test --workspace "$workspace"
           done
-          npm run test:integration --workspace @copilot/desktop
 
-      - name: Strict coverage gates
+      - name: Explicit integration suites
         shell: bash
         run: |
           set -euo pipefail
-          npm run test:coverage:global --workspace @copilot/rag
-          npm run test:coverage:critical --workspace @copilot/rag
-          npm run test:coverage:global --workspace @copilot/desktop
-          npm run test:coverage:critical --workspace @copilot/desktop
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+            npm run test:integration --workspace "$workspace"
+          done
+
+      - name: Strict global and critical coverage gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+            npm run test:coverage:global --workspace "$workspace"
+            npm run test:coverage:critical --workspace "$workspace"
+          done
 
       - name: Build desktop product bytes
         run: npm run build --workspace @copilot/desktop
@@ -116,8 +127,9 @@ jobs:
           console.log(`EXACT_DISCOVERY_PASS ${result.tests} tests in ${result.files} files`);
           NODE
 
-      - name: Verify source tree stayed clean
+      - name: Verify tracked source stayed unchanged
         shell: bash
         run: |
           set -euo pipefail
+          git diff --exit-code
           test -z "$(git status --porcelain=v1 --untracked-files=all)"
