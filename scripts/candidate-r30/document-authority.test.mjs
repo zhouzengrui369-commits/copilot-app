@@ -115,10 +115,12 @@ test('root governance remains blocked while marking GitHub source complete and l
     read('DECISIONS.md'),
     read('CHANGELOG.md'),
   ]);
-  for (const content of [state, status, todo, decisions, changelog]) {
+  for (const content of [state, status, todo, changelog]) {
     assert.match(content, /MVP_NOT_COMPLETE/u);
     assert.match(content, /R31|r31/u);
   }
+  assert.match(decisions, /R31|r31/u);
+  assert.match(decisions, /Development Evidence Is Not Candidate Identity/u);
   assert.match(state, /github_source:\s*SOURCE_COMPLETE/u);
   assert.match(state, /local_execution:\s*NOT_RUN/u);
   assert.match(state, /artifact_sha256:\s*null/u);
