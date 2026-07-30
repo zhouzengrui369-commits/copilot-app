@@ -47,7 +47,7 @@ export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
       { id: 5, name: 'all-local-workspace-checks-tests-integration-coverage-and-desktop-build' },
       { id: 6, name: 'unsigned-macos-arm64-package' }, { id: 7, name: 'source-and-artifact-identity' },
       { id: 8, name: 'focused-packaged-electron', expectedTests: 2, specs: [...FOCUSED_SPECS] },
-      { id: 9, name: 'exact-discovery-and-complete-test-data-manifest', exactDiscovery: { tests: EXACT_TESTS, files: EXACT_FILES },
+      { id: 9, name: 'exact-discovery-and-complete-test-data-manifest', exactDiscovery: { tests: EXACT_TESTS, files: EXACT_FILES } },
       { id: 10, name: 'full-packaged-electron', exactResult: { expected: EXACT_TESTS, passed: EXACT_TESTS,
         skipped: 0, unexpected: 0, flaky: 0, cleanProcessExit: true } },
       { id: 11, name: 'candidate-receipt', assertion: 'source snapshot and all-tracked ledger; artifact SHA256; runtime ID; hashed E2E specs/fixtures/helpers; commands; screenshots; terminal state' },
