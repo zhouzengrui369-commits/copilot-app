@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LEDGER_SCOPE } from './contract.mjs';
 import { FOCUSED_SPECS } from './gates-electron.mjs';
 import { GATE_ORDER, candidateId, parseArgs, staticPlan } from './run-candidate.mjs';
 
@@ -28,13 +29,20 @@ test('an existing evidence directory is not modified by blocker reporting', asyn
   assert.deepEqual(await readdir(evidence), ['sentinel']);
 });
 test('runner gate order is complete and stable', () => assert.deepEqual(GATE_ORDER, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]));
-test('static plan binds Gate 2 offline, Gate 3 complete ledger, Gate 9 exact 113/9, and Gate 10 exact full result', () => {
+test('static plan binds complete ledger, source quality, exact 113/9, and exact full result', () => {
   const plan = staticPlan({ sourceCommit: 'a'.repeat(40), evidenceDir: '/tmp/r30' });
+  assert.equal(plan.schemaVersion, 2);
   assert.equal(plan.networkAuthority, 'offline-only'); assert.equal(plan.automaticRegistryFallback, false);
   assert.match(plan.gates.find((gate) => gate.id === 2).command, /sandbox-exec.*deny network.*npm ci --offline/su);
-  assert.ok(plan.gates.find((gate) => gate.id === 3).files.includes('scripts/candidate-r30/gates-electron.mjs'));
+  const ledger = plan.gates.find((gate) => gate.id === 3);
+  assert.equal(ledger.scope, LEDGER_SCOPE);
+  assert.equal(ledger.source, 'git ls-files -z');
+  assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/gates-electron.mjs'));
+  assert.match(plan.gates.find((gate) => gate.id === 4).name, /source-contracts/u);
+  assert.match(plan.gates.find((gate) => gate.id === 5).name, /checks-tests-integration-coverage/u);
   assert.deepEqual(plan.gates.find((gate) => gate.id === 8).specs, FOCUSED_SPECS);
   assert.deepEqual(plan.gates.find((gate) => gate.id === 9).exactDiscovery, { tests: 113, files: 9 });
+  assert.match(plan.gates.find((gate) => gate.id === 9).name, /test-data-manifest/u);
   assert.deepEqual(plan.gates.find((gate) => gate.id === 10).exactResult, { expected: 113, passed: 113,
     skipped: 0, unexpected: 0, flaky: 0, cleanProcessExit: true });
   assert.equal(JSON.stringify(plan).includes('registry.npmjs.org'), false);
