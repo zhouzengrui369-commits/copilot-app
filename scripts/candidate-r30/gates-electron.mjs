@@ -67,7 +67,19 @@ async function testDataManifest({ sourceCommit, candidateId, discovery, evidence
   return { path: file, sha256: await sha256File(file, { gate: 9 }), manifest };
 }
 
-export async function runElectronGates({ sourceCommit, candidateId, evidenceDir, npm, sourceSnapshotPath, artifacts, identity }) {
+export async function runElectronGates({
+  sourceCommit,
+  candidateId,
+  evidenceDir,
+  npm,
+  sourceSnapshotPath,
+  artifacts,
+  identity,
+  sbom,
+}) {
+  if (!sbom || typeof sbom.path !== 'string' || !/^[0-9a-f]{64}$/u.test(sbom.sha256 ?? '')) {
+    block('BLOCKED_GATE_11_SBOM_IDENTITY_MISSING', 11);
+  }
   const focusedEnv = e2eEnv({ candidateId, sourceSnapshotPath, artifacts, evidenceDir, profile: 'exp-cop-008-009-focused' });
   await recorded({ gate: 8, name: 'focused-packaged-electron', command: npm,
     args: ['run', 'test:e2e:electron', '--workspace', '@copilot/desktop', '--', ...FOCUSED_SPECS], evidenceDir, env: focusedEnv });
@@ -108,6 +120,7 @@ export async function runElectronGates({ sourceCommit, candidateId, evidenceDir,
     source: { commit: sourceCommit, clean: true, snapshotPath: identity.sourceSnapshotPath,
       snapshotSha256: identity.sourceSnapshotSha256, ledgerPath: identity.sourceLedgerPath,
       ledgerAggregateSha256: identity.sourceLedgerAggregateSha256, ledgerFileCount: identity.sourceLedgerFileCount },
+    softwareBillOfMaterials: sbom,
     artifact: { zipPath: identity.zipPath, zipSha256: identity.zipSha256, dmgPath: identity.dmgPath, dmgSha256: identity.dmgSha256,
       appPath: identity.appPath, appSha256: identity.appSha256, executablePath: identity.executablePath,
       executableSha256: identity.executableSha256, signing: identity.signing },
