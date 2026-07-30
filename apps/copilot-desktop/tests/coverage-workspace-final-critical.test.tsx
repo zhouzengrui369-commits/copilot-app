@@ -53,7 +53,11 @@ function baseApi(overrides: {
     },
     todos: {
       list: vi.fn(async () => []),
-      create: vi.fn(async () => ({ id: 'todo-1', title: '', status: 'pending' })),
+      create: vi.fn(async (): Promise<CopilotTodo> => ({
+        id: 'todo-1',
+        title: '',
+        status: 'pending',
+      })),
       update: vi.fn(async () => null),
       remove: vi.fn(async () => true),
       listDue: vi.fn(async () => []),
