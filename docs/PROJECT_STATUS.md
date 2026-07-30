@@ -17,6 +17,10 @@ Read `AGENTS.md`, then `goal.md` / `plan.md` / `rules.md` / `delivery.md` v6.2, 
 
 The R30 runtime source identity is not hard-coded through an impossible self-referential commit. MiniMax Code must pass the final GitHub PR head as `--source-commit`, and the runner fails unless it exactly equals `git HEAD`.
 
+## Preserved Detailed Truth
+
+Exact pre-R30 copies of root state, status, TODO, changelog, and architecture are retained under `docs/history/`. The shorter R30 current view is additive and does not delete accepted development evidence or historical blockers.
+
 ## Completed Remotely
 
 - Read the full root v6.2 baseline and all six low-confidence `main` handoff documents.
