@@ -46,7 +46,7 @@ test('architecture mirror preserves authority and the byte-preserved detailed hi
     'Twelve Candidate Gates',
     'Gate 2',
     'Gate 3',
-    'Gate 9',
+    'Gates 8–10',
     'Gate 11',
     'Gate 12',
     'Deferred',
@@ -128,7 +128,8 @@ test('root governance remains blocked while marking GitHub source complete and l
   assert.match(state, /gate_12:/u);
   assert.match(status, /BLOCKED/u);
   assert.match(status, /1106\/1106/u);
-  assert.match(todo, /MINIMAX_LOCAL_DEPLOYMENT_R31\.md/u);
+  assert.match(todo, /scripts\/candidate-r30\/run-candidate\.mjs/u);
+  assert.match(todo, /EXACT_FINAL_HEAD/u);
   assert.match(decisions, /Embedded-Local Is The Production Retrieval Embedding Default/u);
   assert.match(decisions, /Twelve-Gate Exact-Commit Candidate Contract/u);
   assert.match(changelog, /Gate 2/u);
