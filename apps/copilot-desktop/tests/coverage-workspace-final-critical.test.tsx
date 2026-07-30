@@ -161,16 +161,18 @@ describe('AskWorkspace final critical callbacks', () => {
     expect(onOpenTodo).toHaveBeenCalledWith('todo-1');
   });
 
-  it('truncates long local previews and reports non-Error Todo failures deterministically', async () => {
+  it('truncates nested local previews and reports non-Error Todo failures deterministically', async () => {
     const longBody = `LONG_PREVIEW_${'x'.repeat(400)}`;
+    const nestedDocument = {
+      note: {
+        path: NOTE_PATH,
+        title: 'Long nested source',
+        body: longBody,
+      },
+    } as unknown as Awaited<ReturnType<CopilotProductApi['notes']['get']>>;
     const api = baseApi({
       notes: {
-        get: vi.fn(async () => ({
-          path: NOTE_PATH,
-          title: 'Long source',
-          body: longBody,
-          tags: ['local'],
-        })),
+        get: vi.fn(async () => nestedDocument),
       },
       rag: {
         ask: vi.fn(async () => ({
@@ -201,6 +203,30 @@ describe('AskWorkspace final critical callbacks', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '待办未创建：STRING_CREATE_FAILURE',
     );
+  });
+
+  it('reports an all-source read failure as unavailable rather than verified', async () => {
+    const api = baseApi({
+      notes: {
+        get: vi.fn(async () => Promise.reject(new Error('LOCAL_SOURCE_OFFLINE'))),
+      },
+      rag: {
+        ask: vi.fn(async () => ({
+          text: 'Answer whose local source cannot be read',
+          sources: [NOTE_PATH],
+          sourceDetails: [{ notePath: NOTE_PATH, evidence: ['vector' as const], score: 0.91 }],
+        })),
+      },
+    });
+
+    render(<AskWorkspace api={api} />);
+    fireEvent.change(screen.getByLabelText('问题'), { target: { value: 'Unavailable source question' } });
+    fireEvent.click(screen.getByRole('button', { name: '提问' }));
+
+    await waitFor(() => expect(screen.getByTestId('answer-source-truth'))
+      .toHaveAttribute('data-truth-state', 'UNAVAILABLE'));
+    expect(screen.getByText('来源暂不可核对')).toBeInTheDocument();
+    expect(screen.getByTestId('ask-create-todo')).toBeDisabled();
   });
 });
 
