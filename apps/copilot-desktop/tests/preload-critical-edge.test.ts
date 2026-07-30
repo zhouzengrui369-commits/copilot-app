@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { IPC_CHANNELS } from '../src/shared/ipc-channels.js';
 
+const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const electron = vi.hoisted(() => {
   const listeners = new Map<string, Array<(...args: any[]) => void>>();
   return {
@@ -12,10 +13,10 @@ const electron = vi.hoisted(() => {
       electron.bridge = bridge;
     }),
     invoke: vi.fn(async (channel: string, payload?: unknown) => {
-      if (channel === 'local-asr:status') {
+      if (channel === 'copilot:local-asr:status') {
         return { ok: true, value: { active: false, lastErrorCode: null, state: 'AVAILABLE' } };
       }
-      if (channel === 'local-asr:decode') {
+      if (channel === 'copilot:local-asr:decode') {
         return {
           ok: true,
           value: {
@@ -25,7 +26,7 @@ const electron = vi.hoisted(() => {
           },
         };
       }
-      if (channel === 'local-asr:cancel') {
+      if (channel === 'copilot:local-asr:cancel') {
         return {
           ok: true,
           value: {
@@ -226,5 +227,3 @@ describe('preload complete critical bridge', () => {
     });
   });
 });
-
-const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
