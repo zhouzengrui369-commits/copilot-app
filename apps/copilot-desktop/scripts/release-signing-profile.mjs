@@ -2,7 +2,7 @@ import { createHash, createPublicKey } from 'node:crypto';
 import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-const SIGNING_MODES = new Set(['unsigned', 'macos-unsigned', 'distribution', 'macos-distribution']);
+const SIGNING_MODES = new Set(['unsigned', 'distribution', 'macos-distribution']);
 
 const SIGNING_INPUT_KEYS = [
   'CSC_LINK',
@@ -30,7 +30,7 @@ export function parseSigningModeArgs(args = []) {
     if (args[index].startsWith('--signing-mode=')) {
       throw blocked(
         'BLOCKED_SIGNING_MODE_INVALID',
-        'Use --signing-mode followed by unsigned, macos-unsigned, distribution, or macos-distribution',
+        'Use --signing-mode followed by unsigned, distribution, or macos-distribution',
       );
     }
     if (args[index] !== '--signing-mode') continue;
@@ -48,19 +48,9 @@ export function parseSigningModeArgs(args = []) {
   return validatedMode(mode);
 }
 
-export function isMacOnlySigningMode(mode) {
-  const value = validatedMode(mode);
-  return value === 'macos-unsigned' || value === 'macos-distribution';
-}
-
-export function isDistributionSigningMode(mode) {
-  const value = validatedMode(mode);
-  return value === 'distribution' || value === 'macos-distribution';
-}
-
 export function resolveSigningProfile({ mode = 'unsigned', env = {} } = {}) {
   const validated = validatedMode(mode);
-  if (validated === 'unsigned' || validated === 'macos-unsigned') return { mode: validated };
+  if (validated === 'unsigned') return { mode: 'unsigned' };
 
   const identity = nonempty(env.COPILOT_MAC_SIGN_IDENTITY);
   if (!identity?.startsWith('Developer ID Application: ')) {
@@ -131,8 +121,9 @@ export function resolveSigningProfile({ mode = 'unsigned', env = {} } = {}) {
 }
 
 /**
- * Every canonical builder child receives a zero-signing environment first.
- * Distribution credentials are restored only by the narrow signing calls.
+ * Task 1 intentionally gives every electron-builder child a zero-signing
+ * environment. Distribution credentials remain only in the private profile;
+ * the later platform-signing task owns any narrowly scoped credential use.
  */
 export function createSigningEnvironment(_profile, env = {}) {
   const clean = { ...env };
@@ -187,14 +178,6 @@ export function resolveReleaseChildEnvironment({
 
 export function publicSigningProfile(profile) {
   if (profile.mode === 'unsigned') return { mode: 'unsigned' };
-  if (profile.mode === 'macos-unsigned') {
-    return {
-      mode: 'macos-unsigned',
-      platforms: ['darwin'],
-      mac: { signing: 'unsigned' },
-      windows: { status: 'OWNER_DEFERRED', phase: '1.1' },
-    };
-  }
   if (profile.mode === 'macos-distribution') {
     return {
       mode: 'macos-distribution',
@@ -256,13 +239,16 @@ function validatedMode(mode) {
 }
 
 function nonempty(value) {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+  if (typeof value !== 'string') return undefined;
+  return value.trim() ? value : undefined;
 }
 
 function isHttpsUrl(value) {
+  if (!value) return false;
   try {
     const parsed = new URL(value);
     return parsed.protocol === 'https:'
+      && Boolean(parsed.hostname)
       && !parsed.username
       && !parsed.password
       && !parsed.search
@@ -273,7 +259,5 @@ function isHttpsUrl(value) {
 }
 
 function blocked(code, message) {
-  const error = new Error(`${code}: ${message}`);
-  error.code = code;
-  return error;
+  return Object.assign(new Error(`${code}: ${message}`), { code });
 }
