@@ -1,266 +1,68 @@
-# PROJECT STATUS
-
-## Current Stage
-
-R29 GitHub Remote Development Handoff / Independent Review Pending.
-
-Current branch/base:
-
-- branch: `codex/p0-owner-gate`
-- Git baseline: GitHub `main@96c861706126317c27965fcb64c765973df9ac89`
-- latest materialized P0+P1 product/test commit:
-  `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`
-- latest committed product head, including the macOS build-order repair:
-  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`
-- latest committed receipt/TSC repair:
-  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`
-- latest committed R19 test-only harness repair:
-  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`
-- latest committed R22 focused-Electron producer-isolation repair:
-  `92510816932d0683e95a148789227c6cda0d55a3`
-- R23 governance commit:
-  `2595860e3bf880ea6e357fb197153abf30b09652`
-- latest committed R26 full-suite E2E contract repair:
-  `deaa24fade215f0581a30f6e617bdb4362d5f22d`
-- current governance HEAD before the uncommitted R29 postimage:
-  `ce21c3f4f29fff8a2f8426e36c22306c6f282583`
-- worktree: `/Users/njx/openclaw/copilot.wt-S15C`
+# Copilot App — Current Project Status
 
 ## Verdict
 
-`BLOCKED / R29_GOVERNANCE_AWAITING_INDEPENDENT_REVIEW /
-R28_STAGE_B_REJECTED_P0_1_P1_2_P2_0 / R28_RUNNER_NEVER_EXECUTED /
-NEW_CLEAN_CANDIDATE_NOT_BUILT / INDEPENDENT_RETEST_PENDING /
-RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`
+`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
 
-r3 remains frozen at commit `2b832c20b93e07ee68b6b325dc3ad758986b7f69`
-as a Desktop product-layer input. Accepted EXP-COP-008 and EXP-COP-009
-product/test bytes are materialized together at
-`bd82407dc63fd278c0523f46bcf0e96c5344fd9b`. This commit is not a candidate
-PASS, release evidence, or MVP completion.
+No local R30 candidate has been executed. There is no current artifact SHA256, runtime ID, source snapshot receipt, packaged Electron result, independent Codex verdict, signing, notarization, Release, or Human Owner Gate.
 
-Latest focused review facts:
+## Authority
 
-- PR: `https://github.com/zhouzengrui369-commits/copilot-app/pull/9`
-- focused report: `https://github.com/zhouzengrui369-commits/copilot-app/blob/31dfd0c7f9feca77da82f4a02bf359d85818742c/reports/product-review/2026-07-28-copilot-focused-retest.md`
-- verdict: `NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3`
+The owner-approved baseline remains `goal.md`, `plan.md`, `rules.md`, and `delivery.md` v6.2, interpreted through the 2026-07-16 MiniMax-first/Tencent-post-MVP amendment and the 2026-07-15 macOS-first amendment. `AGENTS.md` and `docs/DEVELOPMENT_WORKFLOW.md` define the GitHub → MiniMax → Codex execution boundary. The six `docs/*` handoff files are mirrors and cannot override root truth.
 
-## Owner-Approved Development Mode
+## Exact Takeover Source
 
-- ChatGPT is the remote product-code developer and works only through bounded
-  GitHub branches and PRs. Exact GitHub commits are the product-source
-  authority.
-- MiniMax Code is the local deployment executor for one exact approved commit.
-  It may build, package, run, and collect evidence, but it must not silently
-  author product fixes during deployment.
-- Codex is the independent local product-experience auditor and Release Gate
-  reviewer. It performs real-computer acceptance on the exact deployed
-  candidate and fails closed on drift or incomplete evidence.
-- This owner mode supersedes the older OpenClaw/Mavis-first product-development
-  routing in `AGENTS.md`. The v6.2 scope, macOS-first and local-first
-  boundaries, tests, evidence, signing/notarization, and independent Focused
-  Retest gates are unchanged.
-- The R28 runner was never executed. Independent review returned
-  `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`: its evidence ledger records
-  a malformed 63-hex Gate 3 SHA, Gate 2 does not enforce offline/no-network
-  behavior and still names the npm registry, and Gate 9 accepts `>=50` instead
-  of exactly `113 tests in 9 files`.
-- R28 established no candidate and cannot be promoted. Its frozen source target
-  is superseded by this governance transition, so a later runner must bind the
-  eventual R29 governance commit and independently close all three blockers.
-- The R29 eight-file postimage is currently uncommitted and awaiting
-  independent review. No push or PR has been performed in this lane.
+- Repository: `zhouzengrui369-commits/copilot-app`
+- Parent branch: `codex/p0-owner-gate`
+- Parent commit: `6aa6b8c0792c5549b818107a0f64e4f32651dacd`
+- `main` observed: `e91cafaa22ea100428b404b371aa35dce535c5bf`
+- Parent Draft PR: `#12`
+- Bounded successor branch: `agent/r30-github-bound-candidate-runner`
 
-## R18/R19 Current Truth
+## Preserved Detailed Handoff
 
-- R18 proved the supported offline package path:
-  `--config.electronDist=$RUN/electron-dist`. Packaging passed, but the focused
-  packaged Electron gate hung before settings credential save completed.
-  Therefore R18 did not establish an accepted candidate, artifact SHA256, or
-  runtime ID.
-- R19 diagnosed a test-harness asymmetry: packaged E2E omitted
-  `--use-mock-keychain`, so a synthetic E2E credential entered the real macOS
-  `safeStorage`/Keychain path and left the settings IPC unresolved.
-- R19 changes only two test-harness files; production code is unchanged:
-  - fixture:
-    `b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`;
-  - unit test:
-    `ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
-- Independent implementation rereview:
-  `PASS / P0=0 / P1=0 / P2=0`.
-- Truth labels:
-  `PACKAGED_E2E_MOCK_KEYCHAIN` and
-  `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`.
-- The initial controller wrapper recorded `RESOURCE_DEFER_NO_TEST` before the
-  command started, so that wrapper consumed no GREEN attempt.
-- The successor then ran the exact command once:
-  `/usr/local/bin/npm run test --workspace @copilot/desktop --
-  tests/electron-fixture-window-readiness.test.ts --minWorkers=1
-  --maxWorkers=1`. It exited `0` with `1 file / 15 tests PASS`;
-  current status is `GREEN_15_OF_15_PASS`, with no retry and no Electron run.
+The complete pre-R30 root state, status, TODO, changelog, and architecture are preserved byte-for-byte under `docs/history/PROJECT_STATE_PRE_R30.yaml`, `docs/history/PROJECT_STATUS_PRE_R30.md`, `docs/history/TODO_PRE_R30.md`, `docs/history/CHANGELOG_PRE_R30.md`, and `docs/history/ARCHITECTURE_PRE_R30.md`. R30 updates current fields only; it does not erase accepted development evidence or historical blockers.
 
-## R20–R26 Current Truth
+## Phase 1 — Documentation Reconciliation
 
-- R20 is rejected. Gates 1–7 passed, but Gate 8 focused Electron returned
-  `1 passed / 1 failed`; Gates 9–11 did not run, retry remained zero, and no
-  candidate was established.
-- R20 source snapshot SHA256 is
-  `bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec`.
-  Its intermediate artifact SHA256
-  `2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b`
-  is explicitly not a candidate artifact.
-- R21 identified `TEST_HARNESS_ISOLATION_DEFECT`: worker-scoped shared
-  userData let EXP-COP-009's note and Todo contaminate EXP-COP-008's exact
-  source assertion. Diagnosis SHA256:
-  `55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4`.
-- R22 added test-producer isolation at
-  `<workerRoot>/producers/<producer>` and committed the exact four-file repair
-  at `92510816932d0683e95a148789227c6cda0d55a3`.
-- R22 independent review returned `PASS / P0=0 / P1=0 / P2=0`.
-  Controller RED ran once and returned `4 failed / 15 passed`, exit `1`.
-  Controller GREEN ran once and returned `1 file / 19 tests PASS`, exit `0`,
-  duration `3.45s`. The desktop main/renderer/tests TSC check also passed once,
-  exit `0`.
-- R22 changes only test-harness data ownership. It does not change product
-  persistence or provide candidate-bound Electron runtime proof.
-- R23 bound the R20 rejection and R22 repair into governance commit
-  `2595860e3bf880ea6e357fb197153abf30b09652`.
-- R24 was a new clean candidate attempt from R23. Gates 1–9 passed, including
-  offline arm64 packaging and focused packaged Electron `2/2 PASS`. Gate 10
-  stopped on `33 passed / 7 failed / 73 not run`, exit `1`; Gate 11 did not
-  run and retry remained zero. No candidate was established.
-- R24 source snapshot SHA256 is
-  `c9bdd37c443dd696e1771244db063b33afef3c95c50e742b4938d512a7a798f0`.
-  Its intermediate artifact SHA256
-  `03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527`
-  is explicitly not a candidate artifact.
-- R25 primary and independent diagnoses agreed that Gate 10 exposed six stale
-  E2E contracts and one missing screenshot-output environment, not a
-  production/provider regression. Diagnosis SHA256 values are
-  `ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088`
-  and
-  `fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea`.
-- R26 repaired exactly seven E2E specs, with no production, fixture, config,
-  package, or lockfile change. Independent review returned
-  `PASS / P0=0 / P1=0 / P2=0`.
-- R26 controller static gates ran once each: desktop main/renderer/tests TSC
-  passed, exit `0`; list-only discovery passed exactly
-  `113 tests in 9 files`, exit `0`. No Electron test case ran in R26.
-- The seven-file R26 repair is committed at
-  `deaa24fade215f0581a30f6e617bdb4362d5f22d`.
-- Candidate commit, candidate artifact SHA256, runtime ID, deterministic
-  candidate test-data manifest, independent candidate retest, Human Owner Gate,
-  release, and MVP completion remain unset or blocked.
+The six low-confidence documents added on `main` were reviewed against the detailed root handoff. The generic architecture/status/risk/todo language was not accepted as a new baseline. The successor supplies explicit authority mirrors and preserves detailed strict local-first, fail-closed, Electron trust, grounded Ask/Todo, candidate receipt, and deferred-scope truth.
 
-## Open Gates
+## Phase 2 — R30 Successor
 
-Electron candidate receipt/TSC repair (2026-07-30):
+R28 remains `NEVER_RUN / PERMANENTLY_REJECTED`; its files, hash ledger, network authority, candidate identity, and evidence are not reused.
 
-- R1 implemented the seven-file receipt contract. Its valid RED receipt was
-  `7 failed / 22 passed`; the bounded GREEN rerun was `2 files / 29 tests
-  PASS`. Tests TSC was initially blocked by the borrowed dependency tree.
-- R3 removed the stale dependency symlink, ran exact
-  `npm ci --ignore-scripts` (`exit 0`, `added 1454 packages in 3m`), then built
-  `@copilot/llm-client`, `@copilot/kb`, `@copilot/kg`, and `@copilot/rag` in
-  order with `exit 0`. The receipt slice remained `29/29 PASS`. Tests TSC then
-  exposed exactly four source diagnostics.
-- R4 added the test-side `vite/client` type and made the one optional note tag
-  access fail-safe. Tests TSC passed; `3 files / 40 tests PASS`; focused
-  diff-check and forbidden scan passed.
-- R5 independent source review returned
-  `FAIL / P1_MANUAL_LAUNCH_OWNERSHIP_GAP / MVP_NOT_COMPLETE`: readiness failure
-  could occur before the caller owned the Electron process, and recorder flush
-  could skip provider cleanup.
-- R6 introduced one shared launch/receipt owner. It records runtime immediately
-  after launch, closes and records process state before rethrowing the original
-  readiness error, avoids duplicate runtime rows, and guarantees provider
-  cleanup. Tests TSC passed; `2 files / 30 tests PASS`; focused diff-check and
-  scan passed.
-- R7 independent read-only re-review returned
-  `PASS / P1_CLOSED / MVP_NOT_COMPLETE`, with no remaining P0/P1 in the complete
-  nine-file diff. R7 did not replace or rerun the R6 command receipts.
-- Stage A committed those exact nine files at
-  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
+R30 is a new committed runner under `scripts/candidate-r30/`:
 
-The focused profile remains exactly `exp-cop-008-009-focused`: exactly two
-tests and the exact producers `exp-cop-008` and `exp-cop-009`. Runtime and
-process receipts are exclusively owned per producer. The full gate is
-unchanged and still requires at least 50 real Electron tests plus its required
-manual and fixture-worker producers.
+- Gate 1: exact full Git commit and clean source.
+- Gate 2: macOS network sandbox denies all network; offline npm only; cache miss stops for separate owner approval.
+- Gate 3: complete regular-file SHA256 ledger with exact 64 lower-case hex digests.
+- Gates 4–7: ordered workspace build, TSC/build, unsigned arm64 package, source snapshot, artifact identity.
+- Gate 8: focused packaged Electron 2/2.
+- Gate 9: exact list-only discovery `113 tests in 9 files`.
+- Gate 10: full packaged Electron 113/113, zero skipped/unexpected/flaky, clean process terminal state.
+- Gate 11: source/artifact/runtime/test-data/command/screenshot/terminal-state manifest.
 
-This repair is source acceptance only. No clean candidate, package, artifact
-SHA256, runtime ID, candidate-bound Electron run, independent product
-experience retest, owner gate, release, or MVP PASS exists yet.
+A successful local R30 run is explicitly an unsigned diagnostic candidate, not a signed/notarized final release.
 
-macOS build-order contract repair (2026-07-30):
+## RED→GREEN Evidence
 
-- `apps/copilot-desktop/package.json` defines one ordered
-  `build:workspace-deps` chain for `@copilot/llm-client`, `@copilot/kb`,
-  `@copilot/kg`, and `@copilot/rag`; every macOS distribution script invokes
-  it before the desktop build.
-- its product repair remains committed at
-  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`.
-- R3's exact install and ordered builds close the earlier executor dependency
-  blocker for the receipt repair, but they are not candidate-bound package
-  evidence and must be rerun from the clean candidate.
+Pure Node tests were used so ChatGPT did not launch Electron:
 
-P0 development acceptance:
+- Gate contract RED: module absent, `exit 1`.
+- Gate contract baseline GREEN: 9/9, `exit 0`; pre-commit path/generated-input hardening RED: missing exports, `exit 1`; final GREEN: 11/11, `exit 0`.
+- Runner RED: module absent, `exit 1`.
+- Runner baseline GREEN: 5/5, `exit 0`; final ownership/no-overwrite suite: 6/6, `exit 0`.
+- Documentation authority RED: target mirrors absent, `exit 1`.
+- Documentation authority GREEN: 6/6, `exit 0`.
+- Combined pure Node suite: 23/23, `exit 0`.
+- Syntax checks and dry-run planning pass; dry-run reports `PLAN_ONLY_NOT_A_CANDIDATE` and `MVP_NOT_COMPLETE`.
 
-- `EXP-COP-008`: canonical create/readback, All/Unscheduled discovery, exact
-  “查看待办”, title/due/source edit, durable notes/execution logs, two-source
-  alignment, exact source summary/full reader, selected-day discovery, and
-  full Electron quit/relaunch readback pass.
-- final current-source Electron journey: `1/1 PASS`, `13.3s`.
-- focused desktop slice: `69/69 PASS`; renderer TSC and desktop build PASS.
-- global R3 classification: 37 failure records, current P0 regression `0`,
-  unclassified `0`; seven execution-resolution records were separately driven
-  into behavior, leaving one existing r22 literal-shell assertion.
-- independent product-experience retest remains pending until EXP-COP-009 and a
-  clean candidate identity are ready.
+## Role Boundary
 
-P1 first:
-
-- `EXP-COP-009`: one versioned latest-completed grounded Ask exchange is
-  persisted in the local Electron main process; exact source/full-reader
-  navigation, explicit return, route change, renderer remount and same-userData
-  quit/relaunch preserve the same question, terminal answer, sources and
-  canonical Todo receipt/action.
-- source and Todo truth is revalidated on load; missing, stale, corrupt,
-  unsafe, nonterminal or mismatched state fails closed.
-- final controller receipt: main and renderer TSC PASS; five focused files /
-  28 tests PASS; exact tests TSC remains exit 2 with zero diagnostics in the
-  two R3d target files and only separated pre-existing diagnostics elsewhere.
-- active R3c Electron evidence is one focused 1/1 PASS run with two clean child
-  exits; its wrapper explicitly records `globalGate=NOT_RUN`.
-- this is development acceptance only. Independent product-experience retest
-  remains pending.
-
-Old source/runtime IDs are not reproducible and must not be reused. New candidate, runtime ID, artifact SHA256, package identity, screenshots, and Electron evidence remain unset.
+1. ChatGPT changes source only through GitHub branch/PR.
+2. MiniMax Code checks out one exact final commit, runs the runner locally, and never silently fixes source.
+3. Codex begins only after complete MiniMax receipts and independently verifies the real computer; it never fixes source in the acceptance lane.
 
 ## Next Single Action
 
-Independently review the exact eight-file R29 governance postimage. If and only
-if that review passes, the controller may create the governance commit, push
-the branch, open a Draft PR, and provide the exact GitHub head plus
-`docs/DEVELOPMENT_WORKFLOW.md` to ChatGPT for the next bounded product-code PR.
-
-After an approved product commit exists, MiniMax Code may deploy exactly that
-commit. Any candidate runner must be newly rebound to the post-R29 Git head and
-must have a correct complete SHA ledger, explicit fail-closed network authority,
-and exact `113 tests in 9 files` discovery/promotion assertions. It then
-must rerun exact `npm ci`, main/renderer/tests TSC, macOS package, focused
-Electron, runner list proving exactly `113 tests in 9 files` (and therefore the
-unchanged `>=50` minimum), and the eligible full Electron gate.
-Only candidate-bound receipts may bind source commit, immutable source
-snapshot, artifact SHA256, runtime ID, deterministic test-data manifest,
-packaged Electron evidence, screenshots, and process terminal state.
-
-The release baseline remains red outside the accepted P0 slice. R24 did run the
-project-wide full Electron gate, but it failed before completion and therefore
-did not replace the older `globalGate=NOT_RUN` development receipt with a
-passing candidate-bound receipt. The next clean candidate must rerun the full
-eligible gate and reach all 113 discovered tests before independent retest.
-
-## Deferred Scope
-
-Do not start Windows, Remote/Backup expansion, major dependency upgrades, or visual redesign in this stage.
+Review the bounded R30 PR. Then MiniMax Code checks out its exact final GitHub commit and executes the runner once in a clean worktree with a new absolute evidence directory outside the repository. If the cache is insufficient, MiniMax stops and requests minimal registry authority; it does not retry online. Codex remains idle until candidate-bound receipts are complete.

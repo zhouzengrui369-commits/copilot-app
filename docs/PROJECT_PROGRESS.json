@@ -1,0 +1,80 @@
+{
+  "schema_version": "2.0.0",
+  "project_id": "copilot-app",
+  "authority_chain": [
+    "AGENTS.md",
+    "goal.md",
+    "plan.md",
+    "rules.md",
+    "delivery.md",
+    "PROJECT_STATE.yaml",
+    "PROJECT_STATUS.md",
+    "TODO.md"
+  ],
+  "confidence": "authoritative_mirror",
+  "status": "BLOCKED",
+  "mvp_status": "MVP_NOT_COMPLETE",
+  "updated_at": "2026-07-30",
+  "source": {
+    "repository": "zhouzengrui369-commits/copilot-app",
+    "parent_branch": "codex/p0-owner-gate",
+    "parent_commit": "6aa6b8c0792c5549b818107a0f64e4f32651dacd",
+    "main_observed": "e91cafaa22ea100428b404b371aa35dce535c5bf",
+    "successor_branch": "agent/r30-github-bound-candidate-runner",
+    "final_commit_binding": "runner --source-commit must equal git HEAD"
+  },
+  "candidate": {
+    "established": false,
+    "candidate_id": null,
+    "source_snapshot_sha256": null,
+    "artifact_sha256": null,
+    "runtime_id": null,
+    "screenshots": null,
+    "process_terminal_state": null
+  },
+  "r28": {
+    "status": "NEVER_RUN_PERMANENTLY_REJECTED",
+    "reusable": false,
+    "blockers": [
+      "Gate 3 malformed/incomplete SHA ledger",
+      "Gate 2 unresolved network authority",
+      "Gate 9 weaker than exact 113 tests in 9 files"
+    ]
+  },
+  "r30": {
+    "source_implementation": "COMPLETE_REMOTE",
+    "local_execution": "NOT_RUN",
+    "electron_runtime": "NOT_RUN",
+    "unit_contract_tests": {
+      "status": "PASS",
+      "count": 23,
+      "electron_launched": false
+    },
+    "gate_2": {
+      "authority": "offline-only",
+      "network_sandbox": "macOS sandbox-exec deny network",
+      "automatic_registry_fallback": false,
+      "cache_miss": "BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED"
+    },
+    "gate_3": {
+      "algorithm": "sha256",
+      "digest_format": "64 lower-case hex",
+      "ledger_generated_at_runtime": true
+    },
+    "gate_9": {
+      "exact_discovery": {
+        "tests": 113,
+        "files": 9
+      }
+    }
+  },
+  "remaining_release_gates": [
+    "MiniMax Code exact-commit local execution and receipts",
+    "Codex independent real-computer product-experience acceptance",
+    "Developer ID signing",
+    "Apple notarization, stapling, and validation",
+    "candidate-bound performance and three verify-fix rounds",
+    "Human Owner Gate"
+  ],
+  "conclusion": "BLOCKED / MVP_NOT_COMPLETE"
+}

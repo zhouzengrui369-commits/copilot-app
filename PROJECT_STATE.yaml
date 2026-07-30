@@ -1,154 +1,142 @@
+schema_version: 3
 project: copilot-app
-stage: R29 GitHub Remote Development Handoff / Independent Review Pending
-verdict: BLOCKED
-default_branch_head: "96c861706126317c27965fcb64c765973df9ac89"
-active_branch: codex/p0-owner-gate
-active_candidate_commit: null
-latest_commit: "ce21c3f4f29fff8a2f8426e36c22306c6f282583"
-materialized_product_commit: "1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2"
-artifact_sha256: null
-runtime_id: null
-ecosystem_baseline_commit: "965713b81a726279f63527eb17979f5e768423c1"
-ecosystem_baseline_version: "0.2.0"
-development_mode:
-  authority: OWNER_APPROVED
-  product_source_authority: GITHUB_COMMIT_AND_PR
-  remote_product_developer: CHATGPT
-  local_deployment_executor: MINIMAX_CODE_EXACT_COMMIT_ONLY
-  independent_acceptance_owner: CODEX
-  supersedes:
-    - OPENCLAW_FIRST_PRODUCT_DEVELOPMENT
-    - MINIMAX_PRIMARY_PRODUCT_AUTHORING
-    - CODEX_TO_MAVIS_PRODUCT_AUTHORING
-  v6_2_gates_changed: false
-workflow_governance:
-  postimage: AWAITING_INDEPENDENT_REVIEW
-  commit: null
-  push: NOT_RUN
-  draft_pr: NOT_CREATED
-r28_runner:
-  execution: NEVER_RUN
-  candidate_established: false
-  frozen_source_target: "ce21c3f4f29fff8a2f8426e36c22306c6f282583"
-  independent_review: FAIL / STAGE_B_REJECTED
-  review_p0: 1
-  review_p1: 2
-  review_p2: 0
+updated_at: "2026-07-30"
+authority:
+  baseline:
+    - AGENTS.md
+    - goal.md
+    - plan.md
+    - rules.md
+    - delivery.md
+  current_truth:
+    - PROJECT_STATE.yaml
+    - PROJECT_STATUS.md
+    - TODO.md
+    - DECISIONS.md
+    - CHANGELOG.md
+  preserved_pre_r30_detail:
+    - docs/history/PROJECT_STATE_PRE_R30.yaml
+    - docs/history/PROJECT_STATUS_PRE_R30.md
+    - docs/history/TODO_PRE_R30.md
+    - docs/history/CHANGELOG_PRE_R30.md
+    - docs/history/ARCHITECTURE_PRE_R30.md
+  docs_mirrors:
+    - docs/AI_HANDOVER.md
+    - docs/ARCHITECTURE.md
+    - docs/PROJECT_PROGRESS.json
+    - docs/PROJECT_STATUS.md
+    - docs/RISKS.md
+    - docs/TODO.md
+status:
+  verdict: BLOCKED
+  mvp: MVP_NOT_COMPLETE
+  release: RELEASE_NOT_READY
+  experience: EXPERIENCE_NOT_READY
+source:
+  repository: zhouzengrui369-commits/copilot-app
+  parent_branch: codex/p0-owner-gate
+  parent_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
+  main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
+  parent_pr: 12
+  successor_branch: agent/r30-github-bound-candidate-runner
+  final_commit_binding: "MiniMax must pass the final GitHub HEAD to --source-commit; runner verifies equality with git HEAD"
+workflow:
+  chatgpt:
+    role: GitHub branch/PR source development only
+    local_candidate_execution: FORBIDDEN
+  minimax_code:
+    role: deploy and execute exact approved commit locally
+    silent_source_fix: FORBIDDEN
+  codex:
+    role: independent real-computer experience and Release Gate verification
+    source_fix: FORBIDDEN
+r28:
+  status: NEVER_RUN_PERMANENTLY_REJECTED
+  executable: false
+  reusable: false
   blockers:
-    - GATE_3_SHA_LEDGER_MALFORMED_63_HEX
-    - GATE_2_OFFLINE_NO_NETWORK_NOT_ENFORCED
-    - GATE_9_NOT_EXACTLY_113_TESTS_IN_9_FILES
-  promotion: FORBIDDEN
-  next_runner_requirement: REBIND_TO_POST_R29_GOVERNANCE_COMMIT
-current_p0: EXP-COP-008_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
-current_p1:
-  primary: EXP-COP-009_DEVELOPMENT_ACCEPTANCE_PASS_INDEPENDENT_RETEST_PENDING
-  total_open: 6
-review_verdict: NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3
-electron_receipt_repair:
-  stage_a_commit: "ee8e207b44fc5091564f292ac130d8f0bd9a492b"
-  focused_profile: exp-cop-008-009-focused
-  focused_expected_tests: 2
-  focused_expected_producers:
-    - exp-cop-008
-    - exp-cop-009
-  full_minimum_electron_tests: 50
-  receipt_ownership: per_producer_exclusive
-  dependency_install: PASS
-  ordered_workspace_builds: PASS
-  tests_tsc: PASS
-  focused_tests: PASS
-  independent_source_review: PASS / P1_CLOSED / MVP_NOT_COMPLETE
-r18_candidate_attempt:
-  offline_package: PASS / SUPPORTED_ELECTRON_DIST
-  focused_packaged_electron: FAIL / SETTINGS_CREDENTIAL_SAVE_NOT_REACHED
-  candidate_status: NOT_ESTABLISHED
-r19_packaged_e2e_harness:
-  production_code_changed: false
-  fixture_sha256: "b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5"
-  unit_test_sha256: "ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9"
-  implementation_rereview: PASS / P0=0 / P1=0 / P2=0
-  packaged_e2e_protection: PACKAGED_E2E_MOCK_KEYCHAIN
-  production_protection: REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN
-  initial_wrapper_resource_gate: RESOURCE_DEFER_NO_TEST
-  initial_wrapper_attempt_consumed: false
-  green_command: /usr/local/bin/npm run test --workspace @copilot/desktop -- tests/electron-fixture-window-readiness.test.ts --minWorkers=1 --maxWorkers=1
-  green_result: GREEN_15_OF_15_PASS
-  green_exit_code: 0
-  green_attempts: 1
-r20_candidate_attempt:
-  source_commit: "c0a3cf32bb13b50fbc0a0eb31ee6f787e0243f33"
-  source_snapshot_sha256: "bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec"
-  gates_1_to_7: PASS
-  gate_8_focused_electron: FAIL / 1_PASSED_1_FAILED
-  gates_9_to_11: NOT_RUN
-  retry: ZERO
-  intermediate_artifact_sha256: "2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b"
-  intermediate_artifact_truth: NOT_A_CANDIDATE_ARTIFACT
-  candidate_status: REJECTED_NO_CANDIDATE
-r21_isolation_diagnosis:
-  verdict: TEST_HARNESS_ISOLATION_DEFECT
-  cause: SHARED_WORKER_USERDATA_CONTAMINATED_EXP008_WITH_EXP009_NOTE_TODO
-  diagnosis_sha256: "55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4"
-r22_producer_userdata_isolation:
-  commit: "92510816932d0683e95a148789227c6cda0d55a3"
-  independent_review: PASS / P0=0 / P1=0 / P2=0
-  red_result: 4_FAILED_15_PASSED
-  red_exit_code: 1
-  red_attempts: 1
-  green_result: 1_FILE_19_TESTS_PASS
-  green_exit_code: 0
-  green_attempts: 1
-  green_duration_seconds: 3.45
-  desktop_check: MAIN_RENDERER_TESTS_TSC_PASS
-  desktop_check_exit_code: 0
-  desktop_check_attempts: 1
-  scope: TEST_HARNESS_ONLY
-  user_data_contract: "<workerRoot>/producers/<producer>"
-  product_persistence_changed: false
-r24_candidate_attempt:
-  source_commit: "2595860e3bf880ea6e357fb197153abf30b09652"
-  source_snapshot_sha256: "c9bdd37c443dd696e1771244db063b33afef3c95c50e742b4938d512a7a798f0"
-  gates_1_to_9: PASS
-  gate_10_full_electron: FAIL / 33_PASSED_7_FAILED_73_NOT_RUN
-  gate_10_exit_code: 1
-  gate_11: NOT_RUN
-  retry: ZERO
-  intermediate_artifact_sha256: "03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527"
-  intermediate_artifact_truth: NOT_A_CANDIDATE_ARTIFACT
-  candidate_status: REJECTED_NO_CANDIDATE
-r25_gate10_diagnosis:
-  primary_sha256: "ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088"
-  independent_sha256: "fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea"
-  verdict: SIX_STALE_E2E_CONTRACTS_PLUS_ONE_SCREENSHOT_ENV_OMISSION
-  production_regression: false
-r26_full_suite_contract_repair:
-  commit: "deaa24fade215f0581a30f6e617bdb4362d5f22d"
-  production_code_changed: false
-  independent_review: PASS / P0=0 / P1=0 / P2=0
-  desktop_check: MAIN_RENDERER_TESTS_TSC_PASS
-  desktop_check_exit_code: 0
-  desktop_check_attempts: 1
-  list_only_result: 113_TESTS_IN_9_FILES
-  list_only_exit_code: 0
-  list_only_attempts: 1
-  electron_runtime: NOT_RUN
-r3_snapshot:
-  manifest_sha256: "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4"
-  aggregate_sha256: "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
-  files: 414
-  tracked_deletions: 7
-  bytes: 51347389
-  role: product_layer_input_only
-release_gate: HUMAN_OWNER_GATE_NOT_ELIGIBLE
-release_baseline: RED
-candidate_status: NOT_ESTABLISHED_R24_REJECTED
-independent_retest: PENDING_NEW_CANDIDATE
-mvp_status: MVP_NOT_COMPLETE
-next_single_action: Independently review the exact eight-file R29 governance postimage; if PASS, commit and push it, open a Draft PR, then hand the exact GitHub head to ChatGPT. Any later runner must bind that head and close the SHA-ledger, offline-network, and exact-113/9 blockers before execution.
-not_doing:
-  - Windows expansion
-  - Remote or Backup expansion
-  - major dependency upgrade
-  - visual redesign
-updated_at: "2026-07-30T15:04:02+08:00"
+    - "Gate 3 malformed/incomplete SHA256 ledger"
+    - "Gate 2 unresolved fail-closed network authority"
+    - "Gate 9 did not assert exact 113 tests in 9 files"
+r30:
+  status: REMOTE_SOURCE_IMPLEMENTED_AWAITING_LOCAL_EXECUTION
+  local_execution: NOT_RUN
+  electron_candidate: NOT_RUN
+  branch: agent/r30-github-bound-candidate-runner
+  runner:
+    path: scripts/candidate-r30/run-candidate.mjs
+    candidate_id: "copilot-r30-<full-source-commit>"
+    evidence_directory: "absolute, outside repo, must not exist"
+  red_green:
+    contract_red_exit: 1
+    contract_green_exit: 0
+    runner_red_exit: 1
+    runner_green_exit: 0
+    document_red_exit: 1
+    document_green_exit: 0
+  static_validation:
+    node_syntax: PASS
+    pure_node_tests: "23/23 PASS"
+    dry_run: PLAN_ONLY_NOT_A_CANDIDATE
+    electron_launched: false
+  gates:
+    gate_1:
+      source_commit: exact_full_40_hex
+      source_clean: "required; tracked, untracked, and ignored generated candidate inputs absent"
+    gate_2:
+      authority: offline-only
+      sandbox: "/usr/bin/sandbox-exec with deny network*"
+      npm_install: "npm ci --offline --no-audit --no-fund"
+      automatic_registry_fallback: false
+      cache_miss: BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
+    gate_3:
+      algorithm: sha256
+      digest: exact_64_lower_hex
+      ledger_scope: complete_control_inputs
+    gate_8:
+      focused_packaged_electron: "2/2 required"
+    gate_9:
+      discovery_tests: 113
+      discovery_files: 9
+      exact: true
+    gate_10:
+      full_packaged_electron: "113/113 required"
+      skipped: 0
+      unexpected: 0
+      flaky: 0
+    gate_11:
+      required_receipts:
+        - source_snapshot_sha256
+        - artifact_sha256
+        - runtime_id
+        - test_data_manifest
+        - commands_and_exit_codes
+        - screenshots
+        - process_terminal_state
+candidate:
+  established: false
+  candidate_id: null
+  source_snapshot_sha256: null
+  artifact_sha256: null
+  runtime_id: null
+  test_data_manifest: null
+  screenshots: null
+  process_terminal_state: null
+independent_acceptance:
+  minimax_receipt: NOT_RECEIVED
+  codex_focused_retest: NOT_RUN
+  codex_release_gate: NOT_RUN
+release_gates:
+  developer_id_signing: BLOCKED
+  apple_notarization: BLOCKED
+  staple_and_validate: BLOCKED
+  candidate_bound_performance: BLOCKED
+  verify_fix_rounds: "0/3 current final candidate"
+  embedded_local_asr_runtime: BLOCKED
+  human_owner_gate: BLOCKED
+deferred_scope:
+  windows: OWNER_DEFERRED_PHASE_1_1
+  tencent_deployment_remote_backup: OWNER_DEFERRED_POST_MVP
+  graph_3d: POST_MVP
+next_single_action: "Review R30 PR, then MiniMax Code deploys its exact final GitHub commit and returns candidate-bound receipts. Codex starts only after those receipts exist."
+conclusion: "BLOCKED / MVP_NOT_COMPLETE"

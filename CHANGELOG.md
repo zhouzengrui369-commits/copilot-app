@@ -1,174 +1,21 @@
-# CHANGELOG
+# Changelog
 
-## 2026-07-30
+## 2026-07-30 — R30 GitHub-Bound Candidate Runner
 
-- Added the owner-approved GitHub remote-development workflow across exactly
-  eight governance/handoff files. ChatGPT is the remote product developer,
-  MiniMax Code is the exact-commit local deployment executor, and Codex is the
-  independent local product-experience and Release Gate reviewer.
-- Added a highest-precedence `AGENTS.md` override that supersedes older
-  OpenClaw/Mavis-first product authoring while preserving the complete v6.2,
-  macOS-first, local-first, test, evidence, signing/notarization, and
-  independent Focused Retest gates.
-- Recorded that R28 was never executed, established no candidate, and cannot
-  be promoted. Its independent review returned
-  `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`: malformed Gate 3 SHA
-  evidence, no fail-closed Gate 2 offline contract, and no exact
-  `113 tests in 9 files` Gate 9 assertion. A later runner must bind the
-  post-R29 Git head and independently close all three blockers.
-- This R29 lane changes governance/docs only. It does not change product,
-  tests, fixtures, config, package/lockfiles, or v6.2 baselines, and performs
-  no Git write, test, Electron, build, package, network, signing, or release.
-  The postimage remains `AWAITING_INDEPENDENT_REVIEW / MVP_NOT_COMPLETE`.
-- Rejected the one-shot R24 candidate: Gates 1–9 passed, Gate 10 stopped at
-  `33 passed / 7 failed / 73 not run`, exit `1`, Gate 11 did not run, retry
-  remained zero, and no candidate was established. Its intermediate artifact
-  SHA256
-  `03f81b4a415e7a631b2118376c7e4335182949c60dfdcda7973283424083f527`
-  is not a candidate artifact.
-- Recorded agreeing R25 primary and independent diagnoses: six stale
-  full-Electron E2E contracts plus one missing screenshot-output environment;
-  no production/provider regression. Diagnosis SHA256 values are
-  `ed15d2be355157cb44dcdd2071d7951bd7249a985a96bf03d25ee0c30e40f088`
-  and
-  `fbb58b14ac619578ced89febd4c41aa66cc0951e7057de2285437a43305fe3ea`.
-- Repaired exactly seven R26 E2E specs without production, fixture, config,
-  package, or lockfile changes. Independent review returned
-  `PASS / P0=0 / P1=0 / P2=0`.
-- Ran the authorized R26 static gates once each: desktop main/renderer/tests
-  TSC passed, exit `0`; list-only discovery passed exactly
-  `113 tests in 9 files`, exit `0`. No Electron test case ran.
-- Committed the exact seven-file R26 test repair at
-  `deaa24fade215f0581a30f6e617bdb4362d5f22d`. A new clean candidate and
-  independent product-experience retest remain required.
-- Rejected the R20 candidate attempt: Gates 1–7 passed, Gate 8 focused Electron
-  returned `1 passed / 1 failed`, Gates 9–11 did not run, retry remained zero,
-  and no candidate was established. Source snapshot SHA256 is
-  `bf44aa2a14e5a42a13221d94e721982a45abfd88322f431c986e7a8d56a29aec`;
-  intermediate artifact SHA256
-  `2826ff86a700096217086cc82a91edaf2bd09eb02ed7159b6061e79cab1b287b`
-  is not a candidate artifact.
-- Recorded R21 `TEST_HARNESS_ISOLATION_DEFECT`: shared worker userData allowed
-  EXP-COP-009 note/Todo state to contaminate EXP-COP-008's exact-source
-  assertion. Diagnosis SHA256:
-  `55c75a2669906d71d7a0cddb974cc7bef6aa696b337f045b40fc390311832ad4`.
-- Added R22 producer-scoped test userData at
-  `<workerRoot>/producers/<producer>` without changing product persistence.
-  Independent review returned `PASS / P0=0 / P1=0 / P2=0`.
-- Preserved the accepted R22 RED-to-GREEN receipts: RED once at
-  `4 failed / 15 passed`, exit `1`; GREEN once at
-  `1 file / 19 tests PASS`, exit `0`, `3.45s`; desktop
-  main/renderer/tests TSC PASS once, exit `0`.
-- Committed the exact four-file R22 test-harness repair at
-  `92510816932d0683e95a148789227c6cda0d55a3`. Candidate identity, candidate
-  artifact SHA256, runtime ID, independent candidate retest, Human Owner Gate,
-  release, and MVP remain unset or blocked.
-- Recorded R18 truth: supported offline `electronDist` packaging passed, but
-  focused packaged Electron failed before settings credential save completed;
-  no candidate, artifact SHA256, or runtime ID was established.
-- Diagnosed and repaired the R19 packaged-E2E launch harness without changing
-  production code. Exact postimages are fixture
-  `b9e0d32b23bcf82e0c03f05855cb741b3b3931a5e196cb0aac9e36f992044df5`
-  and unit test
-  `ed3b85357c8b347669c4888613dac55f6ca16d6bac4bb4f9d065d0504f1bdbf9`.
-- Independent implementation rereview returned
-  `PASS / P0=0 / P1=0 / P2=0`.
-- Bound the evidence labels `PACKAGED_E2E_MOCK_KEYCHAIN` and
-  `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`. The initial controller wrapper
-  preserved `RESOURCE_DEFER_NO_TEST` before command start and consumed no
-  attempt. Its successor ran
-  `/usr/local/bin/npm run test --workspace @copilot/desktop --
-  tests/electron-fixture-window-readiness.test.ts --minWorkers=1
-  --maxWorkers=1` exactly once: exit `0`, `1 file / 15 tests PASS`,
-  `GREEN_15_OF_15_PASS`, no retry and no Electron.
-- Committed the exact two-file R19 test-only repair at
-  `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`; candidate, artifact SHA256 and
-  runtime ID remain unset.
-- Committed the exact nine-file Electron receipt/TSC repair at
-  `ee8e207b44fc5091564f292ac130d8f0bd9a492b`.
-- R1 established the fixed focused receipt contract and moved its bounded
-  receipt suite from valid RED (`7 failed / 22 passed`) to GREEN (`29/29`).
-  R3 then completed exact dependency installation and ordered workspace builds.
-- R4 closed four tests-TSC diagnostics and passed `3 files / 40 tests`.
-  Independent R5 correctly rejected a manual-launch ownership and provider
-  cleanup gap.
-- R6 centralized launch ownership, early runtime recording, failure cleanup,
-  process receipt flushing, original-error propagation, and guaranteed provider
-  close; tests TSC and `2 files / 30 tests` passed.
-- R7 independent read-only re-review returned
-  `PASS / P1_CLOSED / MVP_NOT_COMPLETE` for the complete nine-file diff.
-- The focused profile remains exactly `exp-cop-008-009-focused` with two exact
-  producers. The full real Electron gate remains unchanged at `>=50`.
-- No candidate, artifact SHA256, runtime ID, package, independent experience
-  retest, owner gate, release, or MVP PASS is attached to these source
-  receipts.
-- Added a single ordered `build:workspace-deps` contract and made every macOS
-  distribution script execute it before the desktop build. This closes the
-  clean-install ordering defect without changing Windows scripts or dependency
-  versions.
-- Committed the product/test portion of that repair at
-  `1167cdc55a3fa7601516edeb61a9f4fb19ecd1c2`. This commit is a source rollback
-  point only: no clean candidate, package, artifact SHA256, runtime ID or
-  independent retest is attached to it.
-- Added a static regression test covering the exact dependency order, all four
-  macOS distribution paths, and preservation of generic desktop/Windows
-  scripts. Evidence moved from `5 failed / 1 passed` to `6/6 PASS`; main TSC
-  passes.
-- The first renderer TSC stopped on missing `vite/client` because S15C has no
-  complete root dependency tree. Per first-failure policy, no retry or tests
-  TSC followed. Revalidation is required after exact `npm ci` on the next clean
-  committed candidate; no build, package, Electron, network or Git action was
-  performed.
-- Closed EXP-COP-009 development acceptance: a completed grounded Ask exchange,
-  exact source/full-reader navigation, explicit return, canonical Todo receipt
-  and action entry survive route changes, renderer remount and same-userData
-  Electron quit/relaunch; stale, unsafe or mismatched restore state fails
-  closed.
-- Added a bounded main-process Ask conversation store and IPC contract with
-  serialized operations, atomic `0600` writes, same-handle `O_NOFOLLOW` reads,
-  source revalidation and canonical Todo receipt revalidation.
-- Added deterministic late-success/late-rejection coverage and same-run focused
-  Electron evidence. The controller current-byte receipt records main/renderer
-  TSC PASS and 28/28 focused tests PASS; the tests TSC baseline remains red and
-  R3c explicitly records `globalGate=NOT_RUN`.
-- Materialized the accepted P0+P1 product/test bytes at
-  `bd82407dc63fd278c0523f46bcf0e96c5344fd9b`.
-- Status remains `BLOCKED / CLEAN_CANDIDATE_NOT_BUILT /
-  INDEPENDENT_RETEST_PENDING / RELEASE_BASELINE_RED / MVP_NOT_COMPLETE`.
+Status remains `BLOCKED / MVP_NOT_COMPLETE`.
 
-## 2026-07-29
+- Reconciled all six low-confidence `main` handoff documents. `docs/ARCHITECTURE.md` now routes to the byte-preserved detailed architecture at `docs/history/ARCHITECTURE_PRE_R30.md`; generic placeholders cannot override root v6.2 truth.
+- Preserved the exact pre-R30 root `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `CHANGELOG.md`, and detailed architecture under `docs/history/`; R30 current-state updates do not erase accepted evidence or prior blockers.
+- Added a brand-new R30 successor. R28 remains `NEVER_RUN / PERMANENTLY_REJECTED` and is not copied, repaired, executed, or reused.
+- Gate 1 binds the full GitHub commit, clean tracked/untracked state, absence of stale ignored build/test outputs, and a new realpath-validated evidence directory outside the repository.
+- Gate 2 uses macOS `sandbox-exec` with `(deny network*)`, strips proxy/registry authority, and permits only `npm ci --offline --no-audit --no-fund`. Cache miss stops for separate approval; no online retry exists.
+- Gate 3 computes a complete regular-file control ledger with real exact 64-character lower-case SHA256 values and rejects missing, duplicate, unknown, 63-character, symlinked, or nonregular entries.
+- Gate 9 requires exactly `113 tests in 9 files`; broad `>=50` acceptance is rejected. Gate 10 subsequently requires exact 113/113 with zero skipped/unexpected/flaky and clean process exit.
+- RED→GREEN evidence: initial contract, runner, and documentation tests each failed before implementation; final pure Node suite is 23/23 PASS, all five runtime modules pass `node --check`, JSON/YAML validation passes, and dry-run returns `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`.
+- No npm install, product build, package, Electron candidate, network access, signing, notarization, independent Codex acceptance, Release, or Human Owner Gate was executed by ChatGPT.
 
-- Closed EXP-COP-008 development acceptance on current-source Electron:
-  two-source grounded Ask, exact source summary/full reader, canonical
-  Unscheduled Todo creation, durable title/due/source/log/notes editing,
-  explicit-date calendar discovery, full quit, and same-userData relaunch all
-  pass in one 13.3-second journey.
-- Bound the accepted P0 product and test bytes to commit
-  `0c69b8643ca4dcf20a86623f2528195a34f402a4`; this is a development-stage
-  rollback point, not a release candidate.
-- Restored accepted Todo notes/execution-log UX as durable canonical local
-  state instead of page-memory, and made calendar date selection immediately
-  open the selected-day scope.
-- Made `knowledgeBuild.ready` fail closed on exact revision: pending,
-  processing, failed, stale, and done states now map to queued, running, failed,
-  not-ready, and ready truthfully.
-- Fixed the deterministic Electron MiniMax test provider to cite every valid,
-  ordered, deduplicated local path from the grounded prompt; production
-  Answerer citation filtering was intentionally unchanged.
-- Exhaustively classified the current global receipt: no current P0 regression
-  and no unclassified failures; the separate release baseline remains red and
-  continues to block release readiness.
-- Implemented the focused EXP-COP-008 canonical Todo closure: grounded
-  LOCAL_PRESENT answer gating, frozen answer/source payload, body/source
-  persistence, main and renderer canonical readback, All/Unscheduled discovery,
-  exact “查看待办”, persisted editing, and same-userData Electron relaunch
-  recovery. Focused Electron and 33 focused tests pass; independent review,
-  clean candidate identity, and the pre-existing global red suite remain.
-- Froze the independently accepted Stage 0 materialized product baseline at commit `2b832c20b93e07ee68b6b325dc3ad758986b7f69`; no runtime or release readiness is implied.
-- Entered Stage 1 for `EXP-COP-008` Todo false-success/discoverability/readback closure.
-- Materialized r3 Desktop product-layer snapshot onto `codex/p0-owner-gate@96c861706126317c27965fcb64c765973df9ac89`.
-- Preserved r3 as product-layer input only: `414 files / 7 tracked deletions / 51,347,389 bytes / aggregate 026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311`.
-- Added Stage 0 governance surface: `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `docs/ARCHITECTURE.md`, and `DECISIONS.md`.
-- Added README ecosystem baseline reference for `zhouzengrui369-commits/knowme-ecosystem@965713b81a726279f63527eb17979f5e768423c1`.
-- Corrected the current review issue mapping: `EXP-COP-008` is Todo false-success/discoverability/readback (P0), and `EXP-COP-009` is Ask source-return continuity (P1).
-- Status remains `BLOCKED / COMMIT_PENDING / MVP_NOT_COMPLETE`; no tests, build, Electron, package, Git write, or product logic fix was performed.
+Rollback: revert the bounded R30 PR. No database migration, product feature rewrite, dependency major upgrade, local runtime, or external deployment was created by this remote source work.
+
+## Preserved history
+
+The complete pre-R30 root governance record from `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd` is preserved byte-for-byte at `docs/history/PROJECT_STATE_PRE_R30.yaml`, `docs/history/PROJECT_STATUS_PRE_R30.md`, `docs/history/TODO_PRE_R30.md`, [`docs/history/CHANGELOG_PRE_R30.md`](docs/history/CHANGELOG_PRE_R30.md), and `docs/history/ARCHITECTURE_PRE_R30.md`.
