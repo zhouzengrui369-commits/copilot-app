@@ -27,9 +27,12 @@ test('all six former low-confidence handoff surfaces are authoritative mirrors, 
 });
 
 test('architecture wrapper preserves authority and routes to the byte-preserved detailed architecture', async () => {
-  const [architecture, history] = await Promise.all([
+  const [architecture, history, stateHistory, statusHistory, todoHistory] = await Promise.all([
     read('docs/ARCHITECTURE.md'),
     read('docs/history/ARCHITECTURE_PRE_R30.md'),
+    read('docs/history/PROJECT_STATE_PRE_R30.yaml'),
+    read('docs/history/PROJECT_STATUS_PRE_R30.md'),
+    read('docs/history/TODO_PRE_R30.md'),
   ]);
   assert.ok(architecture.length > 3000, `architecture wrapper too short: ${architecture.length}`);
   assert.match(architecture, /history\/ARCHITECTURE_PRE_R30\.md/u);
@@ -38,6 +41,10 @@ test('architecture wrapper preserves authority and routes to the byte-preserved 
   }
   assert.ok(history.length > 7000, `preserved architecture too short: ${history.length}`);
   for (const token of ['Grounded Ask', 'Candidate Receipt', 'Todo', 'fail-closed']) assert.match(history, new RegExp(token, 'iu'));
+  assert.ok(stateHistory.length > 5000, `preserved project state too short: ${stateHistory.length}`);
+  assert.ok(statusHistory.length > 9000, `preserved project status too short: ${statusHistory.length}`);
+  assert.ok(todoHistory.length > 5000, `preserved TODO too short: ${todoHistory.length}`);
+  assert.match(statusHistory, /R28|MVP_NOT_COMPLETE/iu);
 });
 
 test('project progress JSON is a truthful machine mirror with no candidate inflation', async () => {
