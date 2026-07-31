@@ -6,7 +6,7 @@ This document defines the owner-approved GitHub → MiniMax Code → Codex execu
 
 ## 1. Source Authority
 
-GitHub commits and pull requests are the only product-source authority. A local dirty worktree, pasted patch, generated artifact, worker narrative, screenshot, or review branch does not supersede the exact Git commit.
+GitHub commits and pull requests are the only product-source authority. A local dirty worktree, pasted patch, generated artifact, worker narrative, screenshot, chat transcript, cron result, or review branch does not supersede the exact Git commit.
 
 Current chain:
 
@@ -23,7 +23,7 @@ The final commit is reported externally after the last tracked-document commit p
 May:
 
 - read repository authority and PR history;
-- create/update source and governance on the bounded branch;
+- create/update product source and governance on the bounded branch;
 - add fail-closed tests and GitHub Actions source gates;
 - inspect CI logs and repair source failures;
 - update PR metadata and handoff documentation.
@@ -39,6 +39,8 @@ Must not:
 
 May:
 
+- fetch the exact approved Git commit and verify PR-head equality;
+- materialize the versioned deployment authority from that exact Git object;
 - perform a read-only inventory of existing worktrees, caches, tools, manifests, screenshots, signing/notary tooling, and performance tooling;
 - reuse valid tools and npm cache;
 - create a new clean detached worktree at the exact approved commit;
@@ -47,7 +49,9 @@ May:
 
 Must not:
 
-- silently modify product source or governance;
+- infer authority from a stale current worktree;
+- let a cron/file-presence probe auto-run the candidate;
+- silently modify product source, tests, the runner, or governance;
 - execute R28;
 - reuse old candidate identity, artifact identity, runtime identity, or evidence directory;
 - clean stale ignored output in place and continue;
@@ -56,7 +60,7 @@ Must not:
 
 ### Codex — Independent Real-Computer Acceptance
 
-Starts only after MiniMax returns a complete internally consistent receipt. It independently verifies source/artifact/runtime identity, operates the packaged application, performs focused product-experience journeys and Release Gate checks, and reports P0/P1/P2 findings.
+Starts only after MiniMax returns a complete internally consistent receipt. It independently verifies authority/source/artifact/runtime identity, operates the packaged application, performs focused product-experience journeys and Release Gate checks, and reports P0/P1/P2 findings.
 
 Codex must not repair source in the acceptance lane or use self-authored fixes as independent acceptance.
 
@@ -66,7 +70,7 @@ The PR workflow runs on Node 24/macOS and must be green on the exact final HEAD.
 
 1. exact HEAD checkout and toolchain identity;
 2. exact lockfile install;
-3. candidate fail-closed pure Node contracts;
+3. candidate fail-closed pure Node contracts, including exact-Git-object deployment-authority tests;
 4. embedded-local RAG focused tests;
 5. ordered workspace dependency build;
 6. all local-first workspace checks;
@@ -81,24 +85,50 @@ The PR workflow runs on Node 24/macOS and must be green on the exact final HEAD.
 
 GitHub source CI does not launch the candidate Electron runtime. It authorizes the next executor; it does not establish a candidate or Release.
 
-## 4. Final Commit Handoff
+## 4. Final Commit And Deployment-Authority Handoff
 
 After the final docs/source commit passes the source gate:
 
 1. Read the exact 40-character PR #14 head SHA.
 2. Record it in the PR conversation and owner-facing deployment instruction.
 3. Do not commit again. Any later commit invalidates that reported final SHA.
-4. MiniMax uses the SHA, not a mutable branch name, to create a detached worktree.
-5. The runner compares `--source-commit` with `git rev-parse HEAD` before candidate work.
+4. MiniMax explicitly fetches `refs/pull/14/head` and proves `FETCH_HEAD` equals the supplied SHA.
+5. MiniMax reads the deployment document and bootstrap program from the exact Git object, not the current worktree:
+
+```bash
+git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md"
+git -C "$REPO" show "${SOURCE_COMMIT}:scripts/candidate-r30/minimax-authority.mjs" \
+  > "$BOOTSTRAP_SCRIPT"
+node "$BOOTSTRAP_SCRIPT" \
+  --repository "$REPO" \
+  --source-commit "$SOURCE_COMMIT" \
+  --authority-output "$AUTHORITY_COPY" \
+  --receipt-output "$AUTHORITY_RECEIPT"
+```
+
+6. The authority receipt must say `status=PASS`, `executionAuthority=git-object-at-exact-commit`, `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`.
+7. Only after authority succeeds may MiniMax create the detached candidate worktree.
+8. The candidate runner later compares `--source-commit` with `git rev-parse HEAD` before candidate work.
+
+Exact-object preflight blockers include:
+
+- `BLOCKED_EXACT_COMMIT_NOT_FETCHED`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`
+- `BLOCKED_DEPLOYMENT_RUNNER_MISSING`
+- `BLOCKED_PR_HEAD_MISMATCH`
+
+A file missing from a stale worktree is not sufficient for `MISSING_DEPLOYMENT_AUTHORITY`. A chat-pasted replacement is not versioned authority.
 
 ## 5. MiniMax Preflight
 
 MiniMax must verify:
 
-- macOS and `/usr/bin/sandbox-exec`;
+- macOS arm64 and `/usr/bin/sandbox-exec`;
 - Node 24;
 - Python `/usr/bin/python3` with required packaging compatibility;
 - an executable npm resolved from the reviewed PATH;
+- exact-object deployment authority receipt;
 - exact detached Git HEAD;
 - empty `git status --porcelain=v1 --untracked-files=all`;
 - absence of every governed generated candidate input;
@@ -121,7 +151,7 @@ node scripts/candidate-r30/run-candidate.mjs \
   --dry-run
 ```
 
-Dry-run must report `PLAN_ONLY_NOT_A_CANDIDATE` and `MVP_NOT_COMPLETE`. It must not create the evidence directory or launch Electron.
+Dry-run must report `PLAN_ONLY_NOT_A_CANDIDATE`, `MVP_NOT_COMPLETE`, and macOS-arm64 authority. It must not create the evidence directory or launch Electron.
 
 Then execute once:
 
@@ -135,7 +165,9 @@ The runner owns twelve ordered gates described in `scripts/candidate-r30/README.
 
 ## 7. Network and Cache Rule
 
-All recorded commands run through macOS `sandbox-exec` with `deny network*`. npm authority is offline-only. Proxy and registry environment authority is removed. The runner does not automatically fall back online.
+The authority verifier itself performs no network operation. The one explicit GitHub fetch is a source synchronization step before candidate work; it does not authorize npm registry access.
+
+All candidate recorded commands run through macOS `sandbox-exec` with `deny network*`. npm authority is offline-only. Proxy and registry environment authority is removed. The runner does not automatically fall back online.
 
 If npm cache is insufficient, the runner exits `2` and writes a blocker with:
 
@@ -149,7 +181,8 @@ MiniMax must stop and return that receipt. A separate GitHub-reviewed owner appr
 
 Return one package containing:
 
-- exact commit and final clean Git status;
+- exact supplied commit, fetched PR-head equality, and final clean Git status;
+- deployment-authority document SHA256 and exact-object authority receipt;
 - all-tracked-file ledger path/SHA256, aggregate SHA256, scope, and file count;
 - canonical source snapshot and authoritative input manifest;
 - CycloneDX SBOM and SHA256;
@@ -167,15 +200,15 @@ Return one package containing:
 - `CANDIDATE-MANIFEST.json`;
 - `R30-COMPLETE.json`.
 
-A blocker return includes `R30-BLOCKED.json`, existing command/log receipts, exact source identity, and final Git status. Do not conceal partial failure.
+A blocker return includes the authority receipt or exact authority blocker, `R30-BLOCKED.json` when candidate ownership has begun, existing command/log receipts, exact source identity, and final Git status. Do not conceal partial failure.
 
 ## 9. Codex Acceptance
 
-Codex first verifies the receipt and exact source/artifact/runtime bindings. It then independently exercises the installed/packaged app on the real computer, including grounded Ask/source navigation, Todo closure/restart continuity, quick capture, WIKI truth, Trash recovery, local-ASR offline behavior, startup/performance, and product-language/accessibility findings.
+Codex first verifies the authority receipt and exact source/artifact/runtime bindings. It then independently exercises the installed/packaged app on the real computer, including grounded Ask/source navigation, Todo closure/restart continuity, quick capture, WIKI truth, Trash recovery, local-ASR offline behavior, startup/performance, and product-language/accessibility findings.
 
 Codex reports:
 
-- exact identity checked;
+- exact authority and identity checked;
 - P0/P1/P2 findings;
 - focused retest verdict;
 - Release Gate verdict;
