@@ -76,7 +76,8 @@ test('project progress JSON is truthful machine-readable source completion witho
   assert.equal(progress.r31.status, 'SOURCE_COMPLETE');
   assert.equal(progress.r31.source_features.candidate_gate_count, 12);
   assert.equal(progress.r31.source_features.deployment_authority_bootstrap, 'exact_git_object');
-  assert.equal(progress.r31.source_validation_checkpoint.desktop_phase1_tests.passed, 1106);
+  assert.equal(progress.r31.source_validation_checkpoint.desktop_phase1_tests.passed, 1107);
+  assert.equal(progress.r31.source_validation_checkpoint.desktop_phase1_tests.total, 1107);
   assert.equal(progress.r31.source_validation_checkpoint.local_knowledge_service_branch_percent, 90);
   assert.equal(progress.r31.source_validation_checkpoint.electron_list_only.exact, true);
 });
@@ -132,7 +133,7 @@ test('root governance remains blocked while marking GitHub source complete and l
   assert.match(state, /gate_12:/u);
   assert.match(state, /deployment_authority_bootstrap:/u);
   assert.match(status, /BLOCKED/u);
-  assert.match(status, /1106\/1106/u);
+  assert.match(status, /1107\/1107/u);
   assert.match(status, /exact Git commit object/iu);
   assert.match(todo, /scripts\/candidate-r30\/run-candidate\.mjs/u);
   assert.match(todo, /scripts\/candidate-r30\/minimax-authority\.mjs/u);
