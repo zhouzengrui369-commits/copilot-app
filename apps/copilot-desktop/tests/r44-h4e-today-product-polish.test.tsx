@@ -118,10 +118,17 @@ describe('R44 H4E Today product polish', () => {
       'critical',
     );
 
-    const pressFromSelected = async (key: string, expected: Date) => {
-      const selected = screen.getByRole('button', { name: /选择日期 /u, pressed: true });
-      selected.focus();
-      fireEvent.keyDown(selected, { key });
+    const pressFromDate = async (from: Date, key: string, expected: Date) => {
+      const fromKey = localDateKey(from);
+      const selected = screen.getByRole('button', {
+        name: `选择日期 ${fromKey}`,
+        pressed: true,
+      });
+      await act(async () => {
+        selected.focus();
+        fireEvent.keyDown(selected, { key });
+        await Promise.resolve();
+      });
       const expectedKey = localDateKey(expected);
       await waitFor(() => {
         expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
@@ -135,16 +142,17 @@ describe('R44 H4E Today product polish', () => {
 
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-    await pressFromSelected('ArrowLeft', yesterday);
+    await pressFromDate(today, 'ArrowLeft', yesterday);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('所选日期');
     expect(screen.getByTestId('selected-date-heading')).toHaveTextContent('所选日期工作与生活');
-    await pressFromSelected('ArrowRight', today);
-    await pressFromSelected('ArrowUp', weekAgo);
-    await pressFromSelected('ArrowDown', today);
-    await pressFromSelected('PageUp', monthDate(today, -1));
-    await pressFromSelected('PageDown', today);
-    await pressFromSelected('ArrowLeft', yesterday);
-    await pressFromSelected('Home', today);
+    await pressFromDate(yesterday, 'ArrowRight', today);
+    await pressFromDate(today, 'ArrowUp', weekAgo);
+    await pressFromDate(weekAgo, 'ArrowDown', today);
+    const priorMonth = monthDate(today, -1);
+    await pressFromDate(today, 'PageUp', priorMonth);
+    await pressFromDate(priorMonth, 'PageDown', today);
+    await pressFromDate(today, 'ArrowLeft', yesterday);
+    await pressFromDate(yesterday, 'Home', today);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('今天');
   });
 
