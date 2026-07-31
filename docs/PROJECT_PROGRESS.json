@@ -39,7 +39,7 @@
     "active": {
       "branch": "agent/r31-source-completion",
       "pull_request": 14,
-      "final_commit_source": "external final 40-hex PR #14 HEAD after final documentation CI"
+      "final_commit_source": "external final 40-hex PR #14 HEAD after final governance CI"
     }
   },
   "r28": {
@@ -76,7 +76,11 @@
       "network_used_by_verifier": false,
       "worktree_created_by_verifier": false,
       "evidence_created_by_verifier": false,
-      "resolved_incident": "MISSING_DEPLOYMENT_AUTHORITY was caused by checking stale worktrees before fetching the exact commit"
+      "detached_worktree_command_validation": "accept direct git and repository-scoped git -C forms; require --detach",
+      "resolved_incidents": [
+        "MISSING_DEPLOYMENT_AUTHORITY was caused by checking stale worktrees before fetching the exact commit",
+        "BLOCKED_DEPLOYMENT_AUTHORITY_INVALID was caused by a brittle contiguous command marker that rejected the valid git -C repository-scoped form"
+      ]
     },
     "source_validation_checkpoint": {
       "node": 24,
@@ -85,8 +89,14 @@
       "workflow_steps": 17,
       "last_green_source_commit_before_authority_bootstrap": "309fafd2ca4791037a51f969c360a479c42316b2",
       "desktop_phase1_tests": {
-        "passed": 1106,
-        "total": 1106
+        "passed": 1107,
+        "total": 1107
+      },
+      "authority_contract_tests": {
+        "versioned_document": "PASS",
+        "direct_detached_worktree": "PASS",
+        "repository_scoped_detached_worktree": "PASS",
+        "missing_detach": "BLOCKED"
       },
       "strict_global_coverage": "PASS",
       "strict_critical_coverage": "PASS",
@@ -140,5 +150,5 @@
     "embedded_local_asr_runtime": "BLOCKED",
     "human_owner_gate": "BLOCKED"
   },
-  "next_single_action": "MiniMax Code first fetches and verifies the externally reported final PR #14 HEAD, materializes deployment authority from the exact Git object with scripts/candidate-r30/minimax-authority.mjs, then creates a new clean detached worktree and executes the twelve-gate candidate exactly once. Codex starts only after the complete receipt exists."
+  "next_single_action": "After final governance CI passes, MiniMax Code fetches and verifies the externally reported final PR #14 HEAD, materializes deployment authority from the exact Git object with scripts/candidate-r30/minimax-authority.mjs, then creates a new clean detached worktree and executes the twelve-gate candidate exactly once. Codex starts only after the complete receipt exists."
 }
