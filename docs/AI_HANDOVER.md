@@ -28,17 +28,29 @@ Do not let `docs/PROJECT_STATUS.md` or any other docs mirror override root truth
 
 ## Current Truth
 
-GitHub Phase 1 source is complete. The Node 24 macOS source gate covers exact checkout/lockfile, candidate contracts, embedded-local RAG, ordered workspace builds, checks, unit/integration suites, desktop build, Phase 1 source suite, strict global and per-file critical coverage, production CycloneDX SBOM, exact list-only `113 tests in 9 files`, and clean tracked source.
+GitHub Phase 1 product/source work is complete. The Node 24 macOS source gate covers exact checkout/lockfile, candidate contracts, embedded-local RAG, ordered workspace builds, checks, unit/integration suites, desktop build, Phase 1 source suite, strict global and per-file critical coverage, production CycloneDX SBOM, exact list-only `113 tests in 9 files`, and clean tracked source.
 
-At the source-completion checkpoint, desktop passed `1106/1106`; each critical file reached at least 90%, including `local-knowledge-service.ts` branch coverage at 90.00%.
+At the last green checkpoint before the deployment-authority bootstrap addition, desktop passed `1106/1106`; each critical file reached at least 90%, including `local-knowledge-service.ts` branch coverage at 90.00%.
 
 No local candidate has been executed. Candidate identity, artifact SHA256, runtime ID, candidate-bound performance, packaged Electron 113/113, signing, notarization, independent acceptance, and owner gate are all absent.
+
+## Deployment Authority Resolution
+
+A previous MiniMax check searched stale local worktrees and could not find `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`. The exact approved Git commit did contain the document. The handoff now makes this distinction executable:
+
+1. fetch `refs/pull/14/head` and prove it equals the supplied SHA;
+2. read `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and `scripts/candidate-r30/minimax-authority.mjs` from `<SHA>:<path>`;
+3. run the verifier to validate required markers and emit the authority SHA256 receipt;
+4. only after that receipt passes, create the clean detached candidate worktree.
+
+The verifier is read-only with respect to candidate state: `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`. A cron/file-presence probe is not execution authority and must not auto-run the candidate.
 
 ## R31 Architectural Changes
 
 - production embedding default: deterministic self-contained `embedded-local-hash-v1`;
 - Ollama: explicit local-service compatibility only;
 - vector persistence: one embedding model at a time, rotate incompatible vectors, preserve durable local text;
+- deployment authority: exact Git object plus SHA256 receipt, never stale-worktree presence;
 - candidate runner: twelve fail-closed gates;
 - Gate 2: absolute npm identity and deny-network offline authority;
 - Gate 3: every Git-tracked regular file plus aggregate SHA256;
@@ -51,11 +63,11 @@ No local candidate has been executed. Candidate identity, artifact SHA256, runti
 ## Role Boundary
 
 - ChatGPT: GitHub source/PR only; local candidate execution forbidden.
-- MiniMax Code: exact approved commit, clean detached worktree, new outside-repo evidence directory, no silent source fix.
+- MiniMax Code: fetch and validate the exact approved commit, materialize exact-object authority, create a clean detached worktree and new outside-repo evidence directory, no silent source fix.
 - Codex: starts only after complete MiniMax receipt; independent real-computer acceptance; no source fix in acceptance lane.
 
 ## Next Single Action
 
-Follow `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` with the externally reported final PR #14 SHA. Execute `scripts/candidate-r30/run-candidate.mjs` exactly once after dry-run. On `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, stop and return the blocker; do not retry online.
+After the final authority-bootstrap PR HEAD passes the complete source gate, follow `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` with that externally reported SHA. First run `scripts/candidate-r30/minimax-authority.mjs` against the exact Git object, then run source contracts and dry-run, and finally execute `scripts/candidate-r30/run-candidate.mjs` exactly once. On any authority blocker or `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, stop and return the exact receipt; do not retry online.
 
-Return all source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state receipts plus `CANDIDATE-MANIFEST.json`, `R30-COMPLETE.json`, exact Git identity, and clean final status. Codex remains idle until that package is complete.
+Return the authority/source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state receipts plus `CANDIDATE-MANIFEST.json`, `R30-COMPLETE.json`, exact Git identity, and clean final status. Codex remains idle until that package is complete.
