@@ -160,11 +160,7 @@ describe('R44 H4E Today product polish', () => {
           pressed: true,
         });
         expect(target).toHaveFocus();
-        if (expectedKey === localDateKey(today)) {
-          expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent('当前选中：今天');
-        } else {
-          expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
-        }
+        expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
       });
 
       if (scenario.key === 'ArrowLeft') {
