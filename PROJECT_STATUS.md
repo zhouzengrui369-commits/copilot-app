@@ -20,19 +20,26 @@ The complete pre-R30 state/status/TODO/changelog/architecture remains byte-prese
 - Candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13
 - Active source-completion branch: `agent/r31-source-completion`
 - Active Draft PR: #14
-- Final identity rule: use the externally reported final 40-character PR #14 HEAD after the final CI; tracked documents do not attempt to embed the commit that contains themselves.
+- Final identity rule: use the externally reported final 40-character PR #14 HEAD after the final governance CI; tracked documents do not attempt to embed the commit that contains themselves.
 
-## Deployment Authority Incident And Resolution
+## Deployment Authority Incidents And Resolution
 
-MiniMax correctly stopped when `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` was absent from two old local worktrees. GitHub inspection proved the document existed in the approved PR commit. The failure was therefore a **stale-worktree lookup**, not a missing exact-commit authority file.
+MiniMax correctly stopped twice before candidate creation.
 
-The source contract now closes that ambiguity:
+The first stop occurred because two old local worktrees did not contain `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`. GitHub inspection proved the document existed in the approved PR commit. That incident was a stale-worktree lookup, not a missing exact-commit authority file.
+
+The second stop occurred after MiniMax correctly read the document and verifier from the exact commit object. `minimax-authority.mjs` required the literal contiguous marker `git worktree add --detach`, while the versioned authority document correctly used the repository-scoped command `git -C "$REPO" worktree add --detach`. The old `String.prototype.includes` check therefore produced `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID` even though the executable command was valid.
+
+The source contract now closes both defects:
 
 1. MiniMax first fetches `refs/pull/14/head` and proves it equals the externally supplied exact SHA.
 2. It reads `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and `scripts/candidate-r30/minimax-authority.mjs` from the exact Git commit object, not from the currently checked-out files.
-3. `minimax-authority.mjs` validates required fail-closed markers, hashes the authority bytes, verifies the candidate runner exists in the same commit, and emits an exclusive receipt.
-4. The verifier itself performs no network operation, creates no candidate worktree, and creates no candidate evidence. The explicit GitHub fetch occurs before the verifier and does not grant npm registry authority.
-5. `BLOCKED_EXACT_COMMIT_NOT_FETCHED`, `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`, `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`, or `BLOCKED_DEPLOYMENT_RUNNER_MISSING` stops the handoff before candidate execution.
+3. `minimax-authority.mjs` validates required fail-closed prose markers and separately validates the detached-worktree command with a bounded semantic pattern that accepts both direct `git worktree add --detach` and repository-scoped `git -C <repo> worktree add --detach` forms.
+4. The validator still rejects a worktree command that omits `--detach`.
+5. The tests validate both command forms and call `validateAuthorityDocument` against the real versioned `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` file, preventing another verifier/document drift.
+6. The verifier hashes the authority bytes, verifies the candidate runner exists in the same commit, and emits an exclusive receipt.
+7. The verifier itself performs no network operation, creates no candidate worktree, and creates no candidate evidence. The explicit GitHub fetch occurs before the verifier and does not grant npm registry authority.
+8. `BLOCKED_EXACT_COMMIT_NOT_FETCHED`, `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`, `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`, or `BLOCKED_DEPLOYMENT_RUNNER_MISSING` still stops the handoff before candidate execution.
 
 A cron or file-presence probe is not authority and may not auto-run the candidate.
 
@@ -45,9 +52,10 @@ R31 closes the remote source boundary without launching Electron:
 3. Vector persistence enforces one embedding model at a time. A model change removes incompatible vectors while retaining durable local text for deterministic fallback and re-indexing.
 4. Grounded Ask, canonical Todo readback, reversible Trash, WIKI revision truth, local-ASR source/package contracts, IPC/preload boundaries, and renderer product paths remain fail-closed.
 5. The Node 24 macOS source gate validates the exact PR HEAD, exact lockfile, ordered workspace builds, all checks, core unit/integration suites, desktop Phase 1 suite, strict global coverage, strict per-file critical coverage, production CycloneDX SBOM, exact Electron list-only discovery, and clean tracked source.
-6. At the last green checkpoint before the authority-bootstrap addition, the desktop Phase 1 suite passed `1106/1106`; every critical file met the 90% per-file threshold, including `local-knowledge-service.ts` branch coverage at exactly 90.00%; Electron list-only discovery remained exactly `113 tests in 9 files`.
+6. The current source-completion checkpoint passed the desktop Phase 1 suite at `1107/1107`; every critical file met the 90% per-file threshold, including `local-knowledge-service.ts` branch coverage at exactly 90.00%; Electron list-only discovery remained exactly `113 tests in 9 files`.
+7. The exact-object authority suite now covers the real versioned authority document, direct and repository-scoped detached-worktree commands, and fail-closed rejection when `--detach` is absent.
 
-The final externally supplied deployment SHA is valid only after the authority-bootstrap HEAD passes the same complete source gate. These are source-development results, not packaged runtime or product-release evidence.
+The final externally supplied deployment SHA is valid only after the last tracked governance commit passes the same complete 17-step source gate. These are source-development results, not packaged runtime or product-release evidence.
 
 ## Twelve-Gate Local Candidate Contract
 
@@ -76,7 +84,7 @@ A successful execution is still an **unsigned diagnostic candidate**. It does no
 
 ## Remaining Blocks
 
-- Final authority-bootstrap source gate on the exact deployment SHA.
+- Final governance source gate on the exact deployment SHA.
 - Local twelve-gate candidate execution and complete receipt.
 - Independent Codex focused product-experience retest and Release Gate review.
 - Candidate-bound three verify-fix rounds.
@@ -88,4 +96,4 @@ Windows real-machine/signing/install/screenshots remain Phase 1.1. Tencent deplo
 
 ## Next Single Action
 
-After the exact authority-bootstrap PR HEAD passes the complete source gate, MiniMax receives that 40-character SHA. It fetches PR #14, proves HEAD equality, materializes the deployment document and receipt from the exact Git object with `scripts/candidate-r30/minimax-authority.mjs`, creates a clean detached worktree, verifies no stale generated candidate inputs exist, runs source contracts and dry-run, then executes the R30 successor exactly once with a new absolute outside-repository evidence directory. On `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, it stops without online retry. Codex remains idle until the receipt is complete.
+After the exact final governance PR HEAD passes the complete source gate, MiniMax receives that 40-character SHA. It fetches PR #14, proves HEAD equality, materializes the deployment document and receipt from the exact Git object with `scripts/candidate-r30/minimax-authority.mjs`, creates a clean detached worktree, verifies no stale generated candidate inputs exist, runs source contracts and dry-run, then executes the R30 successor exactly once with a new absolute outside-repository evidence directory. On `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, it stops without online retry. Codex remains idle until the receipt is complete.
