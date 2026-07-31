@@ -161,7 +161,7 @@ test('MiniMax deployment handoff bootstraps authority from the exact Git object 
     'git -C "$REPO" show "${SOURCE_COMMIT}:${BOOTSTRAP_PATH}"',
     'scripts/candidate-r30/minimax-authority.mjs',
     'git-object-at-exact-commit',
-    'git worktree add --detach',
+    'git -C "$REPO" worktree add --detach',
     'git status --porcelain=v1 --untracked-files=all',
     'sandbox-exec',
     'node --test scripts/candidate-r30/*.test.mjs',
