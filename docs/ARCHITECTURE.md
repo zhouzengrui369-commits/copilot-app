@@ -18,6 +18,7 @@ The product uses explicit truth states rather than optimistic badges:
 
 - WIKI: queued, running, current/ready, failed, not-ready;
 - Ask sources: checking, local-present, missing, unavailable, unknown;
+- deployment authority: not-fetched, missing, invalid, exact-object-pass;
 - candidate: not-run, blocked, complete unsigned diagnostic candidate;
 - Release: blocked until signed/notarized/accepted;
 - optional Remote/Backup: disabled or unavailable unless explicitly enabled and proven.
@@ -170,9 +171,37 @@ The original local row is removed atomically before asynchronous KG/RAG cleanup.
 
 Backup import rollback is namespace-bound and ownership-marked. It can remove only objects created by its import intent. Missing objects are idempotent, but stale KG/RAG index cleanup still runs for a declared imported note path.
 
-## 8. Electron Trust and Candidate Identity
+## 8. Deployment Authority Boundary
 
-A development test or source-gate result is not candidate identity. Candidate identity begins only when MiniMax Code executes one exact final Git commit from a clean detached worktree.
+Local execution may begin only after versioned deployment authority is bound to the same exact commit that will become the candidate source.
+
+The authority tuple is:
+
+- source commit: external exact 40-character PR #14 HEAD after final CI;
+- document: `<commit>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`;
+- verifier: `<commit>:scripts/candidate-r30/minimax-authority.mjs`;
+- runner: `<commit>:scripts/candidate-r30/run-candidate.mjs`;
+- receipt identity: document bytes, line count, SHA256, commit, repository and fixed paths.
+
+The bootstrap sequence first performs an explicit GitHub PR-head fetch and equality check. It then uses `git cat-file` and `git show` against the exact object database. The current checkout is not the authority because it may be stale, dirty, or on a different branch.
+
+`minimax-authority.mjs` is deliberately outside candidate-state creation. It:
+
+- performs no network access;
+- creates no candidate worktree;
+- creates no candidate evidence directory;
+- validates the authority document is complete and contains the reviewed fail-closed markers;
+- confirms the candidate runner exists in the same commit;
+- writes optional authority/receipt outputs only by exclusive owner-only creation;
+- refuses an unavailable commit, missing/invalid document, missing runner, relative output path, or existing output.
+
+The explicit GitHub fetch does not extend to npm or other registry authority. Candidate Gate 2 remains deny-network/offline-only.
+
+A recursive filesystem search, a chat-pasted replacement, or a cron file-presence probe cannot authorize candidate execution. A stale worktree that lacks the document does not prove the exact commit lacks it.
+
+## 9. Electron Trust and Candidate Identity
+
+A development test or source-gate result is not candidate identity. Candidate identity begins only when MiniMax Code executes one exact final Git commit from a clean detached worktree after exact-object deployment authority passes.
 
 The R30 successor produces identity-bound evidence for:
 
@@ -190,7 +219,7 @@ The R30 successor produces identity-bound evidence for:
 
 macOS `.app` bundles are atomic candidate artifacts. Nested Electron Helper.app bundles are part of the main bundle, not additional top-level candidates.
 
-## 9. Twelve Candidate Gates
+## 10. Twelve Candidate Gates
 
 ### Gate 1 — Source Preimage
 
@@ -222,9 +251,9 @@ Run three distinct `r31-v1` direct-spawn measurements. Each run binds candidate,
 
 ### Gate 12 — Complete Receipt
 
-Require source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state evidence and write `CANDIDATE-MANIFEST.json` plus `R30-COMPLETE.json`.
+Require deployment authority/source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state evidence and write `CANDIDATE-MANIFEST.json` plus `R30-COMPLETE.json`.
 
-## 10. Deferred Boundaries
+## 11. Deferred Boundaries
 
 - Windows real-machine packaging/signing/install/screenshots: Phase 1.1.
 - Tencent deployment, Remote/live, and optional encrypted Backup: post-MVP.
@@ -232,7 +261,7 @@ Require source/artifact/runtime/test-data/performance/SBOM/command/screenshot/te
 
 Deferred modules must not inflate Phase 1 readiness or be silently exposed as working product paths.
 
-## 11. Release Boundary
+## 12. Release Boundary
 
 A passing twelve-gate run is an unsigned diagnostic candidate. Release still requires independent Codex acceptance, three candidate-consistent verify-fix rounds, real packaged offline ASR, Developer ID signing, Apple notarization/stapling/validation, Gatekeeper install/launch evidence, Human Owner Gate, and required use evidence.
 
