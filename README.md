@@ -2,7 +2,7 @@
 
 Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知识库、知识图谱、Todo、日程和产品数据以本地持久化为准；LLM 用于知识整理和问答；可选云能力不能成为本地核心写入的前置条件。
 
-> 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 源码已在 Draft PR #14 完成，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
+> 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
 ## 权威与当前工作分工
 
@@ -19,7 +19,7 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 Owner 批准的执行边界：
 
 1. **ChatGPT**：只通过 GitHub 分支/PR 开发和审查源码；不在本地执行候选。
-2. **MiniMax Code**：只部署外部报告的精确 40 位 GitHub 提交；不静默修源码；返回完整候选绑定证据。
+2. **MiniMax Code**：先获取并校验外部报告的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。
 3. **Codex**：收到 MiniMax 完整回执后，独立操作真实电脑、执行体验验收和 Release Gate；不在验收通道修源码。
 
 完整流程见 [`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。MiniMax 的可执行手册见 [`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`](docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md)。
@@ -29,9 +29,30 @@ Owner 批准的执行边界：
 - 原始接管：`codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`，PR #12
 - R30 候选执行器父分支：`agent/r30-github-bound-candidate-runner`，PR #13
 - R31 源码收口：`agent/r31-source-completion`，Draft PR #14
-- 最终提交：在最后一次文档同步 CI 成功后，由 PR 对话和 owner-facing 部署指令外部给出；tracked 文档不自引用自身 commit
+- 最终提交：在最后一次 authority-bootstrap CI 成功后，由 PR 对话和 owner-facing 部署指令外部给出；tracked 文档不自引用自身 commit
 
 R28 从未执行，独立复核结果为 `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`，永久拒绝且不得复用。
+
+## 精确提交部署授权
+
+`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` 必须从**精确 Git commit object**读取，而不是从当前 worktree 推断。此前本地在旧 worktree 中找不到该文件，属于 stale-worktree false blocker；精确批准提交内实际存在文档。
+
+最终交接必须先执行：
+
+```bash
+git -C "$REPO" fetch --no-tags --prune origin refs/pull/14/head
+test "$(git -C "$REPO" rev-parse FETCH_HEAD)" = "$SOURCE_COMMIT"
+git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md"
+git -C "$REPO" show "${SOURCE_COMMIT}:scripts/candidate-r30/minimax-authority.mjs" \
+  > "$BOOTSTRAP_SCRIPT"
+node "$BOOTSTRAP_SCRIPT" \
+  --repository "$REPO" \
+  --source-commit "$SOURCE_COMMIT" \
+  --authority-output "$AUTHORITY_COPY" \
+  --receipt-output "$AUTHORITY_RECEIPT"
+```
+
+`minimax-authority.mjs` 校验文档关键约束、同一提交内 candidate runner、文档 SHA256 和 exclusive output。它不联网、不建候选 worktree、不建 candidate evidence。任何 cron/file-presence 探查都不是执行授权，不能自动启动候选。
 
 ## Phase 1 核心能力
 
@@ -62,7 +83,7 @@ Ollama 仅作为显式选择的 local-service 兼容路径。向量存储执行�
 PR #14 使用 Node 24 macOS source gate 验证：
 
 1. 精确 PR HEAD 与 exact lockfile；
-2. candidate fail-closed 纯 Node 合约；
+2. candidate fail-closed 纯 Node 合约，包括 exact-Git-object deployment authority；
 3. R31 embedded RAG 专项；
 4. LLM → KB → KG → RAG ordered build；
 5. 五个 local-first workspace 检查；
@@ -73,7 +94,7 @@ PR #14 使用 Node 24 macOS source gate 验证：
 10. Electron list-only exact `113 tests in 9 files`；
 11. tracked source unchanged。
 
-源码收口检查点已通过 desktop `1106/1106`；每个 critical file 均达到至少 90%，其中 `local-knowledge-service.ts` branch coverage 为 90.00%。这些结果不是 packaged Electron runtime 或 Release 证据。
+最后一次 authority-bootstrap 之前的绿色检查点已通过 desktop `1106/1106`；每个 critical file 均达到至少 90%，其中 `local-knowledge-service.ts` branch coverage 为 90.00%。最终部署 SHA 必须重新通过完整 source gate。这些结果不是 packaged Electron runtime 或 Release 证据。
 
 ## 十二门本地候选流程
 
@@ -121,7 +142,7 @@ npm run test:coverage:critical --workspace @copilot/desktop
 node --test scripts/candidate-r30/*.test.mjs
 ```
 
-上述普通开发命令不等于候选执行。候选必须使用精确 final commit、clean detached worktree、新 evidence directory 和 runner 的 offline/fail-closed 合同。
+上述普通开发命令不等于候选执行。候选必须使用精确 final commit、exact-object authority receipt、clean detached worktree、新 evidence directory 和 runner 的 offline/fail-closed 合同。
 
 ## Local-first 与云边界
 
