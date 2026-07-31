@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-07-31 — R31 Exact-Object Authority Command Marker Closure
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. No local candidate worktree, candidate evidence directory, packaged Electron execution, signing, notarization, independent Codex acceptance, Release, or Human Owner Gate was created by this GitHub repair.
+
+### Root cause
+
+- MiniMax correctly fetched and bound the exact Git object, then Gate 0 returned `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`.
+- The versioned authority document used the valid repository-scoped command `git -C "$REPO" worktree add --detach "$WORKTREE" "$SOURCE_COMMIT"`.
+- `scripts/candidate-r30/minimax-authority.mjs` incorrectly required the contiguous literal substring `git worktree add --detach` through `String.prototype.includes`, so inserting Git's valid `-C <repo>` option caused a false blocker.
+- The original unit fixture was built from `REQUIRED_AUTHORITY_MARKERS` itself and therefore could not detect drift between the verifier and the real versioned authority document.
+
+### Source implementation
+
+- Split literal prose markers from executable-command validation in `scripts/candidate-r30/minimax-authority.mjs`.
+- Added a bounded detached-worktree command pattern that accepts both `git worktree add --detach` and `git -C <repo> worktree add --detach`.
+- Kept `--detach` mandatory; a worktree command without it still returns `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID` with the stable missing-marker label `git worktree add --detach`.
+- Preserved exact-object reads, runner co-location checks, SHA256 authority identity, exclusive outputs, no-network truth, and no-candidate-state truth.
+
+### RED → GREEN tests
+
+- The RED evidence is MiniMax's exact-object Gate 0 blocker against the previously approved source SHA: the authority document and verifier disagreed even though neither local source nor candidate state had been modified.
+- Expanded `scripts/candidate-r30/minimax-authority.test.mjs` to cover direct and repository-scoped detached-worktree commands.
+- Added a negative regression requiring `--detach`.
+- Added a regression that reads and validates the real `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` file instead of only a self-generated fixture.
+- The repaired source checkpoint completed all 17 `copilot-source-gate` steps on Node 24/macOS, including candidate source contracts, desktop Phase 1 source tests, strict global/per-file coverage, CycloneDX SBOM, exact `113 tests in 9 files` discovery, and tracked-source cleanliness.
+
+### Governance and handoff
+
+- Updated `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, and this changelog with the second deployment-authority incident and its closure.
+- The previously supplied SHA `205eef52927c44c4eff65d72e6cea3ac9c0c064c` is invalidated by subsequent tracked repair commits and must not be executed again.
+- The new exact final PR #14 HEAD is supplied externally only after the last governance commit passes the complete source gate; tracked files deliberately do not self-embed their containing commit.
+
+Rollback: revert the bounded authority-command validation and regression-test commits. A rollback creates no database, candidate, artifact, runtime, cloud, signing, notarization, or user-data migration because none were produced.
+
 ## 2026-07-31 — R31 Exact-Object Deployment Authority
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. No local candidate, packaged Electron execution, signing, notarization, independent Codex acceptance, Release, or Human Owner Gate was created by this GitHub work.
