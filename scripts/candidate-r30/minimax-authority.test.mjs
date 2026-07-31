@@ -15,8 +15,10 @@ import {
   validateAuthorityDocument,
 } from './minimax-authority.mjs';
 
-function validAuthority() {
-  return `${REQUIRED_AUTHORITY_MARKERS.join('\n')}\n${'authority-boundary\n'.repeat(300)}`;
+function validAuthority({
+  worktreeCommand = 'git worktree add --detach "$WORKTREE" "$SOURCE_COMMIT"',
+} = {}) {
+  return `${REQUIRED_AUTHORITY_MARKERS.join('\n')}\n${worktreeCommand}\n${'authority-boundary\n'.repeat(300)}`;
 }
 
 function git(repository, args) {
@@ -81,6 +83,33 @@ test('validates a complete authority document and rejects missing markers', () =
       && error.code === 'BLOCKED_DEPLOYMENT_AUTHORITY_INVALID'
       && error.context.missingMarkers.includes('Do not retry online'),
   );
+
+  const missingDetachedWorktree = validAuthority({
+    worktreeCommand: 'git -C "$REPO" worktree add "$WORKTREE" "$SOURCE_COMMIT"',
+  });
+  assert.throws(
+    () => validateAuthorityDocument(missingDetachedWorktree),
+    (error) => error instanceof DeploymentAuthorityBlocked
+      && error.code === 'BLOCKED_DEPLOYMENT_AUTHORITY_INVALID'
+      && error.context.missingMarkers.includes('git worktree add --detach'),
+  );
+});
+
+test('accepts direct and repository-scoped detached-worktree commands', () => {
+  assert.doesNotThrow(() => validateAuthorityDocument(validAuthority()));
+  assert.doesNotThrow(() => validateAuthorityDocument(validAuthority({
+    worktreeCommand: 'git -C "$REPO" worktree add --detach "$WORKTREE" "$SOURCE_COMMIT"',
+  })));
+});
+
+test('validates the versioned MiniMax authority document used by the exact-object bootstrap', async () => {
+  const authority = await readFile(
+    new URL('../../docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md', import.meta.url),
+    'utf8',
+  );
+  const identity = validateAuthorityDocument(authority);
+  assert.match(identity.sha256, /^[0-9a-f]{64}$/u);
+  assert.ok(identity.bytes >= 4_000);
 });
 
 test('reads authority and runner from the exact Git object rather than the checked-out worktree', async () => {
