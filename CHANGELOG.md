@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-31 — R31 Exact-Object Deployment Authority
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. No local candidate, packaged Electron execution, signing, notarization, independent Codex acceptance, Release, or Human Owner Gate was created by this GitHub work.
+
+### Root cause
+
+- MiniMax searched two stale local worktrees for `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` before fetching and binding the externally approved PR commit.
+- The document existed in the approved exact Git object, so the reported `MISSING_DEPLOYMENT_AUTHORITY` was a stale-checkout false blocker rather than missing versioned authority.
+
+### Source implementation
+
+- Added `scripts/candidate-r30/minimax-authority.mjs`.
+- The verifier reads `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and confirms `scripts/candidate-r30/run-candidate.mjs` directly from `<exact SHA>:<path>`.
+- It validates required fail-closed markers, records authority bytes/lines/SHA256, and emits an exclusive receipt.
+- It fails closed with stable codes for an unavailable commit, missing/invalid authority, missing runner, invalid arguments, relative output paths, and output overwrite.
+- Its receipt explicitly states `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`.
+
+### RED → GREEN tests
+
+- Added `scripts/candidate-r30/minimax-authority.test.mjs` with five tests covering exact argument validation, document-marker validation, exact-object reads despite stale checkout bytes, missing commit/document blockers, and exclusive materialization.
+- Added governance assertions that the MiniMax handoff fetches PR #14, compares the exact SHA, uses `git cat-file`/`git show`, invokes the verifier, and never treats current-worktree presence as authority.
+- Candidate source contracts still execute through `node --test scripts/candidate-r30/*.test.mjs`; the complete GitHub source gate remains required on the final externally supplied SHA.
+
+### Handoff and governance
+
+- Rewrote `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` to bootstrap authority from the exact Git object before creating a candidate worktree or evidence directory.
+- Added PR-head equality, authority SHA256 receipt, stable pre-candidate blocker handling, and an explicit prohibition on cron/file-presence auto-execution.
+- Updated root state/status/TODO/decisions and docs mirrors/workflow/README.
+- The exact final PR #14 HEAD remains externally supplied only after the last tracked commit passes the complete source gate; no tracked file self-embeds its own containing commit.
+
+Rollback: revert the bounded authority-bootstrap commits on Draft PR #14. The rollback does not require database, artifact, runtime, cloud, signing, notarization, or user-data changes because none were produced.
+
 ## 2026-07-30 — R31 Phase 1 Source Completion
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY` because the exact final commit has not yet been executed locally, independently accepted, signed, notarized, or owner-approved.
