@@ -123,10 +123,14 @@ describe('R44 H4E Today product polish', () => {
       selected.focus();
       fireEvent.keyDown(selected, { key });
       const expectedKey = localDateKey(expected);
-      expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
-      await waitFor(() => expect(screen.getByRole('button', {
-        name: `选择日期 ${expectedKey}`,
-      })).toHaveFocus());
+      await waitFor(() => {
+        expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
+        const nextSelected = screen.getByRole('button', {
+          name: `选择日期 ${expectedKey}`,
+          pressed: true,
+        });
+        expect(nextSelected).toHaveFocus();
+      });
     };
 
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
