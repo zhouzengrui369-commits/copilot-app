@@ -14,6 +14,7 @@ import {
   resolveEvidenceTarget,
 } from './contract.mjs';
 import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release-r31.mjs';
+import { OWNER_CACHE_AUTHORITY } from './npm-cache-hydrate.mjs';
 import { asBlocked, privateJson, repoRoot } from './io.mjs';
 import { runBuildGates } from './gates-build.mjs';
 import { FOCUSED_SPECS, runElectronGates } from './gates-electron.mjs';
@@ -32,26 +33,61 @@ export function candidateId(sourceCommit) {
 }
 
 export function parseArgs(argv) {
-  const result = { sourceCommit: null, evidenceDir: null, dryRun: false };
+  const result = {
+    sourceCommit: null,
+    evidenceDir: null,
+    npmCacheDir: null,
+    npmCacheReceipt: null,
+    dryRun: false,
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === '--source-commit') result.sourceCommit = argv[++index] ?? null;
     else if (token === '--evidence-dir') result.evidenceDir = argv[++index] ?? null;
+    else if (token === '--npm-cache-dir') result.npmCacheDir = argv[++index] ?? null;
+    else if (token === '--npm-cache-receipt') result.npmCacheReceipt = argv[++index] ?? null;
     else if (token === '--dry-run') result.dryRun = true;
     else block('BLOCKED_RUNNER_ARGUMENT_UNKNOWN', 0, String(token));
   }
   if (!result.sourceCommit || !result.evidenceDir) {
     block('BLOCKED_RUNNER_ARGUMENT', 0, '--source-commit and --evidence-dir are required');
   }
+  if (Boolean(result.npmCacheDir) !== Boolean(result.npmCacheReceipt)) {
+    block(
+      'BLOCKED_NPM_CACHE_RECEIPT_ARGUMENT',
+      0,
+      '--npm-cache-dir and --npm-cache-receipt must be supplied together',
+    );
+  }
   fullCommit(result.sourceCommit);
-  if (!path.isAbsolute(result.evidenceDir)) {
-    block('BLOCKED_EVIDENCE_DIR_NOT_ABSOLUTE', 0, result.evidenceDir);
+  for (const [label, value, code] of [
+    ['evidence dir', result.evidenceDir, 'BLOCKED_EVIDENCE_DIR_NOT_ABSOLUTE'],
+    ['npm cache dir', result.npmCacheDir, 'BLOCKED_NPM_CACHE_RECEIPT_ARGUMENT'],
+    ['npm cache receipt', result.npmCacheReceipt, 'BLOCKED_NPM_CACHE_RECEIPT_ARGUMENT'],
+  ]) {
+    if (value !== null && !path.isAbsolute(value)) block(code, 0, `${label}: ${value}`);
   }
   result.evidenceDir = path.resolve(result.evidenceDir);
+  if (result.npmCacheDir) result.npmCacheDir = path.resolve(result.npmCacheDir);
+  if (result.npmCacheReceipt) result.npmCacheReceipt = path.resolve(result.npmCacheReceipt);
   return result;
 }
 
-export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
+export function staticPlan({
+  sourceCommit,
+  evidenceDir,
+  npmCacheDir = null,
+  npmCacheReceipt = null,
+  dryRun = false,
+}) {
+  const hydratedCache = npmCacheDir && npmCacheReceipt
+    ? {
+      ownerAuthority: OWNER_CACHE_AUTHORITY,
+      cacheDir: path.resolve(npmCacheDir),
+      receipt: path.resolve(npmCacheReceipt),
+      candidateInstallAuthority: 'offline-only-after-exact-receipt-validation',
+    }
+    : null;
   return {
     schemaVersion: 3,
     runner: 'copilot-r30-github-bound-candidate-runner',
@@ -63,6 +99,7 @@ export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
     mvpStatus: 'MVP_NOT_COMPLETE',
     networkAuthority: 'offline-only',
     automaticRegistryFallback: false,
+    approvedNpmCacheHydration: hydratedCache,
     distributionTruth: 'UNSIGNED_DIAGNOSTIC_ONLY',
     gates: [
       {
@@ -73,7 +110,10 @@ export function staticPlan({ sourceCommit, evidenceDir, dryRun = false }) {
       {
         id: 2,
         name: 'offline-install',
-        command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline --no-audit --no-fund`,
+        command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline${hydratedCache ? ' --cache <receipt-bound-isolated-cache>' : ''} --no-audit --no-fund`,
+        cacheAuthority: hydratedCache
+          ? 'exact owner-approved hydration receipt; candidate remains deny-network'
+          : 'existing local npm cache only',
       },
       {
         id: 3,
@@ -156,6 +196,13 @@ export async function execute(options) {
     sourceCommit: options.sourceCommit,
     status: 'IN_PROGRESS',
     mvpStatus: 'MVP_NOT_COMPLETE',
+    approvedNpmCacheHydration: options.npmCacheDir
+      ? {
+        cacheDir: options.npmCacheDir,
+        receipt: options.npmCacheReceipt,
+        ownerAuthority: OWNER_CACHE_AUTHORITY,
+      }
+      : null,
     startedAt: new Date().toISOString(),
   });
   if (process.platform !== 'darwin') {
@@ -170,6 +217,8 @@ export async function execute(options) {
     sourceCommit: options.sourceCommit,
     candidateId: id,
     evidenceDir,
+    npmCacheDir: options.npmCacheDir,
+    npmCacheReceipt: options.npmCacheReceipt,
   });
   return runElectronGates({
     sourceCommit: options.sourceCommit,
