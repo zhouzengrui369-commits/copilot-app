@@ -105,55 +105,77 @@ describe('R44 H4E Today product polish', () => {
 
   it('keeps date truth coherent and supports keyboard navigation in the main calendar', async () => {
     const today = new Date();
-    const api = makeApi();
-    render(<Harness api={api} />);
-    await waitFor(() => expect(api.notes.list).toHaveBeenCalled());
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+    const priorMonth = monthDate(today, -1);
+    const scenarios = [
+      { from: today, key: 'ArrowLeft', expected: yesterday },
+      { from: yesterday, key: 'ArrowRight', expected: today },
+      { from: today, key: 'ArrowUp', expected: weekAgo },
+      { from: weekAgo, key: 'ArrowDown', expected: today },
+      { from: today, key: 'PageUp', expected: priorMonth },
+      { from: priorMonth, key: 'PageDown', expected: today },
+      { from: yesterday, key: 'Home', expected: today },
+    ] as const;
 
-    expect(screen.getByTestId('today-heading-copy')).toHaveAttribute(
-      'data-assistant-avoid',
-      'critical',
-    );
-    expect(screen.getByTestId('today-key-overview')).toHaveAttribute(
-      'data-assistant-avoid',
-      'critical',
-    );
+    for (const [index, scenario] of scenarios.entries()) {
+      const api = makeApi();
+      const view = render(<Harness api={api} />);
+      await waitFor(() => expect(api.notes.list).toHaveBeenCalled());
 
-    const pressFromDate = async (from: Date, key: string, expected: Date) => {
-      const fromKey = localDateKey(from);
-      const selected = screen.getByRole('button', {
+      if (index === 0) {
+        expect(screen.getByTestId('today-heading-copy')).toHaveAttribute(
+          'data-assistant-avoid',
+          'critical',
+        );
+        expect(screen.getByTestId('today-key-overview')).toHaveAttribute(
+          'data-assistant-avoid',
+          'critical',
+        );
+      }
+
+      const fromKey = localDateKey(scenario.from);
+      const expectedKey = localDateKey(scenario.expected);
+      if (fromKey !== localDateKey(today)) {
+        fireEvent.click(screen.getByRole('button', { name: `选择日期 ${fromKey}` }));
+        await waitFor(() => expect(screen.getByRole('button', {
+          name: `选择日期 ${fromKey}`,
+          pressed: true,
+        })).toBeInTheDocument());
+      }
+
+      const source = screen.getByRole('button', {
         name: `选择日期 ${fromKey}`,
         pressed: true,
       });
       await act(async () => {
-        selected.focus();
-        fireEvent.keyDown(selected, { key });
+        source.focus();
+        fireEvent.keyDown(source, { key: scenario.key });
         await Promise.resolve();
       });
-      const expectedKey = localDateKey(expected);
+
       await waitFor(() => {
-        expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
-        const nextSelected = screen.getByRole('button', {
+        const target = screen.getByRole('button', {
           name: `选择日期 ${expectedKey}`,
           pressed: true,
         });
-        expect(nextSelected).toHaveFocus();
+        expect(target).toHaveFocus();
+        if (expectedKey === localDateKey(today)) {
+          expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent('当前选中：今天');
+        } else {
+          expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
+        }
       });
-    };
 
-    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-    const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-    await pressFromDate(today, 'ArrowLeft', yesterday);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('所选日期');
-    expect(screen.getByTestId('selected-date-heading')).toHaveTextContent('所选日期工作与生活');
-    await pressFromDate(yesterday, 'ArrowRight', today);
-    await pressFromDate(today, 'ArrowUp', weekAgo);
-    await pressFromDate(weekAgo, 'ArrowDown', today);
-    const priorMonth = monthDate(today, -1);
-    await pressFromDate(today, 'PageUp', priorMonth);
-    await pressFromDate(priorMonth, 'PageDown', today);
-    await pressFromDate(today, 'ArrowLeft', yesterday);
-    await pressFromDate(yesterday, 'Home', today);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('今天');
+      if (scenario.key === 'ArrowLeft') {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('所选日期');
+        expect(screen.getByTestId('selected-date-heading')).toHaveTextContent('所选日期工作与生活');
+      }
+      if (scenario.key === 'Home') {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('今天');
+      }
+      view.unmount();
+    }
   });
 
   it('shows only notes saved on the selected date and opens the exact note path', async () => {
