@@ -19,6 +19,7 @@ import {
   repoRoot,
   sha256File,
 } from './io.mjs';
+import { validateHydrationReceipt } from './npm-cache-hydrate.mjs';
 import { parseAndValidateCycloneDxSbom } from './sbom.mjs';
 
 const CORE_WORKSPACES = Object.freeze([
@@ -39,7 +40,13 @@ async function npmRun({ gate, name, script, workspace, npm, evidenceDir, extra =
   });
 }
 
-export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) {
+export async function runBuildGates({
+  sourceCommit,
+  candidateId,
+  evidenceDir,
+  npmCacheDir = null,
+  npmCacheReceipt = null,
+}) {
   const root = path.resolve(git(['rev-parse', '--show-toplevel']));
   if (root !== repoRoot) block('BLOCKED_REPO_ROOT_MISMATCH', 1, root);
   const actualCommit = bindCommit(sourceCommit, git(['rev-parse', 'HEAD']));
@@ -55,26 +62,91 @@ export async function runBuildGates({ sourceCommit, candidateId, evidenceDir }) 
     ignoredGeneratedInputsAbsent: true,
   });
 
+  let hydratedCache = null;
+  if (npmCacheDir || npmCacheReceipt) {
+    if (!npmCacheDir || !npmCacheReceipt) {
+      block(
+        'BLOCKED_NPM_CACHE_RECEIPT_ARGUMENT',
+        2,
+        '--npm-cache-dir and --npm-cache-receipt must be supplied together',
+      );
+    }
+    try {
+      hydratedCache = await validateHydrationReceipt({
+        repository: repoRoot,
+        sourceCommit,
+        cacheDir: npmCacheDir,
+        receiptPath: npmCacheReceipt,
+      });
+    } catch (error) {
+      block(
+        error?.code ?? 'BLOCKED_NPM_CACHE_RECEIPT_INVALID',
+        2,
+        error?.detail ?? (error instanceof Error ? error.message : String(error)),
+        error?.context ?? {},
+      );
+    }
+  }
+
   const npm = await findExecutable('npm');
+  const installArgs = ['ci'];
+  const installEnv = {};
+  if (hydratedCache) {
+    installArgs.push('--cache', hydratedCache.cacheIdentity.path);
+    installEnv.npm_config_cache = hydratedCache.cacheIdentity.path;
+  }
   const install = await recorded({
     gate: 2,
-    name: 'npm-ci-offline',
+    name: hydratedCache ? 'npm-ci-approved-cache-offline' : 'npm-ci-offline',
     command: npm,
-    args: ['ci'],
+    args: installArgs,
     evidenceDir,
+    env: installEnv,
     allowFailure: true,
   });
   const installFailure = classifyInstall(install.status ?? 1, install.stdout, install.stderr);
-  if (installFailure) block(installFailure.code, 2, 'npm ci --offline failed', installFailure);
+  if (installFailure) {
+    if (
+      hydratedCache
+      && installFailure.code === 'BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED'
+    ) {
+      block(
+        'BLOCKED_NPM_APPROVED_CACHE_INCOMPLETE',
+        2,
+        'receipt-bound npm cache did not satisfy npm ci --offline',
+        {
+          automaticRetry: false,
+          cacheDir: hydratedCache.cacheIdentity.path,
+          hydrationReceiptSha256: hydratedCache.receiptSha256,
+          cacheAggregateSha256: hydratedCache.cacheIdentity.aggregateSha256,
+        },
+      );
+    }
+    block(installFailure.code, 2, 'npm ci --offline failed', installFailure);
+  }
   cleanStatus(git(['status', '--porcelain=v1', '--untracked-files=all']));
   await privateJson(path.join(evidenceDir, 'gates/gate-02-network.json'), {
-    schemaVersion: 1,
+    schemaVersion: 2,
     gate: 2,
     authority: 'offline-only',
     automaticRegistryFallback: false,
     sandbox: '/usr/bin/sandbox-exec',
     npmExecutable: npm,
     profileSha256: createHash('sha256').update(NETWORK_PROFILE).digest('hex'),
+    approvedCacheHydration: hydratedCache
+      ? {
+        ownerAuthority: hydratedCache.receipt.ownerAuthority,
+        receiptPath: npmCacheReceipt,
+        receiptSha256: hydratedCache.receiptSha256,
+        cacheDir: hydratedCache.cacheIdentity.path,
+        cacheScope: hydratedCache.cacheIdentity.scope,
+        cacheFileCount: hydratedCache.cacheIdentity.fileCount,
+        cacheTotalBytes: hydratedCache.cacheIdentity.totalBytes,
+        cacheAggregateSha256: hydratedCache.cacheIdentity.aggregateSha256,
+        lockfileSha256: hydratedCache.lockfile.sha256,
+        candidateNetworkUsed: false,
+      }
+      : null,
     result: 'PASS',
   });
 
