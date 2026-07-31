@@ -108,13 +108,15 @@ describe('R44 H4E Today product polish', () => {
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
     const priorMonth = monthDate(today, -1);
+    // Month navigation clamps to the destination month's final valid day.
+    const monthAfterPriorMonth = monthDate(priorMonth, 1);
     const scenarios = [
       { from: today, key: 'ArrowLeft', expected: yesterday },
       { from: yesterday, key: 'ArrowRight', expected: today },
       { from: today, key: 'ArrowUp', expected: weekAgo },
       { from: weekAgo, key: 'ArrowDown', expected: today },
       { from: today, key: 'PageUp', expected: priorMonth },
-      { from: priorMonth, key: 'PageDown', expected: today },
+      { from: priorMonth, key: 'PageDown', expected: monthAfterPriorMonth },
       { from: yesterday, key: 'Home', expected: today },
     ] as const;
 
