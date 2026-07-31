@@ -4,6 +4,32 @@
 
 R30 is a new successor to the rejected, never-run R28. It binds one clean checkout to one exact GitHub commit and emits private candidate-bound evidence. It has no online fallback and cannot promote an unsigned diagnostic package to Release.
 
+## Deployment authority preflight
+
+Before creating a candidate worktree, MiniMax must prove the externally supplied SHA equals fetched PR #14 HEAD and materialize authority from the exact Git object:
+
+```bash
+git -C "$REPO" fetch --no-tags --prune origin refs/pull/14/head
+test "$(git -C "$REPO" rev-parse FETCH_HEAD)" = "$SOURCE_COMMIT"
+git -C "$REPO" show "${SOURCE_COMMIT}:scripts/candidate-r30/minimax-authority.mjs" \
+  > "$BOOTSTRAP_SCRIPT"
+node "$BOOTSTRAP_SCRIPT" \
+  --repository "$REPO" \
+  --source-commit "$SOURCE_COMMIT" \
+  --authority-output "$AUTHORITY_COPY" \
+  --receipt-output "$AUTHORITY_RECEIPT"
+```
+
+The authority is `<SOURCE_COMMIT>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`, not whatever files happen to exist in the current worktree. The verifier validates and hashes the document and confirms the candidate runner exists in the same commit. It does not perform network access, create a worktree, or create candidate evidence. A cron/file-presence probe cannot authorize or auto-run the candidate.
+
+Pre-candidate authority blockers include:
+
+- `BLOCKED_EXACT_COMMIT_NOT_FETCHED`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`
+- `BLOCKED_DEPLOYMENT_RUNNER_MISSING`
+- `BLOCKED_PR_HEAD_MISMATCH`
+
 ## Remote source validation
 
 ```bash
@@ -37,7 +63,7 @@ No earlier source/static result establishes Electron runtime, signing, notarizat
 
 ## MiniMax Code execution
 
-Use a new clean checkout of the exact approved commit. First perform the owner-required read-only reuse inventory of existing worktrees, caches, candidate records, release tools, manifests, screenshots, signing/notary tooling, and performance tooling. Reuse valid tools and caches; do not reuse an old candidate identity or old candidate-bound evidence.
+Use a new clean checkout of the exact approved commit, but only after the exact-object authority receipt passes. First perform the owner-required read-only reuse inventory of existing worktrees, caches, candidate records, release tools, manifests, screenshots, signing/notary tooling, and performance tooling. Reuse valid tools and caches; do not reuse an old candidate identity or old candidate-bound evidence.
 
 Relevant ignored `dist`, `.vite`, `release`, `coverage`, `test-results`, and `playwright-report` inputs must be absent from the selected clean worktree. The evidence directory must not exist and must resolve outside the repository even through symlink aliases.
 
@@ -55,7 +81,8 @@ On `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, stop and return the receipt. A
 
 MiniMax returns:
 
-- exact source commit, branch/detached-HEAD truth, and final clean status;
+- exact supplied source commit, fetched PR-head equality, detached-HEAD truth, and final clean status;
+- exact-object deployment-authority document SHA256 and verifier receipt;
 - Gate 3 all-tracked-file ledger, aggregate SHA256, file count, and ledger SHA256;
 - canonical source snapshot, canonical manifest, release identity, SBOM, ZIP, DMG, app, executable, and `app.asar` SHA256 values;
 - Gate 6 arm64-authority receipt, including the legacy builder status/blockers and the two selected authoritative artifact paths;
