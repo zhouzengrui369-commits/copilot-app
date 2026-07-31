@@ -615,6 +615,7 @@ export function ScheduleWorkspace({
   const [captureRetrying, setCaptureRetrying] = useState(false);
   const captureRef = useRef<HTMLElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const pendingCalendarFocusKeyRef = useRef<string | null>(null);
   const modalBackgroundRef = useRef<HTMLElement>(null);
   const todoTriggerRef = useRef<HTMLButtonElement>(null);
   const todoTitleRef = useRef<HTMLInputElement>(null);
@@ -662,6 +663,16 @@ export function ScheduleWorkspace({
   useEffect(() => {
     if (discardDraftOpen) keepDraftRef.current?.focus();
   }, [discardDraftOpen]);
+
+  useEffect(() => {
+    const targetKey = pendingCalendarFocusKeyRef.current;
+    if (!targetKey) return;
+    const target = calendarRef.current
+      ?.querySelector<HTMLButtonElement>('[data-calendar-date-key="' + targetKey + '"]');
+    if (!target) return;
+    target.focus();
+    pendingCalendarFocusKeyRef.current = null;
+  }, [selectedDate]);
 
   const changeCaptureDraft = useCallback((value: string) => {
     captureDraftRef.current = value;
@@ -991,44 +1002,46 @@ export function ScheduleWorkspace({
     chooseGridDate(next);
     focusGridDate(next);
   };
-  const focusMainCalendarDate = (date: Date) => {
-    const key = localDateKey(date.getTime());
-    setSelectedDate(date);
-    window.requestAnimationFrame(() => {
-      calendarRef.current
-        ?.querySelector<HTMLButtonElement>('[data-calendar-date-key="' + key + '"]')
-        ?.focus();
-    });
-  };
-  const handleMainCalendarKey = (event: ReactKeyboardEvent<HTMLButtonElement>, date: Date) => {
-    let next: Date | null = null;
-    switch (event.key) {
-      case 'ArrowLeft':
-        next = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
-        break;
-      case 'ArrowRight':
-        next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-        break;
-      case 'ArrowUp':
-        next = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 7);
-        break;
-      case 'ArrowDown':
-        next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 7);
-        break;
-      case 'PageUp':
-        next = monthDate(date, -1);
-        break;
-      case 'PageDown':
-        next = monthDate(date, 1);
-        break;
-      case 'Home':
-        next = new Date();
-        break;
-      default:
-        return;
-    }
+  const handleMainCalendarKey = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const key = event.key;
+    if (![
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'PageUp',
+      'PageDown',
+      'Home',
+    ].includes(key)) return;
     event.preventDefault();
-    focusMainCalendarDate(next);
+    setSelectedDate((current) => {
+      let next = current;
+      switch (key) {
+        case 'ArrowLeft':
+          next = new Date(current.getFullYear(), current.getMonth(), current.getDate() - 1);
+          break;
+        case 'ArrowRight':
+          next = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1);
+          break;
+        case 'ArrowUp':
+          next = new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7);
+          break;
+        case 'ArrowDown':
+          next = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7);
+          break;
+        case 'PageUp':
+          next = monthDate(current, -1);
+          break;
+        case 'PageDown':
+          next = monthDate(current, 1);
+          break;
+        case 'Home':
+          next = new Date();
+          break;
+      }
+      pendingCalendarFocusKeyRef.current = localDateKey(next.getTime());
+      return next;
+    });
   };
   const closeCaptureImmersive = () => {
     setCaptureImmersiveOpen(false);
@@ -1269,7 +1282,7 @@ export function ScheduleWorkspace({
                     setSelectedDate(date);
                     setTodoScope('day');
                   }}
-                  onKeyDown={(event) => handleMainCalendarKey(event, date)}
+                  onKeyDown={handleMainCalendarKey}
                 >
                   {date.getDate()}
                 </button>
