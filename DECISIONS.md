@@ -155,3 +155,30 @@ Do not put “the final commit containing this file” inside tracked governance
 - The final GitHub workflow result and PR comment bind the externally supplied commit.
 - MiniMax must use a detached clean worktree at that exact commit and may not substitute a branch tip observed later.
 - Any further source or document commit invalidates the previously reported final HEAD and requires a new green source-gate run and a new handoff value.
+
+## D-2026-07-31-01: Deployment Authority Is Read From The Exact Git Object
+
+### Background
+
+MiniMax correctly stopped when two existing local worktrees did not contain `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`. GitHub inspection showed that the approved PR commit did contain the document. The old process searched current filesystem paths before fetching and binding the exact commit, so a stale checkout could be mistaken for missing versioned authority.
+
+### Decision
+
+Deployment authority is the byte sequence at:
+
+```text
+<EXACT_FINAL_COMMIT>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md
+```
+
+MiniMax must first fetch `refs/pull/14/head`, prove equality with the externally supplied SHA, then extract and run `<SHA>:scripts/candidate-r30/minimax-authority.mjs`. The verifier validates the authority document, confirms the candidate runner exists in the same commit, computes the document SHA256, and emits an exclusive receipt before any candidate worktree or evidence directory is created.
+
+The current worktree, a recursive filesystem search, a chat-pasted script, or a cron probe is not deployment authority.
+
+### Impact
+
+- `BLOCKED_EXACT_COMMIT_NOT_FETCHED`, `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`, `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`, and `BLOCKED_DEPLOYMENT_RUNNER_MISSING` stop before candidate state exists.
+- The verifier itself performs no network access and reports `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`.
+- The explicit GitHub fetch is a source synchronization step only; it does not grant npm registry authority or weaken Gate 2.
+- Authority and receipt outputs use exclusive owner-only creation and cannot overwrite prior files.
+- A stale-worktree absence can no longer be treated as proof that the exact approved commit lacks deployment authority.
+- Any new tracked commit still invalidates the prior externally reported final SHA and requires a complete new source-gate result.
