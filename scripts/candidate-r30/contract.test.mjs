@@ -45,6 +45,15 @@ test('Gate 3 parses one complete NUL-delimited git tracked-file set', () => {
     assert.throws(() => trackedFilesFromGit(value), /BLOCKED_GATE_3_/);
   }
 });
+test('Gate 3 critical controls include exact-object deployment authority and active arm64 wrapper', () => {
+  for (const value of [
+    'docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md',
+    'scripts/candidate-r30/canonical-release-r31.mjs',
+    'scripts/candidate-r30/document-authority.test.mjs',
+    'scripts/candidate-r30/minimax-authority.mjs',
+    'scripts/candidate-r30/minimax-authority.test.mjs',
+  ]) assert.ok(CONTROL_FILES.includes(value), value);
+});
 test('Gate 3 builds a sorted all-byte ledger with exact aggregate identity', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'r30-ledger-'));
   for (const relative of CONTROL_FILES) { const file = path.join(root, relative); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, `${relative}\n`); }
