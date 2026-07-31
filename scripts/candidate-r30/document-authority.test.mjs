@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const root = path.resolve(process.env.COPILOT_R30_REPO_ROOT || defaultRoot);
 const read = (relative) => readFile(path.join(root, relative), 'utf8');
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
 const mirrorFiles = [
   'docs/AI_HANDOVER.md',
@@ -74,6 +75,7 @@ test('project progress JSON is truthful machine-readable source completion witho
   assert.deepEqual(progress.r30.gate_9.exact_discovery, { tests: 113, files: 9 });
   assert.equal(progress.r31.status, 'SOURCE_COMPLETE');
   assert.equal(progress.r31.source_features.candidate_gate_count, 12);
+  assert.equal(progress.r31.source_features.deployment_authority_bootstrap, 'exact_git_object');
   assert.equal(progress.r31.source_validation_checkpoint.desktop_phase1_tests.passed, 1106);
   assert.equal(progress.r31.source_validation_checkpoint.local_knowledge_service_branch_percent, 90);
   assert.equal(progress.r31.source_validation_checkpoint.electron_list_only.exact, true);
@@ -100,9 +102,11 @@ test('risk and todo mirrors carry concrete blockers and the exact R31 handoff', 
   for (const token of ['R28', 'SHA256', 'network', 'signing', 'Gate 11', 'SBOM']) {
     assert.match(risks, new RegExp(token, 'iu'));
   }
+  assert.match(risks, /stale worktree|Git object/iu);
   assert.match(todo, /agent\/r31-source-completion/u);
   assert.match(todo, /113 tests in 9 files/u);
   assert.match(todo, /twelve|十二/iu);
+  assert.match(todo, /minimax-authority\.mjs/u);
   assert.match(todo, /MiniMax Code/u);
   assert.match(todo, /Codex/u);
 });
@@ -126,24 +130,37 @@ test('root governance remains blocked while marking GitHub source complete and l
   assert.match(state, /artifact_sha256:\s*null/u);
   assert.match(state, /runtime_id:\s*null/u);
   assert.match(state, /gate_12:/u);
+  assert.match(state, /deployment_authority_bootstrap:/u);
   assert.match(status, /BLOCKED/u);
   assert.match(status, /1106\/1106/u);
+  assert.match(status, /exact Git commit object/iu);
   assert.match(todo, /scripts\/candidate-r30\/run-candidate\.mjs/u);
+  assert.match(todo, /scripts\/candidate-r30\/minimax-authority\.mjs/u);
   assert.match(todo, /EXACT_FINAL_HEAD/u);
   assert.match(decisions, /Embedded-Local Is The Production Retrieval Embedding Default/u);
   assert.match(decisions, /Twelve-Gate Exact-Commit Candidate Contract/u);
+  assert.match(decisions, /Deployment Authority Is Read From The Exact Git Object/u);
   assert.match(changelog, /Gate 2/u);
   assert.match(changelog, /Gate 3/u);
   assert.match(changelog, /Gate 9/u);
   assert.match(changelog, /Gate 11/u);
   assert.match(changelog, /Gate 12/u);
+  assert.match(changelog, /exact Git object/iu);
   assert.match(changelog, /history\/CHANGELOG_PRE_R30\.md/u);
 });
 
-test('MiniMax deployment handoff is exact-commit, clean-worktree, offline and fail-closed', async () => {
-  const deploy = await read('docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md');
+test('MiniMax deployment handoff bootstraps authority from the exact Git object and remains fail-closed', async () => {
+  const [deploy, bootstrap] = await Promise.all([
+    read('docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md'),
+    read('scripts/candidate-r30/minimax-authority.mjs'),
+  ]);
   for (const token of [
     'EXACT_FINAL_40_HEX_PR14_HEAD',
+    'git -C "$REPO" fetch --no-tags --prune origin refs/pull/14/head',
+    'git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:${AUTHORITY_PATH}"',
+    'git -C "$REPO" show "${SOURCE_COMMIT}:${BOOTSTRAP_PATH}"',
+    'scripts/candidate-r30/minimax-authority.mjs',
+    'git-object-at-exact-commit',
     'git worktree add --detach',
     'git status --porcelain=v1 --untracked-files=all',
     'sandbox-exec',
@@ -153,7 +170,20 @@ test('MiniMax deployment handoff is exact-commit, clean-worktree, offline and fa
     'BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED',
     'CANDIDATE-MANIFEST.json',
     'R30-COMPLETE.json',
-  ]) assert.match(deploy, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  ]) assert.match(deploy, new RegExp(escapeRegExp(token), 'u'));
+  assert.match(deploy, /Absence from a stale checkout is not proof/iu);
   assert.match(deploy, /Do not retry online|Do not.*online/su);
   assert.match(deploy, /unsigned diagnostic candidate/iu);
+
+  for (const token of [
+    'BLOCKED_EXACT_COMMIT_NOT_FETCHED',
+    'BLOCKED_DEPLOYMENT_AUTHORITY_MISSING',
+    'BLOCKED_DEPLOYMENT_AUTHORITY_INVALID',
+    'BLOCKED_DEPLOYMENT_RUNNER_MISSING',
+    'executionAuthority',
+    'networkUsed: false',
+    'worktreeCreated: false',
+    'evidenceCreated: false',
+  ]) assert.match(bootstrap, new RegExp(escapeRegExp(token), 'u'));
+  assert.doesNotMatch(bootstrap, /npm\s+(?:ci|install)|fetch\(/u);
 });
