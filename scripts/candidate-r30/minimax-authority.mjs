@@ -13,7 +13,6 @@ export const REQUIRED_AUTHORITY_MARKERS = Object.freeze([
   '# MiniMax Code Local Deployment',
   'BLOCKED / MVP_NOT_COMPLETE / LOCAL_CANDIDATE_NOT_RUN',
   'Use the exact supplied commit SHA',
-  'git worktree add --detach',
   'node --test scripts/candidate-r30/*.test.mjs',
   '--dry-run',
   'BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED',
@@ -21,6 +20,12 @@ export const REQUIRED_AUTHORITY_MARKERS = Object.freeze([
   'R30-COMPLETE.json',
   'Do not retry online',
   'Only after this package is complete may Codex',
+]);
+export const REQUIRED_AUTHORITY_COMMANDS = Object.freeze([
+  Object.freeze({
+    marker: 'git worktree add --detach',
+    pattern: /\bgit(?:\s+-C\s+(?:"[^"\n]+"|'[^'\n]+'|[^\s\n]+))?\s+worktree\s+add\s+--detach(?:\s|$)/u,
+  }),
 ]);
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/u;
@@ -91,7 +96,12 @@ export function validateAuthorityDocument(content) {
   if (content.includes('\u0000')) {
     block('BLOCKED_DEPLOYMENT_AUTHORITY_INVALID', 'authority document contains a NUL byte');
   }
-  const missingMarkers = REQUIRED_AUTHORITY_MARKERS.filter((marker) => !content.includes(marker));
+  const missingMarkers = [
+    ...REQUIRED_AUTHORITY_MARKERS.filter((marker) => !content.includes(marker)),
+    ...REQUIRED_AUTHORITY_COMMANDS
+      .filter(({ pattern }) => !pattern.test(content))
+      .map(({ marker }) => marker),
+  ];
   if (missingMarkers.length > 0) {
     block(
       'BLOCKED_DEPLOYMENT_AUTHORITY_INVALID',
