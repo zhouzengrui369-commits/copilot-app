@@ -12,13 +12,13 @@ GitHub checks prove source contracts only. They do not prove the local packaged 
 
 **Control:** every current document keeps `BLOCKED / MVP_NOT_COMPLETE`; candidate/runtime fields remain null until MiniMax returns exact-commit evidence.
 
-## R2 — Mutable Branch Or Self-Referential Commit Handoff
+## R2 — Mutable Branch, Self-Referential Commit, Or Stale Worktree Handoff
 
-**State:** CONTROLLED.
+**State:** CONTROLLED pending final authority-bootstrap CI.
 
-A branch can move, and a tracked file cannot truthfully contain the commit that contains itself.
+A branch can move, a tracked file cannot truthfully contain the commit that contains itself, and a stale worktree may not contain a document that does exist in the approved exact Git object. Searching only old local paths can therefore produce a false `MISSING_DEPLOYMENT_AUTHORITY` blocker.
 
-**Control:** after final docs CI, record the exact 40-character PR #14 HEAD externally in the PR conversation and owner deployment instruction. MiniMax checks out that SHA detached; the runner verifies `--source-commit` equals `git HEAD`. Any later commit invalidates the handoff.
+**Control:** after final docs CI, record the exact 40-character PR #14 HEAD externally. MiniMax explicitly fetches `refs/pull/14/head`, proves `FETCH_HEAD` equals that SHA, then reads and hashes `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and verifies `scripts/candidate-r30/run-candidate.mjs` from `<SHA>:<path>` using `scripts/candidate-r30/minimax-authority.mjs`. Current-worktree file presence is non-authoritative. Any later commit invalidates the handoff.
 
 ## R3 — R28 Evidence Reuse
 
@@ -34,7 +34,7 @@ R28 was never executed and failed review because Gate 3 SHA256 evidence was malf
 
 The local npm cache may be incomplete. An implicit online retry would violate the approved network boundary.
 
-**Control:** resolve an absolute npm executable, strip proxy/registry authority, run every recorded command through macOS `sandbox-exec` with `deny network*`, and use offline npm. `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED` stops execution; no online retry. Any exception requires separate reviewed owner approval.
+**Control:** resolve an absolute npm executable, strip proxy/registry authority, run every recorded command through macOS `sandbox-exec` with `deny network*`, and use offline npm. `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED` stops execution; no online retry. Any exception requires separate reviewed owner approval. The one explicit GitHub fetch used to acquire the exact source commit occurs before candidate execution and does not grant npm registry authority.
 
 ## R5 — SHA256 Ledger Incompleteness Or Symlink Substitution
 
@@ -115,3 +115,11 @@ An unsigned diagnostic ZIP/DMG is not a distributable macOS Release.
 Windows, Tencent deployment, Remote/live, Backup, or 3D graph could be described as Phase 1 delivered functionality.
 
 **Control:** Windows real-machine/signing/install/screenshots are Phase 1.1; Tencent/Remote/Backup and 3D graph are post-MVP unless Owner explicitly changes scope. Deferred sources cannot produce current readiness claims.
+
+## R15 — Authority Verifier Could Mutate Candidate State
+
+**State:** SOURCE CONTROL CLOSED; final CI pending.
+
+A bootstrap helper that fetched dependencies, created worktrees, or created candidate evidence would blur the GitHub-to-MiniMax boundary before exact authority was established.
+
+**Control:** `scripts/candidate-r30/minimax-authority.mjs` uses Git object reads only. Its receipt states `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`; outputs are optional absolute paths created exclusively with owner-only permissions. Tests reject missing commit objects, missing/invalid authority documents, missing runners, relative outputs, and output overwrite.
