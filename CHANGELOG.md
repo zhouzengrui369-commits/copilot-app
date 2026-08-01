@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-08-01 — R33 npm config isolation repair
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`.
+
+- PR #15 and PR #14 head `e91b37618638da0b2ac864c368cde232079e3bee`
+  passed the full 17-step GitHub source gate.
+- The first exact-SHA hydration stopped before candidate creation because npm
+  11.8.0 rejects loading `/dev/null` as both user and global config.
+- R33 replaces that duplicate path with two distinct, exclusive, mode-0600
+  empty config files outside the repository while preserving inherited
+  proxy/registry/token stripping and explicit reviewed proxy overrides.
+- Added direct RED reproduction and GREEN isolation/fail-closed tests; focused
+  candidate contract suite is `29/29 PASS` and `git diff --check` passes.
+- No dependency install, hydration retry, candidate, Electron, artifact,
+  signing, notarization, database, cloud, or user-data change was performed.
+
+Next: clean GitHub CI, merge into PR #14, freeze the new exact SHA, then make
+one fresh hydration/candidate attempt. Rollback is a source-only revert.
+
 ## 2026-08-01 — R32 Codex/MiniMax Takeover And Source-Gate Recovery
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY /

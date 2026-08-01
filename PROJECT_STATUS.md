@@ -4,29 +4,33 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
 
-Draft PR #14 (`agent/r31-source-completion`) is not currently green. Its HEAD
-`c3bb0ecf64ab841707b954dfa05728fd44652a79` failed source-gate run
-`30682977003` / job `91323461797` with four date-sensitive failures in two
-test files (`1103/1107` passed). The clean local repair branch is
-`codex/r32-ci-date-stability` at the same base. No current candidate, artifact
-SHA256, runtime ID, packaged Electron result, or Human Owner Gate exists.
+Draft PR #14 (`agent/r31-source-completion`) passed all 17 source-gate steps at
+`e91b37618638da0b2ac864c368cde232079e3bee` in run `30689574192` / job
+`91341771876`. The first exact-SHA candidate attempt then stopped before
+candidate creation because npm 11.8.0 rejected the hydrator's duplicate
+`/dev/null` user/global config paths. R33 repairs only that isolation contract;
+local focused tests are `29/29 PASS`, while GitHub CI is still pending. No
+current candidate, artifact SHA256, runtime ID, packaged Electron result, or
+Human Owner Gate exists.
 
-## R32 Takeover
+## R33 Takeover
 
-- Current objective: land the two-test date-stability repair through clean
-  GitHub CI, then freeze the final source SHA and build a reproducible unsigned
-  macOS candidate.
-- Completed: GitHub/local truth audit; independent focused rerun `47/47 PASS`.
-- In progress: governance handoff update and clean-CI landing.
-- Next: clean GitHub source gate, bounded dependency hydration, twelve-gate
-  candidate, real Electron journeys, and three verify-fix rounds.
+- Current objective: land the npm user/global config isolation repair through
+  clean GitHub CI, then freeze the new source SHA and build a reproducible
+  unsigned macOS candidate.
+- Completed: R32 date repair, PR #15 clean CI and merge, PR #14 clean CI, exact
+  candidate preflight, and fail-closed reproduction of the npm 11.8.0 blocker.
+- In progress: R33 source repair and clean-CI landing.
+- Next: one fresh bounded dependency hydration, twelve-gate candidate, real
+  Electron journeys, and three verify-fix rounds.
 - Risk: reused local dependencies cannot prove tests TSC or phase1-release;
   those results remain NOT_ACCEPTED until clean CI. Apple signing/notary is
   owner-deferred post-MVP, while older v6.2 release wording still lists it as a
   release gate; do not silently resolve that conflict.
-- Latest important change: the calendar tests no longer depend on July 2026.
-- Branch: `codex/r32-ci-date-stability`.
-- Latest committed base: `c3bb0ecf64ab841707b954dfa05728fd44652a79`.
+- Latest important change: npm user/global config isolation now uses distinct
+  exclusive empty files instead of loading `/dev/null` twice.
+- Branch: `codex/r33-npm-config-isolation`.
+- Latest committed base: `e91b37618638da0b2ac864c368cde232079e3bee`.
 
 ## Authority
 
@@ -40,8 +44,8 @@ The owner-approved baseline remains `goal.md`, `plan.md`, `rules.md`, and `deliv
 - Candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13
 - Active branch: `agent/r31-source-completion`
 - Active Draft PR: #14
-- Local implementation branch: `codex/r32-ci-date-stability`
-- Current under-repair PR HEAD: `c3bb0ecf64ab841707b954dfa05728fd44652a79`
+- Local implementation branch: `codex/r33-npm-config-isolation`
+- Current PR HEAD before R33: `e91b37618638da0b2ac864c368cde232079e3bee`
 - Final identity rule: use the externally reported final 40-character PR #14 HEAD after the last tracked commit passes all 17 source-gate steps. Tracked files do not self-embed their own containing commit.
 
 ## Closed Deployment-Authority Defects
@@ -88,9 +92,9 @@ If the approved cache is incomplete, the candidate stops with `BLOCKED_NPM_APPRO
 
 ## GitHub Source Checkpoint
 
-R31 remote source work retains the listed capabilities, but the current PR HEAD
-is red because two calendar test files drifted with the real month. The R32
-test-only repair is focused-green locally; clean GitHub CI remains mandatory.
+R31 remote source work and the R32 date-stability repair passed the complete
+source gate. R33 is a candidate-bootstrap repair only; its clean GitHub gate is
+mandatory before any new exact candidate SHA is frozen.
 
 - embedded-local deterministic production embeddings with no external service;
 - explicit Ollama opt-in only;
@@ -143,8 +147,8 @@ A successful local run remains an **unsigned diagnostic candidate**.
 
 ## Next Single Action
 
-Commit and push the two-test R32 repair, require the complete clean GitHub
-source gate to pass, and freeze that exact SHA. Then MiniMax hydrates the
-approved cache in one isolated worktree and executes the candidate runner once
-in a separate detached worktree. Codex reviews the receipt and operates the
-exact packaged candidate on the real Mac.
+Commit and push R33, require the complete clean GitHub source gate, merge it
+into PR #14, and freeze the resulting exact SHA. Then MiniMax hydrates one new
+cache in a fresh isolated worktree and executes the candidate runner once in a
+separate detached worktree. Codex reviews the receipt and operates the exact
+packaged candidate on the real Mac.

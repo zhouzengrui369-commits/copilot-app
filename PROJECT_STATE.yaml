@@ -32,7 +32,7 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
-  github_source: SOURCE_COMPLETE
+  github_source: SOURCE_REPAIR_LOCAL_PASS_CI_PENDING
   local_candidate: NOT_RUN
 source:
   repository: zhouzengrui369-commits/copilot-app
@@ -44,9 +44,9 @@ source:
   runner_parent_pr: 13
   active_branch: agent/r31-source-completion
   active_pr: 14
-  current_pr_head_under_repair: c3bb0ecf64ab841707b954dfa05728fd44652a79
-  implementation_branch: codex/r32-ci-date-stability
-  implementation_base: c3bb0ecf64ab841707b954dfa05728fd44652a79
+  current_pr_head_under_repair: e91b37618638da0b2ac864c368cde232079e3bee
+  implementation_branch: codex/r33-npm-config-isolation
+  implementation_base: e91b37618638da0b2ac864c368cde232079e3bee
   exact_final_commit: "Externally supplied final 40-hex PR #14 HEAD after the final source gate; tracked documents do not self-embed their own commit"
   final_commit_binding: "MiniMax fetches PR #14 head, proves equality with the supplied SHA, reads all authority from that exact Git object, and the runner verifies equality with git HEAD"
 workflow:
@@ -80,7 +80,7 @@ r31:
   role: PHASE1_SOURCE_COMPLETION
   branch: agent/r31-source-completion
   pull_request: 14
-  status: SOURCE_HEAD_UNDER_REPAIR
+  status: SOURCE_GATE_PASS_CANDIDATE_BLOCKED
   local_execution: NOT_RUN
   electron_candidate: NOT_RUN
   source_changes:
@@ -128,10 +128,10 @@ r31:
     runtime: Node_24_macOS
     workflow: copilot-source-gate
     workflow_steps: 17
-    latest_run: 30682977003
-    latest_job: 91323461797
-    latest_result: "RED: 1103/1107 passed; four date-sensitive failures in two test files"
-    phase1_release_tests: "NOT_CURRENTLY_GREEN on c3bb0ecf64ab841707b954dfa05728fd44652a79"
+    latest_run: 30689574192
+    latest_job: 91341771876
+    latest_result: "PASS: all 17 source-gate steps on e91b37618638da0b2ac864c368cde232079e3bee"
+    phase1_release_tests: PASS
     strict_global_coverage: PASS
     strict_critical_per_file_coverage: "PASS; every critical file >= 90%, local-knowledge-service branches = 90.00%"
     cyclonedx_sbom: PASS
@@ -158,10 +158,19 @@ r32:
   local_focused_tests: "47/47 PASS; direct Codex rerun exit 0"
   local_tests_tsc: "NOT_ACCEPTED: reused dependencies expose incompatible Vite/Vitest type identities"
   local_phase1_release: "NOT_ACCEPTED: symlinked dependencies violate the app-local Electron guard"
-  current_candidate: NOT_ESTABLISHED
+  current_candidate: BLOCKED_BEFORE_CREATION
   artifact_sha256: null
   runtime_id: null
-  next_proof: "commit the two-test patch and require clean GitHub copilot-source-gate PASS"
+  blocker: "BLOCKED_NPM_CACHE_HYDRATION_EXECUTABLE: npm 11.8.0 rejects identical NPM_CONFIG_USERCONFIG and NPM_CONFIG_GLOBALCONFIG paths"
+  next_proof: "land R33 npm config isolation repair through clean GitHub source gate"
+r33:
+  role: NPM_CONFIG_ISOLATION_REPAIR
+  branch: codex/r33-npm-config-isolation
+  base_head: e91b37618638da0b2ac864c368cde232079e3bee
+  local_focused_tests: "29/29 PASS; git diff --check PASS"
+  source_change: "replace duplicate /dev/null npm user/global config authority with two distinct exclusive empty config files"
+  github_ci: PENDING
+  candidate_execution: NOT_RUN
 candidate:
   established: false
   candidate_id: null
@@ -194,5 +203,5 @@ deferred_scope:
   multi_user_enterprise_security: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Commit and push the two-test R32 date-stability patch, run clean GitHub CI, freeze the resulting exact source SHA, then hydrate dependencies and create the reproducible unsigned macOS candidate under the existing bounded contracts."
+next_single_action: "Commit and push the R33 npm config isolation repair, require clean GitHub source-gate PASS, merge it into PR #14, freeze the new exact SHA, then run one fresh hydration and candidate attempt under the bounded contracts."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE"
