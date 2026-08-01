@@ -9,7 +9,7 @@ GitHub Phase 1 product/source work is complete on Draft PR #14. No checked sourc
 - [x] Preserve original takeover and detailed pre-R30 governance under `docs/history/`.
 - [x] Establish the bounded R30 successor; reject and never reuse R28.
 - [x] Complete R31 embedded-local RAG, vector rotation, fail-closed product paths, twelve candidate gates, exact `113 tests in 9 files`, strict coverage, SBOM, and arm64 authority.
-- [x] Add exact-Git-object deployment bootstrap and semantic detached-worktree validation.
+- [x] Add exact-Git-object deployment bootstrap and semantic detached-worktree validation through `scripts/candidate-r30/minimax-authority.mjs`.
 - [x] Reproduce and close `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`.
 - [x] Reproduce MiniMax Gate 2 `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED` on `4e46dad574804b38b2a10b05f70d1aa2b551c64b`.
 - [x] Add `scripts/candidate-r30/npm-cache-hydrate.mjs`.
