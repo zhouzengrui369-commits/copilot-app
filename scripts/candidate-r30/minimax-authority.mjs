@@ -19,7 +19,7 @@ export const REQUIRED_AUTHORITY_MARKERS = Object.freeze([
   'CANDIDATE-MANIFEST.json',
   'R30-COMPLETE.json',
   'Do not retry online',
-  'Only after this package is complete may Codex',
+  'Only after this complete package exists may Codex',
 ]);
 export const REQUIRED_AUTHORITY_COMMANDS = Object.freeze([
   Object.freeze({
