@@ -9,12 +9,14 @@ import {
   EXACT_TESTS,
   LEDGER_SCOPE,
   NETWORK_PROFILE,
+  NPM_CACHE_KEY_ALIGNMENT_FLAG,
   block,
+  configureCandidateNpmIsolation,
   fullCommit,
   resolveEvidenceTarget,
 } from './contract.mjs';
 import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release-r31.mjs';
-import { OWNER_CACHE_AUTHORITY } from './npm-cache-hydrate.mjs';
+import { OWNER_CACHE_AUTHORITY, ensureIsolatedNpmConfigFiles } from './npm-cache-hydrate.mjs';
 import { asBlocked, privateJson, repoRoot } from './io.mjs';
 import { runBuildGates } from './gates-build.mjs';
 import { FOCUSED_SPECS, runElectronGates } from './gates-electron.mjs';
@@ -30,6 +32,13 @@ export const GATE_ORDER = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 
 export function candidateId(sourceCommit) {
   return `copilot-r30-${fullCommit(sourceCommit)}`;
+}
+
+export function candidateNpmConfigPaths(evidenceDir) {
+  return {
+    userConfigPath: path.join(path.resolve(evidenceDir), 'npm-config/user.npmrc'),
+    globalConfigPath: path.join(path.resolve(evidenceDir), 'npm-config/global.npmrc'),
+  };
 }
 
 export function parseArgs(argv) {
@@ -110,7 +119,8 @@ export function staticPlan({
       {
         id: 2,
         name: 'offline-install',
-        command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline${hydratedCache ? ' --cache <receipt-bound-isolated-cache>' : ''} --no-audit --no-fund`,
+        command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline${hydratedCache ? ' --cache <receipt-bound-isolated-cache>' : ''} ${NPM_CACHE_KEY_ALIGNMENT_FLAG} --no-audit --no-fund`,
+        npmConfigIsolation: 'candidate-owned-distinct-regular-files',
         cacheAuthority: hydratedCache
           ? 'exact owner-approved hydration receipt; candidate remains deny-network'
           : 'existing local npm cache only',
@@ -187,6 +197,8 @@ export async function execute(options) {
     throw error;
   }
   const id = candidateId(options.sourceCommit);
+  const npmConfigFiles = await ensureIsolatedNpmConfigFiles(candidateNpmConfigPaths(evidenceDir));
+  configureCandidateNpmIsolation(npmConfigFiles);
   const plan = staticPlan(options);
   await privateJson(path.join(evidenceDir, 'R30-PLAN.json'), plan);
   await privateJson(path.join(evidenceDir, 'R30-START.json'), {
@@ -203,6 +215,11 @@ export async function execute(options) {
         ownerAuthority: OWNER_CACHE_AUTHORITY,
       }
       : null,
+    npmConfigIsolation: {
+      userConfigPath: npmConfigFiles.userConfigPath,
+      globalConfigPath: npmConfigFiles.globalConfigPath,
+      inheritedConfigUsed: false,
+    },
     startedAt: new Date().toISOString(),
   });
   if (process.platform !== 'darwin') {

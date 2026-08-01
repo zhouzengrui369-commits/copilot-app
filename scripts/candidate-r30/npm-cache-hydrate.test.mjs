@@ -15,10 +15,12 @@ import {
   ensureIsolatedNpmConfigFiles,
   getIsolatedNpmConfigFiles,
   inspectLockfileDocument,
+  offlineProbeArgs,
   parseHydrationArgs,
   registryProxyProfile,
   validateHydrationReceipt,
 } from './npm-cache-hydrate.mjs';
+import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDir, '../..');
@@ -49,6 +51,14 @@ function validLock() {
     },
   };
 }
+
+test('hydration offline probe uses the same cache-key alignment flag without registry authority', () => {
+  const args = offlineProbeArgs({ npmExecutable: '/usr/local/bin/npm', cacheDir: '/tmp/cache' });
+  assert.ok(args.includes(NPM_CACHE_KEY_ALIGNMENT_FLAG));
+  assert.ok(args.includes('--offline'));
+  assert.ok(args.includes('--ignore-scripts'));
+  assert.equal(args.some((value) => /https?:\/\/|registry\.npmjs/iu.test(value)), false);
+});
 
 function lockWithWorkspace(resolved = 'apps/cloud') {
   const lock = validLock();
