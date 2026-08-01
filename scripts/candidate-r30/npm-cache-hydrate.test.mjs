@@ -108,8 +108,30 @@ test('the online sandbox can reach only the localhost registry proxy', () => {
   const profile = registryProxyProfile(43123);
   assert.match(profile, /deny network\*/u);
   assert.match(profile, /localhost:43123/u);
-  assert.match(profile, /127\.0\.0\.1:43123/u);
+  assert.doesNotMatch(profile, /127\.0\.0\.1:43123/u);
   assert.doesNotMatch(profile, /\*:443|registry\.npmjs\.org/u);
+});
+
+test('the real /usr/bin/sandbox-exec accepts the rendered profile (darwin-only grammar smoke)', {
+  skip: process.platform !== 'darwin' && `non-Darwin host (${process.platform}) skipped`,
+}, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-r39-sandbox-grammar-'));
+  const profilePath = path.join(root, 'npm-cache-hydrate.sp');
+  try {
+    await writeFile(profilePath, registryProxyProfile(43123));
+    const execution = spawnSync('/usr/bin/sandbox-exec', ['-f', profilePath, '/usr/bin/true'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.equal(execution.error, undefined, execution.error?.message ?? '/usr/bin/sandbox-exec must be spawnable');
+    assert.equal(
+      execution.status,
+      0,
+      `sandbox-exec must accept the rendered registry-proxy profile. stdout=${execution.stdout ?? ''} stderr=${execution.stderr ?? ''}`,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test('accepts only reviewed HTTPS registry origins and rejects arbitrary egress', () => {
