@@ -3,7 +3,8 @@
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE`.**
 
 Draft PR #14 passed the source gate at
-`e91b37618638da0b2ac864c368cde232079e3bee`; R33 remains local and CI-pending.
+`e91b37618638da0b2ac864c368cde232079e3bee`; PR #16 now contains R33, and R34
+is the test-only repair for its single async KnowledgeGraph CI failure.
 No checked source task implies a local candidate, packaged runtime, Release,
 or MVP completion.
 
@@ -19,8 +20,11 @@ or MVP completion.
   `e91b37618638da0b2ac864c368cde232079e3bee`.
 - [x] Reproduce the exact npm 11.8.0 duplicate-config blocker and stop before
   candidate creation.
-- [ ] Commit/push R33 and require clean GitHub `copilot-source-gate` PASS.
-  Unlock: one green run bound to the R33 commit.
+- [x] Commit/push R33 and run the GitHub `copilot-source-gate`; run
+  `30691755888` passed through core coverage and `1106/1107` critical tests,
+  then failed only the async KnowledgeGraph harness assertion.
+- [ ] Commit/push R34 and require clean GitHub `copilot-source-gate` PASS.
+  Unlock: one green run bound to the R34 commit with all 17 steps complete.
 - [ ] Merge R33 into PR #14, freeze and report that new exact commit without
   another tracked source change.
 - [ ] Create a reproducible unsigned macOS candidate. Unlock: clean detached

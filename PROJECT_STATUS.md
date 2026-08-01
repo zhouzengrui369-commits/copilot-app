@@ -8,29 +8,34 @@ Draft PR #14 (`agent/r31-source-completion`) passed all 17 source-gate steps at
 `e91b37618638da0b2ac864c368cde232079e3bee` in run `30689574192` / job
 `91341771876`. The first exact-SHA candidate attempt then stopped before
 candidate creation because npm 11.8.0 rejected the hydrator's duplicate
-`/dev/null` user/global config paths. R33 repairs only that isolation contract;
-local focused tests are `29/29 PASS`, while GitHub CI is still pending. No
+`/dev/null` user/global config paths. R33 repaired that isolation contract.
+PR #16 run `30691755888` then passed every source step through core coverage
+and `1106/1107` desktop critical tests, but exposed one pre-existing async
+KnowledgeGraph harness race. R34 changes only that test assertion; its named
+test is `5/5 PASS` and the file is `17/17 PASS`. A clean GitHub rerun is still
+required. No
 current candidate, artifact SHA256, runtime ID, packaged Electron result, or
 Human Owner Gate exists.
 
 ## R33 Takeover
 
-- Current objective: land the npm user/global config isolation repair through
-  clean GitHub CI, then freeze the new source SHA and build a reproducible
-  unsigned macOS candidate.
+- Current objective: land the R33 npm isolation repair plus the R34 test-only
+  async harness fix through clean GitHub CI, then freeze the new source SHA and
+  build a reproducible unsigned macOS candidate.
 - Completed: R32 date repair, PR #15 clean CI and merge, PR #14 clean CI, exact
   candidate preflight, and fail-closed reproduction of the npm 11.8.0 blocker.
-- In progress: R33 source repair and clean-CI landing.
+- In progress: R34 clean-CI landing on PR #16.
 - Next: one fresh bounded dependency hydration, twelve-gate candidate, real
   Electron journeys, and three verify-fix rounds.
 - Risk: reused local dependencies cannot prove tests TSC or phase1-release;
   those results remain NOT_ACCEPTED until clean CI. Apple signing/notary is
   owner-deferred post-MVP, while older v6.2 release wording still lists it as a
   release gate; do not silently resolve that conflict.
-- Latest important change: npm user/global config isolation now uses distinct
-  exclusive empty files instead of loading `/dev/null` twice.
+- Latest important change: the KnowledgeGraph source-removal test now waits for
+  the graph harness to contain all 100 nodes before interaction assertions;
+  production code and coverage thresholds are unchanged.
 - Branch: `codex/r33-npm-config-isolation`.
-- Latest committed base: `e91b37618638da0b2ac864c368cde232079e3bee`.
+- Latest committed predecessor: `de9cde1b11e554b14ef96134c119735eeabbebcc`.
 
 ## Authority
 
@@ -93,8 +98,10 @@ If the approved cache is incomplete, the candidate stops with `BLOCKED_NPM_APPRO
 ## GitHub Source Checkpoint
 
 R31 remote source work and the R32 date-stability repair passed the complete
-source gate. R33 is a candidate-bootstrap repair only; its clean GitHub gate is
-mandatory before any new exact candidate SHA is frozen.
+source gate. R33/R34 are candidate-bootstrap and test-isolation repairs only;
+their clean GitHub gate is mandatory before any new exact candidate SHA is
+frozen. Local use of a sibling `node_modules` symlink is focused evidence only:
+the app-local Electron guard correctly rejected it, so it is not a full gate.
 
 - embedded-local deterministic production embeddings with no external service;
 - explicit Ollama opt-in only;

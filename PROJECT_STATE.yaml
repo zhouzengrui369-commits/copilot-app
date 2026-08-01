@@ -44,8 +44,9 @@ source:
   runner_parent_pr: 13
   active_branch: agent/r31-source-completion
   active_pr: 14
-  current_pr_head_under_repair: e91b37618638da0b2ac864c368cde232079e3bee
+  current_pr_head_under_repair: de9cde1b11e554b14ef96134c119735eeabbebcc
   implementation_branch: codex/r33-npm-config-isolation
+  implementation_pr: 16
   implementation_base: e91b37618638da0b2ac864c368cde232079e3bee
   exact_final_commit: "Externally supplied final 40-hex PR #14 HEAD after the final source gate; tracked documents do not self-embed their own commit"
   final_commit_binding: "MiniMax fetches PR #14 head, proves equality with the supplied SHA, reads all authority from that exact Git object, and the runner verifies equality with git HEAD"
@@ -169,7 +170,16 @@ r33:
   base_head: e91b37618638da0b2ac864c368cde232079e3bee
   local_focused_tests: "29/29 PASS; git diff --check PASS"
   source_change: "replace duplicate /dev/null npm user/global config authority with two distinct exclusive empty config files"
-  github_ci: PENDING_AFTER_GOVERNANCE_TOKEN_REPAIR
+  github_ci: "RUN_30691755888_FAILED_ONLY_KG_ASYNC_HARNESS_ASSERTION_AFTER_1106_TESTS_PASSED"
+  candidate_execution: NOT_RUN
+r34:
+  role: KNOWLEDGE_GRAPH_TEST_ISOLATION_REPAIR
+  branch: codex/r33-npm-config-isolation
+  predecessor_head: de9cde1b11e554b14ef96134c119735eeabbebcc
+  source_change: "test-only waitFor around the loaded graph harness state; no production or threshold change"
+  focused_result: "5/5 named test PASS; KnowledgeGraph.test.tsx 17/17 PASS"
+  full_local_critical_result: "NOT_ACCEPTED: 1106/1107 under a sibling node_modules symlink; app-local Electron guard correctly failed"
+  github_ci: PENDING_AFTER_R34_COMMIT
   candidate_execution: NOT_RUN
 candidate:
   established: false

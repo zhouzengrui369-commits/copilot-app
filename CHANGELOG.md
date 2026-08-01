@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-08-01 — R34 KnowledgeGraph test isolation
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`.
+
+- PR #16 run `30691755888` passed install, source contracts, RAG, ordered build,
+  local-first, core tests, desktop build, Phase 1 suite and core coverage, then
+  failed one of `1107` desktop critical tests.
+- The same KnowledgeGraph test passed earlier in the same run; the failure was
+  an immediate harness read after the toolbar reached `100 / 100 nodes`.
+- R34 wraps only that harness assertion in RTL `waitFor`; all semantic
+  assertions, production source and coverage thresholds remain unchanged.
+- MiniMax focused evidence is `5/5 PASS`; the entire KnowledgeGraph test file is
+  `17/17 PASS`. A sibling-dependency full run is not accepted as a complete
+  gate because the app-local Electron guard correctly failed.
+- Next: commit/push R34 and require a clean GitHub source gate before merging
+  PR #16 or creating a new candidate.
+
 ## 2026-08-01 — R33 npm config isolation repair
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`.
