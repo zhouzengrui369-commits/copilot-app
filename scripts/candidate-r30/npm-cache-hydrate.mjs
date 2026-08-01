@@ -555,7 +555,6 @@ export function registryProxyProfile(port) {
     '(allow default)',
     '(deny network*)',
     `(allow network-outbound (remote tcp "localhost:${port}"))`,
-    `(allow network-outbound (remote tcp "127.0.0.1:${port}"))`,
     '',
   ].join('\n');
 }
