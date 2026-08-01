@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-08-01 — R32 Codex/MiniMax Takeover And Source-Gate Recovery
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY /
+EXPERIENCE_NOT_READY`.
+
+- Reconciled Draft PR #14 head
+  `c3bb0ecf64ab841707b954dfa05728fd44652a79` with source-gate run
+  `30682977003` / job `91323461797`: four date-sensitive failures in two test
+  files, `1103/1107` passed.
+- Created clean branch `codex/r32-ci-date-stability` from that exact head and
+  repaired only the two affected test files.
+- Independently reran the focused files with direct exit `0`, `47/47 PASS`.
+- Kept local tests TSC and phase1-release as NOT_ACCEPTED because the available
+  reused dependency tree has Vite/Vitest type-identity drift and violates the
+  app-local Electron guard. Clean GitHub CI is the next source authority.
+- Reinstated Codex as parent PM/acceptance owner and MiniMax Code CLI as the
+  primary bounded implementation worker; GitHub remains durable source truth.
+- Prioritized the single-user macOS MVP and deferred broad enterprise security
+  review and other post-MVP scope without weakening local-first, credential,
+  no-egress, persistence, or evidence-integrity controls.
+
+Reason: restore one current project truth and remove calendar drift before
+spending resources on candidate creation. Impact: no production behavior or
+MVP readiness changed; only tests and governance are under repair.
+
 ## 2026-08-01 — R31 Owner-Approved NPM Cache Hydration Closure
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. GitHub completed only source, test, governance, and exact-commit handoff work. No local hydrated cache, candidate, packaged Electron runtime, artifact identity, Codex acceptance, signing, notarization, Release, or Human Owner Gate is claimed.

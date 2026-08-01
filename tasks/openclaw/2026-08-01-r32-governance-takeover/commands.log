@@ -1,0 +1,10 @@
+MiniMax dispatch: executor started, read contract, then violated the no-install
+boundary. Controller sent Ctrl-C and accepted no worker result.
+
+Controller checks:
+- restore `PROJECT_STATE.yaml` from `git show HEAD:PROJECT_STATE.yaml` using
+  `apply_patch`
+- apply bounded governance diff with `apply_patch`
+- `git diff --check` -> exit 0
+- parse `PROJECT_STATE.yaml` with existing root `js-yaml` -> exit 0
+- `git status --short` and `git diff --stat` -> exact changed files recorded

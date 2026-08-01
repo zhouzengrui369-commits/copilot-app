@@ -2,7 +2,9 @@
 
 > Authority: this document is a maintained architecture mirror. Root `goal.md`, `plan.md`, `rules.md`, `delivery.md`, `PROJECT_STATE.yaml`, and `PROJECT_STATUS.md` override it. The complete pre-R30 detailed architecture remains byte-preserved at [`history/ARCHITECTURE_PRE_R30.md`](history/ARCHITECTURE_PRE_R30.md).
 >
-> Status: `BLOCKED / MVP_NOT_COMPLETE`. GitHub source is complete; no local exact-commit candidate, signed/notarized Release, independent Codex acceptance, or Human Owner Gate exists.
+> Status: `BLOCKED / MVP_NOT_COMPLETE`. PR #14 is under date-stability repair;
+> no local exact-commit candidate, independent Codex acceptance, or Human Owner
+> Gate exists.
 
 ## 1. Architectural Principles
 
@@ -27,11 +29,16 @@ Missing, stale, malformed, ambiguous, provider-unavailable, or identity-mismatch
 
 ### 1.3 Role Separation
 
-- ChatGPT owns bounded GitHub source/PR work only.
-- MiniMax Code owns exact-commit local candidate execution only.
-- Codex owns independent real-computer acceptance only.
+- GitHub commits/PRs are durable source truth; ChatGPT may contribute through
+  bounded PRs.
+- MiniMax Code CLI is the primary bounded implementation and exact-commit local
+  execution worker.
+- Codex is parent PM, diff/test reviewer, and real-computer acceptance owner.
 
-This division is an architectural evidence boundary, not merely a staffing convention. A source author cannot create independent acceptance evidence; a local executor cannot silently repair product source; an acceptance agent cannot use self-authored fixes as the acceptance result.
+This division is an architectural evidence boundary, not merely a staffing
+convention. MiniMax self-test is not Codex acceptance; source CI is not runtime
+proof; Codex's focused review does not replace independent product-experience
+retest or the Human Owner Gate.
 
 ## 2. Process and Trust Boundaries
 

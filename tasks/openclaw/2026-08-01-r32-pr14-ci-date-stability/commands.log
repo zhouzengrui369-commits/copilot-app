@@ -1,0 +1,153 @@
+# commands.log — Successor addendum run
+
+## Codex acceptance correction (authoritative)
+
+- `git show HEAD:...coverage-renderer-critical.test.tsx | shasum -a 256`
+  recorded base preimage `001f6724a1fd5f6fce8a90f284d29c82f64e6d0c39a7bfc57d3c68c8b53c8d5e`.
+- Codex removed one surplus blank line with `apply_patch`; final coverage
+  postimage is `ad52cdcfe20ef28808be8d3ea3b7ae2db80ff451472ad61ab2309a5a59a89aa7`.
+- Direct focused command with `--cache false`: exit 0, 47/47 PASS.
+- Direct `tsc -p tsconfig.tests.json --noEmit`: exit 2 due incompatible
+  Vite/Vitest type identities in the reused dependency tree. MiniMax's earlier
+  exit-0 claim is superseded and must not be used as PASS evidence.
+- The full phase1-release diagnostic is also not accepted because symlinked
+  dependencies violate the app-local Electron package guard.
+- Final local verdict: `PARTIAL_PASS_FOCUSED_ONLY`; next definitive proof is
+  clean GitHub CI after commit/push.
+
+Recorded by Codex PM (the original MiniMax/Mavis direct PTY exits during the
+first pass are documented in `DISPATCH_STATUS.md`; this log is only the
+successor's actual executed commands).
+
+## State verification (no edits)
+
+`pwd` → `/private/tmp/copilot-r32-ci-date-stability`
+`git rev-parse HEAD` → `c3bb0ecf64ab841707b954dfa05728fd44652a79` (matches TASK.md base; no drift)
+`git rev-parse --abbrev-ref HEAD` → `codex/r32-ci-date-stability` (matches TASK.md branch)
+
+`git status --short` (pre-edit):
+
+```
+ M apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+?? apps/copilot-desktop/dist
+?? apps/copilot-desktop/node_modules
+?? node_modules
+```
+
+## Source-bound symlink identity (pre-unlink)
+
+```
+$ readlink /private/tmp/copilot-r32-ci-date-stability/node_modules
+/Users/njx/openclaw/copilot/node_modules
+
+$ readlink /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/node_modules
+/Users/njx/openclaw/copilot/apps/copilot-desktop/node_modules
+
+$ readlink /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/dist
+/Users/njx/openclaw/copilot/apps/copilot-desktop/dist
+```
+
+## Pre/post SHA256
+
+```
+$ shasum -a 256 apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+ba1c7c7fd20dc106bc9d5cb89aa2ef84dc1b8df261712c23cba6f97199215543  apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+
+$ shasum -a 256 apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+b559b533e7957385c95b24709f51f01dd1008633d434952beb32ca263eb22f42  apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+```
+
+## File edit (Python edit helper; no other files touched)
+
+```
+python3 - <<'PY'
+... apply import line change ...
+... apply beforeEach/afterEach block change ...
+PY
+```
+
+Re-check post-edit SHA:
+
+```
+$ shasum -a 256 apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+51b191c7378501962d1341a8487a5124fbe1c09a5e0e49899a35093fbd914b1d  apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+
+$ shasum -a 256 apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+ba1c7c7fd20dc106bc9d5cb89aa2ef84dc1b8df261712c23cba6f97199215543  apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+```
+
+`coverage` SHA unchanged ⇒ first-worker diff preserved exactly.
+
+## Focused test run (cov + r44)
+
+Exit: 0 (47/47 PASS)
+
+```
+$ cd apps/copilot-desktop
+$ node ../../node_modules/vitest/vitest.mjs run --no-coverage \
+    tests/r44-h4e-today-product-polish.test.tsx \
+    tests/coverage-renderer-critical.test.tsx
+
+ ✓ tests/coverage-renderer-critical.test.tsx (40 tests) 1175ms
+
+ Test Files  2 passed (2)
+      Tests  47 passed (47)
+   Duration  1.73s
+```
+
+(First attempt with `vi.useFakeTimers()` alone without `toFake` restriction
+timed out all 7 r44 tests at 5000 ms because `waitFor`'s internal
+`setInterval` was faked; switching to `vi.useFakeTimers({ toFake: ['Date'] })`
+keeps `setTimeout`/`setInterval` real and the tests pass in 1.72 s.)
+
+## Desktop tests TypeScript check
+
+Exit: 0 (no diagnostics)
+
+```
+$ cd apps/copilot-desktop
+$ node ../../node_modules/typescript/bin/tsc -p tsconfig.tests.json --noEmit
+$ echo "EXIT=$?"
+EXIT=0
+```
+
+## Phase1-release (informational; OUT OF SCOPE per user override of TASK.md §Required checks)
+
+```
+$ node ../../node_modules/vitest/vitest.mjs run --no-coverage \
+    --config tests/vitest.phase1-release.config.ts
+
+ Test Files  1 failed | 98 passed (99)
+      Tests  1 failed | 1106 passed (1107)
+   Duration  18.41s
+
+ FAIL  tests/electron-source-runtime-selection.test.ts > accepts the app-local Electron 38.8.6 executable
+Error: BLOCKED_SOURCE_ELECTRON_PACKAGE_NOT_APP_LOCAL:
+       /Users/njx/openclaw/copilot/apps/copilot-desktop/node_modules/electron/package.json
+```
+
+Single failure is the pre-existing symlink path-resolution blocker; not caused
+by this fix and not counted as a scoped-check exit code.
+
+## Task-created temporary symlinks (precise unlink)
+
+```
+$ unlink /private/tmp/copilot-r32-ci-date-stability/node_modules
+$ unlink /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/node_modules
+$ unlink /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/dist
+
+$ ls -la /private/tmp/copilot-r32-ci-date-stability/node_modules \
+          /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/node_modules \
+          /private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/dist
+ls: ...: No such file or directory    (×3)
+```
+
+Post-unlink `git status`:
+
+```
+$ git status --short
+ M apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+ M apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+```
+
+No untracked entries. No other deletion performed.

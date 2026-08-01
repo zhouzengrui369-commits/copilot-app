@@ -1,6 +1,6 @@
 schema_version: 4
 project: copilot-app
-updated_at: "2026-07-31"
+updated_at: "2026-08-01"
 authority:
   baseline:
     - AGENTS.md
@@ -32,7 +32,7 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
-  github_source: SOURCE_COMPLETE
+  github_source: SOURCE_HEAD_UNDER_REPAIR
   local_candidate: NOT_RUN
 source:
   repository: zhouzengrui369-commits/copilot-app
@@ -44,19 +44,22 @@ source:
   runner_parent_pr: 13
   active_branch: agent/r31-source-completion
   active_pr: 14
+  current_pr_head_under_repair: c3bb0ecf64ab841707b954dfa05728fd44652a79
+  implementation_branch: codex/r32-ci-date-stability
+  implementation_base: c3bb0ecf64ab841707b954dfa05728fd44652a79
   exact_final_commit: "Externally supplied final 40-hex PR #14 HEAD after the final source gate; tracked documents do not self-embed their own commit"
   final_commit_binding: "MiniMax fetches PR #14 head, proves equality with the supplied SHA, reads all authority from that exact Git object, and the runner verifies equality with git HEAD"
 workflow:
   chatgpt:
-    role: GitHub branch/PR source development only
+    role: optional bounded GitHub branch/PR contributor
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: execute bounded cache hydration and the exact approved commit locally
-    silent_source_fix: FORBIDDEN
+    role: primary bounded implementation worker for source, tests, build, package, and evidence
+    source_change_requires_task_allowlist: true
     stale_worktree_authority_lookup: NON_AUTHORITATIVE
   codex:
-    role: independent real-computer product experience and Release Gate verification
-    source_fix: FORBIDDEN
+    role: parent PM, task-contract author, delivery owner, focused diff/test reviewer, and real-computer acceptance owner
+    worker_self_test_is_acceptance: false
 r28:
   status: NEVER_RUN_PERMANENTLY_REJECTED
   executable: false
@@ -77,7 +80,7 @@ r31:
   role: PHASE1_SOURCE_COMPLETION
   branch: agent/r31-source-completion
   pull_request: 14
-  status: SOURCE_COMPLETE
+  status: SOURCE_HEAD_UNDER_REPAIR
   local_execution: NOT_RUN
   electron_candidate: NOT_RUN
   source_changes:
@@ -125,7 +128,10 @@ r31:
     runtime: Node_24_macOS
     workflow: copilot-source-gate
     workflow_steps: 17
-    phase1_release_tests: "1107/1107 PASS at the current source-completion checkpoint"
+    latest_run: 30682977003
+    latest_job: 91323461797
+    latest_result: "RED: 1103/1107 passed; four date-sensitive failures in two test files"
+    phase1_release_tests: "NOT_CURRENTLY_GREEN on c3bb0ecf64ab841707b954dfa05728fd44652a79"
     strict_global_coverage: PASS
     strict_critical_per_file_coverage: "PASS; every critical file >= 90%, local-knowledge-service branches = 90.00%"
     cyclonedx_sbom: PASS
@@ -145,6 +151,17 @@ r31:
     gate_10: "full packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
     gate_11: "three distinct candidate-bound r31-v1 performance runs and aggregate"
     gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
+r32:
+  role: PR14_DATE_STABILITY_AND_TAKEOVER
+  implementation_branch: codex/r32-ci-date-stability
+  base_head: c3bb0ecf64ab841707b954dfa05728fd44652a79
+  local_focused_tests: "47/47 PASS; direct Codex rerun exit 0"
+  local_tests_tsc: "NOT_ACCEPTED: reused dependencies expose incompatible Vite/Vitest type identities"
+  local_phase1_release: "NOT_ACCEPTED: symlinked dependencies violate the app-local Electron guard"
+  current_candidate: NOT_ESTABLISHED
+  artifact_sha256: null
+  runtime_id: null
+  next_proof: "commit the two-test patch and require clean GitHub copilot-source-gate PASS"
 candidate:
   established: false
   candidate_id: null
@@ -173,5 +190,9 @@ deferred_scope:
   windows: OWNER_DEFERRED_PHASE_1_1
   tencent_deployment_remote_backup: OWNER_DEFERRED_POST_MVP
   graph_3d: POST_MVP
-next_single_action: "After the final PR HEAD passes all 17 source-gate steps, MiniMax uses the exact owner token to hydrate one new isolated cache in a dedicated detached worktree, verifies the receipt and deny-network offline probe, then creates a separate detached candidate worktree and executes the runner once with paired --npm-cache-dir and --npm-cache-receipt arguments. Codex starts only after the complete candidate receipt exists."
+  mobile_web: POST_MVP
+  multi_user_enterprise_security: POST_MVP
+  plugins_i18n: POST_MVP
+  major_dependency_upgrades: POST_MVP
+next_single_action: "Commit and push the two-test R32 date-stability patch, run clean GitHub CI, freeze the resulting exact source SHA, then hydrate dependencies and create the reproducible unsigned macOS candidate under the existing bounded contracts."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE"

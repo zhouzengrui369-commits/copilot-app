@@ -1,3 +1,35 @@
+<!-- owner-codex-minimax-takeover:start -->
+# Owner Mode: Codex PM -> MiniMax Code CLI -> Codex Acceptance
+
+## Precedence
+
+This 2026-08-01 owner instruction is the current development mode. It
+supersedes the older rule below that made ChatGPT the sole product-code author.
+GitHub commits and PRs remain the durable source authority.
+
+## Current roles
+
+- Codex is the parent PM, task-contract author, technical delivery owner, and
+  final acceptance reviewer. Codex keeps implementation bounded and accepts
+  only diffs, command receipts, runtime evidence, and artifacts.
+- MiniMax Code CLI is the primary bounded implementation worker for source,
+  tests, builds, packaging, and evidence. Every non-trivial task uses a task
+  folder and an exact allowlist. Multiple non-overlapping workers may run in
+  parallel.
+- ChatGPT may contribute through bounded GitHub branches and PRs, but it is no
+  longer the sole source-authoring route.
+- Real-computer Codex verification and independent product-experience review
+  remain distinct from worker self-test and from browser prototypes.
+
+## MVP prioritization
+
+Phase 1 is a single-user, macOS-first MVP. Defer broad multi-user/enterprise
+security review, Windows Phase 1.1, Tencent deployment/Remote/Backup, 3D,
+mobile/web, plugins, i18n, and major dependency upgrades. This prioritization
+does not weaken local-first data authority, credential handling, no-egress
+truth, durable readback, source/runtime identity, or fail-closed evidence.
+<!-- owner-codex-minimax-takeover:end -->
+
 <!-- owner-github-remote-development-mode:start -->
 # Owner Mode: GitHub Remote Development And Independent Local Acceptance
 
