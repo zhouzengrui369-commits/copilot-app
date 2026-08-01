@@ -2,20 +2,34 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE`.**
 
-Draft PR #14 is currently red at `c3bb0ecf64ab841707b954dfa05728fd44652a79`.
-No checked source task implies a local candidate, packaged runtime, Release, or
-MVP completion.
+Draft PR #14 passed the source gate at
+`e91b37618638da0b2ac864c368cde232079e3bee`; PR #16 now contains R33, and R34
+is the test-only repair for its single async KnowledgeGraph CI failure.
+No checked source task implies a local candidate, packaged runtime, Release,
+or MVP completion.
 
-## P0 — R32 Source Gate Recovery
+## P0 — R33 Candidate Bootstrap Recovery
 
 - [x] Reconcile GitHub PR #14, its current HEAD, latest CI, local worktrees,
   and candidate truth.
 - [x] Repair only the two date-sensitive tests; independently rerun both files
   with `47/47 PASS`.
-- [ ] Commit/push the exact two-test patch and require clean GitHub
-  `copilot-source-gate` PASS. Unlock: one green run bound to the new commit.
-- [ ] Freeze and report that exact commit without another tracked source
-  change. Unlock: branch/PR head equals the reported 40-hex SHA.
+- [x] Commit/push the exact R32 two-test patch and require clean GitHub
+  `copilot-source-gate` PASS.
+- [x] Merge R32 into PR #14 and pass the complete 17-step source gate at
+  `e91b37618638da0b2ac864c368cde232079e3bee`.
+- [x] Reproduce the exact npm 11.8.0 duplicate-config blocker and stop before
+  candidate creation.
+- [x] Commit/push R33 and run the GitHub `copilot-source-gate`; run
+  `30691755888` passed through core coverage and `1106/1107` critical tests,
+  then failed only the async KnowledgeGraph harness assertion.
+- [x] Commit/push R34 and pass the complete GitHub `copilot-source-gate` at
+  `5d4e6a64de9bcf606245b7336990608afbb913aa` in run `30692711892` / job
+  `91350214409`.
+- [ ] Pass the same gate on the truth-only status commit, then merge PR #16
+  into PR #14.
+- [ ] Merge R33 into PR #14, freeze and report that new exact commit without
+  another tracked source change.
 - [ ] Create a reproducible unsigned macOS candidate. Unlock: clean detached
   worktree, exact dependency receipt, artifact SHA256, runtime ID, and complete
   candidate manifest.
@@ -45,7 +59,9 @@ MVP completion.
 - [x] Keep candidate Gate 2 `npm ci --offline` under `(deny network*)`; map a receipt-bound miss to `BLOCKED_NPM_APPROVED_CACHE_INCOMPLETE`.
 - [x] Rewrite `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` for a dedicated hydration worktree, separate candidate worktree, new cache/receipt/evidence, and exact return package.
 - [x] Keep product scope and dependency major versions unchanged.
-- [ ] Require the final PR HEAD to pass the complete 17-step `copilot-source-gate`; freeze and externally report that exact SHA without another tracked commit.
+- [x] Require the R32 PR HEAD to pass the complete 17-step `copilot-source-gate`.
+- [ ] Repeat the complete gate after R33, then freeze and externally report the
+  new exact SHA without another tracked commit.
 
 ## P0 — MiniMax Code Local Hydration And Candidate
 

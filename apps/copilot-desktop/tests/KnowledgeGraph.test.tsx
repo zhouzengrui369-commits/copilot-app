@@ -363,7 +363,12 @@ describe('KnowledgeGraph · render', () => {
     );
 
     await screen.findByText(/100 \/ 100 nodes/, {}, { timeout: 10000 });
-    expect(graphHarness.latestNodeIds()).toHaveLength(100);
+    await waitFor(
+      () => {
+        expect(graphHarness.latestNodeIds()).toHaveLength(100);
+      },
+      { timeout: 10000 },
+    );
     expect(graphHarness.latestEdgeKeys().length).toBeGreaterThan(0);
     expect(fixtureRead).toHaveBeenCalledTimes(1);
     act(() => {

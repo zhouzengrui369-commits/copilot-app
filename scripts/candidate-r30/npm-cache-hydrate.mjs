@@ -53,6 +53,8 @@ const STRIPPED_ENV_KEYS = [
 ];
 const OFFLINE_PROFILE = '(version 1)\n(allow default)\n(deny network*)\n';
 
+const isolatedNpmConfigFiles = { userConfigPath: null, globalConfigPath: null };
+
 export class NpmCacheHydrationBlocked extends Error {
   constructor(code, detail, context = {}) {
     super(`${code}: ${detail}`);
@@ -154,6 +156,58 @@ function git(repository, args, { allowFailure = false } = {}) {
 function inside(parent, child) {
   const relation = path.relative(parent, child);
   return relation === '' || (!relation.startsWith('..') && !path.isAbsolute(relation));
+}
+
+export async function ensureIsolatedNpmConfigFiles({ userConfigPath, globalConfigPath }) {
+  if (!userConfigPath || !path.isAbsolute(userConfigPath)) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+      'isolated user config path must be an absolute path',
+      { userConfigPath },
+    );
+  }
+  if (!globalConfigPath || !path.isAbsolute(globalConfigPath)) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+      'isolated global config path must be an absolute path',
+      { globalConfigPath },
+    );
+  }
+  if (path.resolve(userConfigPath) === path.resolve(globalConfigPath)) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+      'isolated user and global config paths must be distinct',
+      { userConfigPath, globalConfigPath },
+    );
+  }
+  if (/^\/dev\/(?:null|stdout|stderr|stdin|zero|full|random|urandom)(?:\.|$)/u.test(userConfigPath)
+    || /^\/dev\/(?:null|stdout|stderr|stdin|zero|full|random|urandom)(?:\.|$)/u.test(globalConfigPath)) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+      'isolated npm config files must not reuse /dev/* devices',
+      { userConfigPath, globalConfigPath },
+    );
+  }
+  await mkdir(path.dirname(userConfigPath), { recursive: true, mode: 0o700 });
+  await mkdir(path.dirname(globalConfigPath), { recursive: true, mode: 0o700 });
+  await writeExclusive(userConfigPath, '');
+  await writeExclusive(globalConfigPath, '');
+  isolatedNpmConfigFiles.userConfigPath = await realpath(userConfigPath);
+  isolatedNpmConfigFiles.globalConfigPath = await realpath(globalConfigPath);
+  return getIsolatedNpmConfigFiles();
+}
+
+export function getIsolatedNpmConfigFiles() {
+  if (!isolatedNpmConfigFiles.userConfigPath || !isolatedNpmConfigFiles.globalConfigPath) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+      'isolated npm config files have not been prepared',
+    );
+  }
+  return {
+    userConfigPath: isolatedNpmConfigFiles.userConfigPath,
+    globalConfigPath: isolatedNpmConfigFiles.globalConfigPath,
+  };
 }
 
 async function futureRealpath(target) {
@@ -338,13 +392,14 @@ async function findExecutable(name) {
   block('BLOCKED_NPM_CACHE_HYDRATION_EXECUTABLE', `${name} is not executable`);
 }
 
-function cleanEnvironment(extra = {}) {
+export function cleanEnvironment(extra = {}) {
+  const isolated = getIsolatedNpmConfigFiles();
   const env = { ...process.env };
   for (const key of STRIPPED_ENV_KEYS) delete env[key];
   return {
     ...env,
-    NPM_CONFIG_USERCONFIG: '/dev/null',
-    NPM_CONFIG_GLOBALCONFIG: '/dev/null',
+    NPM_CONFIG_USERCONFIG: isolated.userConfigPath,
+    NPM_CONFIG_GLOBALCONFIG: isolated.globalConfigPath,
     npm_config_audit: 'false',
     npm_config_fund: 'false',
     npm_config_update_notifier: 'false',
@@ -619,6 +674,22 @@ export async function hydrateNpmCache(options) {
   }
   await access('/usr/bin/sandbox-exec', fsConstants.X_OK).catch(() => {
     block('BLOCKED_NPM_CACHE_HYDRATION_SANDBOX', '/usr/bin/sandbox-exec is unavailable');
+  });
+
+  const cacheParent = path.dirname(path.resolve(options.cacheDir));
+  const isolatedUserConfigPath = await requireNewExternalPath(
+    options.repository,
+    path.join(cacheParent, `.npmrc-user-${process.pid}-${Date.now()}`),
+    'isolated user config file',
+  );
+  const isolatedGlobalConfigPath = await requireNewExternalPath(
+    options.repository,
+    path.join(cacheParent, `.npmrc-global-${process.pid}-${Date.now()}`),
+    'isolated global config file',
+  );
+  await ensureIsolatedNpmConfigFiles({
+    userConfigPath: isolatedUserConfigPath,
+    globalConfigPath: isolatedGlobalConfigPath,
   });
 
   const repository = await realpath(options.repository);

@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-08-01 — R34 KnowledgeGraph test isolation
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`.
+
+- PR #16 run `30691755888` passed install, source contracts, RAG, ordered build,
+  local-first, core tests, desktop build, Phase 1 suite and core coverage, then
+  failed one of `1107` desktop critical tests.
+- The same KnowledgeGraph test passed earlier in the same run; the failure was
+  an immediate harness read after the toolbar reached `100 / 100 nodes`.
+- R34 wraps only that harness assertion in RTL `waitFor`; all semantic
+  assertions, production source and coverage thresholds remain unchanged.
+- MiniMax focused evidence is `5/5 PASS`; the entire KnowledgeGraph test file is
+  `17/17 PASS`. A sibling-dependency full run is not accepted as a complete
+  gate because the app-local Electron guard correctly failed.
+- GitHub run `30692711892` / job `91350214409` passed all 17 source-gate steps
+  on exact R34 head `5d4e6a64de9bcf606245b7336990608afbb913aa`.
+- Next: pass the same gate on this truth-only status commit, then merge PR #16
+  into PR #14 and require the merged exact head to pass before candidate work.
+
+## 2026-08-01 — R33 npm config isolation repair
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`.
+
+- PR #15 and PR #14 head `e91b37618638da0b2ac864c368cde232079e3bee`
+  passed the full 17-step GitHub source gate.
+- The first exact-SHA hydration stopped before candidate creation because npm
+  11.8.0 rejects loading `/dev/null` as both user and global config.
+- R33 replaces that duplicate path with two distinct, exclusive, mode-0600
+  empty config files outside the repository while preserving inherited
+  proxy/registry/token stripping and explicit reviewed proxy overrides.
+- Added direct RED reproduction and GREEN isolation/fail-closed tests; focused
+  candidate contract suite is `29/29 PASS` and `git diff --check` passes.
+- The first PR #16 gate exposed an existing governance contract requiring
+  `github_source: SOURCE_COMPLETE`; R33 preserves that source-capability token
+  while keeping candidate/runtime readiness separately blocked.
+- No dependency install, hydration retry, candidate, Electron, artifact,
+  signing, notarization, database, cloud, or user-data change was performed.
+
+Next: clean GitHub CI, merge into PR #14, freeze the new exact SHA, then make
+one fresh hydration/candidate attempt. Rollback is a source-only revert.
+
 ## 2026-08-01 — R32 Codex/MiniMax Takeover And Source-Gate Recovery
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY /

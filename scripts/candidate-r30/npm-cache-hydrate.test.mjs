@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { lstat, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +10,10 @@ import {
   NPM_REGISTRY,
   OWNER_CACHE_AUTHORITY,
   NpmCacheHydrationBlocked,
+  cleanEnvironment,
   computeCacheIdentity,
+  ensureIsolatedNpmConfigFiles,
+  getIsolatedNpmConfigFiles,
   inspectLockfileDocument,
   parseHydrationArgs,
   registryProxyProfile,
@@ -223,6 +227,114 @@ test('binds an exclusive hydration receipt to source, lockfile, and immutable ca
     await assert.rejects(
       validateHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
       /BLOCKED_NPM_CACHE_RECEIPT_INVALID/u,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+test('npm 11.8.0 fails closed when NPM_CONFIG_USERCONFIG and NPM_CONFIG_GLOBALCONFIG both point at /dev/null (RED reproduction)', async () => {
+  const reproduction = spawnSync('npm', ['--version'], {
+    env: {
+      ...process.env,
+      NPM_CONFIG_USERCONFIG: '/dev/null',
+      NPM_CONFIG_GLOBALCONFIG: '/dev/null',
+    },
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  assert.equal(reproduction.error, undefined, reproduction.error?.message);
+  assert.notEqual(reproduction.status ?? 1, 0, 'npm 11.8.0 must fail when both config paths collapse to /dev/null');
+  const combined = `${reproduction.stdout ?? ''}${reproduction.stderr ?? ''}`;
+  assert.match(
+    combined,
+    /double-loading config|Exit prior to config file resolving/u,
+    'npm 11.8.0 must report the double-load failure mode we are repairing',
+  );
+});
+
+test('cleanEnvironment uses distinct isolated npm config files and never reuses /dev/null (GREEN contract)', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-r33-iso-'));
+  try {
+    const userConfigPath = path.join(root, 'user', '.npmrc-user');
+    const globalConfigPath = path.join(root, 'global', '.npmrc-global');
+    const prepared = await ensureIsolatedNpmConfigFiles({ userConfigPath, globalConfigPath });
+    assert.equal(prepared.userConfigPath, await realpath(userConfigPath));
+    assert.equal(prepared.globalConfigPath, await realpath(globalConfigPath));
+    assert.notEqual(prepared.userConfigPath, prepared.globalConfigPath);
+    assert.equal(getIsolatedNpmConfigFiles().userConfigPath, prepared.userConfigPath);
+    assert.equal(getIsolatedNpmConfigFiles().globalConfigPath, prepared.globalConfigPath);
+
+    const userStat = await lstat(prepared.userConfigPath);
+    const globalStat = await lstat(prepared.globalConfigPath);
+    assert.equal(userStat.isFile(), true);
+    assert.equal(globalStat.isFile(), true);
+    assert.equal(userStat.size, 0);
+    assert.equal(globalStat.size, 0);
+
+    const env = cleanEnvironment();
+    assert.equal(env.NPM_CONFIG_USERCONFIG, prepared.userConfigPath);
+    assert.equal(env.NPM_CONFIG_GLOBALCONFIG, prepared.globalConfigPath);
+    assert.notEqual(env.NPM_CONFIG_USERCONFIG, env.NPM_CONFIG_GLOBALCONFIG);
+    for (const forbidden of ['/dev/null', '/dev/stdout', '/dev/stderr', '/dev/stdin', '/dev/zero']) {
+      assert.notEqual(env.NPM_CONFIG_USERCONFIG, forbidden);
+      assert.notEqual(env.NPM_CONFIG_GLOBALCONFIG, forbidden);
+    }
+    assert.equal(env.NPM_CONFIG_PROXY, undefined, 'inherited proxy authority must remain stripped');
+    for (const key of [
+      'NPM_CONFIG_REGISTRY',
+      'NODE_AUTH_TOKEN',
+      'NPM_TOKEN',
+      'HTTP_PROXY',
+      'HTTPS_PROXY',
+      'http_proxy',
+      'https_proxy',
+      'npm_config_proxy',
+      'npm_config_https_proxy',
+      'npm_config_registry',
+      'npm_config_userconfig',
+      'npm_config_globalconfig',
+    ]) {
+      assert.equal(env[key], undefined, `${key} must not survive cleanEnvironment`);
+    }
+    const verification = spawnSync('npm', ['--version'], {
+      env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.equal(verification.error, undefined, verification.error?.message);
+    assert.equal(
+      verification.status,
+      0,
+      `${verification.stdout ?? ''}${verification.stderr ?? ''}`,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('ensureIsolatedNpmConfigFiles rejects identical, relative, or /dev/* config paths (fail-closed)', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-r33-iso-bad-'));
+  try {
+    const absolute = path.join(root, 'user.npmrc');
+    const same = path.join(root, 'user.npmrc');
+    const absolute2 = path.join(root, 'global.npmrc');
+    await assert.rejects(
+      ensureIsolatedNpmConfigFiles({ userConfigPath: absolute, globalConfigPath: same }),
+      /BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION/u,
+    );
+    await assert.rejects(
+      ensureIsolatedNpmConfigFiles({ userConfigPath: 'relative.npmrc', globalConfigPath: absolute2 }),
+      /BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION/u,
+    );
+    await assert.rejects(
+      ensureIsolatedNpmConfigFiles({ userConfigPath: '/dev/null', globalConfigPath: absolute2 }),
+      /BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION/u,
+    );
+    await assert.rejects(
+      ensureIsolatedNpmConfigFiles({ userConfigPath: absolute, globalConfigPath: '/dev/zero' }),
+      /BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION/u,
     );
   } finally {
     await rm(root, { recursive: true, force: true });
