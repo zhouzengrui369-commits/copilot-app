@@ -1,0 +1,159 @@
+name: copilot-source-gate
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/copilot-source-gate.yml"
+      - "apps/copilot-desktop/**"
+      - "packages/kb/**"
+      - "packages/kg/**"
+      - "packages/llm-client/**"
+      - "packages/rag/**"
+      - "scripts/candidate-r30/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - "THIRD_PARTY_NOTICES.md"
+      - "PROJECT_STATE.yaml"
+      - "PROJECT_STATUS.md"
+      - "TODO.md"
+      - "CHANGELOG.md"
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: copilot-source-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  CI: "true"
+  PYTHON: "/usr/bin/python3"
+
+jobs:
+  source-gate:
+    name: Node 24 macOS source gate
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Record exact source and toolchain identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          node --version
+          npm --version
+          "$PYTHON" --version
+          "$PYTHON" -c 'import distutils; print(distutils.__file__)'
+          uname -a
+
+      - name: Install exact lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Candidate fail-closed source contracts
+        run: node --test scripts/candidate-r30/*.test.mjs
+
+      - name: R31 embedded RAG RED-to-GREEN slice
+        run: >-
+          npm run test --workspace @copilot/rag --
+          tests/embedded-local-provider.test.ts
+          tests/vector-model-rotation.test.ts
+
+      - name: Build existing ordered workspace dependency chain
+        run: npm run build:workspace-deps --workspace @copilot/desktop
+
+      - name: Check local-first workspaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag @copilot/desktop; do
+            npm run check --workspace "$workspace"
+          done
+
+      - name: Core unit and integration suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag; do
+            npm run test --workspace "$workspace"
+            npm run test:integration --workspace "$workspace"
+          done
+
+      - name: Build desktop product bytes before package contracts
+        run: npm run build --workspace @copilot/desktop
+
+      - name: Desktop Phase 1 release source suite
+        run: npm run test:phase1-release --workspace @copilot/desktop
+
+      - name: Core strict global and critical coverage gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workspace in @copilot/llm-client @copilot/kb @copilot/kg @copilot/rag; do
+            npm run test:coverage:global --workspace "$workspace"
+            npm run test:coverage:critical --workspace "$workspace"
+          done
+
+      - name: Desktop Phase 1 global and critical coverage gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:coverage:global --workspace @copilot/desktop
+          set +e
+          npm run test:coverage:critical --workspace @copilot/desktop
+          critical_status=$?
+          set -e
+          node apps/copilot-desktop/scripts/report-critical-coverage-gaps.mjs \
+            apps/copilot-desktop/coverage/critical/coverage-final.json || true
+          exit "$critical_status"
+
+      - name: Generate and validate production CycloneDX SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          sbom_file="${RUNNER_TEMP}/copilot-production.cdx.json"
+          npm sbom --sbom-format=cyclonedx --sbom-type=application --omit=dev > "$sbom_file"
+          node --input-type=module - "$sbom_file" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { parseAndValidateCycloneDxSbom } from './scripts/candidate-r30/sbom.mjs';
+          const file = process.argv[2];
+          const { identity } = parseAndValidateCycloneDxSbom(await readFile(file, 'utf8'));
+          console.log(`SBOM_PASS ${identity.format} ${identity.specVersion} components=${identity.componentCount}`);
+          NODE
+
+      - name: Require exact Electron suite discovery without launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_file="${RUNNER_TEMP}/electron-list.txt"
+          npm run test:e2e:electron --workspace @copilot/desktop -- --list 2>&1 | tee "$output_file"
+          node --input-type=module - "$output_file" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { exactDiscovery } from './scripts/candidate-r30/contract.mjs';
+          const file = process.argv[2];
+          const result = exactDiscovery(await readFile(file, 'utf8'));
+          if (result.tests !== 113 || result.files !== 9) process.exit(1);
+          console.log(`EXACT_DISCOVERY_PASS ${result.tests} tests in ${result.files} files`);
+          NODE
+
+      - name: Verify tracked source stayed unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"

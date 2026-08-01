@@ -1,64 +1,51 @@
-# Copilot App Project Status
+# Copilot App Project Status — Mirror
 
-**Verdict: `BLOCKED / MVP_NOT_COMPLETE`.** This is an authoritative mirror of the root status, not an independent baseline.
+`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
 
-## Authority and Reading Order
+Root authority must be read first: `goal.md`, `plan.md`, `rules.md`, `delivery.md`, `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `DECISIONS.md`, and `CHANGELOG.md`. This mirror cannot override them.
 
-Read `AGENTS.md`, then `goal.md` / `plan.md` / `rules.md` / `delivery.md` v6.2, then root `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `DECISIONS.md`, and `CHANGELOG.md`. Only after those may this mirror and `docs/ARCHITECTURE.md` be used. `docs/PROJECT_STATUS.md` never overrides root truth.
+## Current Stage
 
-## Exact Source
+GitHub Phase 1 product/source development is complete on `agent/r31-source-completion`, Draft PR #14. The exact final 40-character PR HEAD will be recorded externally only after the final deployment-authority bootstrap CI succeeds.
 
-- Repository: `zhouzengrui369-commits/copilot-app`
-- Parent branch: `codex/p0-owner-gate`
-- Parent commit: `6aa6b8c0792c5549b818107a0f64e4f32651dacd`
-- `main` observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
-- Successor branch: `agent/r30-github-bound-candidate-runner`
-- Parent Draft PR: `#12`
+Source completion includes the self-contained embedded-local RAG default, explicit Ollama compatibility, single-model vector rotation preserving durable text, fail-closed product/source paths, a Node 24 source gate, production CycloneDX SBOM validation, strict global/per-file critical coverage, exact Electron list-only `113 tests in 9 files`, and a twelve-gate local candidate runner.
 
-The R30 runtime source identity is not hard-coded through an impossible self-referential commit. MiniMax Code must pass the final GitHub PR head as `--source-commit`, and the runner fails unless it exactly equals `git HEAD`.
+At the last green checkpoint before the authority-bootstrap addition, the desktop Phase 1 suite passed `1106/1106`; each critical file reached at least 90%, including `local-knowledge-service.ts` branch coverage at 90.00%.
 
-## Preserved Detailed Truth
+## Deployment Authority
 
-Exact pre-R30 copies of root state, status, TODO, changelog, and architecture are retained under `docs/history/`. The shorter R30 current view is additive and does not delete accepted development evidence or historical blockers.
+The authority file is `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` in the exact approved Git commit. Its absence from an old worktree is non-authoritative. MiniMax must:
 
-## Completed Remotely
+1. fetch `refs/pull/14/head` and compare it to the supplied SHA;
+2. extract `scripts/candidate-r30/minimax-authority.mjs` from that SHA;
+3. validate and hash `<SHA>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`;
+4. return the exact-object authority receipt before creating a candidate worktree.
 
-- Read the full root v6.2 baseline and all six low-confidence `main` handoff documents.
-- Replaced generic handoff/status/risk/todo/progress content with explicit mirrors subordinate to root authority.
-- Preserved and expanded the detailed local-first, Electron, grounded Ask/Todo, ASR, candidate-receipt, and deferred-scope architecture.
-- Created a brand-new R30 candidate runner; old R28 remains `NEVER_RUN / PERMANENTLY_REJECTED` and is neither copied nor repaired.
-- Added pure Node RED→GREEN contract tests for source binding, dirty-tree rejection, Gate 2, Gate 3, Gate 9, runner planning, and documentation authority.
-- Confirmed syntax, dry-run planning, and 23/23 pure Node tests without launching Electron.
+The verifier does not fetch packages, create candidate worktrees, or create candidate evidence. A cron/file-presence probe cannot trigger execution.
 
-## R30 Gate Truth
+## What Is Not Established
 
-- Gate 1 binds a full 40-hex owner-approved commit and clean worktree.
-- Gate 2 defaults to no network and requires macOS `sandbox-exec` with `(deny network*)`; `npm ci --offline` cannot fall back online.
-- Gate 3 generates a complete regular-file control ledger with exact 64-character SHA256 digests.
-- Gates 4–7 define deterministic workspace builds, TSC/build, one unsigned macOS arm64 package, source snapshot, and artifact identity.
-- Gate 8 requires focused packaged Electron 2/2.
-- Gate 9 requires exactly `113 tests in 9 files`.
-- Gate 10 requires exact packaged Electron 113/113, zero skipped/unexpected/flaky, and clean terminal state.
-- Gate 11 binds test-data manifest, screenshots, artifact SHA256, runtime ID, commands, and process terminal state.
+- no local exact-commit candidate;
+- no source snapshot/artifact/app/executable/`app.asar` SHA256 receipt;
+- no runtime ID;
+- no focused packaged Electron 2/2 or full 113/113 candidate evidence;
+- no three-run candidate-bound performance receipt;
+- no independent Codex acceptance;
+- no Developer ID signing or Apple notarization;
+- no Human Owner Gate.
 
-## Not Completed
-
-No R30 local run or Electron candidate exists. Artifact SHA256, runtime ID, source snapshot receipt, packaged Electron evidence, real-computer screenshots, Codex verdict, signing, notarization, Release, and Human Owner Gate remain unset.
+Therefore GitHub source completion must not be reported as MVP completion or Release readiness.
 
 ## Role Boundary
 
-- ChatGPT develops through GitHub only.
-- MiniMax Code deploys and executes one exact approved commit; it does not edit source.
-- Codex independently performs real-computer acceptance after MiniMax evidence; it does not fix source.
+1. ChatGPT develops source through GitHub only.
+2. MiniMax Code fetches and verifies the exact approved final commit, materializes authority from the exact Git object, executes it locally, and returns complete evidence; no silent source fix.
+3. Codex independently operates and evaluates the packaged app only after the receipt exists; no source fix in acceptance.
 
-## Next Single Action
+## Next Action
 
-After the bounded PR is reviewed, MiniMax Code checks out its exact final commit and runs:
+After final CI, MiniMax Code follows `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`, first creates the exact-object authority receipt with `scripts/candidate-r30/minimax-authority.mjs`, then creates a new clean detached worktree at the exact final PR #14 SHA, uses a new absolute evidence directory outside the repository, runs source contracts and dry-run, and executes `scripts/candidate-r30/run-candidate.mjs` once.
 
-```bash
-node scripts/candidate-r30/run-candidate.mjs \
-  --source-commit <EXACT_FINAL_GITHUB_COMMIT> \
-  --evidence-dir <ABSOLUTE_NEW_OUTSIDE_REPO_DIRECTORY>
-```
+The runner requires twelve gates, including offline deny-network install, complete SHA256 ledger, source quality/SBOM, canonical arm64 package identity, focused/full Electron, exact 113/9 discovery with complete E2E source manifest, three-run performance, screenshots, and final manifest.
 
-On any blocker, MiniMax stops and returns the blocker receipt. Only after complete source snapshot, artifact SHA256, runtime ID, test-data manifest, commands, screenshots, and process terminal state are returned may Codex begin independent acceptance.
+On an exact-object authority blocker or `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, stop without fallback or online retry. Codex remains idle until the MiniMax return package is complete.

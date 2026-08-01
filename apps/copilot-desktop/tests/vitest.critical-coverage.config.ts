@@ -1,10 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
+import { PHASE1_RELEASE_EXCLUSIONS } from './phase1-release-scope.js';
 
 const appRoot = fileURLToPath(new URL('..', import.meta.url));
 
-/** Strict baseline gate for the local service, IPC and renderer adapter. */
+/** Strict per-file gate for the Phase 1 local-first product boundary. */
 export default defineConfig({
   root: appRoot,
   plugins: [react()],
@@ -12,12 +13,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
-    include: [
-      'tests/**/*.test.{ts,tsx}',
-      'tests/backup/**/*.test.{ts,tsx}',
-      'tests/remote/**/*.test.{ts,tsx}',
-      'tests/integration/reversible-trash-source-r1.integration.test.ts',
-    ],
+    include: ['tests/**/*.test.{ts,tsx}'],
+    exclude: [...configDefaults.exclude, ...PHASE1_RELEASE_EXCLUSIONS],
     minWorkers: 1,
     maxWorkers: 4,
     testTimeout: 30_000,
@@ -31,19 +28,6 @@ export default defineConfig({
         'src/main/domain-ipc.ts',
         'src/main/media-permission.ts',
         'src/main/preload.ts',
-        'src/main/backup-integration/manager.ts',
-        'src/main/backup-integration/repository.ts',
-        'src/main/backup-integration/native-keyring-credential-store.ts',
-        'src/main/backup-integration/safe-storage-credential-store.ts',
-        'src/main/backup-integration/production-runtime.ts',
-        'src/main/remote/pairing.ts',
-        'src/main/remote/session-crypto.ts',
-        'src/main/remote/desktop-signer.ts',
-        'src/main/remote/native-credential-store.ts',
-        'src/main/remote/online-client.ts',
-        'src/main/remote/controller.ts',
-        'src/main/remote/production-runtime.ts',
-        'src/main/remote/local-adapter.ts',
         'src/renderer/components/NoteDetail/MarkdownRenderer.tsx',
         'src/renderer/components/VoiceInput/audio-pcm.ts',
         'src/renderer/components/VoiceInput/useLocalAsrCapture.ts',

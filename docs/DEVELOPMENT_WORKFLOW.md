@@ -1,140 +1,223 @@
-# Copilot Development Workflow
+# Copilot App Development Workflow
 
-## Status And Authority
+Status: `BLOCKED / MVP_NOT_COMPLETE`.
 
-This is the owner-approved repository development mode. It supersedes older
-OpenClaw-first, MiniMax-primary, and Codex-to-Mavis product-development
-routing in this repository.
+This document defines the owner-approved GitHub → MiniMax Code → Codex execution boundary. Root `AGENTS.md`, `goal.md`, `plan.md`, `rules.md`, `delivery.md`, and current root state files remain authoritative.
 
-It changes role ownership only. The root v6.2 baseline, macOS-first scope,
-strict local-first truth, quality thresholds, integration/coverage/Electron
-E2E/performance gates, candidate-bound evidence, signing/notarization,
-independent Focused Retest, Human Owner Gate, and fail-closed claims remain
-unchanged.
+## 1. Source Authority
 
-GitHub commits and PRs are the only product-source authority.
+GitHub commits and pull requests are the only product-source authority. A local dirty worktree, pasted patch, generated artifact, worker narrative, screenshot, chat transcript, cron result, or review branch does not supersede the exact Git commit.
 
-## Role Separation
+Current chain:
 
-### ChatGPT: remote product-code developer
+- original takeover: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`, PR #12;
+- candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13;
+- source completion: `agent/r31-source-completion`, Draft PR #14.
 
-- Starts from an exact GitHub commit.
-- Works in a bounded branch and PR.
-- Changes only the approved product/test/docs scope.
-- Records implementation, tests, risks, migrations, rollback, and exact
-  changed files in the PR.
-- Does not claim local deployment, Electron runtime, independent acceptance,
-  signing, release, or MVP completion.
+The final commit is reported externally after the last tracked-document commit passes CI. Tracked documents do not attempt to embed their own containing commit.
 
-### MiniMax Code: local exact-commit deployment executor
+## 2. Roles
 
-- Checks out one approved Git commit without adding product changes.
-- Runs the exact dependency, build, package, launch, and evidence commands
-  authorized for that candidate.
-- Stops and returns the defect to a new GitHub PR if source changes are needed.
-- Produces a deployment receipt that binds:
-  - source commit and immutable source snapshot SHA256;
-  - artifact SHA256;
-  - runtime ID;
-  - deterministic test-data manifest and classification;
-  - exact commands and exit codes;
-  - packaged Electron identity and screenshots;
-  - process launch and terminal state;
-  - dirty/untracked and source/runtime drift checks.
+### ChatGPT — GitHub Source Developer
 
-### Codex: independent local acceptance and Release Gate
+May:
 
-- Verifies that deployed source, artifact, runtime, and test data match the
-  MiniMax receipt.
-- Uses the real computer and exact deployed Electron candidate for product
-  acceptance.
-- Reviews sources, persistence, quit/relaunch, failure states, local/cloud
-  boundary, and the required candidate-bound quality evidence.
-- Fails closed when evidence is missing, stale, synthetic without labeling, or
-  bound to different bytes.
-- Does not author a product fix and then count its own result as independent
-  acceptance. A failed check returns to ChatGPT through a new GitHub PR.
+- read repository authority and PR history;
+- create/update product source and governance on the bounded branch;
+- add fail-closed tests and GitHub Actions source gates;
+- inspect CI logs and repair source failures;
+- update PR metadata and handoff documentation.
 
-## End-To-End Flow
+Must not:
 
-1. **Source handoff** — owner/controller identifies the exact GitHub base
-   commit and bounded change contract.
-2. **Remote development** — ChatGPT implements and opens a PR with tests and
-   precise handoff evidence.
-3. **Source review** — the PR is reviewed; accepted product bytes are committed
-   and immutable.
-4. **Local deployment** — MiniMax checks out and deploys exactly that commit,
-   without source edits, and writes the candidate receipt.
-5. **Independent acceptance** — Codex validates identity and performs
-   real-computer acceptance on that same runtime.
-6. **Focused Retest** — an independent retest must return P0=0 before the Human
-   Owner Gate is eligible.
-7. **Distribution gates** — signing, notarization, installation, Gatekeeper,
-   final coverage/E2E/performance, screenshots, verify-fix rounds, SHA256, and
-   delivery evidence remain separately required.
+- execute the local candidate or packaged Electron app;
+- create local runtime, signing, notarization, installation, or owner-use evidence;
+- claim source tests establish product completion;
+- send MiniMax an unverified branch tip.
 
-No earlier step may claim a later gate.
+### MiniMax Code — Exact-Commit Local Executor
 
-## Fail-Closed Rules
+May:
 
-- Dirty or untracked product input is not a candidate.
-- A browser prototype, fixture, static screenshot, build output, or worker
-  summary is not Electron runtime proof.
-- A packaged artifact without exact source/runtime/test-data binding is not a
-  candidate.
-- A successful write without canonical readback and restart recovery is not a
-  product PASS.
-- MiniMax source edits invalidate the deployment receipt and require a new PR.
-- Codex self-authored product fixes invalidate independence for that result.
-- P0 greater than zero, source/runtime drift, missing evidence, unsigned
-  distribution, or incomplete v6.2 gates remain blocking.
-- A runner with an incomplete/malformed SHA ledger, unresolved network
-  authority, or a discovered-suite assertion weaker than the accepted exact
-  count is not executable and cannot be promoted.
+- fetch the exact approved Git commit and verify PR-head equality;
+- materialize the versioned deployment authority from that exact Git object;
+- perform a read-only inventory of existing worktrees, caches, tools, manifests, screenshots, signing/notary tooling, and performance tooling;
+- reuse valid tools and npm cache;
+- create a new clean detached worktree at the exact approved commit;
+- execute the reviewed candidate runner once;
+- return candidate-bound evidence.
 
-## Current R29 Handoff
+Must not:
 
-- branch: `codex/p0-owner-gate`
-- pre-R29 committed head:
-  `ce21c3f4f29fff8a2f8426e36c22306c6f282583`
-- active candidate: none
-- artifact SHA256: unset
-- runtime ID: unset
-- independent candidate retest: pending
-- Human Owner Gate: not eligible
-- MVP: `MVP_NOT_COMPLETE`
+- infer authority from a stale current worktree;
+- let a cron/file-presence probe auto-run the candidate;
+- silently modify product source, tests, the runner, or governance;
+- execute R28;
+- reuse old candidate identity, artifact identity, runtime identity, or evidence directory;
+- clean stale ignored output in place and continue;
+- retry online after an offline-cache blocker;
+- relabel an unsigned diagnostic candidate as Release.
 
-The R28 runner was never executed and established no candidate. Independent
-review returned `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`:
+### Codex — Independent Real-Computer Acceptance
 
-- its persisted Gate 3 SHA ledger value was malformed and only 63 hex
-  characters;
-- Gate 2 still named the npm registry without enforcing offline/no-network;
-- Gate 9 accepted `>=50` rather than exactly `113 tests in 9 files`.
+Starts only after MiniMax returns a complete internally consistent receipt. It independently verifies authority/source/artifact/runtime identity, operates the packaged application, performs focused product-experience journeys and Release Gate checks, and reports P0/P1/P2 findings.
 
-R28 is rejected and cannot be promoted. The R29 governance postimage
-supersedes its frozen source target. Because this postimage is not yet
-committed, no replacement runner target exists yet. After independent review
-and the controller-created governance commit, every future runner must bind
-that new exact head and obtain a fresh independent review of its complete SHA
-ledger, network authority, and exact `113 / 9` assertions.
+Codex must not repair source in the acceptance lane or use self-authored fixes as independent acceptance.
 
-## ChatGPT Takeover Contract
+## 3. GitHub Source Gate
 
-Use the following handoff after the R29 governance commit is independently
-reviewed, committed, pushed, and available on GitHub:
+The PR workflow runs on Node 24/macOS and must be green on the exact final HEAD. It performs:
 
-> Start from the exact GitHub commit supplied by the controller. Read
-> `README.md`, `AGENTS.md`, `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`,
-> `TODO.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_WORKFLOW.md`,
-> `DECISIONS.md`, `CHANGELOG.md`, and the four root v6.2 baseline documents.
-> Work only in a bounded GitHub branch/PR. Do not expand scope, weaken
-> local-first truth, alter quality/release gates, or treat historical
-> candidate evidence as current. Implement the single highest-priority TODO,
-> add the required tests, update handoff documents, and report exact changed
-> files, commands, results, risks, rollback, and the resulting commit. Do not
-> claim local deployment, independent acceptance, signing, release, or MVP
-> completion.
+1. exact HEAD checkout and toolchain identity;
+2. exact lockfile install;
+3. candidate fail-closed pure Node contracts, including exact-Git-object deployment-authority tests;
+4. embedded-local RAG focused tests;
+5. ordered workspace dependency build;
+6. all local-first workspace checks;
+7. core unit and integration suites;
+8. desktop product build;
+9. desktop Phase 1 release source suite;
+10. core strict global and critical coverage;
+11. desktop strict global and per-file critical coverage;
+12. production CycloneDX SBOM validation;
+13. exact Electron list-only `113 tests in 9 files` discovery;
+14. clean tracked source verification.
 
-The controller must replace “the exact GitHub commit supplied” with the real
-post-R29 commit. Never infer or reuse the pre-R29 head.
+GitHub source CI does not launch the candidate Electron runtime. It authorizes the next executor; it does not establish a candidate or Release.
+
+## 4. Final Commit And Deployment-Authority Handoff
+
+After the final docs/source commit passes the source gate:
+
+1. Read the exact 40-character PR #14 head SHA.
+2. Record it in the PR conversation and owner-facing deployment instruction.
+3. Do not commit again. Any later commit invalidates that reported final SHA.
+4. MiniMax explicitly fetches `refs/pull/14/head` and proves `FETCH_HEAD` equals the supplied SHA.
+5. MiniMax reads the deployment document and bootstrap program from the exact Git object, not the current worktree:
+
+```bash
+git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md"
+git -C "$REPO" show "${SOURCE_COMMIT}:scripts/candidate-r30/minimax-authority.mjs" \
+  > "$BOOTSTRAP_SCRIPT"
+node "$BOOTSTRAP_SCRIPT" \
+  --repository "$REPO" \
+  --source-commit "$SOURCE_COMMIT" \
+  --authority-output "$AUTHORITY_COPY" \
+  --receipt-output "$AUTHORITY_RECEIPT"
+```
+
+6. The authority receipt must say `status=PASS`, `executionAuthority=git-object-at-exact-commit`, `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`.
+7. Only after authority succeeds may MiniMax create the detached candidate worktree.
+8. The candidate runner later compares `--source-commit` with `git rev-parse HEAD` before candidate work.
+
+Exact-object preflight blockers include:
+
+- `BLOCKED_EXACT_COMMIT_NOT_FETCHED`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`
+- `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`
+- `BLOCKED_DEPLOYMENT_RUNNER_MISSING`
+- `BLOCKED_PR_HEAD_MISMATCH`
+
+A file missing from a stale worktree is not sufficient for `MISSING_DEPLOYMENT_AUTHORITY`. A chat-pasted replacement is not versioned authority.
+
+## 5. MiniMax Preflight
+
+MiniMax must verify:
+
+- macOS arm64 and `/usr/bin/sandbox-exec`;
+- Node 24;
+- Python `/usr/bin/python3` with required packaging compatibility;
+- an executable npm resolved from the reviewed PATH;
+- exact-object deployment authority receipt;
+- exact detached Git HEAD;
+- empty `git status --porcelain=v1 --untracked-files=all`;
+- absence of every governed generated candidate input;
+- a new absolute evidence directory outside the repository that does not exist through any symlink alias.
+
+Governed generated inputs include desktop `.vite`, `coverage`, `dist`, `release`, `test-results`, `playwright-report`, root report directories, and KB/KG/LLM/RAG `dist`/`coverage` directories.
+
+If a governed path exists, stop and create another clean worktree. Do not delete it in place and continue.
+
+## 6. Candidate Execution
+
+First run source contracts and dry-run:
+
+```bash
+node --test scripts/candidate-r30/*.test.mjs
+
+node scripts/candidate-r30/run-candidate.mjs \
+  --source-commit <EXACT_FINAL_40_HEX_HEAD> \
+  --evidence-dir <NEW_ABSOLUTE_OUTSIDE_REPO_DIR> \
+  --dry-run
+```
+
+Dry-run must report `PLAN_ONLY_NOT_A_CANDIDATE`, `MVP_NOT_COMPLETE`, and macOS-arm64 authority. It must not create the evidence directory or launch Electron.
+
+Then execute once:
+
+```bash
+node scripts/candidate-r30/run-candidate.mjs \
+  --source-commit <EXACT_FINAL_40_HEX_HEAD> \
+  --evidence-dir <NEW_ABSOLUTE_OUTSIDE_REPO_DIR>
+```
+
+The runner owns twelve ordered gates described in `scripts/candidate-r30/README.md` and `docs/ARCHITECTURE.md`.
+
+## 7. Network and Cache Rule
+
+The authority verifier itself performs no network operation. The one explicit GitHub fetch is a source synchronization step before candidate work; it does not authorize npm registry access.
+
+All candidate recorded commands run through macOS `sandbox-exec` with `deny network*`. npm authority is offline-only. Proxy and registry environment authority is removed. The runner does not automatically fall back online.
+
+If npm cache is insufficient, the runner exits `2` and writes a blocker with:
+
+```text
+BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
+```
+
+MiniMax must stop and return that receipt. A separate GitHub-reviewed owner approval is required before any minimal read-only registry exception. MiniMax may not retry or edit the runner.
+
+## 8. Required MiniMax Return
+
+Return one package containing:
+
+- exact supplied commit, fetched PR-head equality, and final clean Git status;
+- deployment-authority document SHA256 and exact-object authority receipt;
+- all-tracked-file ledger path/SHA256, aggregate SHA256, scope, and file count;
+- canonical source snapshot and authoritative input manifest;
+- CycloneDX SBOM and SHA256;
+- canonical manifest and release identity;
+- arm64 ZIP, DMG, app, executable, and `app.asar` SHA256;
+- focused packaged Electron 2/2 evidence;
+- exact list-only 113/9 evidence;
+- full packaged Electron 113/113 evidence with zero skipped/unexpected/flaky and clean exit;
+- complete E2E source manifest and aggregate SHA256;
+- three raw performance records and one aggregate, all hashes and candidate bindings;
+- runtime ID and runtime identity;
+- commands and exit codes;
+- screenshots and SHA256;
+- process terminal state;
+- `CANDIDATE-MANIFEST.json`;
+- `R30-COMPLETE.json`.
+
+A blocker return includes the authority receipt or exact authority blocker, `R30-BLOCKED.json` when candidate ownership has begun, existing command/log receipts, exact source identity, and final Git status. Do not conceal partial failure.
+
+## 9. Codex Acceptance
+
+Codex first verifies the authority receipt and exact source/artifact/runtime bindings. It then independently exercises the installed/packaged app on the real computer, including grounded Ask/source navigation, Todo closure/restart continuity, quick capture, WIKI truth, Trash recovery, local-ASR offline behavior, startup/performance, and product-language/accessibility findings.
+
+Codex reports:
+
+- exact authority and identity checked;
+- P0/P1/P2 findings;
+- focused retest verdict;
+- Release Gate verdict;
+- whether a source-fix cycle is required.
+
+If a source fix is required, work returns to a new bounded GitHub revision. All candidate-bound evidence must then be regenerated for the new final commit.
+
+## 10. Completion Boundary
+
+Even a complete unsigned candidate is not MVP complete. Remaining gates include three verify-fix rounds on one final candidate, Developer ID signing, Apple notarization/stapling/validation, Gatekeeper install/launch, real packaged offline ASR, independent acceptance, Human Owner Gate, and required owner-use evidence.
+
+Windows is Phase 1.1. Tencent deployment, Remote/live, and optional Backup are post-MVP unless the owner explicitly changes scope.

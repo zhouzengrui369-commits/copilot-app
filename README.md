@@ -1,177 +1,173 @@
 # Copilot App
 
-Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知识库、知识图谱和产品数据以本地存储为准，LLM 用于知识整理与问答，腾讯云只承担受限的无状态能力。
+Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知识库、知识图谱、Todo、日程和产品数据以本地持久化为准；LLM 用于知识整理和问答；可选云能力不能成为本地核心写入的前置条件。
 
-> 当前状态：`IN_PROGRESS / PARTIAL_BLOCKED`。Phase 1 MVP 采用 macOS-first 验收；Windows 为 `OWNER-DEFERRED`，转入 MVP 后的 Phase 1.1。本仓库当前没有声明已完成签名、公证、final-candidate coverage、Electron E2E、性能、截图或三轮 verify-fix 门禁。
+> 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
-## 开发与验收工作流
+## 权威与当前工作分工
 
-Owner 当前批准的仓库级工作流是：
+唯一项目基线是根目录：
 
-1. ChatGPT 通过 GitHub 分支和 PR 开发产品代码；GitHub commit 是唯一产品
-   源码权威。
-2. MiniMax Code 只部署一个已批准的精确 commit，绑定 source snapshot、
-   artifact SHA256、runtime ID、test-data manifest、命令与终态证据；部署时
-   不静默修改产品代码。
-3. Codex 在本机对同一候选执行独立、fail-closed 的真实电脑体验验收和
-   Release Gate 复核，不用自写修复替代独立验收。
+- [`AGENTS.md`](AGENTS.md)
+- [`goal.md`](goal.md)
+- [`plan.md`](plan.md)
+- [`rules.md`](rules.md)
+- [`delivery.md`](delivery.md)
 
-此工作流取代仓库内旧的 OpenClaw/Mavis-first 产品开发路由，但不改变
-v6.2、macOS-first、local-first、测试、证据、签名、公证或独立 Focused
-Retest 门。完整合同见
-[`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。
+当前事实由 [`PROJECT_STATE.yaml`](PROJECT_STATE.yaml)、[`PROJECT_STATUS.md`](PROJECT_STATUS.md)、[`TODO.md`](TODO.md)、[`DECISIONS.md`](DECISIONS.md) 和 [`CHANGELOG.md`](CHANGELOG.md) 维护。`docs/*` 是镜像，不能覆盖根目录真值。完整 pre-R30 交接内容保存在 [`docs/history/`](docs/history/)。
 
-R28 runner 从未执行，独立复核结果为
-`FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`，不得晋级。后续 runner
-必须绑定 R29 之后的新 GitHub commit，并重新关闭 SHA ledger、离线网络边界
-和精确 `113 tests in 9 files` 三项前置门。
+Owner 批准的执行边界：
 
-## 项目基线
+1. **ChatGPT**：只通过 GitHub 分支/PR 开发和审查源码；不在本地执行候选。
+2. **MiniMax Code**：先获取并校验外部报告的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。
+3. **Codex**：收到 MiniMax 完整回执后，独立操作真实电脑、执行体验验收和 Release Gate；不在验收通道修源码。
 
-唯一项目基线是根目录 v6.2 文档及 2026-07-15 macOS-first owner amendment：
+完整流程见 [`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。MiniMax 的可执行手册见 [`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`](docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md)。
 
-- [`goal.md`](goal.md)：目标、用户场景、local-first 与范围边界
-- [`plan.md`](plan.md)：Phase 1 任务、依赖和当前 macOS Gate
-- [`rules.md`](rules.md)：质量、安全、证据与禁止误报规则
-- [`delivery.md`](delivery.md)：交付状态与最终 RESULT/EVIDENCE 收口
+## 当前源码链
 
-当前 Phase 1 只有在同一 macOS final candidate 完成规定覆盖率、集成测试、至少 50 条真实 Electron E2E、candidate-bound 性能、三轮 verify-fix、真机截图、Developer ID 签名、Apple 公证、可安装包/SHA256 和文档证据后，才能声明 MVP 完成。
+- 原始接管：`codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`，PR #12
+- R30 候选执行器父分支：`agent/r30-github-bound-candidate-runner`，PR #13
+- R31 源码收口：`agent/r31-source-completion`，Draft PR #14
+- 最终提交：在最后一次 authority-bootstrap CI 成功后，由 PR 对话和 owner-facing 部署指令外部给出；tracked 文档不自引用自身 commit
 
-## Ecosystem Baseline
+R28 从未执行，独立复核结果为 `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0`，永久拒绝且不得复用。
 
-- repository: `zhouzengrui369-commits/knowme-ecosystem`
-- version: `0.2.0`
-- commit: `965713b81a726279f63527eb17979f5e768423c1`
-- review date: `2026-07-29`
-- deviations: `None`
+## 精确提交部署授权
 
-治理风险：生态仓缺少其自身 `docs/acceptance` 权威路径；本仓只记录该风险，不修改 Copilot 评审 Core/Profile 或产品定位。
+`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` 必须从**精确 Git commit object**读取，而不是从当前 worktree 推断。此前本地在旧 worktree 中找不到该文件，属于 stale-worktree false blocker；精确批准提交内实际存在文档。
 
-## 核心能力
+最终交接必须先执行：
 
-- 本地笔记与知识库：SQLite + Markdown 持久化、检索、恢复与数据完整性保护。
-- LLM WIKI：自动摘要、分类/标签、实体和关系抽取，以及增量知识组织。
-- 本地知识图谱：持久化图数据、2D 可视化、筛选/搜索、节点详情和双向引用。
-- RAG 问答：基于本地知识的召回、回答与可核对的 `sources`/source details。
-- 文字与语音录入：文本输入以及受能力/权限边界保护的 ASR 路径。
-- 知识关联日程：Todo、日程与本地知识引用。
-- 可扩展模型配置：模型提供方、兼容端点和凭据边界由主进程/安全存储管理。
-- 可选 Backup 与 Remote：显式启用、失败闭合，不改变本地数据权威性。
+```bash
+git -C "$REPO" fetch --no-tags --prune origin refs/pull/14/head
+test "$(git -C "$REPO" rev-parse FETCH_HEAD)" = "$SOURCE_COMMIT"
+git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md"
+git -C "$REPO" show "${SOURCE_COMMIT}:scripts/candidate-r30/minimax-authority.mjs" \
+  > "$BOOTSTRAP_SCRIPT"
+node "$BOOTSTRAP_SCRIPT" \
+  --repository "$REPO" \
+  --source-commit "$SOURCE_COMMIT" \
+  --authority-output "$AUTHORITY_COPY" \
+  --receipt-output "$AUTHORITY_RECEIPT"
+```
 
-## Local-first 与腾讯云边界
+`minimax-authority.mjs` 校验文档关键约束、同一提交内 candidate runner、文档 SHA256 和 exclusive output。它不联网、不建候选 worktree、不建 candidate evidence。任何 cron/file-presence 探查都不是执行授权，不能自动启动候选。
 
-桌面 App 是产品和数据权威面：
+## Phase 1 核心能力
 
-- 笔记、KB、KG、Todo、日程及其持久化真值留在本地。
-- 本地写入不能依赖云端成功；云不可用时，本地核心能力仍应可用。
-- API key、Backup token、issuer 私钥等不得进入笔记、渲染页面、日志或仓库。
+- 本地笔记与知识库：SQLite + Markdown 持久化、检索、回读、恢复和数据完整性保护。
+- LLM WIKI：摘要、分类/标签、实体和关系提取，以及按精确笔记 revision 校验的知识构建状态。
+- 本地知识图谱：持久化图数据、2D 可视化、搜索/筛选、节点详情和双向引用。
+- Grounded RAG：回答必须绑定可核对 sources/source details；缺失、stale、unknown 或不可验证来源不能伪装为成功。
+- Todo 与日程：支持未安排 Todo、All/Unscheduled 发现、正文/备注/执行日志、来源路径、canonical readback 和 quit/relaunch 恢复。
+- 快速记录：文字始终可用；本地语音只进入可编辑草稿，用户确认后才写入本地笔记。
+- 可逆 Trash：删除、恢复、清理和启动恢复均由本地主进程持有，渲染层只接收窄化安全回执。
 
-腾讯云边界仅包括：
+## R31 本地检索架构
 
-- 无状态 LLM 请求代理；
-- 不保存本地知识真值的 Remote 管理中继；
-- 显式可选、默认关闭的 Backup 元数据/短期 COS presign 能力。
+生产默认 embedding provider 是 `embedded-local-hash-v1`：
 
-Backup 数据必须在客户端加密后才可上传；腾讯云不能获得明文或客户端加密密钥。Remote 必须使用生产 issuer 与 TLS/WSS 安全边界。当前腾讯生产配置、issuer mount 和 Remote readiness 仍有未关闭门，不能视为已部署或可用。
+- 确定性字符/词 n-gram hashing；
+- 默认 1024 维；
+- 无 HTTP、进程启动、模型下载、native addon、云回退或外部本地服务依赖；
+- 显式 provider/model revision/privacy class；
+- 仅负责检索 embedding，不代替问答生成模型。
 
-更多安全说明见 [`SECURITY.md`](SECURITY.md)。
+Ollama 仅作为显式选择的 local-service 兼容路径。向量存储执行单模型不变量：模型身份变化时清理不兼容向量，但保留 durable local text，供本地文本 fallback 和重新索引。
 
-## Phase 1 不做
+详情见 [`packages/rag/README.md`](packages/rag/README.md) 和 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
-- 3D 知识图谱
-- mobile 或 web 客户端
-- 多用户、多租户、SSO 或实时协作
-- 商业化、订阅或付费系统
-- 第三方插件或开放 API
-- i18n
-- 端侧 LLM 推理
-- 已退役的 `njx-knowledge` Sprint 2
+## GitHub Source Gate
 
-Windows 源码路径、平台抽象和静态兼容性会保留，但 Windows 真机、签名、安装和截图属于 Phase 1.1，当前不构成已交付证据。
+PR #14 使用 Node 24 macOS source gate 验证：
+
+1. 精确 PR HEAD 与 exact lockfile；
+2. candidate fail-closed 纯 Node 合约，包括 exact-Git-object deployment authority；
+3. R31 embedded RAG 专项；
+4. LLM → KB → KG → RAG ordered build；
+5. 五个 local-first workspace 检查；
+6. core unit/integration suites；
+7. desktop build 与 Phase 1 release suite；
+8. core 与 desktop strict global/critical coverage；
+9. production CycloneDX SBOM；
+10. Electron list-only exact `113 tests in 9 files`；
+11. tracked source unchanged。
+
+最后一次 authority-bootstrap 之前的绿色检查点已通过 desktop `1106/1106`；每个 critical file 均达到至少 90%，其中 `local-knowledge-service.ts` branch coverage 为 90.00%。最终部署 SHA 必须重新通过完整 source gate。这些结果不是 packaged Electron runtime 或 Release 证据。
+
+## 十二门本地候选流程
+
+执行入口：
+
+```bash
+node scripts/candidate-r30/run-candidate.mjs \
+  --source-commit <EXACT_FINAL_40_HEX_HEAD> \
+  --evidence-dir <NEW_ABSOLUTE_DIRECTORY_OUTSIDE_REPO>
+```
+
+十二门依次绑定：
+
+1. 精确 commit 与 clean preimage；
+2. absolute npm、macOS deny-network sandbox、offline install；
+3. 所有 Git-tracked regular files 的 SHA256 ledger 与 aggregate；
+4. candidate contracts 与 ordered workspace build；
+5. checks/tests/coverage/build/SBOM；
+6. canonical unsigned macOS arm64 ZIP/DMG；
+7. snapshot、ZIP/DMG/app/executable/`app.asar` identity；
+8. focused packaged Electron `2/2`；
+9. exact `113 tests in 9 files` 与完整 E2E source manifest；
+10. full packaged Electron `113/113`、零 skipped/unexpected/flaky、clean exit；
+11. 三次 distinct candidate-bound `r31-v1` 性能测试与 aggregate；
+12. final manifest、SBOM、screenshots、commands、test-data/runtime/performance/terminal-state 回执。
+
+本地成功结果仍是 **unsigned diagnostic candidate**，不能替代签名、公证、Codex 独立验收和 Human Owner Gate。
 
 ## 本地开发
 
-要求：
-
-- Node.js 24 或更高版本
-- npm workspace 依赖已安装
-- 当前 Phase 1 的桌面运行与验收目标为 macOS
-
-安装依赖：
+开发环境要求 Node.js 24 或更高版本。普通开发安装/启动：
 
 ```bash
 npm install
-```
-
-启动 Copilot Electron 桌面开发环境：
-
-```bash
 npm run dev:copilot-desktop
 ```
 
-按需启动本地 Cloud 服务开发进程：
+常用源码验证：
 
 ```bash
-npm run dev:cloud
-```
-
-Cloud 开发进程仍需要合法的本地运行配置；不要把 API key、token、私钥或生产值写入仓库。
-
-## 本地验证入口
-
-以下命令来自当前 `package.json`/workspace scripts。它们是验证入口，不代表本仓库当前已经通过相应门禁。
-
-桌面 TypeScript 与单元测试：
-
-```bash
-npm run check:copilot-desktop
-npm run test:copilot-desktop
-```
-
-桌面集成与真实 Electron E2E：
-
-```bash
-npm run test:integration --workspace @copilot/desktop
-npm run test:e2e:electron
-```
-
-桌面覆盖率：
-
-```bash
+npm run check --workspace @copilot/desktop
+npm run test:phase1-release --workspace @copilot/desktop
 npm run test:coverage:global --workspace @copilot/desktop
 npm run test:coverage:critical --workspace @copilot/desktop
+node --test scripts/candidate-r30/*.test.mjs
 ```
 
-Cloud 检查、测试与覆盖率：
+上述普通开发命令不等于候选执行。候选必须使用精确 final commit、exact-object authority receipt、clean detached worktree、新 evidence directory 和 runner 的 offline/fail-closed 合同。
 
-```bash
-npm run check:cloud
-npm run test:cloud
-npm run test:coverage:global --workspace @copilot/cloud
-npm run test:coverage:critical --workspace @copilot/cloud
-```
+## Local-first 与云边界
 
-项目集成入口：
+- 笔记、KB、KG、Todo、日程及其持久化真值留在本地。
+- 本地写入不能依赖云成功；云不可用时，本地核心仍应工作。
+- API key、Backup token、issuer 私钥不得进入笔记、渲染页面、日志或仓库。
+- 腾讯云 Remote/live、可选 Backup 与相关生产配置属于 post-MVP，除非 Owner 改变范围。
+- Backup 在上传前必须客户端加密；Remote 必须使用生产 issuer 与 TLS/WSS 边界。
 
-```bash
-npm run ci:integration
-```
+安全说明见 [`SECURITY.md`](SECURITY.md)。
 
-macOS 打包入口确实存在：
+## Phase 1 不做与延期
 
-```bash
-npm run dist:mac:copilot
-```
+- Windows 真机、签名、安装、截图：Phase 1.1。
+- 腾讯部署、Remote/live、可选 Backup：post-MVP。
+- 3D 知识图谱、mobile/web、多用户/多租户/SSO/实时协作、商业化、插件开放 API、i18n：post-MVP 或 owner-deferred。
 
-但运行打包命令或生成 DMG/ZIP 不等于 Developer ID 签名、公证、安装、Gatekeeper 或 final-candidate 验收通过。
+## Release 仍需关闭
 
-## 证据入口
+- MiniMax exact-commit local candidate 和完整回执；
+- Codex 独立真实电脑验收；
+- 同一候选三轮 verify-fix；
+- packaged real-offline local-ASR；
+- Developer ID signing；
+- Apple notarization、staple、validate、Gatekeeper 安装/启动；
+- Human Owner Gate 与规定使用证据。
 
-当前接管任务的事实索引位于：
-
-- [`tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/RESULT.md`](tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/RESULT.md)
-- [`tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/EVIDENCE.md`](tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/EVIDENCE.md)
-- [`tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/DISPATCH_STATUS.md`](tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/DISPATCH_STATUS.md)
-- [`tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/reports/`](tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/reports/)
-
-历史 unsigned candidate、source/static PASS、测试路由、计划或 worker 叙述都不能替代同一已签名 final candidate 的真实运行证据。最终状态以根基线和 `delivery.md` 为准。
+任何 historical unsigned candidate、source/static PASS、截图、计划或 worker 自述都不能替代同一 final candidate 的真实证据。最终状态以根基线和 `delivery.md` 为准。

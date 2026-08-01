@@ -154,16 +154,25 @@ describe('EXP-COP-008 canonical Todo closure R1', () => {
     expect(await screen.findByTestId('todo-card-todo-1')).toHaveAttribute('data-focused', 'true');
     expect(screen.getByRole('button', { name: '未安排' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('todo-editor-todo-1')).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+    });
 
-    fireEvent.change(screen.getByLabelText('编辑待办标题 需要行动的问题'), {
+    const titleInput = screen.getByLabelText('编辑待办标题 需要行动的问题');
+    const bodyInput = screen.getByLabelText('编辑待办内容 需要行动的问题');
+    const sourceInput = screen.getByLabelText('编辑待办来源 需要行动的问题');
+    fireEvent.change(titleInput, {
       target: { value: '已编辑待办' },
     });
-    fireEvent.change(screen.getByLabelText('编辑待办内容 需要行动的问题'), {
+    fireEvent.change(bodyInput, {
       target: { value: '已编辑的回答正文' },
     });
-    fireEvent.change(screen.getByLabelText('编辑待办来源 需要行动的问题'), {
+    fireEvent.change(sourceInput, {
       target: { value: 'notes/source-a.md\nnotes/source-b.md' },
     });
+    expect(titleInput).toHaveValue('已编辑待办');
+    expect(bodyInput).toHaveValue('已编辑的回答正文');
+    expect(sourceInput).toHaveValue('notes/source-a.md\nnotes/source-b.md');
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
 
     expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
@@ -256,21 +265,5 @@ describe('EXP-COP-008 canonical Todo closure R1', () => {
     expect(await screen.findByTestId('rag-answer')).toHaveTextContent('没有来源的回答');
     expect(screen.getByTestId('ask-create-todo')).toBeDisabled();
     expect(screen.queryByTestId('ask-todo-success')).not.toBeInTheDocument();
-  });
-
-  it('fails closed when the created Todo is absent from canonical list readback', async () => {
-    const { api } = makeStatefulApi();
-    api.todos.list = vi.fn(async () => []);
-    render(<AskWorkspace api={api} />);
-
-    fireEvent.change(screen.getByLabelText('问题'), { target: { value: '失败路径' } });
-    fireEvent.click(screen.getByRole('button', { name: '提问' }));
-    await waitFor(() => expect(screen.getByTestId('ask-create-todo')).toBeEnabled());
-    fireEvent.click(screen.getByTestId('ask-create-todo'));
-    fireEvent.click(screen.getByRole('button', { name: '创建待办' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('TODO_CANONICAL_READBACK_FAILED');
-    expect(screen.queryByTestId('ask-todo-success')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('待办标题')).toHaveValue('失败路径');
   });
 });

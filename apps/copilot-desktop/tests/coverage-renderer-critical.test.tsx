@@ -55,12 +55,40 @@ const NOTE_RECORD: NoteRecord = {
   agent: null,
 };
 
+// Pick a deterministic day inside the current rendered calendar month so the
+// selected date is always within the visible 42-day window. Day 15 of the
+// current month is always present in calendarDays(selectedDate), regardless of
+// how the real wall-clock month rolls over.
+const COVERAGE_TARGET_DAY = (() => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 15);
+})();
+const COVERAGE_TARGET_DAY_KEY = `${COVERAGE_TARGET_DAY.getFullYear()}-${String(COVERAGE_TARGET_DAY.getMonth() + 1).padStart(2, '0')}-${String(COVERAGE_TARGET_DAY.getDate()).padStart(2, '0')}`;
+const COVERAGE_TARGET_DUE_AT_MS = Date.UTC(
+  COVERAGE_TARGET_DAY.getFullYear(),
+  COVERAGE_TARGET_DAY.getMonth(),
+  COVERAGE_TARGET_DAY.getDate(),
+  9,
+  30,
+);
+const COVERAGE_TARGET_REMIND_AT_MS = Date.UTC(
+  COVERAGE_TARGET_DAY.getFullYear(),
+  COVERAGE_TARGET_DAY.getMonth(),
+  COVERAGE_TARGET_DAY.getDate(),
+  9,
+  0,
+);
+const COVERAGE_TARGET_NEXT_DAY_KEY = (() => {
+  const next = new Date(COVERAGE_TARGET_DAY);
+  next.setDate(next.getDate() + 1);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+})();
 const TODO_RECORD: TodoRecord = {
   id: 'todo-1',
   title: 'Ship MVP',
   body: '',
-  due_at_ms: Date.UTC(2026, 6, 20, 9, 30),
-  remind_at_ms: Date.UTC(2026, 6, 20, 9, 0),
+  due_at_ms: COVERAGE_TARGET_DUE_AT_MS,
+  remind_at_ms: COVERAGE_TARGET_REMIND_AT_MS,
   status: 'pending',
   priority: 'normal',
   note_links: ['notes/one.md'],
@@ -998,8 +1026,8 @@ function todo(overrides: Partial<CopilotTodo> = {}): CopilotTodo {
     id: 'todo-1',
     title: 'Ship MVP',
     status: 'pending',
-    due_at_ms: Date.UTC(2026, 6, 20, 9, 30),
-    remind_at_ms: Date.UTC(2026, 6, 20, 9, 0),
+    due_at_ms: COVERAGE_TARGET_DUE_AT_MS,
+    remind_at_ms: COVERAGE_TARGET_REMIND_AT_MS,
     note_links: ['notes/one.md'],
     ...overrides,
   };
@@ -1081,7 +1109,7 @@ describe('ScheduleWorkspace critical interaction', () => {
     const onOpenNote = vi.fn();
     render(<ScheduleWorkspace api={api} onOpenNote={onOpenNote} />);
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    fireEvent.click(screen.getByRole('button', { name: `选择日期 ${COVERAGE_TARGET_DAY_KEY}` }));
     expect(await screen.findByRole('checkbox', { name: '完成 deduped' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: '待办列表' }).children).toHaveLength(3);
     expect(screen.getByText('提醒：Ship MVP')).toBeInTheDocument();
@@ -1106,7 +1134,7 @@ describe('ScheduleWorkspace critical interaction', () => {
     fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));
     fireEvent.change(screen.getByRole('textbox', { name: '待办标题' }), { target: { value: ' New task ' } });
     fireEvent.click(screen.getByRole('button', { name: '选择日期与提醒' }));
-    fireEvent.change(screen.getByLabelText('临时日期与提醒时间'), { target: { value: '2026-07-21T10:30' } });
+    fireEvent.change(screen.getByLabelText('临时日期与提醒时间'), { target: { value: `${COVERAGE_TARGET_NEXT_DAY_KEY}T10:30` } });
     fireEvent.click(screen.getByRole('button', { name: '使用此时间' }));
     fireEvent.change(screen.getByRole('combobox', { name: '搜索关联笔记' }), { target: { value: 'One' } });
     fireEvent.click(screen.getByRole('option', { name: /One/ }));
@@ -1164,7 +1192,7 @@ describe('ScheduleWorkspace critical interaction', () => {
     expect(await screen.findByTestId('workspace-state-error')).toHaveTextContent('read failed');
     fireEvent.click(screen.getByRole('button', { name: '重试' }));
     await waitFor(() => expect(api.todos.list).toHaveBeenCalledTimes(2));
-    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    fireEvent.click(screen.getByRole('button', { name: `选择日期 ${COVERAGE_TARGET_DAY_KEY}` }));
     expect(await screen.findByRole('checkbox', { name: '完成 Ship MVP' })).toBeInTheDocument();
 
     vi.mocked(api.todos.create).mockRejectedValueOnce(new Error('create failed'));
@@ -1224,7 +1252,7 @@ describe('ScheduleWorkspace critical interaction', () => {
     const api2 = todoApi([todo()], [todo()]);
     const second = render(<ScheduleWorkspace api={api2} />);
     await waitFor(() => expect(api2.todos.list).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: '选择日期 2026-07-20' }));
+    fireEvent.click(screen.getByRole('button', { name: `选择日期 ${COVERAGE_TARGET_DAY_KEY}` }));
     expect(await screen.findByRole('checkbox', { name: '完成 Ship MVP' })).toBeInTheDocument();
     vi.mocked(api2.todos.create).mockRejectedValueOnce('create string');
     fireEvent.click(screen.getByRole('button', { name: /\+ 新增待办/ }));

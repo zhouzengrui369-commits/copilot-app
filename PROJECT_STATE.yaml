@@ -1,6 +1,6 @@
-schema_version: 3
+schema_version: 4
 project: copilot-app
-updated_at: "2026-07-30"
+updated_at: "2026-08-01"
 authority:
   baseline:
     - AGENTS.md
@@ -32,24 +32,35 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
+  github_source: SOURCE_COMPLETE
+  local_candidate: NOT_RUN
 source:
   repository: zhouzengrui369-commits/copilot-app
-  parent_branch: codex/p0-owner-gate
-  parent_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
+  original_takeover_branch: codex/p0-owner-gate
+  original_takeover_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
   main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
-  parent_pr: 12
-  successor_branch: agent/r30-github-bound-candidate-runner
-  final_commit_binding: "MiniMax must pass the final GitHub HEAD to --source-commit; runner verifies equality with git HEAD"
+  original_parent_pr: 12
+  runner_parent_branch: agent/r30-github-bound-candidate-runner
+  runner_parent_pr: 13
+  active_branch: agent/r31-source-completion
+  active_pr: 14
+  current_pr_head_under_repair: 5d4e6a64de9bcf606245b7336990608afbb913aa
+  implementation_branch: codex/r33-npm-config-isolation
+  implementation_pr: 16
+  implementation_base: e91b37618638da0b2ac864c368cde232079e3bee
+  exact_final_commit: "Externally supplied final 40-hex PR #14 HEAD after the final source gate; tracked documents do not self-embed their own commit"
+  final_commit_binding: "MiniMax fetches PR #14 head, proves equality with the supplied SHA, reads all authority from that exact Git object, and the runner verifies equality with git HEAD"
 workflow:
   chatgpt:
-    role: GitHub branch/PR source development only
+    role: optional bounded GitHub branch/PR contributor
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: deploy and execute exact approved commit locally
-    silent_source_fix: FORBIDDEN
+    role: primary bounded implementation worker for source, tests, build, package, and evidence
+    source_change_requires_task_allowlist: true
+    stale_worktree_authority_lookup: NON_AUTHORITATIVE
   codex:
-    role: independent real-computer experience and Release Gate verification
-    source_fix: FORBIDDEN
+    role: parent PM, task-contract author, delivery owner, focused diff/test reviewer, and real-computer acceptance owner
+    worker_self_test_is_acceptance: false
 r28:
   status: NEVER_RUN_PERMANENTLY_REJECTED
   executable: false
@@ -59,78 +70,138 @@ r28:
     - "Gate 2 unresolved fail-closed network authority"
     - "Gate 9 did not assert exact 113 tests in 9 files"
 r30:
-  status: REMOTE_SOURCE_IMPLEMENTED_AWAITING_LOCAL_EXECUTION
+  role: GITHUB_BOUND_CANDIDATE_RUNNER
+  branch: agent/r30-github-bound-candidate-runner
   local_execution: NOT_RUN
   electron_candidate: NOT_RUN
-  branch: agent/r30-github-bound-candidate-runner
-  runner:
-    path: scripts/candidate-r30/run-candidate.mjs
-    candidate_id: "copilot-r30-<full-source-commit>"
-    evidence_directory: "absolute, outside repo, must not exist"
-  red_green:
-    contract_red_exit: 1
-    contract_green_exit: 0
-    runner_red_exit: 1
-    runner_green_exit: 0
-    document_red_exit: 1
-    document_green_exit: 0
-  static_validation:
-    node_syntax: PASS
-    pure_node_tests: "23/23 PASS"
-    dry_run: PLAN_ONLY_NOT_A_CANDIDATE
-    electron_launched: false
+  runner_path: scripts/candidate-r30/run-candidate.mjs
+  candidate_id: "copilot-r30-<full-source-commit>"
+  evidence_directory: "absolute, outside repository, must not exist"
+r31:
+  role: PHASE1_SOURCE_COMPLETION
+  branch: agent/r31-source-completion
+  pull_request: 14
+  status: SOURCE_GATE_PASS_CANDIDATE_BLOCKED
+  local_execution: NOT_RUN
+  electron_candidate: NOT_RUN
+  source_changes:
+    embedded_rag_default: embedded-local-hash-v1
+    ollama: explicit_opt_in_local_service_only
+    vector_model_invariant: "one embedding model at a time; incompatible vectors rotate while durable local text remains"
+    local_asr: "source and package contracts retained; real offline packaged runtime remains an acceptance gate"
+    candidate_runner: "12 fail-closed gates"
+    canonical_arm64_authority: "selected arm64 ZIP/DMG and identity reports are independently revalidated; legacy x64/Windows blockers are quarantined only after arm64 authority passes"
+    deployment_authority_bootstrap: "read and hash docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object; accept direct and repository-scoped detached-worktree commands while requiring --detach"
+    npm_cache_hydration: "one owner-approved exact-commit operation through scripts/candidate-r30/npm-cache-hydrate.mjs; lifecycle scripts disabled; npm child restricted to a localhost CONNECT proxy; proxy permits only registry.npmjs.org:443; deny-network offline probe required"
+  deployment_authority:
+    document: docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md
+    verifier: scripts/candidate-r30/minimax-authority.mjs
+    verifier_tests: scripts/candidate-r30/minimax-authority.test.mjs
+    cache_hydrator: scripts/candidate-r30/npm-cache-hydrate.mjs
+    cache_hydrator_tests: scripts/candidate-r30/npm-cache-hydrate.test.mjs
+    owner_cache_authority: OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS
+    source: git-object-at-exact-commit
+    stale_worktree_lookup_authoritative: false
+    network_used_by_authority_verifier: false
+    worktree_created_by_authority_verifier: false
+    evidence_created_by_authority_verifier: false
+  npm_cache_incident:
+    prior_source_commit: 4e46dad574804b38b2a10b05f70d1aa2b551c64b
+    blocker: BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
+    failed_gate: 2
+    old_worktree: "/Users/njx/copilot-r31-4e46dad57480-20260731T140551Z"
+    old_evidence: "/Users/njx/copilot-evidence/copilot-r30-4e46dad574804b38b2a10b05f70d1aa2b551c64b-20260731T140551Z"
+    reuse: FORBIDDEN_REFERENCE_ONLY
+    resolution:
+      - "new clean detached hydration worktree"
+      - "new isolated cache and exclusive receipt"
+      - "exact owner authority token"
+      - "review package-lock origins before egress"
+      - "strip inherited proxies, registry, tokens, and npm user/global config"
+      - "disable lifecycle scripts"
+      - "sandbox npm child to localhost proxy only"
+      - "proxy allow registry.npmjs.org:443 only"
+      - "deny-network offline probe"
+      - "bind receipt to source commit, lock SHA256, cache aggregate SHA256, npm identity, commands, logs, and proxy audit"
+      - "new separate candidate worktree and evidence directory"
+      - "candidate Gate 2 remains npm ci --offline under deny network"
+  github_validation:
+    runtime: Node_24_macOS
+    workflow: copilot-source-gate
+    workflow_steps: 17
+    latest_run: 30689574192
+    latest_job: 91341771876
+    latest_result: "PASS: all 17 source-gate steps on e91b37618638da0b2ac864c368cde232079e3bee"
+    phase1_release_tests: PASS
+    strict_global_coverage: PASS
+    strict_critical_per_file_coverage: "PASS; every critical file >= 90%, local-knowledge-service branches = 90.00%"
+    cyclonedx_sbom: PASS
+    electron_list_only_discovery: "exact 113 tests in 9 files"
+    tracked_source_unchanged: PASS
+    final_head: "external after final CI"
   gates:
-    gate_1:
-      source_commit: exact_full_40_hex
-      source_clean: "required; tracked, untracked, and ignored generated candidate inputs absent"
-    gate_2:
-      authority: offline-only
-      sandbox: "/usr/bin/sandbox-exec with deny network*"
-      npm_install: "npm ci --offline --no-audit --no-fund"
-      automatic_registry_fallback: false
-      cache_miss: BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
-    gate_3:
-      algorithm: sha256
-      digest: exact_64_lower_hex
-      ledger_scope: complete_control_inputs
-    gate_8:
-      focused_packaged_electron: "2/2 required"
-    gate_9:
-      discovery_tests: 113
-      discovery_files: 9
-      exact: true
-    gate_10:
-      full_packaged_electron: "113/113 required"
-      skipped: 0
-      unexpected: 0
-      flaky: 0
-    gate_11:
-      required_receipts:
-        - source_snapshot_sha256
-        - artifact_sha256
-        - runtime_id
-        - test_data_manifest
-        - commands_and_exit_codes
-        - screenshots
-        - process_terminal_state
+    gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
+    gate_2: "candidate always deny-network/offline; optional exact receipt-bound isolated cache; no automatic registry fallback"
+    gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
+    gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
+    gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
+    gate_6: "arm64-authority wrapper requires exact canonical unsigned macOS arm64 ZIP/DMG, release identity, artifact identity reports and hashes"
+    gate_7: "canonical source snapshot and ZIP/DMG/app/executable/app.asar identities"
+    gate_8: "focused packaged Electron 2/2"
+    gate_9: "exact discovery 113 tests in 9 files and complete E2E source manifest"
+    gate_10: "full packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
+    gate_11: "three distinct candidate-bound r31-v1 performance runs and aggregate"
+    gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
+r32:
+  role: PR14_DATE_STABILITY_AND_TAKEOVER
+  implementation_branch: codex/r32-ci-date-stability
+  base_head: c3bb0ecf64ab841707b954dfa05728fd44652a79
+  local_focused_tests: "47/47 PASS; direct Codex rerun exit 0"
+  local_tests_tsc: "NOT_ACCEPTED: reused dependencies expose incompatible Vite/Vitest type identities"
+  local_phase1_release: "NOT_ACCEPTED: symlinked dependencies violate the app-local Electron guard"
+  current_candidate: BLOCKED_BEFORE_CREATION
+  artifact_sha256: null
+  runtime_id: null
+  blocker: "BLOCKED_NPM_CACHE_HYDRATION_EXECUTABLE: npm 11.8.0 rejects identical NPM_CONFIG_USERCONFIG and NPM_CONFIG_GLOBALCONFIG paths"
+  next_proof: "land R33 npm config isolation repair through clean GitHub source gate"
+r33:
+  role: NPM_CONFIG_ISOLATION_REPAIR
+  branch: codex/r33-npm-config-isolation
+  base_head: e91b37618638da0b2ac864c368cde232079e3bee
+  local_focused_tests: "29/29 PASS; git diff --check PASS"
+  source_change: "replace duplicate /dev/null npm user/global config authority with two distinct exclusive empty config files"
+  github_ci: "RUN_30691755888_FAILED_ONLY_KG_ASYNC_HARNESS_ASSERTION_AFTER_1106_TESTS_PASSED"
+  candidate_execution: NOT_RUN
+r34:
+  role: KNOWLEDGE_GRAPH_TEST_ISOLATION_REPAIR
+  branch: codex/r33-npm-config-isolation
+  predecessor_head: de9cde1b11e554b14ef96134c119735eeabbebcc
+  source_change: "test-only waitFor around the loaded graph harness state; no production or threshold change"
+  focused_result: "5/5 named test PASS; KnowledgeGraph.test.tsx 17/17 PASS"
+  full_local_critical_result: "NOT_ACCEPTED: 1106/1107 under a sibling node_modules symlink; app-local Electron guard correctly failed"
+  github_ci: "PASS: run 30692711892 job 91350214409 completed all 17 source-gate steps on 5d4e6a64de9bcf606245b7336990608afbb913aa"
+  candidate_execution: NOT_RUN
 candidate:
   established: false
   candidate_id: null
   source_snapshot_sha256: null
   artifact_sha256: null
+  app_asar_sha256: null
   runtime_id: null
   test_data_manifest: null
+  performance_receipt: null
   screenshots: null
   process_terminal_state: null
 independent_acceptance:
-  minimax_receipt: NOT_RECEIVED
+  minimax_cache_hydration_receipt: NOT_RECEIVED
+  minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
   codex_release_gate: NOT_RUN
 release_gates:
   developer_id_signing: BLOCKED
   apple_notarization: BLOCKED
   staple_and_validate: BLOCKED
-  candidate_bound_performance: BLOCKED
+  candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   verify_fix_rounds: "0/3 current final candidate"
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
@@ -138,5 +209,9 @@ deferred_scope:
   windows: OWNER_DEFERRED_PHASE_1_1
   tencent_deployment_remote_backup: OWNER_DEFERRED_POST_MVP
   graph_3d: POST_MVP
-next_single_action: "Review R30 PR, then MiniMax Code deploys its exact final GitHub commit and returns candidate-bound receipts. Codex starts only after those receipts exist."
+  mobile_web: POST_MVP
+  multi_user_enterprise_security: POST_MVP
+  plugins_i18n: POST_MVP
+  major_dependency_upgrades: POST_MVP
+next_single_action: "Commit and push the R33 npm config isolation repair, require clean GitHub source-gate PASS, merge it into PR #14, freeze the new exact SHA, then run one fresh hydration and candidate attempt under the bounded contracts."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE"

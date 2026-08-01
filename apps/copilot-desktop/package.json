@@ -22,6 +22,7 @@
     "dev": "node scripts/dev-desktop.mjs",
     "start": "electron .",
     "test": "vitest run",
+    "test:phase1-release": "vitest run --config tests/vitest.phase1-release.config.ts",
     "test:release-evidence": "vitest run --config tests/vitest.release-evidence.config.ts",
     "test:integration": "vitest run tests/integration",
     "test:e2e:electron": "node scripts/run-electron-e2e.mjs",

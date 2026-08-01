@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { access, lstat, mkdir, readFile, readdir, readlink, writeFile } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
+import { access, lstat, mkdir, open, readFile, readdir, readlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CandidateBlocked, block, offlineEnv, sandboxPlan } from './contract.mjs';
@@ -48,10 +48,20 @@ export async function recorded({ gate, name, command, args, evidenceDir, cwd = r
   if (!allowFailure && (result.status ?? 1) !== 0) block('BLOCKED_CANDIDATE_COMMAND_FAILED', gate, `${name} exit ${result.status ?? 'signal'}`, receipt);
   return { ...result, receipt };
 }
-export async function sha256File(file) {
-  const stat = await lstat(file);
-  if (!stat.isFile() || stat.isSymbolicLink()) block('BLOCKED_IDENTITY_FILE_NOT_REGULAR', 7, file);
-  return createHash('sha256').update(await readFile(file)).digest('hex');
+export async function sha256File(file, { gate = 7, code = 'BLOCKED_IDENTITY_FILE_NOT_REGULAR' } = {}) {
+  let handle;
+  try {
+    handle = await open(file, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+  } catch (error) {
+    block(code, gate, file, { code: error?.code ?? null });
+  }
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile()) block(code, gate, file);
+    return createHash('sha256').update(await handle.readFile()).digest('hex');
+  } finally {
+    await handle.close();
+  }
 }
 export async function sha256Path(target) {
   const stat = await lstat(target);
@@ -75,7 +85,14 @@ export async function walk(root) {
   const result = [];
   async function visit(directory) {
     const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name));
-    for (const entry of entries) { const absolute = path.join(directory, entry.name); result.push({ absolute, entry }); if (entry.isDirectory()) await visit(absolute); }
+    for (const entry of entries) {
+      const absolute = path.join(directory, entry.name);
+      result.push({ absolute, entry });
+      // Treat macOS application bundles as atomic artifacts. Electron helper
+      // applications live inside the main .app and must not be mistaken for
+      // additional top-level candidates.
+      if (entry.isDirectory() && !entry.name.endsWith('.app')) await visit(absolute);
+    }
   }
   await visit(root); return result;
 }
@@ -109,10 +126,10 @@ export function canonical(value) {
 }
 export async function screenshotManifest(evidenceDir) {
   const root = path.join(evidenceDir, 'screenshots'); let entries;
-  try { entries = await walk(root); } catch (error) { if (error?.code === 'ENOENT') block('BLOCKED_GATE_11_SCREENSHOTS_MISSING', 11); throw error; }
+  try { entries = await walk(root); } catch (error) { if (error?.code === 'ENOENT') block('BLOCKED_GATE_12_SCREENSHOTS_MISSING', 12); throw error; }
   const result = [];
-  for (const { absolute, entry } of entries) if (entry.isFile() && entry.name.endsWith('.png')) result.push({ path: path.relative(evidenceDir, absolute).split(path.sep).join('/'), sha256: await sha256File(absolute) });
-  if (!result.length) block('BLOCKED_GATE_11_SCREENSHOTS_MISSING', 11);
+  for (const { absolute, entry } of entries) if (entry.isFile() && entry.name.endsWith('.png')) result.push({ path: path.relative(evidenceDir, absolute).split(path.sep).join('/'), sha256: await sha256File(absolute, { gate: 12 }) });
+  if (!result.length) block('BLOCKED_GATE_12_SCREENSHOTS_MISSING', 12);
   return result.sort((a, b) => a.path.localeCompare(b.path));
 }
 export function asBlocked(error) {

@@ -1,8 +1,8 @@
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CopilotNoteSummary,
   CopilotProductApi,
@@ -101,47 +101,88 @@ describe('R44 H4E Today product polish', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_COPILOT_BROWSER_PROTOTYPE', '1');
     window.history.replaceState(null, '', '/?prototype=ready');
+    // Freeze the wall clock so today's calendar targets (today / weekAgo / priorMonth / etc.)
+    // remain inside the rendered 42-day grid regardless of the real CI date.
+    // Only fake `Date` so waitFor/setTimeout/setInterval keep real timing.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 7, 28, 12, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('keeps date truth coherent and supports keyboard navigation in the main calendar', async () => {
     const today = new Date();
-    const api = makeApi();
-    render(<Harness api={api} />);
-    await waitFor(() => expect(api.notes.list).toHaveBeenCalled());
-
-    expect(screen.getByTestId('today-heading-copy')).toHaveAttribute(
-      'data-assistant-avoid',
-      'critical',
-    );
-    expect(screen.getByTestId('today-key-overview')).toHaveAttribute(
-      'data-assistant-avoid',
-      'critical',
-    );
-
-    const pressFromSelected = async (key: string, expected: Date) => {
-      const selected = screen.getByRole('button', { name: /选择日期 /u, pressed: true });
-      selected.focus();
-      fireEvent.keyDown(selected, { key });
-      const expectedKey = localDateKey(expected);
-      expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
-      await waitFor(() => expect(screen.getByRole('button', {
-        name: `选择日期 ${expectedKey}`,
-      })).toHaveFocus());
-    };
-
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-    await pressFromSelected('ArrowLeft', yesterday);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('所选日期');
-    expect(screen.getByTestId('selected-date-heading')).toHaveTextContent('所选日期工作与生活');
-    await pressFromSelected('ArrowRight', today);
-    await pressFromSelected('ArrowUp', weekAgo);
-    await pressFromSelected('ArrowDown', today);
-    await pressFromSelected('PageUp', monthDate(today, -1));
-    await pressFromSelected('PageDown', today);
-    await pressFromSelected('ArrowLeft', yesterday);
-    await pressFromSelected('Home', today);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('今天');
+    const priorMonth = monthDate(today, -1);
+    // Month navigation clamps to the destination month's final valid day.
+    const monthAfterPriorMonth = monthDate(priorMonth, 1);
+    const scenarios = [
+      { from: today, key: 'ArrowLeft', expected: yesterday },
+      { from: yesterday, key: 'ArrowRight', expected: today },
+      { from: today, key: 'ArrowUp', expected: weekAgo },
+      { from: weekAgo, key: 'ArrowDown', expected: today },
+      { from: today, key: 'PageUp', expected: priorMonth },
+      { from: priorMonth, key: 'PageDown', expected: monthAfterPriorMonth },
+      { from: yesterday, key: 'Home', expected: today },
+    ] as const;
+
+    for (const [index, scenario] of scenarios.entries()) {
+      const api = makeApi();
+      const view = render(<Harness api={api} />);
+      await waitFor(() => expect(api.notes.list).toHaveBeenCalled());
+
+      if (index === 0) {
+        expect(screen.getByTestId('today-heading-copy')).toHaveAttribute(
+          'data-assistant-avoid',
+          'critical',
+        );
+        expect(screen.getByTestId('today-key-overview')).toHaveAttribute(
+          'data-assistant-avoid',
+          'critical',
+        );
+      }
+
+      const fromKey = localDateKey(scenario.from);
+      const expectedKey = localDateKey(scenario.expected);
+      if (fromKey !== localDateKey(today)) {
+        fireEvent.click(screen.getByRole('button', { name: `选择日期 ${fromKey}` }));
+        await waitFor(() => expect(screen.getByRole('button', {
+          name: `选择日期 ${fromKey}`,
+          pressed: true,
+        })).toBeInTheDocument());
+      }
+
+      const source = screen.getByRole('button', {
+        name: `选择日期 ${fromKey}`,
+        pressed: true,
+      });
+      await act(async () => {
+        source.focus();
+        fireEvent.keyDown(source, { key: scenario.key });
+        await Promise.resolve();
+      });
+
+      await waitFor(() => {
+        const target = screen.getByRole('button', {
+          name: `选择日期 ${expectedKey}`,
+          pressed: true,
+        });
+        expect(target).toHaveFocus();
+        expect(screen.getByTestId('selected-date-feedback')).toHaveTextContent(expectedKey);
+      });
+
+      if (scenario.key === 'ArrowLeft') {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('所选日期');
+        expect(screen.getByTestId('selected-date-heading')).toHaveTextContent('所选日期工作与生活');
+      }
+      if (scenario.key === 'Home') {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('今天');
+      }
+      view.unmount();
+    }
   });
 
   it('shows only notes saved on the selected date and opens the exact note path', async () => {
@@ -266,12 +307,19 @@ describe('R44 H4E Today product polish', () => {
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
 
     expect(await screen.findByTestId('todo-editor-h4e-actual-route')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('编辑待办截止时间 实际路由保存验收'), {
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const dueInput = screen.getByLabelText('编辑待办截止时间 实际路由保存验收');
+    const sourceInput = screen.getByLabelText('编辑待办来源 实际路由保存验收');
+    fireEvent.change(dueInput, {
       target: { value: '2026-08-01T09:30' },
     });
-    fireEvent.change(screen.getByLabelText('编辑待办来源 实际路由保存验收'), {
+    fireEvent.change(sourceInput, {
       target: { value: 'notes/a.md\nnotes/b.md' },
     });
+    expect(dueInput).toHaveValue('2026-08-01T09:30');
+    expect(sourceInput).toHaveValue('notes/a.md\nnotes/b.md');
     fireEvent.click(screen.getByRole('button', { name: '保存待办详情' }));
 
     expect(await screen.findByText('已保存并完成本地回读')).toBeInTheDocument();
