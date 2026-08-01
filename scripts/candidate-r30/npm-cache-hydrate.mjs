@@ -226,18 +226,65 @@ function collectResolvedValues(value, output = []) {
   return output;
 }
 
+function isSafeWorkspacePackagePath(value) {
+  if (
+    typeof value !== 'string'
+    || value.length === 0
+    || value.includes('\\')
+    || path.posix.isAbsolute(value)
+    || /^[A-Za-z][A-Za-z0-9+.-]*:/u.test(value)
+  ) return false;
+  const segments = value.split('/');
+  return segments.length >= 2
+    && (segments[0] === 'apps' || segments[0] === 'packages')
+    && segments.every((segment) => segment !== '' && segment !== '.' && segment !== '..');
+}
+
+function reviewedWorkspacePackagePaths(document) {
+  if (
+    !document.packages
+    || typeof document.packages !== 'object'
+    || Array.isArray(document.packages)
+  ) {
+    block(
+      'BLOCKED_NPM_CACHE_HYDRATION_LOCKFILE',
+      'package-lock.json must contain one packages object',
+    );
+  }
+  return new Set(
+    Object.entries(document.packages)
+      .filter(([packagePath, entry]) => (
+        isSafeWorkspacePackagePath(packagePath)
+        && entry
+        && typeof entry === 'object'
+        && !Array.isArray(entry)
+        && entry.link !== true
+      ))
+      .map(([packagePath]) => packagePath),
+  );
+}
+
 export function inspectLockfileDocument(document) {
   if (!document || typeof document !== 'object' || document.lockfileVersion !== 3) {
     block('BLOCKED_NPM_CACHE_HYDRATION_LOCKFILE', 'package-lock.json must use lockfileVersion 3');
   }
+  const reviewedWorkspacePaths = reviewedWorkspacePackagePaths(document);
+  const workspaceResolutions = new Set();
   const origins = new Set();
   for (const resolved of collectResolvedValues(document)) {
     if (resolved.startsWith('file:') || resolved.startsWith('workspace:')) continue;
+    if (
+      isSafeWorkspacePackagePath(resolved)
+      && reviewedWorkspacePaths.has(resolved)
+    ) {
+      workspaceResolutions.add(resolved);
+      continue;
+    }
     let url;
     try {
       url = new URL(resolved);
     } catch {
-      block('BLOCKED_NPM_CACHE_HYDRATION_LOCK_ORIGIN', 'resolved dependency is not a bounded registry URL', {
+      block('BLOCKED_NPM_CACHE_HYDRATION_LOCK_ORIGIN', 'resolved dependency is not a bounded registry URL or package-graph-bound workspace', {
         resolved,
       });
     }
@@ -253,7 +300,11 @@ export function inspectLockfileDocument(document) {
   if (origins.size === 0) {
     block('BLOCKED_NPM_CACHE_HYDRATION_LOCKFILE', 'package-lock.json contains no registry-resolved dependencies');
   }
-  return { lockfileVersion: document.lockfileVersion, resolvedOrigins: [...origins].sort() };
+  return {
+    lockfileVersion: document.lockfileVersion,
+    resolvedOrigins: [...origins].sort(),
+    workspaceResolutions: [...workspaceResolutions].sort(),
+  };
 }
 
 async function inspectLockfile(repository) {
