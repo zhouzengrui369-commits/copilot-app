@@ -31,7 +31,7 @@ GitHub Phase 1 product/source work is complete on Draft PR #14. No checked sourc
 
 ## P0 — MiniMax Code Local Hydration And Candidate
 
-- [ ] Receive the final 40-character PR #14 HEAD. All previously reported deployment SHAs are invalid after tracked hydration changes.
+- [ ] Receive the final 40-character PR #14 HEAD as `EXACT_FINAL_HEAD`. All previously reported deployment SHAs are invalid after tracked hydration changes.
 - [ ] Fetch `refs/pull/14/head` and prove `FETCH_HEAD` equality.
 - [ ] Materialize authority from the exact Git object.
 - [ ] Treat the old `4e46...` failed worktree/evidence as `REFERENCE_ONLY`; never reuse them.
