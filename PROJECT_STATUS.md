@@ -12,19 +12,21 @@ candidate creation because npm 11.8.0 rejected the hydrator's duplicate
 PR #16 run `30691755888` then passed every source step through core coverage
 and `1106/1107` desktop critical tests, but exposed one pre-existing async
 KnowledgeGraph harness race. R34 changes only that test assertion; its named
-test is `5/5 PASS` and the file is `17/17 PASS`. A clean GitHub rerun is still
-required. No
+test is `5/5 PASS` and the file is `17/17 PASS`. GitHub run `30692711892` / job
+`91350214409` passed all 17 source-gate steps at
+`5d4e6a64de9bcf606245b7336990608afbb913aa`. No
 current candidate, artifact SHA256, runtime ID, packaged Electron result, or
 Human Owner Gate exists.
 
 ## R33 Takeover
 
 - Current objective: land the R33 npm isolation repair plus the R34 test-only
-  async harness fix through clean GitHub CI, then freeze the new source SHA and
-  build a reproducible unsigned macOS candidate.
+  async harness fix into PR #14, pass the exact merged head gate, then build a
+  reproducible unsigned macOS candidate.
 - Completed: R32 date repair, PR #15 clean CI and merge, PR #14 clean CI, exact
   candidate preflight, and fail-closed reproduction of the npm 11.8.0 blocker.
-- In progress: R34 clean-CI landing on PR #16.
+- In progress: this truth-only status record must pass the same source gate,
+  then PR #16 may merge into PR #14.
 - Next: one fresh bounded dependency hydration, twelve-gate candidate, real
   Electron journeys, and three verify-fix rounds.
 - Risk: reused local dependencies cannot prove tests TSC or phase1-release;
@@ -35,7 +37,7 @@ Human Owner Gate exists.
   the graph harness to contain all 100 nodes before interaction assertions;
   production code and coverage thresholds are unchanged.
 - Branch: `codex/r33-npm-config-isolation`.
-- Latest committed predecessor: `de9cde1b11e554b14ef96134c119735eeabbebcc`.
+- Latest clean source/test head: `5d4e6a64de9bcf606245b7336990608afbb913aa`.
 
 ## Authority
 

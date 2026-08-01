@@ -14,8 +14,10 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 - MiniMax focused evidence is `5/5 PASS`; the entire KnowledgeGraph test file is
   `17/17 PASS`. A sibling-dependency full run is not accepted as a complete
   gate because the app-local Electron guard correctly failed.
-- Next: commit/push R34 and require a clean GitHub source gate before merging
-  PR #16 or creating a new candidate.
+- GitHub run `30692711892` / job `91350214409` passed all 17 source-gate steps
+  on exact R34 head `5d4e6a64de9bcf606245b7336990608afbb913aa`.
+- Next: pass the same gate on this truth-only status commit, then merge PR #16
+  into PR #14 and require the merged exact head to pass before candidate work.
 
 ## 2026-08-01 — R33 npm config isolation repair
 

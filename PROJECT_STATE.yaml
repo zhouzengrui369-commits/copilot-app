@@ -44,7 +44,7 @@ source:
   runner_parent_pr: 13
   active_branch: agent/r31-source-completion
   active_pr: 14
-  current_pr_head_under_repair: de9cde1b11e554b14ef96134c119735eeabbebcc
+  current_pr_head_under_repair: 5d4e6a64de9bcf606245b7336990608afbb913aa
   implementation_branch: codex/r33-npm-config-isolation
   implementation_pr: 16
   implementation_base: e91b37618638da0b2ac864c368cde232079e3bee
@@ -179,7 +179,7 @@ r34:
   source_change: "test-only waitFor around the loaded graph harness state; no production or threshold change"
   focused_result: "5/5 named test PASS; KnowledgeGraph.test.tsx 17/17 PASS"
   full_local_critical_result: "NOT_ACCEPTED: 1106/1107 under a sibling node_modules symlink; app-local Electron guard correctly failed"
-  github_ci: PENDING_AFTER_R34_COMMIT
+  github_ci: "PASS: run 30692711892 job 91350214409 completed all 17 source-gate steps on 5d4e6a64de9bcf606245b7336990608afbb913aa"
   candidate_execution: NOT_RUN
 candidate:
   established: false

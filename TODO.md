@@ -23,8 +23,11 @@ or MVP completion.
 - [x] Commit/push R33 and run the GitHub `copilot-source-gate`; run
   `30691755888` passed through core coverage and `1106/1107` critical tests,
   then failed only the async KnowledgeGraph harness assertion.
-- [ ] Commit/push R34 and require clean GitHub `copilot-source-gate` PASS.
-  Unlock: one green run bound to the R34 commit with all 17 steps complete.
+- [x] Commit/push R34 and pass the complete GitHub `copilot-source-gate` at
+  `5d4e6a64de9bcf606245b7336990608afbb913aa` in run `30692711892` / job
+  `91350214409`.
+- [ ] Pass the same gate on the truth-only status commit, then merge PR #16
+  into PR #14.
 - [ ] Merge R33 into PR #14, freeze and report that new exact commit without
   another tracked source change.
 - [ ] Create a reproducible unsigned macOS candidate. Unlock: clean detached
