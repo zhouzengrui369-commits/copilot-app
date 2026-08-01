@@ -32,7 +32,7 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
-  github_source: SOURCE_REPAIR_LOCAL_PASS_CI_PENDING
+  github_source: SOURCE_COMPLETE
   local_candidate: NOT_RUN
 source:
   repository: zhouzengrui369-commits/copilot-app
@@ -169,7 +169,7 @@ r33:
   base_head: e91b37618638da0b2ac864c368cde232079e3bee
   local_focused_tests: "29/29 PASS; git diff --check PASS"
   source_change: "replace duplicate /dev/null npm user/global config authority with two distinct exclusive empty config files"
-  github_ci: PENDING
+  github_ci: PENDING_AFTER_GOVERNANCE_TOKEN_REPAIR
   candidate_execution: NOT_RUN
 candidate:
   established: false

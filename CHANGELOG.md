@@ -13,6 +13,9 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
   proxy/registry/token stripping and explicit reviewed proxy overrides.
 - Added direct RED reproduction and GREEN isolation/fail-closed tests; focused
   candidate contract suite is `29/29 PASS` and `git diff --check` passes.
+- The first PR #16 gate exposed an existing governance contract requiring
+  `github_source: SOURCE_COMPLETE`; R33 preserves that source-capability token
+  while keeping candidate/runtime readiness separately blocked.
 - No dependency install, hydration retry, candidate, Electron, artifact,
   signing, notarization, database, cloud, or user-data change was performed.
 
