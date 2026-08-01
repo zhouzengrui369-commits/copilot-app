@@ -5,12 +5,12 @@ import { mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LEDGER_SCOPE } from './contract.mjs';
+import { LEDGER_SCOPE, NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release.mjs';
 import { FOCUSED_SPECS } from './gates-electron.mjs';
 import { OWNER_CACHE_AUTHORITY } from './npm-cache-hydrate.mjs';
 import { PERFORMANCE_RAW_BASENAMES } from './performance.mjs';
-import { GATE_ORDER, candidateId, parseArgs, staticPlan } from './run-candidate.mjs';
+import { GATE_ORDER, candidateId, candidateNpmConfigPaths, parseArgs, staticPlan } from './run-candidate.mjs';
 
 test('R30 identity is deterministic and bound to the full source commit', () => {
   assert.equal(
@@ -98,6 +98,8 @@ test('static plan binds canonical packaging, exact Electron and three-run perfor
     plan.gates.find((gate) => gate.id === 2).command,
     /sandbox-exec.*deny network.*npm ci --offline/su,
   );
+  assert.match(plan.gates.find((gate) => gate.id === 2).command, new RegExp(NPM_CACHE_KEY_ALIGNMENT_FLAG));
+  assert.equal(plan.gates.find((gate) => gate.id === 2).npmConfigIsolation, 'candidate-owned-distinct-regular-files');
   const ledger = plan.gates.find((gate) => gate.id === 3);
   assert.equal(ledger.scope, LEDGER_SCOPE);
   assert.equal(ledger.source, 'git ls-files -z');
@@ -125,6 +127,13 @@ test('static plan binds canonical packaging, exact Electron and three-run perfor
   assert.deepEqual(plan.gates.find((gate) => gate.id === 11).raws, PERFORMANCE_RAW_BASENAMES);
   assert.match(plan.gates.find((gate) => gate.id === 12).assertion, /canonical manifest/u);
   assert.equal(JSON.stringify(plan).includes('registry.npmjs.org'), false);
+});
+
+test('candidate npm config paths are distinct and evidence-bound', () => {
+  const paths = candidateNpmConfigPaths('/tmp/r30');
+  assert.equal(paths.userConfigPath, '/tmp/r30/npm-config/user.npmrc');
+  assert.equal(paths.globalConfigPath, '/tmp/r30/npm-config/global.npmrc');
+  assert.notEqual(paths.userConfigPath, paths.globalConfigPath);
 });
 
 test('static plan keeps candidate offline while binding a separately hydrated cache receipt', () => {

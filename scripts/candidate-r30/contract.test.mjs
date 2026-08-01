@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  CONTROL_FILES, GENERATED_INPUTS, LEDGER_SCOPE, NETWORK_PROFILE, bindCommit, buildLedger, classifyInstall, cleanStatus,
+  CONTROL_FILES, GENERATED_INPUTS, LEDGER_SCOPE, NETWORK_PROFILE, NPM_CACHE_KEY_ALIGNMENT_FLAG, bindCommit, buildLedger, classifyInstall, cleanStatus,
+  configureCandidateNpmIsolation,
   exactDiscovery, fullCommit, generatedInputsAbsent, offlineEnv, resolveEvidenceTarget, sandboxPlan, trackedFilesFromGit,
   validateLedger,
 } from './contract.mjs';
@@ -23,14 +25,67 @@ test('Gate 2 is macOS-only, denies network, forces npm offline flags, and has no
   const plan = sandboxPlan('/usr/local/bin/npm', ['ci'], 'darwin');
   assert.equal(plan.command, '/usr/bin/sandbox-exec');
   assert.deepEqual(plan.args.slice(0, 2), ['-p', NETWORK_PROFILE]);
-  for (const value of ['--offline', '--no-audit', '--no-fund']) assert.ok(plan.args.includes(value));
+  for (const value of ['--offline', '--no-audit', '--no-fund', NPM_CACHE_KEY_ALIGNMENT_FLAG]) assert.ok(plan.args.includes(value));
   assert.equal(plan.args.some((value) => /https?:\/\/|registry\.npmjs/iu.test(value)), false);
   assert.throws(() => sandboxPlan('npm', ['ci'], 'linux'), /BLOCKED_NETWORK_SANDBOX_UNAVAILABLE/);
 });
-test('Gate 2 strips inherited proxy and registry authority', () => {
-  const env = offlineEnv({ PATH: '/usr/bin', HTTPS_PROXY: 'http://proxy.invalid', npm_config_registry: 'https://registry.invalid' });
+test('Gate 2 strips inherited proxy, registry, and npm config authority while installing candidate isolation', () => {
+  const env = offlineEnv(
+    {
+      PATH: '/usr/bin',
+      HTTPS_PROXY: 'http://proxy.invalid',
+      npm_config_registry: 'https://registry.invalid',
+      NODE_AUTH_TOKEN: 'host-node-token',
+      NPM_TOKEN: 'host-npm-token',
+      NPM_CONFIG_USERCONFIG: '/tmp/host-user.npmrc',
+      NPM_CONFIG_GLOBALCONFIG: '/tmp/host-global.npmrc',
+    },
+    {
+      userConfigPath: '/tmp/candidate-user.npmrc',
+      globalConfigPath: '/tmp/candidate-global.npmrc',
+    },
+  );
   assert.equal(env.PATH, '/usr/bin'); assert.equal(env.npm_config_offline, 'true');
   assert.equal(Object.hasOwn(env, 'HTTPS_PROXY'), false); assert.equal(Object.hasOwn(env, 'npm_config_registry'), false);
+  assert.equal(Object.hasOwn(env, 'NODE_AUTH_TOKEN'), false); assert.equal(Object.hasOwn(env, 'NPM_TOKEN'), false);
+  assert.equal(env.NPM_CONFIG_USERCONFIG, '/tmp/candidate-user.npmrc');
+  assert.equal(env.NPM_CONFIG_GLOBALCONFIG, '/tmp/candidate-global.npmrc');
+});
+test('Gate 2 ignores a mirror registry in HOME and resolves the isolated npm default registry', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'r41-host-npmrc-'));
+  const home = path.join(root, 'home');
+  const isolated = path.join(root, 'isolated');
+  await mkdir(home);
+  await mkdir(isolated);
+  await writeFile(path.join(home, '.npmrc'), 'registry=https://registry.npmmirror.com/\n');
+  const userConfigPath = path.join(isolated, 'user.npmrc');
+  const globalConfigPath = path.join(isolated, 'global.npmrc');
+  await writeFile(userConfigPath, '');
+  await writeFile(globalConfigPath, '');
+  const env = offlineEnv(
+    { ...process.env, HOME: home },
+    { userConfigPath, globalConfigPath },
+  );
+  const result = spawnSync('npm', ['config', 'get', 'registry'], {
+    env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+  assert.equal(result.stdout.trim(), 'https://registry.npmjs.org/');
+  await rm(root, { recursive: true, force: true });
+});
+test('configured candidate npm isolation applies to every later offline child environment', () => {
+  configureCandidateNpmIsolation({
+    userConfigPath: '/tmp/candidate-global-user.npmrc',
+    globalConfigPath: '/tmp/candidate-global-global.npmrc',
+  });
+  const env = offlineEnv({
+    NPM_CONFIG_USERCONFIG: '/tmp/host-user.npmrc',
+    NPM_CONFIG_GLOBALCONFIG: '/tmp/host-global.npmrc',
+  });
+  assert.equal(env.NPM_CONFIG_USERCONFIG, '/tmp/candidate-global-user.npmrc');
+  assert.equal(env.NPM_CONFIG_GLOBALCONFIG, '/tmp/candidate-global-global.npmrc');
 });
 test('Gate 2 cache miss requires separate approval and never retries automatically', () => {
   assert.deepEqual(classifyInstall(1, '', 'npm error ENOTCACHED request mode is offline'), {

@@ -6,6 +6,7 @@ import path from 'node:path';
 export const EXACT_TESTS = 113;
 export const EXACT_FILES = 9;
 export const NETWORK_PROFILE = '(version 1)\n(allow default)\n(deny network*)\n';
+export const NPM_CACHE_KEY_ALIGNMENT_FLAG = '--replace-registry-host=always';
 export const LEDGER_SCOPE = 'all-git-tracked-regular-files-v1';
 /** Critical runner inputs are named in the plan; the executed ledger covers every tracked file. */
 export const CONTROL_FILES = Object.freeze([
@@ -65,6 +66,8 @@ const ENV_KEYS = [
   'HTTP_PROXY',
   'HTTPS_PROXY',
   'NO_PROXY',
+  'NODE_AUTH_TOKEN',
+  'NPM_TOKEN',
   'all_proxy',
   'http_proxy',
   'https_proxy',
@@ -72,11 +75,16 @@ const ENV_KEYS = [
   'NPM_CONFIG_PROXY',
   'NPM_CONFIG_HTTPS_PROXY',
   'NPM_CONFIG_REGISTRY',
+  'NPM_CONFIG_USERCONFIG',
+  'NPM_CONFIG_GLOBALCONFIG',
   'npm_config_proxy',
   'npm_config_https_proxy',
   'npm_config_registry',
+  'npm_config_userconfig',
+  'npm_config_globalconfig',
   'COPILOT_CANDIDATE_REGISTRY_ORIGIN',
 ];
+let configuredNpmConfigFiles = null;
 
 export class CandidateBlocked extends Error {
   constructor(code, gate = 0, detail = '', context = {}) {
@@ -113,7 +121,30 @@ export function cleanStatus(value) {
   return true;
 }
 
-export function offlineEnv(base = {}) {
+function isolatedNpmConfigEnv(files) {
+  if (!files) return {};
+  const { userConfigPath, globalConfigPath } = files;
+  if (
+    !path.isAbsolute(userConfigPath ?? '')
+    || !path.isAbsolute(globalConfigPath ?? '')
+    || path.resolve(userConfigPath) === path.resolve(globalConfigPath)
+    || [userConfigPath, globalConfigPath].some((value) => /^\/dev\//u.test(value))
+  ) {
+    block('BLOCKED_CANDIDATE_NPM_CONFIG_ISOLATION', 2);
+  }
+  return {
+    NPM_CONFIG_USERCONFIG: path.resolve(userConfigPath),
+    NPM_CONFIG_GLOBALCONFIG: path.resolve(globalConfigPath),
+  };
+}
+
+export function configureCandidateNpmIsolation(files) {
+  isolatedNpmConfigEnv(files);
+  configuredNpmConfigFiles = { ...files };
+  return { ...configuredNpmConfigFiles };
+}
+
+export function offlineEnv(base = {}, npmConfigFiles = null) {
   const result = { ...base };
   for (const key of ENV_KEYS) delete result[key];
   Object.assign(result, {
@@ -122,6 +153,7 @@ export function offlineEnv(base = {}) {
     npm_config_fund: 'false',
     npm_config_update_notifier: 'false',
     COPILOT_CANDIDATE_NETWORK_AUTHORITY: 'offline-only',
+    ...isolatedNpmConfigEnv(npmConfigFiles ?? configuredNpmConfigFiles),
   });
   return result;
 }
@@ -131,7 +163,7 @@ export function sandboxPlan(command, args = [], platform = process.platform) {
   if (!command) block('BLOCKED_CANDIDATE_COMMAND_INVALID', 0);
   const finalArgs = [...args];
   if (path.basename(command) === 'npm' && finalArgs[0] === 'ci') {
-    for (const value of ['--offline', '--no-audit', '--no-fund']) {
+    for (const value of ['--offline', '--no-audit', '--no-fund', NPM_CACHE_KEY_ALIGNMENT_FLAG]) {
       if (!finalArgs.includes(value)) finalArgs.push(value);
     }
   }

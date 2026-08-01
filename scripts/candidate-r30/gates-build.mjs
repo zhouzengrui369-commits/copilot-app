@@ -19,7 +19,7 @@ import {
   repoRoot,
   sha256File,
 } from './io.mjs';
-import { validateHydrationReceipt } from './npm-cache-hydrate.mjs';
+import { NPM_REGISTRY, getIsolatedNpmConfigFiles, validateHydrationReceipt } from './npm-cache-hydrate.mjs';
 import { parseAndValidateCycloneDxSbom } from './sbom.mjs';
 
 const CORE_WORKSPACES = Object.freeze([
@@ -89,6 +89,21 @@ export async function runBuildGates({
   }
 
   const npm = await findExecutable('npm');
+  const npmConfigFiles = getIsolatedNpmConfigFiles();
+  const effectiveRegistry = await recorded({
+    gate: 2,
+    name: 'npm-effective-registry-offline',
+    command: npm,
+    args: ['config', 'get', 'registry'],
+    evidenceDir,
+    allowFailure: true,
+  });
+  if ((effectiveRegistry.status ?? 1) !== 0 || effectiveRegistry.stdout.trim() !== NPM_REGISTRY) {
+    block('BLOCKED_NPM_CANDIDATE_REGISTRY_MISMATCH', 2, effectiveRegistry.stdout.trim(), {
+      expected: NPM_REGISTRY,
+      automaticRetry: false,
+    });
+  }
   const installArgs = ['ci'];
   const installEnv = {};
   if (hydratedCache) {
@@ -132,6 +147,12 @@ export async function runBuildGates({
     automaticRegistryFallback: false,
     sandbox: '/usr/bin/sandbox-exec',
     npmExecutable: npm,
+    effectiveRegistry: NPM_REGISTRY,
+    npmConfigIsolation: {
+      userConfigPath: npmConfigFiles.userConfigPath,
+      globalConfigPath: npmConfigFiles.globalConfigPath,
+      inheritedConfigUsed: false,
+    },
     profileSha256: createHash('sha256').update(NETWORK_PROFILE).digest('hex'),
     approvedCacheHydration: hydratedCache
       ? {

@@ -16,6 +16,7 @@ import {
 } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 
 export const CACHE_HYDRATION_SCHEMA_VERSION = 1;
 export const OWNER_CACHE_AUTHORITY = 'OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS';
@@ -192,6 +193,16 @@ export async function ensureIsolatedNpmConfigFiles({ userConfigPath, globalConfi
   await mkdir(path.dirname(globalConfigPath), { recursive: true, mode: 0o700 });
   await writeExclusive(userConfigPath, '');
   await writeExclusive(globalConfigPath, '');
+  for (const file of [userConfigPath, globalConfigPath]) {
+    const stat = await lstat(file);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) {
+      block(
+        'BLOCKED_NPM_CACHE_HYDRATION_NPM_CONFIG_ISOLATION',
+        'isolated npm config must be a single-link regular file',
+        { file, nlink: stat.nlink },
+      );
+    }
+  }
   isolatedNpmConfigFiles.userConfigPath = await realpath(userConfigPath);
   isolatedNpmConfigFiles.globalConfigPath = await realpath(globalConfigPath);
   return getIsolatedNpmConfigFiles();
@@ -748,7 +759,7 @@ export async function hydrateNpmCache(options) {
     '--prefer-online',
     '--registry',
     NPM_REGISTRY,
-    '--replace-registry-host=always',
+    NPM_CACHE_KEY_ALIGNMENT_FLAG,
     '--no-audit',
     '--no-fund',
   ];
@@ -791,18 +802,7 @@ export async function hydrateNpmCache(options) {
     });
   }
 
-  const offlineArgs = [
-    '-p',
-    OFFLINE_PROFILE,
-    npmExecutable,
-    'ci',
-    '--ignore-scripts',
-    '--offline',
-    '--cache',
-    cacheDir,
-    '--no-audit',
-    '--no-fund',
-  ];
+  const offlineArgs = offlineProbeArgs({ npmExecutable, cacheDir });
   const offlineEnv = cleanEnvironment({
     npm_config_cache: cacheDir,
     npm_config_offline: 'true',
@@ -878,6 +878,22 @@ export async function hydrateNpmCache(options) {
   };
   await writeExclusive(options.receiptOutput, `${JSON.stringify(receipt, null, 2)}\n`);
   return receipt;
+}
+
+export function offlineProbeArgs({ npmExecutable, cacheDir }) {
+  return [
+    '-p',
+    OFFLINE_PROFILE,
+    npmExecutable,
+    'ci',
+    '--ignore-scripts',
+    '--offline',
+    '--cache',
+    cacheDir,
+    NPM_CACHE_KEY_ALIGNMENT_FLAG,
+    '--no-audit',
+    '--no-fund',
+  ];
 }
 
 async function main() {
