@@ -16,6 +16,15 @@
   governance/handoff files.
 - Candidate/artifact/runtime remain not established.
 
+## PR #15 clean-CI compatibility follow-up
+
+- GitHub run `30689136694` reached candidate source contracts and passed
+  `59/60`; the only failure was the exact governance assertion requiring
+  `status.github_source: SOURCE_COMPLETE`.
+- The aggregate verdict, `r31.status`, candidate, artifact, runtime, release,
+  experience, and MVP fields remain fail-closed. Restoring this source-capability
+  token does not claim a candidate or runtime result.
+
 ## Current governance SHA256
 
 - `AGENTS.md`: `37034de0cf1888a12929d6d164f7aa4ed388c7baf85753a88df7305b313e9f17`

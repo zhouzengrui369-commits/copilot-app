@@ -32,7 +32,7 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
-  github_source: SOURCE_HEAD_UNDER_REPAIR
+  github_source: SOURCE_COMPLETE
   local_candidate: NOT_RUN
 source:
   repository: zhouzengrui369-commits/copilot-app

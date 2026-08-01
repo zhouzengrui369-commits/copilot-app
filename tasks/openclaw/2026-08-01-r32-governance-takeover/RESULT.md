@@ -13,3 +13,9 @@ updated `AGENTS.md`, `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`,
 `CHANGELOG.md`, `DECISIONS.md`, and `docs/ARCHITECTURE.md`. YAML parsing and
 `git diff --check` pass. No production code, v6.2 baseline, credential,
 package, lockfile, build, Electron, or Git state was changed.
+
+Clean-CI follow-up: PR #15 run `30689136694` exposed one exact-token
+compatibility failure after `59/60` candidate source-contract tests passed.
+`status.github_source` is restored to `SOURCE_COMPLETE`; the separate
+`r31.status: SOURCE_HEAD_UNDER_REPAIR` and all runtime/release/MVP blockers are
+unchanged. Clean GitHub CI is still required.
