@@ -46,6 +46,19 @@ function validLock() {
   };
 }
 
+function lockWithWorkspace(resolved = 'apps/cloud') {
+  const lock = validLock();
+  lock.packages['apps/cloud'] = {
+    name: '@fixture/cloud',
+    version: '1.0.0',
+  };
+  lock.packages['node_modules/@fixture/cloud'] = {
+    resolved,
+    link: true,
+  };
+  return lock;
+}
+
 test('requires the exact owner token, source commit, and new absolute outputs', () => {
   const parsed = parseHydrationArgs([
     '--repository', '/tmp/repo',
@@ -103,6 +116,7 @@ test('accepts only reviewed HTTPS registry origins and rejects arbitrary egress'
     'https://registry.npmmirror.com',
     'https://registry.yarnpkg.com',
   ].sort());
+  assert.deepEqual(identity.workspaceResolutions, []);
 
   for (const resolved of [
     'http://registry.npmjs.org/a/-/a-1.0.0.tgz',
@@ -120,6 +134,26 @@ test('accepts only reviewed HTTPS registry origins and rejects arbitrary egress'
   }
 });
 
+test('accepts only package-graph-bound plain workspace resolutions', () => {
+  const identity = inspectLockfileDocument(lockWithWorkspace());
+  assert.deepEqual(identity.workspaceResolutions, ['apps/cloud']);
+
+  for (const resolved of [
+    '../apps/cloud',
+    '/apps/cloud',
+    'apps\\cloud',
+    'apps/missing',
+    'tools/cloud',
+  ]) {
+    assert.throws(
+      () => inspectLockfileDocument(lockWithWorkspace(resolved)),
+      (error) => error instanceof NpmCacheHydrationBlocked
+        && error.code === 'BLOCKED_NPM_CACHE_HYDRATION_LOCK_ORIGIN',
+      resolved,
+    );
+  }
+});
+
 test('the real package lock contains only reviewed registry-resolved dependencies', async () => {
   const lock = JSON.parse(await readFile(path.join(repoRoot, 'package-lock.json'), 'utf8'));
   const identity = inspectLockfileDocument(lock);
@@ -133,6 +167,7 @@ test('the real package lock contains only reviewed registry-resolved dependencie
     ].includes(origin)),
     true,
   );
+  assert.ok(identity.workspaceResolutions.includes('apps/copilot-cloud'));
 });
 
 test('binds an exclusive hydration receipt to source, lockfile, and immutable cache bytes', async () => {
