@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-08-01 — R31 Owner-Approved NPM Cache Hydration Closure
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. GitHub completed only source, test, governance, and exact-commit handoff work. No local hydrated cache, candidate, packaged Electron runtime, artifact identity, Codex acceptance, signing, notarization, Release, or Human Owner Gate is claimed.
+
+### Root cause
+
+- MiniMax correctly reached candidate Gate 2 on the previously frozen SHA and stopped with `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED` because the existing npm cache could not satisfy `npm ci --offline`.
+- The candidate contract correctly prohibited an online retry, but the repository did not yet contain an auditable, separately owner-approved cache-hydration path.
+- The initial hydration implementation exposed three source-contract defects before local use:
+  - root `TODO.md` no longer carried the exact `scripts/candidate-r30/minimax-authority.mjs` and `EXACT_FINAL_HEAD` governance tokens;
+  - the authority verifier expected an obsolete Codex handoff sentence instead of the exact versioned-document sentence;
+  - the lock-origin parser treated npm lockfile v3 plain relative workspace resolutions such as `apps/copilot-cloud` as network origins.
+
+### Source implementation
+
+- Added the owner-gated `scripts/candidate-r30/npm-cache-hydrate.mjs` flow and kept it separate from candidate execution.
+- Require the exact token `OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS`, an exact clean detached source commit, new outside-repository cache/receipt paths, and no repository `.npmrc`.
+- Strip inherited proxy, registry, token, and npm user/global configuration authority and disable lifecycle scripts.
+- Confine the npm child to a localhost CONNECT proxy under `sandbox-exec`; the parent proxy accepts only `registry.npmjs.org:443` and records every request.
+- Require a deny-network `npm ci --ignore-scripts --offline` proof before emitting the exclusive source/lock/cache-bound hydration receipt.
+- Bind the candidate runner to paired `--npm-cache-dir` and `--npm-cache-receipt` inputs, validate their exact bytes before Gate 2, and keep the candidate itself under `(deny network*)` with `npm ci --offline`.
+- Accept npm lockfile v3 plain relative workspace resolutions only when they are safe `apps/...` or `packages/...` paths and exactly match a non-link package entry in the same lockfile graph.
+- Continue rejecting traversal, absolute, backslash, unknown workspace, unreviewed host, credential-bearing, non-HTTPS, Git, SSH, and GitHub dependency origins.
+- Align the deployment-authority marker with the actual versioned Codex handoff sentence and restore exact governance tokens in root `TODO.md`.
+
+### RED → GREEN tests
+
+- Added source tests for exact owner approval, new absolute paths, localhost-only sandbox authority, reviewed registry origins, lockfile workspace-path binding, cache identity tamper, exclusive receipt validation, paired candidate cache arguments, and offline-only plan truth.
+- The real root `package-lock.json` is now validated directly, including `apps/copilot-cloud` as a package-graph-bound workspace resolution.
+- Negative tests reject `../apps/cloud`, `/apps/cloud`, `apps\\cloud`, unknown `apps/missing`, and non-workspace `tools/cloud` resolutions.
+- The complete Node 24/macOS source gate remains mandatory on the final externally reported PR #14 HEAD; no tracked file self-embeds its containing commit.
+
+### Governance and handoff
+
+- Updated root TODO authority tokens and retained the executable `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` hydration/candidate separation.
+- All previously reported deployment SHAs are invalid after these tracked source changes.
+- MiniMax must use a new hydration worktree, new isolated cache, new receipt, separate new candidate worktree, and new evidence directory against the final externally supplied exact SHA.
+- Existing failed worktrees, evidence, caches, receipts, and `/tmp` probes remain `REFERENCE_ONLY` and must never be reused.
+
+Rollback: revert the bounded cache-hydration, receipt-binding, workspace-lock policy, governance-token, and authority-marker commits. Rollback creates no database, candidate, artifact, runtime, cloud, signing, notarization, or user-data migration because none were produced by GitHub execution.
+
 ## 2026-07-31 — R31 Exact-Object Authority Command Marker Closure
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`. No local candidate worktree, candidate evidence directory, packaged Electron execution, signing, notarization, independent Codex acceptance, Release, or Human Owner Gate was created by this GitHub repair.
