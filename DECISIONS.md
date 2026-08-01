@@ -1,5 +1,38 @@
 # DECISIONS
 
+## D-2026-08-01-01: Reinstate Codex PM And MiniMax Implementation
+
+### Background
+
+GitHub remote development produced Draft PR #14, but the current head is red
+and no reproducible candidate exists. The owner now requires Codex to resume
+parent-PM ownership and use MiniMax Code CLI for bounded local implementation.
+
+### Options
+
+1. Keep ChatGPT as the sole source developer and MiniMax as deployment-only.
+2. Keep GitHub as durable source truth while Codex owns PM/acceptance and
+   MiniMax Code CLI becomes the primary bounded implementation worker.
+
+### Decision
+
+Choose option 2. ChatGPT remains an optional PR contributor, not the sole
+source-authoring route. Worker self-test, browser prototype, source CI,
+candidate runtime, independent experience review, and Human Owner Gate remain
+separate evidence surfaces.
+
+### Impact
+
+- Non-overlapping MiniMax tasks may run in parallel under exact allowlists.
+- Codex accepts only real diffs, commands, runtime evidence, and artifacts.
+- The single-user macOS MVP defers broad enterprise/multi-user security review
+  and other post-MVP scope.
+- Local-first truth, credential safety, no-egress semantics, durable readback,
+  and source/runtime identity remain mandatory.
+- Apple Developer ID/notary is owner-deferred post-MVP; the conflict with older
+  release-gate wording remains a recorded risk until the baseline is formally
+  amended.
+
 ## D-2026-07-29-01: Git Baseline And Product Input
 
 GitHub `main@96c861706126317c27965fcb64c765973df9ac89` is the Git baseline. r3 is the new candidate product-layer input and must remain distinct from review branches and review reports.

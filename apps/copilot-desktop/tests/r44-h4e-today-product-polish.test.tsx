@@ -2,7 +2,7 @@ import React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CopilotNoteSummary,
   CopilotProductApi,
@@ -101,6 +101,15 @@ describe('R44 H4E Today product polish', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_COPILOT_BROWSER_PROTOTYPE', '1');
     window.history.replaceState(null, '', '/?prototype=ready');
+    // Freeze the wall clock so today's calendar targets (today / weekAgo / priorMonth / etc.)
+    // remain inside the rendered 42-day grid regardless of the real CI date.
+    // Only fake `Date` so waitFor/setTimeout/setInterval keep real timing.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 7, 28, 12, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('keeps date truth coherent and supports keyboard navigation in the main calendar', async () => {

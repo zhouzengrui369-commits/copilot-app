@@ -4,7 +4,29 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
 
-GitHub-side Phase 1 source development is complete on Draft PR #14 (`agent/r31-source-completion`). The exact final PR HEAD must still be hydrated, built, packaged, and exercised locally by MiniMax Code. No local R30/R31 candidate, artifact SHA256, runtime ID, packaged Electron result, candidate-bound performance receipt, independent Codex verdict, Developer ID signing, Apple notarization, Release, or Human Owner Gate exists yet.
+Draft PR #14 (`agent/r31-source-completion`) is not currently green. Its HEAD
+`c3bb0ecf64ab841707b954dfa05728fd44652a79` failed source-gate run
+`30682977003` / job `91323461797` with four date-sensitive failures in two
+test files (`1103/1107` passed). The clean local repair branch is
+`codex/r32-ci-date-stability` at the same base. No current candidate, artifact
+SHA256, runtime ID, packaged Electron result, or Human Owner Gate exists.
+
+## R32 Takeover
+
+- Current objective: land the two-test date-stability repair through clean
+  GitHub CI, then freeze the final source SHA and build a reproducible unsigned
+  macOS candidate.
+- Completed: GitHub/local truth audit; independent focused rerun `47/47 PASS`.
+- In progress: governance handoff update and clean-CI landing.
+- Next: clean GitHub source gate, bounded dependency hydration, twelve-gate
+  candidate, real Electron journeys, and three verify-fix rounds.
+- Risk: reused local dependencies cannot prove tests TSC or phase1-release;
+  those results remain NOT_ACCEPTED until clean CI. Apple signing/notary is
+  owner-deferred post-MVP, while older v6.2 release wording still lists it as a
+  release gate; do not silently resolve that conflict.
+- Latest important change: the calendar tests no longer depend on July 2026.
+- Branch: `codex/r32-ci-date-stability`.
+- Latest committed base: `c3bb0ecf64ab841707b954dfa05728fd44652a79`.
 
 ## Authority
 
@@ -18,6 +40,8 @@ The owner-approved baseline remains `goal.md`, `plan.md`, `rules.md`, and `deliv
 - Candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13
 - Active branch: `agent/r31-source-completion`
 - Active Draft PR: #14
+- Local implementation branch: `codex/r32-ci-date-stability`
+- Current under-repair PR HEAD: `c3bb0ecf64ab841707b954dfa05728fd44652a79`
 - Final identity rule: use the externally reported final 40-character PR #14 HEAD after the last tracked commit passes all 17 source-gate steps. Tracked files do not self-embed their own containing commit.
 
 ## Closed Deployment-Authority Defects
@@ -62,9 +86,11 @@ The GitHub source now provides `scripts/candidate-r30/npm-cache-hydrate.mjs` and
 
 If the approved cache is incomplete, the candidate stops with `BLOCKED_NPM_APPROVED_CACHE_INCOMPLETE`; it does not ask for or perform another automatic network retry.
 
-## GitHub Source Completion
+## GitHub Source Checkpoint
 
-R31 remote source work retains:
+R31 remote source work retains the listed capabilities, but the current PR HEAD
+is red because two calendar test files drifted with the real month. The R32
+test-only repair is focused-green locally; clean GitHub CI remains mandatory.
 
 - embedded-local deterministic production embeddings with no external service;
 - explicit Ollama opt-in only;
@@ -96,11 +122,14 @@ These are source-development results, not packaged runtime or release evidence.
 
 A successful local run remains an **unsigned diagnostic candidate**.
 
-## Role Boundary
+## Current Role Boundary
 
-1. ChatGPT changes source and governance only through GitHub branch/PR; it does not execute the local hydration or candidate.
-2. MiniMax Code performs the exact owner-authorized hydration and exact-commit candidate execution; it cannot silently fix source, broaden egress, reuse identity/evidence, or retry automatically.
-3. Codex starts only after a complete MiniMax receipt and independently operates the packaged app on the real computer; it does not fix source.
+1. Codex is parent PM, writes bounded contracts, reviews exact diffs/tests, and
+   owns final real-computer acceptance.
+2. MiniMax Code CLI is the primary bounded implementation worker. It may edit
+   only an exact task allowlist and cannot use its own self-test as acceptance.
+3. GitHub commits/PRs remain durable source truth. ChatGPT may contribute by
+   PR, but is no longer the sole source-authoring route.
 
 ## Remaining Blocks
 
@@ -114,4 +143,8 @@ A successful local run remains an **unsigned diagnostic candidate**.
 
 ## Next Single Action
 
-After the final PR HEAD passes the complete source gate, MiniMax fetches and proves that exact SHA, materializes authority from the exact Git commit object, runs the owner-approved registry-only cache hydrator in a dedicated detached worktree, verifies the deny-network offline-probe receipt, then creates a separate detached candidate worktree and executes `scripts/candidate-r30/run-candidate.mjs` exactly once with a new evidence directory and paired cache/receipt arguments. Codex remains idle until the complete receipt exists.
+Commit and push the two-test R32 repair, require the complete clean GitHub
+source gate to pass, and freeze that exact SHA. Then MiniMax hydrates the
+approved cache in one isolated worktree and executes the candidate runner once
+in a separate detached worktree. Codex reviews the receipt and operates the
+exact packaged candidate on the real Mac.

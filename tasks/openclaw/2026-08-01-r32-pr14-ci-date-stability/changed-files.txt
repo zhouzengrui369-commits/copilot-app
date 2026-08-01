@@ -1,0 +1,31 @@
+# changed-files.txt — Successor addendum (final)
+
+The successor pass limits itself to the addendum-allowed test files. The
+first-worker coverage repair is preserved semantically; Codex removed one
+surplus blank line during acceptance (final SHA256 `ad52cdcf…9aa7`).
+
+## Modified by this task (cumulative, both workers)
+
+apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx           # first-worker fix (COVERAGE_TARGET_DAY* + button name rewrites); preserved verbatim by successor
+apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx         # successor fix: import + beforeEach/afterEach deterministic clock
+
+## Task-owned deliverables
+
+/Users/njx/openclaw/copilot/tasks/openclaw/2026-08-01-r32-pr14-ci-date-stability/RESULT.md
+/Users/njx/openclaw/copilot/tasks/openclaw/2026-08-01-r32-pr14-ci-date-stability/EVIDENCE.md
+/Users/njx/openclaw/copilot/tasks/openclaw/2026-08-01-r32-pr14-ci-date-stability/commands.log
+/Users/njx/openclaw/copilot/tasks/openclaw/2026-08-01-r32-pr14-ci-date-stability/changed-files.txt
+/Users/njx/openclaw/copilot/tasks/openclaw/2026-08-01-r32-pr14-ci-date-stability/DISPATCH_STATUS.md
+
+## Removed task-created temporary symlinks (precise)
+
+/private/tmp/copilot-r32-ci-date-stability/node_modules                                                # unlink (was -> /Users/njx/openclaw/copilot/node_modules)
+/private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/node_modules                           # unlink (was -> /Users/njx/openclaw/copilot/apps/copilot-desktop/node_modules)
+/private/tmp/copilot-r32-ci-date-stability/apps/copilot-desktop/dist                                   # unlink (was -> /Users/njx/openclaw/copilot/apps/copilot-desktop/dist)
+
+## Explicitly not changed by the successor
+
+- No other source files, no `package.json`, no `package-lock.json`, no
+  `vitest.config.ts`, no `tsconfig.*`, no Electron / packaging / signing /
+  credentials, no commit, no push, no PR mutation, no production code.
+- No other deletion performed.

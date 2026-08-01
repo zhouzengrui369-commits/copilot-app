@@ -2,7 +2,25 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE`.**
 
-GitHub Phase 1 product/source work is complete on Draft PR #14. No checked source task implies a local candidate, packaged runtime, signing, notarization, Release, or MVP completion.
+Draft PR #14 is currently red at `c3bb0ecf64ab841707b954dfa05728fd44652a79`.
+No checked source task implies a local candidate, packaged runtime, Release, or
+MVP completion.
+
+## P0 — R32 Source Gate Recovery
+
+- [x] Reconcile GitHub PR #14, its current HEAD, latest CI, local worktrees,
+  and candidate truth.
+- [x] Repair only the two date-sensitive tests; independently rerun both files
+  with `47/47 PASS`.
+- [ ] Commit/push the exact two-test patch and require clean GitHub
+  `copilot-source-gate` PASS. Unlock: one green run bound to the new commit.
+- [ ] Freeze and report that exact commit without another tracked source
+  change. Unlock: branch/PR head equals the reported 40-hex SHA.
+- [ ] Create a reproducible unsigned macOS candidate. Unlock: clean detached
+  worktree, exact dependency receipt, artifact SHA256, runtime ID, and complete
+  candidate manifest.
+- [ ] Run the real Electron Knowledge → Ask → source → return → Todo → edit →
+  quit/relaunch journey and three candidate-bound verify-fix rounds.
 
 ## P0 — GitHub Remote Development
 
@@ -67,3 +85,5 @@ GitHub Phase 1 product/source work is complete on Draft PR #14. No checked sourc
 - Windows real-machine/signing/install/screenshots → Phase 1.1.
 - Tencent deployment, Remote/live, and optional Backup → post-MVP.
 - 3D graph and broader expansion → post-MVP.
+- Mobile/web, multi-user, plugins, i18n, broad enterprise security review, and
+  major dependency upgrades → post-MVP.
