@@ -6,6 +6,7 @@ import {
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   blockNativeCache,
+  nativeHydrationTransportPolicy,
   validateNativeHydrationReceipt,
 } from './native-cache-policy.mjs';
 
@@ -48,15 +49,61 @@ function nativeBinary(value, electronVersion) {
     && SHA256.test(value?.binary?.sha256 ?? '');
 }
 
-function auditedProxy(proxy, expectedHosts) {
-  return proxy?.allRequestsAllowed === true
-    && sameJson(proxy?.allowedHosts, expectedHosts)
-    && Array.isArray(proxy?.requests)
-    && proxy.requests.length > 0
-    && proxy.requests.every((request) => request?.method === 'CONNECT'
+function expectedSocketPolicy(transportPolicy) {
+  return {
+    keepAlive: true,
+    keepAliveMs: transportPolicy.proxyKeepAliveMs,
+    noDelay: true,
+    idleTimeoutMs: transportPolicy.proxyIdleTimeoutMs,
+  };
+}
+
+function validTransportReceipt(transport, socketPolicy) {
+  return validIso(transport?.startedAt)
+    && validIso(transport?.endedAt)
+    && Number.isSafeInteger(transport?.durationMs)
+    && transport.durationMs >= 0
+    && Number.isSafeInteger(transport?.bytesClientToUpstream)
+    && transport.bytesClientToUpstream >= 0
+    && Number.isSafeInteger(transport?.bytesUpstreamToClient)
+    && transport.bytesUpstreamToClient >= 0
+    && transport?.fatal === false
+    && transport?.error === null
+    && sameJson(transport?.socketPolicy, socketPolicy);
+}
+
+function auditedProxy(proxy, expectedHosts, transportPolicy) {
+  const socketPolicy = expectedSocketPolicy(transportPolicy);
+  const requests = proxy?.requests;
+  if (
+    proxy?.allRequestsAllowed !== true
+    || !sameJson(proxy?.allowedHosts, expectedHosts)
+    || !Array.isArray(requests)
+    || requests.length === 0
+    || !requests.every((request) => request?.method === 'CONNECT'
       && request?.allowed === true
       && request?.port === 443
-      && expectedHosts.includes(request?.host));
+      && expectedHosts.includes(request?.host)
+      && validTransportReceipt(request.transport, socketPolicy))
+  ) return false;
+
+  const summary = proxy?.transportSummary;
+  const bytesClientToUpstream = requests.reduce(
+    (sum, request) => sum + request.transport.bytesClientToUpstream,
+    0,
+  );
+  const bytesUpstreamToClient = requests.reduce(
+    (sum, request) => sum + request.transport.bytesUpstreamToClient,
+    0,
+  );
+  return summary?.requestCount === requests.length
+    && summary?.allowedCount === requests.length
+    && summary?.deniedCount === 0
+    && summary?.completedCount === requests.length
+    && summary?.transportErrorCount === 0
+    && summary?.bytesClientToUpstream === bytesClientToUpstream
+    && summary?.bytesUpstreamToClient === bytesUpstreamToClient
+    && sameJson(summary?.socketPolicy, socketPolicy);
 }
 
 export function auditNativeHydrationReceiptShape({
@@ -65,6 +112,7 @@ export function auditNativeHydrationReceiptShape({
   lifecyclePackages = EXPECTED_LIFECYCLE_PACKAGES,
 }) {
   const expectedHosts = [...NATIVE_HYDRATION_HOSTS].sort();
+  const transportPolicy = nativeHydrationTransportPolicy();
   const onlineInstall = receipt?.onlineHydration?.install;
   const onlineNative = receipt?.onlineHydration?.nativeArm64;
   const offlineInstall = receipt?.offlineInstallProof;
@@ -82,6 +130,13 @@ export function auditNativeHydrationReceiptShape({
   requireProof(receipt?.profile === NATIVE_TOOLCHAIN_PROFILE, 'profile');
   requireProof(receipt?.nativeBuildMode === NATIVE_BUILD_MODE, 'nativeBuildMode');
   requireProof(sameJson(receipt?.allowedHosts, expectedHosts), 'allowedHosts');
+  requireProof(sameJson(receipt?.transportPolicy, transportPolicy), 'transportPolicy');
+  requireProof(
+    receipt?.transportPolicy?.automaticRetry === false
+      && receipt?.transportPolicy?.npmFetchRetries === 0
+      && receipt?.transportPolicy?.partialCacheReuse === false,
+    'transportPolicy.failClosed',
+  );
   requireProof(
     sameJson(receipt?.reviewedLifecyclePackages, lifecyclePackages),
     'reviewedLifecyclePackages',
@@ -145,7 +200,7 @@ export function auditNativeHydrationReceiptShape({
     'onlineHydration.nativeArm64.command',
   );
   requireProof(
-    auditedProxy(receipt?.onlineHydration?.proxy, expectedHosts),
+    auditedProxy(receipt?.onlineHydration?.proxy, expectedHosts, transportPolicy),
     'onlineHydration.proxy',
   );
 
@@ -221,9 +276,10 @@ export function auditNativeHydrationReceiptShape({
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     status: 'PASS',
     expectedHosts,
+    transportPolicy,
     proxyRequestCount: receipt.onlineHydration.proxy.requests.length,
     onlineInstallExitCode: onlineInstall.exitCode,
     onlineNativeExitCode: onlineNative.exitCode,
