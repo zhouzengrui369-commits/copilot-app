@@ -150,17 +150,21 @@ test('root governance remains blocked while marking GitHub source complete and l
   assert.match(changelog, /history\/CHANGELOG_PRE_R30\.md/u);
 });
 
-test('MiniMax deployment handoff bootstraps authority from the exact Git object and remains fail-closed', async () => {
-  const [deploy, bootstrap] = await Promise.all([
+test('MiniMax deployment handoff is PR-agnostic, exact-object bound, and native-cache fail-closed', async () => {
+  const [deploy, bootstrap, hydrator] = await Promise.all([
     read('docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md'),
     read('scripts/candidate-r30/minimax-authority.mjs'),
+    read('scripts/candidate-r30/npm-native-cache-hydrate.mjs'),
   ]);
   for (const token of [
-    'EXACT_FINAL_40_HEX_PR14_HEAD',
-    'git -C "$REPO" fetch --no-tags --prune origin refs/pull/14/head',
-    'git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:${AUTHORITY_PATH}"',
+    'EXACT_FINAL_HEAD',
+    'PR_NUMBER',
+    'refs/pull/${PR_NUMBER}/head',
+    'git -C "$REPO" cat-file -e "${SOURCE_COMMIT}:${path}"',
     'git -C "$REPO" show "${SOURCE_COMMIT}:${BOOTSTRAP_PATH}"',
     'scripts/candidate-r30/minimax-authority.mjs',
+    'scripts/candidate-r30/npm-native-cache-hydrate.mjs',
+    'OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION',
     'git-object-at-exact-commit',
     'git -C "$REPO" worktree add --detach',
     'git status --porcelain=v1 --untracked-files=all',
@@ -175,6 +179,7 @@ test('MiniMax deployment handoff bootstraps authority from the exact Git object 
   assert.match(deploy, /Absence from a stale checkout is not proof/iu);
   assert.match(deploy, /Do not retry online|Do not.*online/su);
   assert.match(deploy, /unsigned diagnostic candidate/iu);
+  assert.doesNotMatch(deploy, /refs\/pull\/14\/head/u);
 
   for (const token of [
     'BLOCKED_EXACT_COMMIT_NOT_FETCHED',
@@ -187,4 +192,7 @@ test('MiniMax deployment handoff bootstraps authority from the exact Git object 
     'evidenceCreated: false',
   ]) assert.match(bootstrap, new RegExp(escapeRegExp(token), 'u'));
   assert.doesNotMatch(bootstrap, /npm\s+(?:ci|install)|fetch\(/u);
+  assert.match(hydrator, /offlineInstallProof/u);
+  assert.match(hydrator, /offlineNativeProof/u);
+  assert.match(hydrator, /candidateCreated:\s*false/u);
 });
