@@ -1,8 +1,8 @@
-# Copilot App AI Handover — R31
+# Copilot App AI Handover — R45
 
-`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
+`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-This is a mirror. Read root authority first, in this order:
+This file is a mirror. Read root authority first, in this order:
 
 1. `AGENTS.md`
 2. `goal.md`
@@ -15,59 +15,53 @@ This is a mirror. Read root authority first, in this order:
 9. `DECISIONS.md`
 10. `CHANGELOG.md`
 
-Do not let `docs/PROJECT_STATUS.md` or any other docs mirror override root truth. The full pre-R30 handoff is preserved under `docs/history/`.
+The complete pre-R30 detail remains under `docs/history/`. This mirror cannot override root truth.
 
-## Current Source
+## Current source truth
 
-- repository: `zhouzengrui369-commits/copilot-app`
-- original takeover: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`, PR #12
-- candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13
-- active source-completion branch: `agent/r31-source-completion`
-- active Draft PR: #14
-- final SHA rule: use the externally reported final 40-character PR #14 HEAD after final CI; tracked files do not self-embed their own commit
+- The R31/R44 macOS MVP product source was consolidated at `74454d21910f0c01e0b9d4f8117b4394defe3228` and passed all 17 GitHub source-gate steps.
+- That source includes grounded Ask/source truth, Ask → source → return continuity, canonical Todo readback and Unscheduled navigation, local-first persistence, app-embedded local-ASR source contracts, strict coverage, production SBOM, and exact Electron discovery `113 tests in 9 files`.
+- Source completion did not create a packaged candidate, artifact SHA-256, runtime ID, Electron acceptance, signing, notarization, Release, Experience acceptance, or Human Owner Gate result.
 
-## Current Truth
+## First candidate attempt
 
-GitHub Phase 1 product/source work is complete. The Node 24 macOS source gate covers exact checkout/lockfile, candidate contracts, embedded-local RAG, ordered workspace builds, checks, unit/integration suites, desktop build, Phase 1 source suite, strict global and per-file critical coverage, production CycloneDX SBOM, exact list-only `113 tests in 9 files`, and clean tracked source.
+MiniMax Code executed the exact source once in clean detached worktrees. Exact-object authority, one registry-only hydration, source contracts, and dry-run passed. Candidate Gate 2 then stopped with:
 
-At the last green checkpoint before the deployment-authority bootstrap addition, desktop passed `1106/1106`; each critical file reached at least 90%, including `local-knowledge-service.ts` branch coverage at 90.00%.
+```text
+BLOCKED_NPM_OFFLINE_INSTALL_FAILED
+```
 
-No local candidate has been executed. Candidate identity, artifact SHA256, runtime ID, candidate-bound performance, packaged Electron 113/113, signing, notarization, independent acceptance, and owner gate are all absent.
+The old hydration disabled lifecycle scripts, while the candidate correctly enabled them under `(deny network*)`. `better-sqlite3` therefore could not obtain its prebuild or node-gyp headers. No source was changed and no online retry occurred.
 
-## Deployment Authority Resolution
+## Active R45 repair
 
-A previous MiniMax check searched stale local worktrees and could not find `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`. The exact approved Git commit did contain the document. The handoff now makes this distinction executable:
+R45 introduces a new source-bound native-toolchain receipt:
 
-1. fetch `refs/pull/14/head` and prove it equals the supplied SHA;
-2. read `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and `scripts/candidate-r30/minimax-authority.mjs` from `<SHA>:<path>`;
-3. run the verifier to validate required markers and emit the authority SHA256 receipt;
-4. only after that receipt passes, create the clean detached candidate worktree.
+```text
+OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+```
 
-The verifier is read-only with respect to candidate state: `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`. A cron/file-presence probe is not execution authority and must not auto-run the candidate.
+The hydrator:
 
-## R31 Architectural Changes
+- runs only in a new exact detached worktree;
+- strips inherited credentials, npm configs, mirrors, registry/proxy authority, dist URLs, and native overrides;
+- permits child network only through a localhost CONNECT proxy;
+- restricts that proxy to the exact source-defined official npm/Node/Electron/GitHub release-host allowlist;
+- enables lifecycle scripts and build-from-source native work;
+- hydrates npm, Electron, electron-builder, Node/Electron headers, and prebuild caches;
+- proves a full lifecycle offline install and Electron arm64 native rebuild under deny-network;
+- hashes every cache file and aggregate identity;
+- creates no candidate or candidate evidence.
 
-- production embedding default: deterministic self-contained `embedded-local-hash-v1`;
-- Ollama: explicit local-service compatibility only;
-- vector persistence: one embedding model at a time, rotate incompatible vectors, preserve durable local text;
-- deployment authority: exact Git object plus SHA256 receipt, never stale-worktree presence;
-- candidate runner: twelve fail-closed gates;
-- Gate 2: absolute npm identity and deny-network offline authority;
-- Gate 3: every Git-tracked regular file plus aggregate SHA256;
-- Gate 5: full Phase 1 source quality and CycloneDX SBOM;
-- Gate 6/7: canonical arm64 ZIP/DMG and source/artifact/`app.asar` identity;
-- Gate 9: exact 113/9 plus hashes for all E2E specs/fixtures/helpers;
-- Gate 11: three distinct candidate-bound `r31-v1` performance runs;
-- Gate 12: final manifest and screenshots.
+Candidate Gate 2 remains offline, revalidates the new receipt and cache bytes, runs full lifecycle `npm ci --offline`, and proves the cache remains immutable.
 
-## Role Boundary
+## Role boundary
 
-- ChatGPT: GitHub source/PR only; local candidate execution forbidden.
-- MiniMax Code: fetch and validate the exact approved commit, materialize exact-object authority, create a clean detached worktree and new outside-repo evidence directory, no silent source fix.
-- Codex: starts only after complete MiniMax receipt; independent real-computer acceptance; no source fix in acceptance lane.
+- ChatGPT performs bounded GitHub remote source work and Draft PR contracts; ChatGPT does not run the local candidate.
+- MiniMax Code uses the exact externally frozen SHA in new clean worktrees and produces technical evidence; MiniMax self-test is not acceptance.
+- Codex independently operates the exact packaged Electron candidate on the real Mac and issues the candidate-bound product-experience/runtime verdict.
+- Owner decides Human Owner Gate and release scope.
 
-## Next Single Action
+## Next action
 
-After the final authority-bootstrap PR HEAD passes the complete source gate, follow `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` with that externally reported SHA. First run `scripts/candidate-r30/minimax-authority.mjs` against the exact Git object, then run source contracts and dry-run, and finally execute `scripts/candidate-r30/run-candidate.mjs` exactly once. On any authority blocker or `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`, stop and return the exact receipt; do not retry online.
-
-Return the authority/source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state receipts plus `CANDIDATE-MANIFEST.json`, `R30-COMPLETE.json`, exact Git identity, and clean final status. Codex remains idle until that package is complete.
+Pass the complete GitHub source gate on the exact final R45 repair head. Then obtain explicit Owner approval for one new bounded native-toolchain hydration and one new candidate attempt. Do not reuse the old cache, receipt, worktrees, evidence, artifacts, or runtime identity.
