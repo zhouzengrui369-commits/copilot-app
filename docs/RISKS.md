@@ -1,125 +1,107 @@
-# Copilot App Risks — R31 Mirror
+# Copilot App Risks — R45 Mirror
 
-`BLOCKED / MVP_NOT_COMPLETE`
+`BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`
 
 Root `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `DECISIONS.md`, and `rules.md` are authoritative.
 
-## R1 — Source Completion Could Be Misreported As Product Completion
+## R1 — Source evidence could be misreported as product completion
 
 **State:** OPEN / P0 governance risk.
 
-GitHub checks prove source contracts only. They do not prove the local packaged candidate, real user machine behavior, signing, notarization, installation, independent acceptance, or owner use.
+GitHub source gates, TypeScript tests, coverage, SBOM, exact discovery, PR merge, and package commands cannot prove the packaged Electron product, persistence, performance, signing, notarization, or Human Owner Gate.
 
-**Control:** every current document keeps `BLOCKED / MVP_NOT_COMPLETE`; candidate/runtime fields remain null until MiniMax returns exact-commit evidence.
+**Control:** all current surfaces retain `MVP_NOT_COMPLETE`; candidate/artifact/runtime fields remain unset until a complete exact-SHA MiniMax package and independent Codex acceptance exist.
 
-## R2 — Mutable Branch, Self-Referential Commit, Or Stale Worktree Handoff
-
-**State:** CONTROLLED pending final authority-bootstrap CI.
-
-A branch can move, a tracked file cannot truthfully contain the commit that contains itself, and a stale worktree may not contain a document that does exist in the approved exact Git object. Searching only old local paths can therefore produce a false `MISSING_DEPLOYMENT_AUTHORITY` blocker.
-
-**Control:** after final docs CI, record the exact 40-character PR #14 HEAD externally. MiniMax explicitly fetches `refs/pull/14/head`, proves `FETCH_HEAD` equals that SHA, then reads and hashes `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and verifies `scripts/candidate-r30/run-candidate.mjs` from `<SHA>:<path>` using `scripts/candidate-r30/minimax-authority.mjs`. Current-worktree file presence is non-authoritative. Any later commit invalidates the handoff.
-
-## R3 — R28 Evidence Reuse
-
-**State:** CONTROLLED / permanent prohibition.
-
-R28 was never executed and failed review because Gate 3 SHA256 evidence was malformed/incomplete, Gate 2 network authority was not fail-closed, and Gate 9 did not bind exactly `113 tests in 9 files`.
-
-**Control:** never run, repair, copy, or promote R28. R30/R31 uses a new runner identity and new evidence directory.
-
-## R4 — Network Or npm Cache Authority Drift
-
-**State:** OPEN until local execution.
-
-The local npm cache may be incomplete. An implicit online retry would violate the approved network boundary.
-
-**Control:** resolve an absolute npm executable, strip proxy/registry authority, run every recorded command through macOS `sandbox-exec` with `deny network*`, and use offline npm. `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED` stops execution; no online retry. Any exception requires separate reviewed owner approval. The one explicit GitHub fetch used to acquire the exact source commit occurs before candidate execution and does not grant npm registry authority.
-
-## R5 — SHA256 Ledger Incompleteness Or Symlink Substitution
-
-**State:** SOURCE CONTROL CLOSED; runtime execution pending.
-
-A selected control-file list or path-following read could omit or substitute candidate inputs.
-
-**Control:** Gate 3 consumes `git ls-files -z`, requires the exact complete path set, opens each file no-follow through one handle, requires a regular single-link file, records byte size and SHA256, and binds an aggregate SHA256.
-
-## R6 — Packaging Identity Drift
-
-**State:** OPEN until local execution.
-
-A source build, generated ZIP, extracted app, executable, or `app.asar` can diverge.
-
-**Control:** canonical manifest and source snapshot are bound to the exact source commit. Gate 7 records ZIP, DMG, app, executable, and `app.asar` hashes. macOS `.app` is treated as one atomic artifact; nested Electron Helper.app bundles cannot be counted as separate candidates.
-
-## R7 — Incompatible Embedding Vectors
-
-**State:** SOURCE CONTROL CLOSED; migration behavior must be observed locally.
-
-Vectors from different provider/model/dimension identities could be mixed and produce invalid retrieval.
-
-**Control:** one-model vector invariant; rotate incompatible vectors while preserving durable local text and source notes. The packaged default is deterministic `embedded-local-hash-v1`; Ollama is explicit local-service opt-in only.
-
-## R8 — Grounding Or Canonical Readback Inflation
-
-**State:** SOURCE CONTROL CLOSED; packaged verification pending.
-
-Renderer state or provider output could appear successful without local source/Todo truth.
-
-**Control:** exact local source readback, source previews, latest-completed exchange persistence, main and renderer Todo canonical readbacks, fail-closed WIKI revision/digest truth, and no green state for missing/stale/unknown evidence.
-
-## R9 — Local ASR Source Contract Mistaken For Offline Runtime Proof
-
-**State:** OPEN.
-
-Source and package tests cannot prove microphone permission, audio preprocessing, worker assets, cancellation, transcript quality, or no-egress behavior in the final packaged app.
-
-**Control:** Gate 10/11 candidate execution plus independent Codex real-computer offline verification. No remote fallback is permitted.
-
-## R10 — Electron Test Fixture Or Process Evidence Contamination
-
-**State:** OPEN until candidate execution.
-
-Shared userData, overwritten receipts, reused screenshots, or orphaned Electron processes could blend evidence.
-
-**Control:** producer-scoped userData, exclusive receipts, exact candidate/runtime binding, complete E2E source manifest, zero skipped/unexpected/flaky full result, clean process exit, Gate 12 screenshots, and no evidence-directory reuse.
-
-## R11 — Candidate Performance Reuse Or Synthetic Aggregation
-
-**State:** OPEN.
-
-Historical performance files or repeated challenges could be presented as three independent runs.
-
-**Control:** Gate 11 uses three fixed raw basenames, unique challenge SHA256 values, ordered captured timestamps, exact candidate/executable/`app.asar`/canonical source binding, raw byte hashes, and one strict aggregate.
-
-## R12 — CycloneDX Root Identity Variation
-
-**State:** SOURCE CONTROL CLOSED.
-
-npm 11 may identify the SBOM application root by checkout directory rather than package name.
-
-**Control:** accept only the two reviewed identities `openclaw-workbench@0.1.0` and `copilot-app@0.1.0`; still require application type, exact version, nonempty bom-ref, valid optional purl, nonempty components, dependency array, unique component refs, and no private path/secret leakage.
-
-## R13 — Signing And Notarization
-
-**State:** OPEN / release blocker.
-
-An unsigned diagnostic ZIP/DMG is not a distributable macOS Release.
-
-**Control:** Developer ID identity, hardened runtime/entitlements, notarization, stapling, validation, Gatekeeper installation/launch, and independent Release Gate evidence remain required.
-
-## R14 — Deferred Scope Inflation
+## R2 — Mutable branch or stale worktree could become false authority
 
 **State:** CONTROLLED.
 
-Windows, Tencent deployment, Remote/live, Backup, or 3D graph could be described as Phase 1 delivered functionality.
+A branch can move and a stale worktree can omit files that exist in the approved Git object.
 
-**Control:** Windows real-machine/signing/install/screenshots are Phase 1.1; Tencent/Remote/Backup and 3D graph are post-MVP unless Owner explicitly changes scope. Deferred sources cannot produce current readiness claims.
+**Control:** MiniMax receives `PR_NUMBER` and `EXACT_FINAL_HEAD`, fetches the exact PR object, proves equality, and reads authority through `git cat-file`/`git show`. `scripts/candidate-r30/minimax-authority.mjs` creates a SHA256 receipt without network, worktree, or evidence side effects.
 
-## R15 — Authority Verifier Could Mutate Candidate State
+## R3 — Registry-only cache cannot satisfy native lifecycle scripts
 
-**State:** SOURCE CONTROL CLOSED; final CI pending.
+**State:** REPRODUCED / R45 REPAIR UNDER REVIEW.
 
-A bootstrap helper that fetched dependencies, created worktrees, or created candidate evidence would blur the GitHub-to-MiniMax boundary before exact authority was established.
+The old hydration disabled lifecycle scripts, while candidate Gate 2 enabled them under deny-network. `better-sqlite3` attempted a GitHub prebuild and then Node headers and stopped with `BLOCKED_NPM_OFFLINE_INSTALL_FAILED`.
 
-**Control:** `scripts/candidate-r30/minimax-authority.mjs` uses Git object reads only. Its receipt states `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`; outputs are optional absolute paths created exclusively with owner-only permissions. Tests reject missing commit objects, missing/invalid authority documents, missing runners, relative outputs, and output overwrite.
+**Control:** the new native-toolchain hydrator must prove a full lifecycle install and Electron arm64 native rebuild both online through the bounded proxy and offline under deny-network before a cache receipt is accepted.
+
+## R4 — Native hydration could silently expand network authority
+
+**State:** CONTROLLED BY SOURCE CONTRACT.
+
+Node/Electron lifecycle tooling may contact npm, nodejs.org, Electron distribution hosts, or GitHub release-asset hosts. Unbounded process network would violate the local candidate contract.
+
+**Control:** every hydration child runs under `sandbox-exec` and can connect only to a localhost CONNECT proxy. The proxy permits only the exact source-defined official-host list, records all CONNECT requests, and fails on any denied destination. Candidate processes receive no proxy or network authority.
+
+## R5 — Credentials, mirrors, or global npm config could alter hydration
+
+**State:** CONTROLLED.
+
+Inherited `.npmrc`, registry mirrors, proxy variables, GitHub/npm tokens, Electron mirrors, dist URLs, or node-gyp overrides could change bytes or destinations.
+
+**Control:** hydration uses two distinct exclusive npm config files and strips registry, proxy, token, Electron mirror, dist URL, and native target authority. The receipt binds commands, source, lockfile, host audit, cache bytes, and exact header root.
+
+## R6 — Receipt-valid cache could mutate during candidate install
+
+**State:** CONTROLLED.
+
+An install script could modify the shared cache after receipt validation.
+
+**Control:** Candidate Gate 2 validates the receipt and cache, performs the full lifecycle install under deny-network, then revalidates every cache byte and aggregate SHA256 before continuing. Any mutation blocks.
+
+## R7 — Ignoring lifecycle scripts could create a false green candidate
+
+**State:** REJECTED DESIGN.
+
+Using `--ignore-scripts` in the candidate could let source tests pass while native Electron dependencies remain absent or ABI-incompatible.
+
+**Control:** lifecycle scripts stay enabled. `better-sqlite3` is built from source with receipt-bound headers. Packaged native staging and Electron runtime smoke remain later candidate gates.
+
+## R8 — R28 or historical candidate evidence could be reused
+
+**State:** CONTROLLED.
+
+R28 is `NEVER_RUN / PERMANENTLY_REJECTED`. The old registry-only cache, receipt, failed candidate worktree, evidence, and runtime placeholders cannot define the new source or candidate.
+
+**Control:** every tracked source change requires new worktrees, cache, receipt, evidence, artifact SHA256, runtime ID, screenshots, performance records, and manifests.
+
+## R9 — Native cache receipt may not match exact source or package lock
+
+**State:** CONTROLLED.
+
+Package versions or lifecycle sets can drift while cache paths remain the same.
+
+**Control:** receipt validation recomputes source/lock identity, exact `hasInstallScript` package set, Electron version, header root, cache file count/bytes/aggregate SHA256, and offline proof fields.
+
+## R10 — Electron runtime or product continuity may still fail after Gate 2
+
+**State:** OPEN.
+
+Passing Gate 2 only unlocks Gates 3–12. Packaged Electron `113/113`, full quit/relaunch, grounded source continuity, Todo discoverability/editing, local ASR, performance, screenshots, and process termination remain unproven.
+
+**Control:** MiniMax must stop at the first later blocker. Codex independently operates the same source/artifact/runtime identity. Human Owner Gate remains blocked until candidate-bound P0=0.
+
+## R11 — Signing and notarization remain unresolved
+
+**State:** OPEN RELEASE RISK.
+
+The current authorized local result is at most an unsigned diagnostic candidate.
+
+**Control:** Developer ID signing, Apple notarization, stapling, validation, Gatekeeper evidence, and Owner release decision remain separate gates. No Gate 2 work modifies credentials or signing configuration.
+
+## R12 — Candidate performance evidence may be incomplete or unbound
+
+**State:** OPEN UNTIL GATE 11.
+
+One benchmark or a run against a different artifact cannot prove performance.
+
+**Control:** Gate 11 requires three distinct candidate-bound runs and one aggregate tied to the exact source, artifact, runtime, and test-data identity. Gate 12 hashes the final evidence.
+
+## R13 — SBOM or SHA256 evidence could omit controlling inputs
+
+**State:** CONTROLLED BY SOURCE GATES 3, 5, AND 12.
+
+**Control:** Gate 3 hashes every tracked regular file, Gate 5 validates the production CycloneDX SBOM, and Gate 12 binds source, native cache, artifacts, runtime, screenshots, performance, and terminal state.

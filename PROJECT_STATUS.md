@@ -2,162 +2,117 @@
 
 ## Verdict
 
-`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`
+`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-Draft PR #14 (`agent/r31-source-completion`) passed all 17 source-gate steps at
-`e91b37618638da0b2ac864c368cde232079e3bee` in run `30689574192` / job
-`91341771876`. The first exact-SHA candidate attempt then stopped before
-candidate creation because npm 11.8.0 rejected the hydrator's duplicate
-`/dev/null` user/global config paths. R33 repaired that isolation contract.
-PR #16 run `30691755888` then passed every source step through core coverage
-and `1106/1107` desktop critical tests, but exposed one pre-existing async
-KnowledgeGraph harness race. R34 changes only that test assertion; its named
-test is `5/5 PASS` and the file is `17/17 PASS`. GitHub run `30692711892` / job
-`91350214409` passed all 17 source-gate steps at
-`5d4e6a64de9bcf606245b7336990608afbb913aa`. No
-current candidate, artifact SHA256, runtime ID, packaged Electron result, or
-Human Owner Gate exists.
+The macOS MVP remote source is complete enough for another exact-SHA local candidate attempt, but no current candidate, artifact SHA-256, runtime ID, packaged Electron result, independent Codex acceptance, or Human Owner Gate exists.
 
-## R33 Takeover
-
-- Current objective: land the R33 npm isolation repair plus the R34 test-only
-  async harness fix into PR #14, pass the exact merged head gate, then build a
-  reproducible unsigned macOS candidate.
-- Completed: R32 date repair, PR #15 clean CI and merge, PR #14 clean CI, exact
-  candidate preflight, and fail-closed reproduction of the npm 11.8.0 blocker.
-- In progress: this truth-only status record must pass the same source gate,
-  then PR #16 may merge into PR #14.
-- Next: one fresh bounded dependency hydration, twelve-gate candidate, real
-  Electron journeys, and three verify-fix rounds.
-- Risk: reused local dependencies cannot prove tests TSC or phase1-release;
-  those results remain NOT_ACCEPTED until clean CI. Apple signing/notary is
-  owner-deferred post-MVP, while older v6.2 release wording still lists it as a
-  release gate; do not silently resolve that conflict.
-- Latest important change: the KnowledgeGraph source-removal test now waits for
-  the graph harness to contain all 100 nodes before interaction assertions;
-  production code and coverage thresholds are unchanged.
-- Branch: `codex/r33-npm-config-isolation`.
-- Latest clean source/test head: `5d4e6a64de9bcf606245b7336990608afbb913aa`.
-
-## Authority
-
-The owner-approved baseline remains `goal.md`, `plan.md`, `rules.md`, and `delivery.md` v6.2. `AGENTS.md` and `docs/DEVELOPMENT_WORKFLOW.md` define the GitHub → MiniMax Code → Codex role boundary. Root `PROJECT_STATE.yaml`, this file, `TODO.md`, `DECISIONS.md`, and `CHANGELOG.md` are current truth. The six `docs/*` handoff files are mirrors and cannot override root truth. The complete pre-R30 detail remains byte-preserved under `docs/history/`.
-
-## Source Chain
+## Current source chain
 
 - Repository: `zhouzengrui369-commits/copilot-app`
-- Original takeover: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`
-- Original parent PR: #12
-- Candidate-runner parent: `agent/r30-github-bound-candidate-runner`, PR #13
-- Active branch: `agent/r31-source-completion`
-- Active Draft PR: #14
-- Local implementation branch: `codex/r33-npm-config-isolation`
-- Current PR HEAD before R33: `e91b37618638da0b2ac864c368cde232079e3bee`
-- Final identity rule: use the externally reported final 40-character PR #14 HEAD after the last tracked commit passes all 17 source-gate steps. Tracked files do not self-embed their own containing commit.
+- Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
+- Original product takeover: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`
+- Consolidated remote MVP source: `chatgpt/mvp-source-finalization@74454d21910f0c01e0b9d4f8117b4394defe3228`
+- Source gate: run `30784565586`, all 17 steps PASS
+- Active repair branch: `chatgpt/gate2-native-cache-hydration`
+- Exact repair deployment SHA: externally supplied only after the final source gate; tracked files do not self-embed their containing commit.
 
-## Closed Deployment-Authority Defects
+The exact Git commit object, not a branch tip or stale worktree, is the only deployment authority.
 
-MiniMax correctly stopped before candidate creation when old worktrees lacked the authority document and again when the exact-object verifier required a contiguous `git worktree add --detach` marker while the real document used `git -C "$REPO" worktree add --detach`.
+## Source checkpoint
 
-The source now reads authority from the exact Git commit object, validates both detached-worktree command forms semantically, requires `--detach`, validates the real versioned authority document, hashes it, and creates no network/worktree/evidence state during bootstrap.
+The consolidated R31/R44 product source contains:
 
-## Gate 2 Cache Incident And Source Resolution
-
-The first local run against `4e46dad574804b38b2a10b05f70d1aa2b551c64b` passed authority bootstrap, source contracts, and dry-run, then correctly stopped at Gate 2:
-
-```text
-BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
-OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS
-```
-
-The failed worktree and evidence are `REFERENCE_ONLY` and may never be reused:
-
-```text
-/Users/njx/copilot-r31-4e46dad57480-20260731T140551Z
-/Users/njx/copilot-evidence/copilot-r30-4e46dad574804b38b2a10b05f70d1aa2b551c64b-20260731T140551Z
-```
-
-The GitHub source now provides `scripts/candidate-r30/npm-cache-hydrate.mjs` and its RED→GREEN tests. The bounded recovery contract is:
-
-1. Receive the exact owner token `OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS`.
-2. Use a new clean detached hydration worktree at the final exact commit.
-3. Use a new isolated cache and a new exclusive receipt outside the repository.
-4. Validate `package-lock.json` version, SHA256, and every network-resolved origin.
-5. Reject non-HTTPS, credential-bearing, GitHub, Git, SSH, or any non-reviewed origin.
-6. Strip inherited proxy, registry, token, and npm user/global config authority.
-7. Disable all lifecycle scripts during hydration.
-8. Run the npm child under `sandbox-exec`, where it can connect only to a localhost CONNECT proxy.
-9. Permit the parent proxy to connect only to `registry.npmjs.org:443`; record every CONNECT request.
-10. Run a second `npm ci --ignore-scripts --offline` under `(deny network*)`.
-11. Hash every regular cache file and bind the receipt to exact source commit, lock SHA256, cache path/aggregate SHA256, npm identity, commands, logs, proxy audit, and offline probe.
-12. Create a separate clean candidate worktree and evidence directory.
-13. Pass paired `--npm-cache-dir` and `--npm-cache-receipt` arguments to the candidate runner.
-14. Revalidate receipt/source/lock/cache bytes before Gate 2.
-15. Keep candidate Gate 2 as `npm ci --offline` under `(deny network*)`, with no automatic online fallback.
-
-If the approved cache is incomplete, the candidate stops with `BLOCKED_NPM_APPROVED_CACHE_INCOMPLETE`; it does not ask for or perform another automatic network retry.
-
-## GitHub Source Checkpoint
-
-R31 remote source work and the R32 date-stability repair passed the complete
-source gate. R33/R34 are candidate-bootstrap and test-isolation repairs only;
-their clean GitHub gate is mandatory before any new exact candidate SHA is
-frozen. Local use of a sibling `node_modules` symlink is focused evidence only:
-the app-local Electron guard correctly rejected it, so it is not a full gate.
-
-- embedded-local deterministic production embeddings with no external service;
-- explicit Ollama opt-in only;
-- single-model vector rotation preserving durable local text;
-- fail-closed Ask, Todo, WIKI, reversible Trash, local-ASR, IPC/preload, renderer, and native-binding contracts;
-- the complete Node 24 macOS source gate;
-- desktop Phase 1 checkpoint `1107/1107`;
-- strict global and per-file critical coverage, including `local-knowledge-service.ts` branches at 90.00%;
+- local-first notes, KB, WIKI, KG, RAG, Todo, schedule, and persistence boundaries;
+- embedded-local production embeddings and explicit Ollama compatibility;
+- grounded Ask answers with verifiable local sources;
+- Ask → source reader → same-exchange return continuity;
+- canonical Todo create/list/readback, source links, All/Unscheduled discovery, editing, and focused navigation;
+- app-embedded local-ASR source and package contracts;
+- twelve fail-closed candidate gates;
+- desktop Phase 1 source suite `1107/1107`;
+- strict global and per-file critical coverage;
 - production CycloneDX SBOM;
 - exact Electron list-only discovery `113 tests in 9 files`;
-- clean tracked source.
+- clean tracked and untracked source.
 
-These are source-development results, not packaged runtime or release evidence.
+These are source results, not Electron runtime proof.
 
-## Twelve-Gate Local Candidate Contract
+## First exact MVP candidate attempt
 
-1. Exact source identity and clean preimage.
-2. Receipt-bound isolated cache accepted only after exact validation; candidate install remains deny-network/offline.
-3. Complete SHA256 ledger for every Git-tracked regular file plus aggregate digest.
-4. Candidate source contracts and ordered LLM → KB → KG → RAG build.
-5. Checks, unit/integration tests, strict global/critical coverage, desktop build, Phase 1 suite, and CycloneDX SBOM.
-6. Canonical unsigned macOS arm64 ZIP/DMG builder and independent authority wrapper.
-7. Canonical source snapshot and ZIP/DMG/app/executable/`app.asar` identity.
-8. Focused packaged Electron `2/2`.
-9. Exact `113 tests in 9 files` discovery and complete E2E source manifest.
-10. Full packaged Electron `113/113`, zero skipped/unexpected/flaky, clean process termination.
-11. Three distinct candidate-bound `r31-v1` performance runs and aggregate.
-12. Final manifest, SBOM, commands, screenshots, identities, runtime ID, performance evidence, and terminal state.
+MiniMax Code executed the exact frozen source `74454d21910f0c01e0b9d4f8117b4394defe3228` under the approved contract.
 
-A successful local run remains an **unsigned diagnostic candidate**.
+Completed before the blocker:
 
-## Current Role Boundary
+- exact PR fetch, SHA binding, exact-object authority, and new-path checks PASS;
+- clean hydration worktree and `34/34` focused cache/runner contracts PASS;
+- one registry-only cache hydration PASS: 5,388 files, approximately 464 MiB;
+- online npm hydration and deny-network `--ignore-scripts` offline probe PASS;
+- clean candidate worktree and all stale-input checks PASS;
+- complete candidate source contracts `68/68` PASS;
+- dry-run PASS with `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`;
+- one candidate execution started.
 
-1. Codex is parent PM, writes bounded contracts, reviews exact diffs/tests, and
-   owns final real-computer acceptance.
-2. MiniMax Code CLI is the primary bounded implementation worker. It may edit
-   only an exact task allowlist and cannot use its own self-test as acceptance.
-3. GitHub commits/PRs remain durable source truth. ChatGPT may contribute by
-   PR, but is no longer the sole source-authoring route.
+The candidate stopped at Gate 2 with:
 
-## Remaining Blocks
+```text
+BLOCKED_NPM_OFFLINE_INSTALL_FAILED
+```
 
-- Final 17-step source gate on the exact deployment SHA.
-- Owner-authorized local cache hydration receipt.
-- Local twelve-gate candidate and complete evidence package.
-- Independent Codex real-computer acceptance.
-- Candidate-bound three verify-fix rounds.
-- Real packaged offline local-ASR chain.
-- Developer ID signing, Apple notarization, stapling, validation, Gatekeeper evidence, and Human Owner Gate.
+No source changes were made by MiniMax. No package, Electron candidate, artifact identity, runtime ID, screenshot, performance receipt, signing, notarization, Release, or Human Owner Gate was produced.
 
-## Next Single Action
+## Root cause
 
-Commit and push R33, require the complete clean GitHub source gate, merge it
-into PR #14, and freeze the resulting exact SHA. Then MiniMax hydrates one new
-cache in a fresh isolated worktree and executes the candidate runner once in a
-separate detached worktree. Codex reviews the receipt and operates the exact
-packaged candidate on the real Mac.
+The prior hydration intentionally ran `npm ci --ignore-scripts`, while the candidate correctly ran full lifecycle `npm ci --offline` under `(deny network*)`.
+
+`better-sqlite3` then attempted its install lifecycle:
+
+1. prebuilt binary acquisition from GitHub;
+2. fallback node-gyp header acquisition from nodejs.org.
+
+Both network attempts were correctly denied. The old registry-only cache proved npm tarball availability but did not prove lifecycle and native-toolchain closure. Adding `--ignore-scripts` to the candidate would hide the native runtime requirement and is rejected. Allowing candidate egress is also rejected.
+
+## R45 Gate 2 repair
+
+The active repair introduces a separate bounded native-toolchain hydration:
+
+- new exact owner token: `OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION`;
+- new hydrator: `scripts/candidate-r30/npm-native-cache-hydrate.mjs`;
+- new source-defined official-host allowlist;
+- localhost CONNECT proxy only;
+- inherited npm config, registry, proxy, credentials, Electron mirrors, and native overrides stripped;
+- exact package-lock `hasInstallScript` set locked;
+- lifecycle scripts enabled during hydration and candidate install;
+- `better-sqlite3` built from source;
+- Node and Electron headers stored under the new receipt-bound cache;
+- online Electron 38 arm64 native rebuild required;
+- full lifecycle `npm ci --offline` proof under deny-network required;
+- offline Electron arm64 native rebuild proof required;
+- Electron executable cache proof required;
+- all cache bytes and the aggregate cache identity hashed;
+- candidate install revalidates the receipt, uses no network, and proves the cache did not mutate.
+
+The old hydration cache, receipt, worktrees, evidence, and failed candidate are `FORBIDDEN_REFERENCE_ONLY` and cannot be reused after this source change.
+
+## Role boundary
+
+1. ChatGPT develops the bounded GitHub repair and Draft PR only.
+2. MiniMax Code may execute only the exact externally frozen repair SHA in new detached worktrees and may not edit source locally.
+3. Codex may begin independent real Electron acceptance only after a complete source/artifact/runtime-bound MiniMax evidence package exists.
+4. MiniMax self-test, CI, browser fixtures, package success, or PR merge cannot substitute for Codex acceptance.
+
+## Remaining gates
+
+- Complete `copilot-source-gate` on the exact R45 fix head.
+- Obtain explicit Owner authority for one bounded native-toolchain hydration.
+- Run one new hydration using new paths and a new receipt.
+- Run one new candidate exactly once.
+- Pass Gate 2 full lifecycle install under deny-network.
+- Pass Gates 3–12, including packaged Electron `113/113`, three performance runs, screenshots, identities, and clean terminal state.
+- Independently verify the exact candidate through Codex on the real Mac.
+- Complete candidate-bound verify-fix rounds.
+- Prove real packaged offline local ASR.
+- Complete signing, notarization, stapling, Gatekeeper, and Human Owner Gate unless Owner explicitly revises the v6.2 release boundary.
+
+## Next single action
+
+Pass the complete source gate on the exact R45 repair head. Then MiniMax Code may perform one new explicitly authorized bounded native-toolchain hydration and one new candidate attempt using entirely new cache, receipt, worktree, evidence, artifact, and runtime identities.

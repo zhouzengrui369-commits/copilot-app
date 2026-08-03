@@ -1,6 +1,6 @@
-schema_version: 4
+schema_version: 5
 project: copilot-app
-updated_at: "2026-08-01"
+updated_at: "2026-08-03"
 authority:
   baseline:
     - AGENTS.md
@@ -34,153 +34,130 @@ status:
   experience: EXPERIENCE_NOT_READY
   github_source: SOURCE_COMPLETE
   local_candidate: NOT_RUN
+  runtime_proof: NOT_RUNTIME_PROOF
 source:
   repository: zhouzengrui369-commits/copilot-app
+  main_observed: e91cafaa22ea100428b404b371aa35dce535c5bf
   original_takeover_branch: codex/p0-owner-gate
   original_takeover_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
-  main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
-  original_parent_pr: 12
-  runner_parent_branch: agent/r30-github-bound-candidate-runner
-  runner_parent_pr: 13
-  active_branch: agent/r31-source-completion
-  active_pr: 14
-  current_pr_head_under_repair: 5d4e6a64de9bcf606245b7336990608afbb913aa
-  implementation_branch: codex/r33-npm-config-isolation
-  implementation_pr: 16
-  implementation_base: e91b37618638da0b2ac864c368cde232079e3bee
-  exact_final_commit: "Externally supplied final 40-hex PR #14 HEAD after the final source gate; tracked documents do not self-embed their own commit"
-  final_commit_binding: "MiniMax fetches PR #14 head, proves equality with the supplied SHA, reads all authority from that exact Git object, and the runner verifies equality with git HEAD"
+  product_source_branch: chatgpt/mvp-source-finalization
+  product_source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
+  product_source_pr: 20
+  active_fix_branch: chatgpt/gate2-native-cache-hydration
+  active_fix_pr: "externally assigned after branch publication"
+  exact_final_commit: "externally supplied final 40-hex active-fix PR HEAD after the final source gate; tracked documents do not self-embed their own commit"
+  final_commit_binding: "MiniMax fetches the open active-fix PR head, proves equality with the supplied SHA, reads authority from that exact Git object, and the runner verifies equality with git HEAD"
 workflow:
   chatgpt:
-    role: optional bounded GitHub branch/PR contributor
+    role: GitHub remote source developer and task-contract author
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: primary bounded implementation worker for source, tests, build, package, and evidence
-    source_change_requires_task_allowlist: true
-    stale_worktree_authority_lookup: NON_AUTHORITATIVE
-  codex:
-    role: parent PM, task-contract author, delivery owner, focused diff/test reviewer, and real-computer acceptance owner
+    role: exact-SHA clean-worktree hydrator, candidate executor, build/package worker, and technical evidence producer
+    source_modification_during_candidate: FORBIDDEN
     worker_self_test_is_acceptance: false
+  codex:
+    role: independent real-computer Electron product-experience and runtime acceptance owner
+    source_repair_during_acceptance: FORBIDDEN
 r28:
   status: NEVER_RUN_PERMANENTLY_REJECTED
   executable: false
   reusable: false
-  blockers:
-    - "Gate 3 malformed/incomplete SHA256 ledger"
-    - "Gate 2 unresolved fail-closed network authority"
-    - "Gate 9 did not assert exact 113 tests in 9 files"
 r30:
   role: GITHUB_BOUND_CANDIDATE_RUNNER
-  branch: agent/r30-github-bound-candidate-runner
-  local_execution: NOT_RUN
-  electron_candidate: NOT_RUN
   runner_path: scripts/candidate-r30/run-candidate.mjs
   candidate_id: "copilot-r30-<full-source-commit>"
-  evidence_directory: "absolute, outside repository, must not exist"
+  evidence_directory: "new absolute directory outside repository"
+  gate_count: 12
 r31:
   role: PHASE1_SOURCE_COMPLETION
-  branch: agent/r31-source-completion
-  pull_request: 14
-  status: SOURCE_GATE_PASS_CANDIDATE_BLOCKED
-  local_execution: NOT_RUN
-  electron_candidate: NOT_RUN
+  status: SOURCE_COMPLETE
+  product_source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
+  source_gate:
+    workflow: copilot-source-gate
+    run: 30784565586
+    result: PASS_ALL_17_STEPS
+    desktop_phase1_tests: "1107/1107"
+    electron_list_only_discovery: "exact 113 tests in 9 files"
+    strict_global_coverage: PASS
+    strict_critical_per_file_coverage: PASS
+    cyclonedx_sbom: PASS
+    tracked_source_unchanged: PASS
   source_changes:
     embedded_rag_default: embedded-local-hash-v1
     ollama: explicit_opt_in_local_service_only
     vector_model_invariant: "one embedding model at a time; incompatible vectors rotate while durable local text remains"
-    local_asr: "source and package contracts retained; real offline packaged runtime remains an acceptance gate"
+    local_asr: "source and package contracts retained; real packaged offline runtime remains an acceptance gate"
     candidate_runner: "12 fail-closed gates"
-    canonical_arm64_authority: "selected arm64 ZIP/DMG and identity reports are independently revalidated; legacy x64/Windows blockers are quarantined only after arm64 authority passes"
-    deployment_authority_bootstrap: "read and hash docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object; accept direct and repository-scoped detached-worktree commands while requiring --detach"
-    npm_cache_hydration: "one owner-approved exact-commit operation through scripts/candidate-r30/npm-cache-hydrate.mjs; lifecycle scripts disabled; npm child restricted to a localhost CONNECT proxy; proxy permits only registry.npmjs.org:443; deny-network offline probe required"
-  deployment_authority:
-    document: docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md
-    verifier: scripts/candidate-r30/minimax-authority.mjs
-    verifier_tests: scripts/candidate-r30/minimax-authority.test.mjs
-    cache_hydrator: scripts/candidate-r30/npm-cache-hydrate.mjs
-    cache_hydrator_tests: scripts/candidate-r30/npm-cache-hydrate.test.mjs
-    owner_cache_authority: OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS
-    source: git-object-at-exact-commit
-    stale_worktree_lookup_authoritative: false
-    network_used_by_authority_verifier: false
-    worktree_created_by_authority_verifier: false
-    evidence_created_by_authority_verifier: false
-  npm_cache_incident:
-    prior_source_commit: 4e46dad574804b38b2a10b05f70d1aa2b551c64b
-    blocker: BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED
-    failed_gate: 2
-    old_worktree: "/Users/njx/copilot-r31-4e46dad57480-20260731T140551Z"
-    old_evidence: "/Users/njx/copilot-evidence/copilot-r30-4e46dad574804b38b2a10b05f70d1aa2b551c64b-20260731T140551Z"
-    reuse: FORBIDDEN_REFERENCE_ONLY
-    resolution:
-      - "new clean detached hydration worktree"
-      - "new isolated cache and exclusive receipt"
-      - "exact owner authority token"
-      - "review package-lock origins before egress"
-      - "strip inherited proxies, registry, tokens, and npm user/global config"
-      - "disable lifecycle scripts"
-      - "sandbox npm child to localhost proxy only"
-      - "proxy allow registry.npmjs.org:443 only"
-      - "deny-network offline probe"
-      - "bind receipt to source commit, lock SHA256, cache aggregate SHA256, npm identity, commands, logs, and proxy audit"
-      - "new separate candidate worktree and evidence directory"
-      - "candidate Gate 2 remains npm ci --offline under deny network"
-  github_validation:
-    runtime: Node_24_macOS
-    workflow: copilot-source-gate
-    workflow_steps: 17
-    latest_run: 30689574192
-    latest_job: 91341771876
-    latest_result: "PASS: all 17 source-gate steps on e91b37618638da0b2ac864c368cde232079e3bee"
-    phase1_release_tests: PASS
-    strict_global_coverage: PASS
-    strict_critical_per_file_coverage: "PASS; every critical file >= 90%, local-knowledge-service branches = 90.00%"
-    cyclonedx_sbom: PASS
-    electron_list_only_discovery: "exact 113 tests in 9 files"
-    tracked_source_unchanged: PASS
-    final_head: "external after final CI"
-  gates:
-    gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-    gate_2: "candidate always deny-network/offline; optional exact receipt-bound isolated cache; no automatic registry fallback"
-    gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
-    gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
-    gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
-    gate_6: "arm64-authority wrapper requires exact canonical unsigned macOS arm64 ZIP/DMG, release identity, artifact identity reports and hashes"
-    gate_7: "canonical source snapshot and ZIP/DMG/app/executable/app.asar identities"
-    gate_8: "focused packaged Electron 2/2"
-    gate_9: "exact discovery 113 tests in 9 files and complete E2E source manifest"
-    gate_10: "full packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
-    gate_11: "three distinct candidate-bound r31-v1 performance runs and aggregate"
-    gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
-r32:
-  role: PR14_DATE_STABILITY_AND_TAKEOVER
-  implementation_branch: codex/r32-ci-date-stability
-  base_head: c3bb0ecf64ab841707b954dfa05728fd44652a79
-  local_focused_tests: "47/47 PASS; direct Codex rerun exit 0"
-  local_tests_tsc: "NOT_ACCEPTED: reused dependencies expose incompatible Vite/Vitest type identities"
-  local_phase1_release: "NOT_ACCEPTED: symlinked dependencies violate the app-local Electron guard"
-  current_candidate: BLOCKED_BEFORE_CREATION
+    deployment_authority_bootstrap: "read and hash docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object; generic PR number and externally supplied exact head"
+  local_execution: NOT_RUN
+  electron_candidate: NOT_RUN
+r44_first_mvp_candidate_attempt:
+  source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
+  setup_steps_1_to_9: PASS
+  registry_only_hydration:
+    status: PASS
+    contract_tests: "34/34"
+    cache_files: 5388
+    cache_bytes: 486539264
+    online_hydration: PASS
+    ignore_scripts_offline_probe: PASS
+  candidate_source_contracts: "68/68 PASS"
+  dry_run: "PASS / PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE"
+  candidate_execution_count: 1
+  failed_gate: 2
+  blocker: BLOCKED_NPM_OFFLINE_INSTALL_FAILED
+  root_cause: "registry-only hydration disabled lifecycle scripts; candidate enabled lifecycle scripts under deny-network, so better-sqlite3 prebuild and node-gyp header acquisition could not complete"
+  source_changes_by_minimax: NONE
+  candidate_established: false
   artifact_sha256: null
   runtime_id: null
-  blocker: "BLOCKED_NPM_CACHE_HYDRATION_EXECUTABLE: npm 11.8.0 rejects identical NPM_CONFIG_USERCONFIG and NPM_CONFIG_GLOBALCONFIG paths"
-  next_proof: "land R33 npm config isolation repair through clean GitHub source gate"
-r33:
-  role: NPM_CONFIG_ISOLATION_REPAIR
-  branch: codex/r33-npm-config-isolation
-  base_head: e91b37618638da0b2ac864c368cde232079e3bee
-  local_focused_tests: "29/29 PASS; git diff --check PASS"
-  source_change: "replace duplicate /dev/null npm user/global config authority with two distinct exclusive empty config files"
-  github_ci: "RUN_30691755888_FAILED_ONLY_KG_ASYNC_HARNESS_ASSERTION_AFTER_1106_TESTS_PASSED"
-  candidate_execution: NOT_RUN
-r34:
-  role: KNOWLEDGE_GRAPH_TEST_ISOLATION_REPAIR
-  branch: codex/r33-npm-config-isolation
-  predecessor_head: de9cde1b11e554b14ef96134c119735eeabbebcc
-  source_change: "test-only waitFor around the loaded graph harness state; no production or threshold change"
-  focused_result: "5/5 named test PASS; KnowledgeGraph.test.tsx 17/17 PASS"
-  full_local_critical_result: "NOT_ACCEPTED: 1106/1107 under a sibling node_modules symlink; app-local Electron guard correctly failed"
-  github_ci: "PASS: run 30692711892 job 91350214409 completed all 17 source-gate steps on 5d4e6a64de9bcf606245b7336990608afbb913aa"
-  candidate_execution: NOT_RUN
+  old_cache_and_receipts: FORBIDDEN_REFERENCE_ONLY
+r45_gate2_native_cache_repair:
+  role: BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+  branch: chatgpt/gate2-native-cache-hydration
+  status: SOURCE_UNDER_REVIEW
+  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+  hydrator: scripts/candidate-r30/npm-native-cache-hydrate.mjs
+  policy: scripts/candidate-r30/native-cache-policy.mjs
+  runtime: scripts/candidate-r30/native-cache-runtime.mjs
+  candidate_network_authority: deny-network
+  hydration_network_authority:
+    child: localhost_connect_proxy_only
+    destinations: exact_source_allowlist_official_npm_node_electron_github_release_hosts
+    credentials_and_mirrors_inherited: false
+    automatic_retry: false
+  lifecycle_contract:
+    reviewed_package_set: exact_package_lock_hasInstallScript_set
+    hydration_install_scripts: enabled
+    candidate_install_scripts: enabled
+    native_build_mode: build-from-source-with-receipt-bound-headers
+    online_electron_arm64_rebuild: required
+    offline_full_install_proof: required
+    offline_electron_arm64_rebuild_proof: required
+  receipt_contract:
+    source_commit: required
+    lock_sha256: required
+    cache_aggregate_sha256: required
+    connect_audit: required
+    electron_nodedir: required
+    cache_immutable_after_candidate_install: required
+    candidate_created_by_hydrator: false
+    evidence_created_by_hydrator: false
+  local_execution: NOT_RUN
+  unlock: "complete GitHub source gate on exact final fix SHA, then one new explicit owner-authorized hydration and one new candidate attempt"
+gates:
+  gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
+  gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; cache immutable after install; no automatic network fallback"
+  gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
+  gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
+  gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
+  gate_6: "canonical unsigned macOS arm64 ZIP/DMG authority"
+  gate_7: "source snapshot and ZIP/DMG/app/executable/app.asar identities"
+  gate_8: "focused packaged Electron 2/2"
+  gate_9: "exact discovery 113 tests in 9 files and complete E2E source manifest"
+  gate_10: "full packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
+  gate_11: "three distinct candidate-bound performance runs and aggregate"
+  gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
 candidate:
   established: false
   candidate_id: null
@@ -193,7 +170,7 @@ candidate:
   screenshots: null
   process_terminal_state: null
 independent_acceptance:
-  minimax_cache_hydration_receipt: NOT_RECEIVED
+  minimax_native_cache_receipt: NOT_RECEIVED
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
   codex_release_gate: NOT_RUN
@@ -213,5 +190,5 @@ deferred_scope:
   multi_user_enterprise_security: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Commit and push the R33 npm config isolation repair, require clean GitHub source-gate PASS, merge it into PR #14, freeze the new exact SHA, then run one fresh hydration and candidate attempt under the bounded contracts."
+next_single_action: "Pass the complete source gate on the exact R45 fix head, obtain explicit bounded native-toolchain hydration authority, and run one new hydration plus one new candidate attempt without reusing prior cache, receipt, worktree, evidence, artifact, or runtime identity."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE"

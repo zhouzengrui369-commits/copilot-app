@@ -1,275 +1,395 @@
-# Copilot App Architecture — R31 Current Mirror
+# Copilot App Architecture — R45 Current Mirror
 
 > Authority: this document is a maintained architecture mirror. Root `goal.md`, `plan.md`, `rules.md`, `delivery.md`, `PROJECT_STATE.yaml`, and `PROJECT_STATUS.md` override it. The complete pre-R30 detailed architecture remains byte-preserved at [`history/ARCHITECTURE_PRE_R30.md`](history/ARCHITECTURE_PRE_R30.md).
 >
-> Status: `BLOCKED / MVP_NOT_COMPLETE`. PR #14 is under date-stability repair;
-> no local exact-commit candidate, independent Codex acceptance, or Human Owner
-> Gate exists.
+> Status: `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`. The remote macOS MVP source is complete enough for another candidate attempt, but no current candidate, artifact identity, runtime ID, independent Electron acceptance, signing, notarization, or Human Owner Gate exists.
 
-## 1. Architectural Principles
+## 1. Local-First Product Authority
 
-### 1.1 Local-First Product Authority
+Copilot App is a single-user macOS Electron desktop product. Its core truth remains on the Owner computer:
 
-The Electron desktop application is the product and data authority. Notes, bodies, metadata, WIKI projections, knowledge graph rows, RAG text/vector indexes, Todo records, schedules, Trash state, and the latest completed grounded Ask exchange remain local. Optional cloud or local-service adapters may assist computation, but they cannot become the authority for a local mutation.
+```text
+local notes / Markdown
+        ↓
+local KB index + SQLite metadata
+        ↓
+local WIKI / MOC / KG projections
+        ↓
+local RAG retrieval and source receipts
+        ↓
+Ask conversation
+        ↓
+Todo and schedule application
+```
 
-A local write is successful only when the local durable owner accepts and canonically reads it back. Cloud backup enqueueing, provider response, renderer state, and optimistic UI cannot replace that readback.
+Notes, KB, WIKI, MOC, KG, RAG, Todo, and schedule records are not delegated to cloud data truth. Cloud providers may be optional stateless model boundaries, but they cannot become the canonical store for user knowledge or work state.
 
-### 1.2 Fail-Closed Truth
+The architecture does not add a Python resident service, a second database, a second knowledge base, or a second vector store. Existing TypeScript/Electron boundaries and local stores remain authoritative.
 
-The product uses explicit truth states rather than optimistic badges:
+## 2. Product Process Boundaries
 
-- WIKI: queued, running, current/ready, failed, not-ready;
-- Ask sources: checking, local-present, missing, unavailable, unknown;
-- deployment authority: not-fetched, missing, invalid, exact-object-pass;
-- candidate: not-run, blocked, complete unsigned diagnostic candidate;
-- Release: blocked until signed/notarized/accepted;
-- optional Remote/Backup: disabled or unavailable unless explicitly enabled and proven.
-
-Missing, stale, malformed, ambiguous, provider-unavailable, or identity-mismatched evidence cannot become green success.
-
-### 1.3 Role Separation
-
-- GitHub commits/PRs are durable source truth; ChatGPT may contribute through
-  bounded PRs.
-- MiniMax Code CLI is the primary bounded implementation and exact-commit local
-  execution worker.
-- Codex is parent PM, diff/test reviewer, and real-computer acceptance owner.
-
-This division is an architectural evidence boundary, not merely a staffing
-convention. MiniMax self-test is not Codex acceptance; source CI is not runtime
-proof; Codex's focused review does not replace independent product-experience
-retest or the Human Owner Gate.
-
-## 2. Process and Trust Boundaries
-
-### 2.1 Renderer
-
-The React renderer owns presentation, interaction state, accessible dialogs, and user-controlled drafts. It does not receive arbitrary filesystem paths, database handles, credential material, raw provider errors, Trash metadata, or unrestricted Electron APIs.
-
-Primary product workspaces include:
-
-- Today/Schedule: date-scoped Todo and notes, All/Unscheduled routes, quick capture, local voice draft, reminders, canonical Todo editing, source links;
-- Ask: local RAG answer, source truth, previews, copying, latest completed exchange persistence, answer-to-Todo conversion;
-- Knowledge: note/WIKI/KG navigation and grounded local truth;
-- Settings and deferred surfaces: narrow configuration contracts with explicit unavailable/deferred states.
-
-### 2.2 Preload
-
-Preload exposes one narrow `window.copilot` bridge. Each function maps to an allowlisted IPC channel and validated request/receipt shape. Listener wrappers return explicit disposers. Renderer-visible errors use curated stable categories rather than main-process stack traces or private paths.
-
-### 2.3 Main Process
+### Electron main process
 
 The main process owns:
 
-- local storage composition;
-- SQLite native-binding validation for source mode;
-- KB/KG/RAG ports;
-- Todo canonical records;
-- reversible Trash lifecycle;
-- WIKI revision truth;
+- local file and SQLite access;
+- canonical Todo persistence and readback;
+- note and knowledge indexing orchestration;
 - Ask conversation persistence;
-- credentials and settings;
-- local-ASR manager/worker boundary;
-- Electron startup/window/process lifecycle;
-- candidate/runtime evidence producers.
+- local ASR worker lifecycle;
+- secure IPC registration;
+- packaged-resource path selection;
+- candidate runtime identity surfaces.
 
-The main process validates all public paths and payloads. Renderer input cannot select arbitrary system files or impersonate reserved Todo/import namespaces.
+The renderer cannot open arbitrary filesystem or database handles. It communicates through the preload bridge and explicit typed IPC contracts.
 
-## 3. Local Knowledge Pipeline
+### Preload bridge
 
-### 3.1 Note Commit
+Preload exposes a bounded product API for:
 
-A note mutation first commits local note bytes and metadata. The commit receipt reports `LOCAL_SAVED`. Knowledge enrichment is a separate durable lifecycle and cannot retroactively turn a valid local save into a failed local save.
+- notes;
+- knowledge graph;
+- RAG / Ask;
+- Todo and reminders;
+- Ask conversation state;
+- Trash;
+- WIKI truth;
+- local ASR;
+- settings and runtime metadata.
 
-### 3.2 Durable Knowledge Build
+The bridge is not a second truth store. It validates requests and carries structured receipts.
 
-The build sequence is:
+### Renderer
 
-1. local note document read;
-2. exact note revision/digest capture;
-3. KG entity/relation indexing;
-4. digest-bound WIKI projection verification;
-5. RAG text/vector indexing;
-6. durable status update.
+The renderer owns interaction state only. Critical views are:
 
-If the note changes during the build, the result is not current. Startup reconciliation returns abandoned processing rows to pending and schedules work without delaying product startup. A ready badge requires the exact current revision and current digest-bound WIKI projection.
+- Today / Schedule;
+- Knowledge;
+- Ask / Conversations;
+- Settings;
+- local voice capture and editable transcript draft.
 
-### 3.3 WIKI Truth
+Browser prototype adapters are fixture-only and remain labeled `NOT_RUNTIME_PROOF`.
 
-WIKI receipts carry:
+## 3. Fail-Closed Truth
 
-- exact note path;
-- expected content digest;
-- current/latest/stale/failed projections;
-- provider/model/generated-at provenance;
-- current build status for the exact note revision.
+The product uses fail-closed receipts rather than optimistic success language.
 
-The renderer only reports WIKI current when path, expected digest, projection status, projection path, and projection digest all agree.
+### Grounded Ask
 
-## 4. RAG Architecture
+A completed answer is actionable only when:
 
-### 4.1 Embedded-Local Production Default
+1. the terminal answer exists;
+2. the exact source set and source details exist;
+3. each source path resolves to the matching local note;
+4. source state is `LOCAL_PRESENT`;
+5. the completed exchange is persisted;
+6. stale, missing, unknown, unavailable, duplicate, or mismatched sources disable completion actions.
 
-R31 changes the production embedding default to `embedded-local-hash-v1`:
+The renderer displays source reason codes and previews. No source means no green truth state.
 
-- deterministic normalized word and character n-gram features;
-- signed hashing into a fixed vector;
-- default 1024 dimensions;
-- stable model identity `embedded-local-hash-v1:<dimensions>`;
-- stable implementation revision `char-word-ngram-v1`;
-- privacy class `embedded-local`;
-- no HTTP request, child process, external model server, model download, native addon, cloud fallback, or credential.
+### Ask → source → return
 
-This provider supplies retrieval vectors. It does not replace the separately configured answer-generation LLM.
+Before opening a full source reader, the current exchange is persisted. Navigation carries an origin token containing the exact exchange ID and source path. Returning is valid only for the matching exchange. The same question, answer, source set, source truth, and Todo action/receipt must reappear without re-asking.
 
-### 4.2 Explicit Ollama Compatibility
+### Todo truth
 
-Ollama remains supported only when the owner explicitly selects `provider: ollama` or provides Ollama-specific compatibility configuration. It is classified as `local-service`, not as the packaged self-contained default. Its endpoint, model, timeout, response shape, dimensions, and cancellation remain validated.
+A Todo success receipt requires:
 
-### 4.3 Single-Model Vector Scope
+1. `todos.create()` returns a canonical ID;
+2. `todos.list()` returns the same ID;
+3. title, body, status, due date, and source links match;
+4. the matching Ask exchange stores the same Todo receipt;
+5. “查看待办” opens the exact object;
+6. unscheduled objects open in All / Unscheduled;
+7. edit/update returns the same canonical object and is read back again;
+8. full Electron quit and relaunch persistence is proven on the candidate.
 
-The production-facing vector store wraps the existing SQL text/vector store with a single-model invariant:
+If the Todo object exists but the Ask receipt cannot be safely persisted, the UI must not claim complete success. It may report the partial truth explicitly, but it cannot encourage blind duplicate creation.
 
-- zero models: durable text may exist without vectors;
-- one expected model: vectors are valid;
-- a different or mixed model set: all incompatible vectors are removed;
-- text chunks remain durable and searchable by local-text fallback;
-- re-indexing may repopulate vectors under the new model;
-- source note truth is never deleted by vector rotation.
+## 4. Embedded-Local Production Default
 
-The SQL schema version remains independent from the model-scope contract version.
+The production retrieval embedding default is `embedded-local-hash-v1`:
 
-### 4.4 Retrieval and Grounding
+- no HTTP service;
+- no process spawn;
+- no model download;
+- no native addon;
+- no cloud fallback;
+- deterministic local output.
 
-Candidate evidence may include vector, KG entity, KG neighbor, and deterministic local-text signals. Answer source details bind note path, evidence classes, score, chunk identity, exact character range, and bounded excerpt.
+Ollama remains explicit opt-in compatibility for a user-operated local service. It is not silently selected and does not replace durable local text.
 
-The renderer re-reads each returned source through the local notes API. A source is actionable only when its returned path exactly matches the requested path and a local preview can be produced. Todo conversion is enabled only after every source is `LOCAL_PRESENT`, the completed answer still matches the current answer, and the latest exchange is safely persisted.
+## 5. Single-Model Vector Scope
 
-## 5. Todo and Schedule Architecture
+Only one embedding-model vector scope is authoritative at a time. On model rotation:
 
-Todo records are local system notes under a reserved namespace. The structured JSON body contains title/body/due/reminder/status/priority/source links and canonical timestamps. User-facing extended detail—notes and append-only execution logs—is encoded deterministically in the Todo body so main, renderer, and restart share one truth.
+- incompatible vector rows are removed or rotated;
+- durable Markdown/local text remains;
+- deterministic local fallback remains available;
+- re-indexing rebuilds projections from the durable source.
 
-Create/update success requires two readbacks:
+This prevents mixed vector spaces from appearing comparable and keeps source text recoverable.
 
-1. main re-reads and compares the durable Todo record;
-2. renderer lists and compares the returned ID before showing success.
+## 6. WIKI, KG, and RAG Ordering
 
-`due_at_ms=null` is a supported product state. The UI provides All and Unscheduled routes rather than forcing an artificial due date. Calendar selection returns the workspace to day scope. A requested Todo ID selects the correct route, focuses the canonical card, and fails closed if the ID is not present.
+The ordered dependency and runtime chain is:
 
-## 6. Quick Capture and Local ASR
+```text
+LLM client
+→ KB
+→ KG
+→ RAG
+→ desktop product
+```
 
-Text capture is always available. Voice is disclosed explicitly and uses the packaged local-ASR bridge only; there is no silent remote fallback.
+A locally saved note can exist before its WIKI/KG/RAG projection becomes current. The UI distinguishes:
 
-The renderer converts a bounded compressed recording to validated mono PCM16LE, binds byte length/sample count/SHA256/request UUID, and sends it through the narrow preload bridge. The main-process manager validates status, request identity, assets, timing, cancellation, and worker reply. Transcript text enters an editable draft only. The user must confirm before a local note is created.
+- queued;
+- running;
+- current;
+- failed;
+- not-ready.
 
-Source/package contracts do not establish real packaged offline ASR. MiniMax must execute the candidate and Codex must independently verify the actual offline chain.
+A WIKI or KG failure does not erase the saved local note. A successful projection receipt must bind the same note path, revision/content digest, and current build state.
 
-## 7. Reversible Trash
+## 7. Local ASR Boundary
 
-Notes and Todos move through a durable Trash state machine:
+The macOS MVP carries an app-embedded local ASR package contract:
 
-`prepared → cleanup_pending → trashed → restoring → restored`
+- model and runtime resources are bundled in the application source/package contract;
+- voice capture produces an editable draft;
+- the draft is written to local notes only after user confirmation;
+- remote ASR fallback is not silently enabled;
+- real packaged offline execution remains a candidate acceptance gate.
 
-or
+Source/package presence is not the same as successful packaged runtime proof.
 
-`trashed → purging → purged`.
+## 8. Electron Trust
 
-The original local row is removed atomically before asynchronous KG/RAG cleanup. Crash recovery resumes `cleanup_pending` or `restoring` work. Restore rebuilds current indexes before reporting completion. Renderer receipts exclude original filesystem paths, metadata JSON, journal ownership, private content, and internal leases.
+Electron runtime truth requires one exact candidate identity. The accepted candidate must bind:
 
-Backup import rollback is namespace-bound and ownership-marked. It can remove only objects created by its import intent. Missing objects are idempotent, but stale KG/RAG index cleanup still runs for a declared imported note path.
+- exact source commit;
+- source snapshot SHA-256;
+- native-cache receipt SHA-256 and aggregate cache SHA-256;
+- package-lock SHA-256;
+- ZIP and DMG identities;
+- `.app`, main executable, and `app.asar` identities;
+- runtime ID;
+- ecosystem baseline commit;
+- deterministic test-data manifest;
+- command and exit-code log;
+- screenshots and SHA-256;
+- performance receipts;
+- process terminal state.
 
-## 8. Deployment Authority Boundary
+Source-run Electron, dirty/untracked code, a browser fixture, a different artifact, or an unbound screenshot is not candidate truth.
 
-Local execution may begin only after versioned deployment authority is bound to the same exact commit that will become the candidate source.
+## 9. Exact-Object Deployment Authority
 
-The authority tuple is:
+The deployment controller receives two external values:
 
-- source commit: external exact 40-character PR #14 HEAD after final CI;
-- document: `<commit>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`;
-- verifier: `<commit>:scripts/candidate-r30/minimax-authority.mjs`;
-- runner: `<commit>:scripts/candidate-r30/run-candidate.mjs`;
-- receipt identity: document bytes, line count, SHA256, commit, repository and fixed paths.
+```text
+PR_NUMBER
+EXACT_FINAL_HEAD
+```
 
-The bootstrap sequence first performs an explicit GitHub PR-head fetch and equality check. It then uses `git cat-file` and `git show` against the exact object database. The current checkout is not the authority because it may be stale, dirty, or on a different branch.
+MiniMax fetches `refs/pull/${PR_NUMBER}/head`, proves `FETCH_HEAD == EXACT_FINAL_HEAD`, and reads the authority, hydrator, and runner directly from that exact Git object. A stale worktree cannot grant or deny authority.
 
-`minimax-authority.mjs` is deliberately outside candidate-state creation. It:
+The authority bootstrap itself creates no cache, worktree, evidence, or network activity. It emits a SHA-256 receipt with:
 
-- performs no network access;
-- creates no candidate worktree;
-- creates no candidate evidence directory;
-- validates the authority document is complete and contains the reviewed fail-closed markers;
-- confirms the candidate runner exists in the same commit;
-- writes optional authority/receipt outputs only by exclusive owner-only creation;
-- refuses an unavailable commit, missing/invalid document, missing runner, relative output path, or existing output.
+- `executionAuthority=git-object-at-exact-commit`;
+- `networkUsed=false`;
+- `worktreeCreated=false`;
+- `evidenceCreated=false`.
 
-The explicit GitHub fetch does not extend to npm or other registry authority. Candidate Gate 2 remains deny-network/offline-only.
+## 10. Gate 2 — Receipt-Bound Native Toolchain Cache
 
-A recursive filesystem search, a chat-pasted replacement, or a cron file-presence probe cannot authorize candidate execution. A stale worktree that lacks the document does not prove the exact commit lacks it.
+### Incident resolved by R45
 
-## 9. Electron Trust and Candidate Identity
+The first exact PR #20 candidate used a registry-only cache hydrated with lifecycle scripts disabled. Gate 2 then ran a full lifecycle `npm ci --offline` under `(deny network*)`. `better-sqlite3` attempted a prebuilt download and then a node-gyp header download, both correctly denied. The source was safe, but the cache proof was incomplete.
 
-A development test or source-gate result is not candidate identity. Candidate identity begins only when MiniMax Code executes one exact final Git commit from a clean detached worktree after exact-object deployment authority passes.
+The architecture rejects two unsafe shortcuts:
 
-The R30 successor produces identity-bound evidence for:
+- candidate `--ignore-scripts`, because it hides native runtime requirements;
+- candidate network access, because dependency execution must remain offline and reproducible.
 
-- exact source commit and clean status;
-- all-tracked-file SHA256 ledger and aggregate;
-- canonical source snapshot;
-- CycloneDX SBOM;
-- unsigned macOS arm64 ZIP and DMG;
-- extracted `.app`, executable, and `app.asar` hashes;
-- focused and full packaged Electron evidence;
-- runtime ID and terminal process state;
-- complete E2E source manifest;
-- three distinct performance runs and aggregate;
-- screenshots and final manifest.
+### Hydration phase
 
-macOS `.app` bundles are atomic candidate artifacts. Nested Electron Helper.app bundles are part of the main bundle, not additional top-level candidates.
+A separate owner-approved hydrator is allowed one bounded egress operation for one exact source commit. It requires:
 
-## 10. Twelve Candidate Gates
+```text
+OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+```
 
-### Gate 1 — Source Preimage
+The hydrator runs in a new detached clean worktree. Child processes are sandboxed so they can reach only a localhost CONNECT proxy. The proxy resolves and connects only to the exact source-defined official npm, Node, Electron, and GitHub release-asset allowlist. Every request is recorded; one denied host fails the hydration.
 
-Exact full commit, clean tracked/untracked state, and absence of governed generated candidate inputs.
+Inherited authority is removed:
 
-### Gate 2 — Network Authority
+- npm user/global configs;
+- registry and proxy variables;
+- npm/GitHub tokens;
+- Electron mirrors/custom filenames;
+- node-gyp dist URLs and native target overrides.
 
-Resolve an absolute npm executable, execute under `/usr/bin/sandbox-exec` with `deny network*`, strip proxy/registry authority, and run offline npm only. A cache miss stops with `BLOCKED_NPM_CACHE_MISSING_APPROVAL_REQUIRED`; there is no automatic online retry.
+The cache root contains:
 
-### Gate 3 — Complete SHA256 Ledger
+```text
+native-cache-root/
+├── npm/
+├── electron/
+├── electron-builder/
+├── node-gyp/
+├── prebuild/
+├── npm-config/
+├── home/
+└── xdg-cache/
+```
 
-Hash every path returned by `git ls-files -z` using no-follow same-handle reads. Require regular single-link files, exact byte size, per-file SHA256, full path set, and aggregate SHA256.
+The exact package-lock `hasInstallScript` set is locked by source tests. Hydration enables lifecycle scripts, forces source builds where appropriate, downloads official Node/Electron headers and Electron distributions through the allowlisted proxy, and performs an Electron 38 arm64 `better-sqlite3` rebuild.
 
-### Gates 4–5 — Source Quality
+Before a PASS receipt, hydration deletes all `node_modules` trees and repeats:
 
-Run candidate contracts, ordered workspace build, all checks, core unit/integration/global/critical suites, desktop build, Phase 1 release suite, strict desktop global/critical coverage, and production CycloneDX SBOM.
+1. full lifecycle `npm ci --offline` under `(deny network*)`;
+2. Electron 38 arm64 native rebuild under `(deny network*)` using the exact hydrated header root;
+3. Electron executable cache restoration;
+4. source-clean verification.
 
-### Gates 6–7 — Canonical Package and Identity
+The receipt binds every regular cache file, aggregate SHA-256, source commit, lockfile, lifecycle set, proxy audit, header root, npm identity, commands, logs, and both offline proofs. The hydrator creates no candidate or candidate evidence.
 
-Run the existing canonical unsigned release builder for the arm64 ZIP/DMG, copy verified source/artifact evidence into the private candidate directory, extract the ZIP, and bind source snapshot, canonical manifest, release identity, ZIP, DMG, app, executable, and `app.asar` hashes.
+### Candidate phase
 
-### Gates 8–10 — Packaged Electron
+Candidate Gate 2:
 
-Run the exact focused 2/2 profile, list exactly `113 tests in 9 files`, hash all E2E TypeScript specs/fixtures/helpers, then run full packaged Electron 113/113 with zero skipped/unexpected/flaky and clean process termination.
+1. validates the receipt, source, lockfile, lifecycle set, header root, and all cache bytes;
+2. runs full lifecycle `npm ci --offline` under `(deny network*)`;
+3. directs native packages to build from source with receipt-bound Node headers;
+4. uses receipt-bound Electron and electron-builder caches;
+5. redirects npm logs to evidence;
+6. revalidates the cache identity after install;
+7. adds the exact receipt-bound Electron header root for later native staging.
 
-### Gate 11 — Candidate-Bound Performance
+The candidate has no proxy and no online fallback. A missing, stale, tampered, source-mismatched, or mutated cache is a blocker.
 
-Run three distinct `r31-v1` direct-spawn measurements. Each run binds candidate, executable, `app.asar`, release identity, canonical manifest, source snapshot, unique challenge, native-window/renderer startup milestones, 100-node KG result, RSS, and process cleanup. Aggregate bytes and SHA256 must match the raw records.
+## 11. Gate 3 — Complete Source Ledger
 
-### Gate 12 — Complete Receipt
+Gate 3 enumerates every Git-tracked regular file through `git ls-files -z`, reads each without following symlinks, records a lower-case SHA-256, and computes an aggregate digest. Missing, duplicate, unknown, malformed, symlinked, or nonregular entries fail closed.
 
-Require deployment authority/source/artifact/runtime/test-data/performance/SBOM/command/screenshot/terminal-state evidence and write `CANDIDATE-MANIFEST.json` plus `R30-COMPLETE.json`.
+The native-cache policy, runtime, hydrator, Gate 2 controller, and candidate runner are named critical controls; all tracked files remain in the complete ledger regardless of the critical list.
 
-## 11. Deferred Boundaries
+## 12. Gates 4–7 — Build and Artifact Identity
 
-- Windows real-machine packaging/signing/install/screenshots: Phase 1.1.
-- Tencent deployment, Remote/live, and optional encrypted Backup: post-MVP.
-- 3D knowledge graph and broader ecosystem expansion: post-MVP.
+### Gate 4
 
-Deferred modules must not inflate Phase 1 readiness or be silently exposed as working product paths.
+- candidate source contracts;
+- ordered workspace dependency build.
 
-## 12. Release Boundary
+### Gate 5
 
-A passing twelve-gate run is an unsigned diagnostic candidate. Release still requires independent Codex acceptance, three candidate-consistent verify-fix rounds, real packaged offline ASR, Developer ID signing, Apple notarization/stapling/validation, Gatekeeper install/launch evidence, Human Owner Gate, and required use evidence.
+- local-first TypeScript checks;
+- core unit and integration suites;
+- strict global and per-file critical coverage;
+- desktop Phase 1 source suite;
+- desktop build;
+- production CycloneDX SBOM.
 
-The root v6.2 baseline and `delivery.md` remain the final authority for any completion claim.
+### Gate 6
+
+The R31 authority wrapper validates the canonical unsigned macOS arm64 ZIP/DMG candidate. Legacy x64/Windows matrix blockers may be quarantined only after the selected arm64 authority passes. An arm64 blocker remains fatal.
+
+### Gate 7
+
+Binds:
+
+- source snapshot;
+- ZIP;
+- DMG;
+- `.app`;
+- executable;
+- `app.asar`;
+- release identity;
+- runtime identity.
+
+## 13. Gates 8–10 — Packaged Electron
+
+### Gate 8
+
+Runs the focused packaged Electron journeys first, including the critical local-first closure and candidate identity surfaces.
+
+### Gate 9
+
+Requires exact list-only discovery:
+
+```text
+113 tests in 9 files
+```
+
+It also hashes every E2E spec, fixture, and helper into the deterministic test-data/source manifest.
+
+### Gate 10
+
+Requires:
+
+```text
+passed     = 113
+skipped    = 0
+unexpected = 0
+flaky      = 0
+clean process exit = true
+```
+
+Browser fixture results cannot satisfy Gates 8–10.
+
+## 14. Gate 11 — Candidate-Bound Performance
+
+Gate 11 requires three distinct performance run IDs, each bound to the same source/artifact/runtime identity, plus one aggregate receipt. Current source thresholds include:
+
+- launch below 2,000 ms exclusive;
+- resident set below 500 MB exclusive;
+- 100-node KG frame rate at least 30 FPS.
+
+A single run or an unbound benchmark is insufficient.
+
+## 15. Gate 12 — Final Receipt
+
+Gate 12 assembles:
+
+- candidate manifest;
+- source and control ledger;
+- native-cache receipt;
+- SBOM;
+- artifact/runtime identities;
+- exact test results;
+- test-data manifest;
+- screenshots and hashes;
+- performance receipts;
+- command/exit log;
+- final process terminal state;
+- final clean Git state.
+
+Expected durable evidence files include `CANDIDATE-MANIFEST.json` and `R30-COMPLETE.json` outside the repository.
+
+## 16. Role and Acceptance Boundary
+
+- ChatGPT: bounded GitHub source development and Draft PR contract.
+- MiniMax Code: exact-SHA clean-worktree hydration, candidate execution, build/package work, and technical evidence.
+- Codex: independent real-computer Electron product-experience and runtime acceptance.
+- Owner: Human Owner Gate and release decision.
+
+MiniMax self-test is not acceptance. Only a complete MiniMax receipt can unlock Codex. Only a candidate-bound Codex focused retest with `P0=0` can make Human Owner Gate eligible.
+
+## 17. Deferred Scope
+
+Deferred beyond the current macOS MVP:
+
+- Windows real-machine, signing, installation, and screenshots;
+- mobile/web clients;
+- cloud data truth;
+- Tencent deployment, Remote/live, and optional Backup;
+- 3D graph;
+- plugins and i18n;
+- multi-user and enterprise expansion;
+- commercial scope;
+- major dependency upgrades.
+
+The R45 Gate 2 repair changes only candidate dependency/native-toolchain evidence. It does not expand product architecture or release authority.

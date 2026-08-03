@@ -16,7 +16,11 @@ import {
   resolveEvidenceTarget,
 } from './contract.mjs';
 import { CANONICAL_CANDIDATE_ALIAS } from './canonical-release-r31.mjs';
-import { OWNER_CACHE_AUTHORITY, ensureIsolatedNpmConfigFiles } from './npm-cache-hydrate.mjs';
+import { ensureIsolatedNpmConfigFiles } from './npm-cache-hydrate.mjs';
+import {
+  NATIVE_TOOLCHAIN_PROFILE,
+  OWNER_NATIVE_CACHE_AUTHORITY,
+} from './npm-native-cache-hydrate.mjs';
 import { asBlocked, privateJson, repoRoot } from './io.mjs';
 import { runBuildGates } from './gates-build.mjs';
 import { FOCUSED_SPECS, runElectronGates } from './gates-electron.mjs';
@@ -91,14 +95,18 @@ export function staticPlan({
 }) {
   const hydratedCache = npmCacheDir && npmCacheReceipt
     ? {
-      ownerAuthority: OWNER_CACHE_AUTHORITY,
+      ownerAuthority: OWNER_NATIVE_CACHE_AUTHORITY,
+      profile: NATIVE_TOOLCHAIN_PROFILE,
       cacheDir: path.resolve(npmCacheDir),
       receipt: path.resolve(npmCacheReceipt),
-      candidateInstallAuthority: 'offline-only-after-exact-receipt-validation',
+      hydrationAuthority:
+        'bounded official-host lifecycle and native-toolchain hydration outside candidate',
+      candidateInstallAuthority:
+        'full lifecycle install and native rebuild proved offline before candidate',
     }
     : null;
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     runner: 'copilot-r30-github-bound-candidate-runner',
     sourceCommit,
     candidateId: candidateId(sourceCommit),
@@ -106,7 +114,7 @@ export function staticPlan({
     evidenceDir: path.resolve(evidenceDir),
     executionStatus: dryRun ? 'PLAN_ONLY_NOT_A_CANDIDATE' : 'NOT_RUN',
     mvpStatus: 'MVP_NOT_COMPLETE',
-    networkAuthority: 'offline-only',
+    networkAuthority: 'candidate-deny-network-only',
     automaticRegistryFallback: false,
     approvedNpmCacheHydration: hydratedCache,
     distributionTruth: 'UNSIGNED_DIAGNOSTIC_ONLY',
@@ -118,19 +126,29 @@ export function staticPlan({
       },
       {
         id: 2,
-        name: 'offline-install',
-        command: `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' npm ci --offline${hydratedCache ? ' --cache <receipt-bound-isolated-cache>' : ''} ${NPM_CACHE_KEY_ALIGNMENT_FLAG} --no-audit --no-fund`,
+        name: 'receipt-bound-offline-lifecycle-install',
+        command:
+          `/usr/bin/sandbox-exec -p '${NETWORK_PROFILE.trim()}' `
+          + `npm ci --offline --cache <receipt-bound-native-cache/npm> `
+          + `${NPM_CACHE_KEY_ALIGNMENT_FLAG} --no-audit --no-fund`,
+        lifecycleScripts: 'enabled-and-required',
         npmConfigIsolation: 'candidate-owned-distinct-regular-files',
+        nativeCacheProfile: NATIVE_TOOLCHAIN_PROFILE,
         cacheAuthority: hydratedCache
-          ? 'exact owner-approved hydration receipt; candidate remains deny-network'
-          : 'existing local npm cache only',
+          ? 'exact owner-approved native-toolchain receipt; candidate remains deny-network'
+          : 'required before execution; no unbound local cache is accepted',
       },
       {
         id: 3,
         name: 'sha256-ledger',
         scope: LEDGER_SCOPE,
         source: 'git ls-files -z',
-        criticalControlFiles: [...CONTROL_FILES],
+        criticalControlFiles: [
+          ...CONTROL_FILES,
+          'scripts/candidate-r30/native-cache-policy.mjs',
+          'scripts/candidate-r30/native-cache-runtime.mjs',
+          'scripts/candidate-r30/npm-native-cache-hydrate.mjs',
+        ],
         digest: '64 lower-case hex per file plus aggregate SHA256',
       },
       { id: 4, name: 'candidate-source-contracts-and-ordered-workspace-builds' },
@@ -202,7 +220,7 @@ export async function execute(options) {
   const plan = staticPlan(options);
   await privateJson(path.join(evidenceDir, 'R30-PLAN.json'), plan);
   await privateJson(path.join(evidenceDir, 'R30-START.json'), {
-    schemaVersion: 3,
+    schemaVersion: 4,
     candidateId: id,
     canonicalCandidateAlias: CANONICAL_CANDIDATE_ALIAS,
     sourceCommit: options.sourceCommit,
@@ -212,7 +230,8 @@ export async function execute(options) {
       ? {
         cacheDir: options.npmCacheDir,
         receipt: options.npmCacheReceipt,
-        ownerAuthority: OWNER_CACHE_AUTHORITY,
+        ownerAuthority: OWNER_NATIVE_CACHE_AUTHORITY,
+        profile: NATIVE_TOOLCHAIN_PROFILE,
       }
       : null,
     npmConfigIsolation: {
@@ -261,7 +280,7 @@ async function main() {
     if (evidenceDir && ownedEvidenceDirectories.has(evidenceDir)) {
       try {
         await privateJson(path.join(evidenceDir, 'R30-BLOCKED.json'), {
-          schemaVersion: 3,
+          schemaVersion: 4,
           status: 'BLOCKED',
           mvpStatus: 'MVP_NOT_COMPLETE',
           code: blocked.code,

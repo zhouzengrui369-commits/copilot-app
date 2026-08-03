@@ -1,217 +1,92 @@
 # DECISIONS
 
+## D-2026-08-03-01: Gate 2 Uses A Receipt-Bound Native Toolchain Cache
+
+### Background
+
+The first exact PR #20 candidate completed source authority, registry-only hydration, source contracts, and dry-run, then stopped at Gate 2 with `BLOCKED_NPM_OFFLINE_INSTALL_FAILED`.
+
+The old hydration deliberately disabled lifecycle scripts. The candidate correctly enabled them while denying network. `better-sqlite3` therefore could not obtain a prebuilt binary or node-gyp headers. The registry-only receipt proved npm tarballs but did not prove native lifecycle closure.
+
+### Decision
+
+1. Candidate Gate 2 remains `(deny network*)`.
+2. Candidate lifecycle scripts remain enabled; `--ignore-scripts` is not accepted as runtime truth.
+3. A separate exact-commit hydration may run once only after the Owner supplies `OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION`.
+4. Hydration children can connect only to a localhost CONNECT proxy.
+5. The proxy accepts only the exact official npm, Node, Electron, and GitHub release-asset hosts defined in source and records every CONNECT request.
+6. Inherited credentials, npm configs, mirrors, registry, proxy, dist URLs, and native-build overrides are stripped.
+7. The exact package-lock `hasInstallScript` set is a source contract.
+8. Hydration must prove a full lifecycle install, Electron 38 arm64 native rebuild, full lifecycle offline install under deny-network, and offline Electron arm64 native rebuild before emitting a receipt.
+9. The receipt binds source commit, lock SHA-256, lifecycle set, header root, cache layout, every cache file, aggregate SHA-256, commands, logs, and proxy audit.
+10. Candidate Gate 2 revalidates the receipt and all cache bytes, runs a full lifecycle offline install, proves the cache remained immutable, and passes only the receipt-bound Electron headers to later native staging.
+11. Old registry-only caches and receipts cannot be upgraded in place or reused after a tracked source change.
+12. There is no automatic online retry or candidate network fallback.
+
+### Consequences
+
+- Hydration is more expensive but now matches candidate lifecycle truth.
+- A new source SHA, cache, receipt, hydration worktree, candidate worktree, evidence directory, artifact identity, and runtime ID are required.
+- A denied or unexpected host remains an auditable blocker rather than an implicit network expansion.
+- The candidate still cannot be described as runtime proof, MVP completion, Release, or Experience acceptance without MiniMax evidence and independent Codex operation.
+
+## D-2026-08-03-02: Deployment Bootstrap Is PR-Agnostic But Exact-Object Bound
+
+### Decision
+
+- The final handoff receives `PR_NUMBER` and `EXACT_FINAL_HEAD` externally.
+- MiniMax fetches `refs/pull/${PR_NUMBER}/head`, proves equality with the supplied full SHA, and reads authority, hydrator, and runner from that exact Git commit object.
+- Historical PR #14 literals are removed from active executable authority.
+- Tracked source never self-embeds its own containing commit.
+
+### Consequence
+
+The same reviewed authority contract can be used by a stacked fix PR without accidentally executing an older branch head.
+
+## Development Evidence Is Not Candidate Identity
+
+Source tests, GitHub CI, static analysis, coverage, SBOM generation, browser fixtures, package commands, and worker self-tests are development evidence. They are not candidate identity and cannot prove Electron runtime, artifact, runtime ID, Experience, Release, or MVP completion.
+
+One candidate identity requires exact source, source snapshot SHA-256, native-cache receipt and aggregate SHA-256, artifact SHA-256, app/executable/`app.asar` identities, runtime ID, ecosystem baseline, deterministic test-data manifest, command logs, screenshots, performance receipts, and clean terminal state.
+
+## Embedded-Local Is The Production Retrieval Embedding Default
+
+R31 keeps `embedded-local-hash-v1` as the self-contained production default. Ollama remains an explicit local-service compatibility option. Durable local text remains authoritative across vector-model rotation.
+
+No Gate 2 repair may add a second database, second knowledge base, second vector store, Python service, cloud truth, or external production embedding dependency.
+
+## Twelve-Gate Exact-Commit Candidate Contract
+
+The macOS candidate executes exactly twelve ordered, fail-closed gates:
+
+1. exact source and clean preimage;
+2. receipt-bound lifecycle install under deny-network;
+3. all-tracked-file SHA-256 ledger;
+4. source contracts and ordered workspace build;
+5. checks, unit, integration, strict coverage, desktop build, Phase 1 suite, and SBOM;
+6. canonical unsigned macOS arm64 authority;
+7. source and artifact identities;
+8. focused packaged Electron;
+9. exact `113 tests in 9 files` discovery and test-data manifest;
+10. packaged Electron `113/113` and clean termination;
+11. three candidate-bound performance runs;
+12. final source/artifact/runtime/test-data/evidence receipt.
+
+No later gate can repair, reinterpret, or bypass an earlier blocker.
+
+## Deployment Authority Is Read From The Exact Git Object
+
+MiniMax must not infer authority from the current checkout or a stale worktree. It fetches the externally specified PR head, proves the exact full SHA, reads `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and controlling scripts from the exact object, and materializes a hash-bound authority receipt before creating hydration or candidate state.
+
 ## D-2026-08-01-01: Reinstate Codex PM And MiniMax Implementation
 
-### Background
+- ChatGPT owns bounded GitHub remote source work and Draft PR contracts.
+- MiniMax Code owns exact-SHA clean-worktree implementation, hydration, build, package, and technical evidence when explicitly authorized.
+- Codex owns independent real-computer Electron product-experience and runtime acceptance.
+- Worker self-test is never final acceptance.
 
-GitHub remote development produced Draft PR #14, but the current head is red
-and no reproducible candidate exists. The owner now requires Codex to resume
-parent-PM ownership and use MiniMax Code CLI for bounded local implementation.
+## D-2026-07-30-01: Preserve macOS-First Local-First Scope
 
-### Options
+The current MVP remains a single-user macOS Electron desktop product. Windows is deferred to Phase 1.1. Mobile, cloud data truth, Remote, Backup, 3D graph, plugins, multi-user, commercial, and enterprise expansion remain post-MVP.
 
-1. Keep ChatGPT as the sole source developer and MiniMax as deployment-only.
-2. Keep GitHub as durable source truth while Codex owns PM/acceptance and
-   MiniMax Code CLI becomes the primary bounded implementation worker.
-
-### Decision
-
-Choose option 2. ChatGPT remains an optional PR contributor, not the sole
-source-authoring route. Worker self-test, browser prototype, source CI,
-candidate runtime, independent experience review, and Human Owner Gate remain
-separate evidence surfaces.
-
-### Impact
-
-- Non-overlapping MiniMax tasks may run in parallel under exact allowlists.
-- Codex accepts only real diffs, commands, runtime evidence, and artifacts.
-- The single-user macOS MVP defers broad enterprise/multi-user security review
-  and other post-MVP scope.
-- Local-first truth, credential safety, no-egress semantics, durable readback,
-  and source/runtime identity remain mandatory.
-- Apple Developer ID/notary is owner-deferred post-MVP; the conflict with older
-  release-gate wording remains a recorded risk until the baseline is formally
-  amended.
-
-## D-2026-07-29-01: Git Baseline And Product Input
-
-GitHub `main@96c861706126317c27965fcb64c765973df9ac89` is the Git baseline. r3 is the new candidate product-layer input and must remain distinct from review branches and review reports.
-
-## D-2026-07-29-02: Worktree Reuse
-
-Use the existing clean worktree `/Users/njx/openclaw/copilot.wt-S15C`. Do not create another worktree for Stage 0 recovery.
-
-## D-2026-07-29-03: Todo Due-Date Route Pending Source Audit
-
-Do not assume unscheduled Todo is complete. If the current domain and persistence model already support it end-to-end, expose a discoverable All/Unscheduled route with canonical view/edit/restart readback. Otherwise, require a due date before creation. The P0 implementation audit selects the smaller reliable route and records the final decision.
-
-## D-2026-07-29-04: Focused Retest Is Owner-Gate Authority
-
-Only an independent Focused Retest can make the Human Owner Gate eligible. r3 materialization, static review, or worker self-report cannot make the release or MVP ready.
-
-## D-2026-07-29-05: Keep Unscheduled Todo And Close Its Full Contract
-
-The existing domain and local persistence represent `due_at_ms=null`. For MVP, keep that capability and add canonical readback, All/Unscheduled discovery, “查看待办”, persisted editing, source retention, and full quit/relaunch recovery. Do not force a due date merely to hide an incomplete user path.
-
-## D-2026-07-29-06: Success Requires Two Canonical Readbacks
-
-Todo create/update success is not inferred from the returned write object. Main must re-read and compare the canonical stored object, then renderer must perform one list/readback by the returned ID before showing success. Any absent/mismatched readback fails closed and keeps editable user input visible.
-
-## D-2026-07-29-07: Persist Notes And Execution Logs In Canonical Todo Truth
-
-The accepted Todo card behavior includes editable notes and append-only execution logs. Keep that UX, but do not restore its former page-memory implementation. Encode both deterministically in the existing Todo body so the main process, renderer readback, and full restart share one local truth.
-
-## D-2026-07-29-08: Calendar Dates Navigate To Day Scope
-
-Clicking a calendar date must immediately show that day's local items. A prior Unscheduled or All filter must not remain selected after the calendar action. Users can explicitly return to those scopes.
-
-## D-2026-07-29-09: Readiness Requires Exact Revision Completion
-
-WIKI digest current is necessary but insufficient for Knowledge build readiness. Only the exact current note revision with completed durable KG/RAG work may report ready. Running, failed, missing, or stale work fails closed.
-
-## D-2026-07-29-10: Persist Only The Latest Completed Grounded Ask Exchange
-
-Persist one versioned latest-completed grounded exchange in the local Electron main process. Do not persist streaming, cancelled, failed, zero-source or renderer draft state. Use atomic owner-only storage and revalidate local sources and the optional canonical Todo receipt on load. This gives users source-return and restart continuity without creating a second knowledge truth or cloud/session-storage dependency.
-
-## D-2026-07-29-11: Development Evidence Is Not Candidate Identity
-
-Current-source focused tests, Electron runs, screenshots and task-local evidence may establish development acceptance, but they do not establish a candidate. Candidate identity begins only from clean committed P0+P1 bytes and binds an immutable source snapshot, exact artifact SHA256, runtime ID, deterministic test-data manifest and candidate-bound evidence. Independent Focused Retest is still required before Human Owner Gate eligibility.
-
-## D-2026-07-30-01: Electron Receipts Are Exclusively Owned Per Producer
-
-Focused and full Electron runs must write one exclusive runtime/process receipt pair per validated producer. Aggregation fails closed on duplicate or mismatched producers, inconsistent runtime identity, count/index disagreement, or unclean process exit. This prevents concurrent workers from overwriting or blending evidence.
-
-## D-2026-07-30-02: Manual Launch Owns Runtime Before Readiness
-
-The shared manual-launch helper records runtime immediately after Electron process creation, before page readiness. Any later failure closes and records the process, flushes evidence, and preserves the original error. Provider close is independent of recorder flush. This removes the R5 orphan-process and cleanup ambiguity without changing product behavior.
-
-## D-2026-07-30-03: Focused Receipt Profile Does Not Weaken The Full Gate
-
-`exp-cop-008-009-focused` contains exactly the two named tests and producers needed for the P0/P1 development slice. It is not a substitute for the candidate-bound full gate, which remains at least 50 real Electron tests with the required manual and fixture-worker producers.
-
-## D-2026-07-30-04: Governance Must Bind Receipt Repair Before Candidate
-
-Bind the independently accepted nine-file repair commit `ee8e207b44fc5091564f292ac130d8f0bd9a492b` in mandatory handoff governance, then reuse the existing candidate worktree to create a clean candidate from the resulting governance HEAD. Do not create a new worktree or reuse old artifact/runtime identity.
-
-## D-2026-07-30-05: Mock Keychain Is Test-Harness Isolation, Not Runtime Proof
-
-For macOS Electron E2E only, add exactly one `--use-mock-keychain` switch when and only when Darwin, `NODE_ENV=test`, and `COPILOT_E2E=1` are all true. This keeps synthetic packaged-E2E credentials out of the real user Keychain without changing production `safeStorage` behavior.
-
-The resulting evidence is labeled `PACKAGED_E2E_MOCK_KEYCHAIN`. It must never be presented as proof of ordinary packaged runtime Keychain behavior, which remains `REAL_MACOS_KEYCHAIN_RUNTIME_NOT_PROVEN`. Independent implementation rereview PASS did not replace GREEN. The initial controller wrapper recorded `RESOURCE_DEFER_NO_TEST` before command start and consumed no attempt; its successor ran the exact focused unit command once and returned `GREEN_15_OF_15_PASS` (`1 file / 15 tests`, exit `0`, no retry). This does not replace packaged Electron, real macOS Keychain runtime, candidate, independent Focused Retest, owner-gate, or release evidence.
-
-The exact two-file test-only repair is committed at `54cd07ec631872f9b1fd45a5c426a4fe57f3d92b`. Governance remains a separate postimage that requires independent review and its own bounded commit before a new candidate attempt.
-
-## D-2026-07-30-06: Restart Persistence Is Per Test Producer
-
-R20 proved that one worker-scoped userData directory cannot be shared by the EXP-COP-008 and EXP-COP-009 manual restart journeys: the first producer's persisted note and Todo contaminated the second producer's exact-source assertion.
-
-Keep the wrapper-owned worker root, validate each producer with the existing slug contract, and derive exactly `<workerRoot>/producers/<producer>`. Each spec creates its producer directory once and reuses it for both launches within that spec. Different producers must never share the child directory, and tests must not delete another producer's data or weaken exact source assertions to hide contamination.
-
-This choice preserves the intended same-userData quit/relaunch proof while isolating test ownership. It is a test-harness decision only and does not alter product persistence. The accepted repair commit is `92510816932d0683e95a148789227c6cda0d55a3`; it does not establish a candidate, runtime ID, artifact SHA256, independent retest, owner-gate eligibility, release, or MVP completion.
-
-## D-2026-07-30-07: GitHub Is Product Source Authority; Local Roles Are Separated
-
-### Background
-
-The prior repository rules routed ordinary product implementation through OpenClaw or MiniMax/Mavis and left Codex both close to implementation and acceptance. That mode made local dirty bytes, deployment execution, and independent product judgment harder to separate.
-
-### Options
-
-1. Keep OpenClaw/Mavis-first product authoring and continue separating evidence by task convention.
-2. Make GitHub commits/PRs the source authority, assign remote product development to ChatGPT, exact-commit local deployment to MiniMax Code, and independent real-computer acceptance to Codex.
-
-### Decision
-
-Choose option 2. The new owner mode at the top of `AGENTS.md` supersedes the older OpenClaw/Mavis-first product-development routing. Historical blocks remain for provenance and explicit fallback only.
-
-### Impact
-
-- Product changes originate in bounded GitHub branches/PRs.
-- MiniMax Code deploys the exact approved commit and cannot silently repair product source.
-- Codex remains independent, fail-closed, and cannot use self-authored product fixes as acceptance.
-- v6.2 scope, macOS-first/local-first boundaries, tests, evidence, signing/notarization, independent Focused Retest, and Human Owner Gate remain unchanged.
-- R28 was never executed and produced no candidate. Independent review returned `FAIL / STAGE_B_REJECTED / P0=1 / P1=2 / P2=0` because the Gate 3 evidence ledger contained a malformed SHA, Gate 2 did not enforce offline/no-network, and Gate 9 did not bind exactly `113 tests in 9 files`.
-- R28 is rejected rather than repaired or promoted. Its frozen target is superseded by the R29 governance transition; a later runner must bind the eventual R29 Git commit and independently close those three pre-execution contracts.
-
-## D-2026-07-30-08: Embedded-Local Is The Production Retrieval Embedding Default
-
-### Decision
-
-Use `embedded-local-hash-v1` as the packaged production embedding default. It is deterministic, self-contained, and has no HTTP request, process spawn, model download, native addon, cloud fallback, or external local-service requirement. Keep Ollama only as an explicit opt-in compatibility provider.
-
-### Impact
-
-- A default packaged install can build retrieval vectors without asking the owner to install or operate Ollama.
-- This adapter is retrieval-only and does not replace the separately configured answer-generation provider.
-- Provider identity, dimensions, implementation revision, and privacy class remain explicit evidence.
-- A source test is not packaged performance or product-quality proof; the exact local candidate and Codex acceptance remain required.
-
-## D-2026-07-30-09: Vector Persistence Enforces One Model While Preserving Text
-
-### Decision
-
-A durable vector database may contain vectors from one embedding-model identity at a time. If the expected model changes or mixed historical models are detected, remove incompatible vectors but retain durable local text chunks.
-
-### Impact
-
-- Embeddings with incompatible dimensions or semantics are never mixed in one retrieval result.
-- Local text remains available for deterministic fallback and later re-indexing.
-- The existing SQL schema version remains unchanged; a separate model-scope contract reports the wrapper invariant.
-- Model rotation must never delete the user's source note truth.
-
-## D-2026-07-30-10: R31 Uses A Twelve-Gate Exact-Commit Candidate Contract
-
-### Decision
-
-The R30 successor remains the executable runner name, but the R31 handoff expands it to twelve gates. Gate 11 is exclusively the three-run candidate-bound performance contract; Gate 12 owns the complete candidate receipt and screenshots.
-
-### Impact
-
-- Gate 2 binds an absolute reviewed npm executable and denies network by default.
-- Gate 3 covers every Git-tracked regular file with per-file and aggregate SHA256.
-- Gate 5 includes all Phase 1 checks/tests/coverage/build and a production CycloneDX SBOM.
-- Gate 6/7 bind the existing canonical unsigned arm64 release and source/artifact/runtime identities.
-- Gate 9 binds all E2E specs, fixtures, and helpers in addition to exact `113 tests in 9 files` discovery.
-- Gate 10 remains exact packaged Electron `113/113` with zero skipped/unexpected/flaky and clean process exit.
-- Gate 11 requires three distinct `r31-v1` performance runs and one hash-bound aggregate.
-- Gate 12 requires the final manifest, SBOM, screenshots, commands, test-data identity, runtime identity, performance evidence, and terminal process state.
-
-## D-2026-07-30-11: Final Commit Identity Is External To Tracked Handoff Documents
-
-### Decision
-
-Do not put “the final commit containing this file” inside tracked governance documents. After the last documentation commit passes the source gate, record the exact final 40-character PR #14 HEAD in the PR conversation and the owner-facing deployment instruction. MiniMax Code passes that value to `--source-commit`, and the runner verifies it equals `git HEAD`.
-
-### Impact
-
-- Governance avoids an impossible self-referential commit loop.
-- The final GitHub workflow result and PR comment bind the externally supplied commit.
-- MiniMax must use a detached clean worktree at that exact commit and may not substitute a branch tip observed later.
-- Any further source or document commit invalidates the previously reported final HEAD and requires a new green source-gate run and a new handoff value.
-
-## D-2026-07-31-01: Deployment Authority Is Read From The Exact Git Object
-
-### Background
-
-MiniMax correctly stopped when two existing local worktrees did not contain `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`. GitHub inspection showed that the approved PR commit did contain the document. The old process searched current filesystem paths before fetching and binding the exact commit, so a stale checkout could be mistaken for missing versioned authority.
-
-### Decision
-
-Deployment authority is the byte sequence at:
-
-```text
-<EXACT_FINAL_COMMIT>:docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md
-```
-
-MiniMax must first fetch `refs/pull/14/head`, prove equality with the externally supplied SHA, then extract and run `<SHA>:scripts/candidate-r30/minimax-authority.mjs`. The verifier validates the authority document, confirms the candidate runner exists in the same commit, computes the document SHA256, and emits an exclusive receipt before any candidate worktree or evidence directory is created.
-
-The current worktree, a recursive filesystem search, a chat-pasted script, or a cron probe is not deployment authority.
-
-### Impact
-
-- `BLOCKED_EXACT_COMMIT_NOT_FETCHED`, `BLOCKED_DEPLOYMENT_AUTHORITY_MISSING`, `BLOCKED_DEPLOYMENT_AUTHORITY_INVALID`, and `BLOCKED_DEPLOYMENT_RUNNER_MISSING` stop before candidate state exists.
-- The verifier itself performs no network access and reports `networkUsed=false`, `worktreeCreated=false`, and `evidenceCreated=false`.
-- The explicit GitHub fetch is a source synchronization step only; it does not grant npm registry authority or weaken Gate 2.
-- Authority and receipt outputs use exclusive owner-only creation and cannot overwrite prior files.
-- A stale-worktree absence can no longer be treated as proof that the exact approved commit lacks deployment authority.
-- Any new tracked commit still invalidates the prior externally reported final SHA and requires a complete new source-gate result.
+Notes, KB, WIKI, MOC, KG, RAG, Todo, and schedule truth remain on the local computer. Signing and notarization remain separate release gates.

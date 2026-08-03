@@ -1,119 +1,106 @@
 # MiniMax Code Local Handoff — Copilot App macOS MVP
 
-This document coordinates the final macOS local candidate attempt. It supplements, but does not replace, the exact-object authority and runner contracts already versioned in:
+This document coordinates the next exact-SHA macOS candidate attempt after the first PR #20 candidate stopped correctly at Gate 2 with `BLOCKED_NPM_OFFLINE_INSTALL_FAILED`.
+
+The authoritative executable handoff is:
 
 ```text
 docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md
 scripts/candidate-r30/minimax-authority.mjs
-scripts/candidate-r30/npm-cache-hydrate.mjs
+scripts/candidate-r30/npm-native-cache-hydrate.mjs
 scripts/candidate-r30/run-candidate.mjs
 ```
 
-## 1. Fixed status
+## Fixed truth
 
 ```text
-REMOTE_SOURCE_READY_FOR_LOCAL_ATTEMPT
+REMOTE_SOURCE_FIX_UNDER_REVIEW
+LOCAL_CANDIDATE_NOT_RUN_ON_FIX
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
 NOT_RELEASE_READY
 NOT_EXPERIENCE_READY
 ```
 
-A successful source gate, build, package, CI job, browser fixture, or PR merge does not prove Electron runtime acceptance.
+The prior source `74454d21910f0c01e0b9d4f8117b4394defe3228`, its old registry-only cache, old receipt, old candidate worktree, and old evidence package are reference-only. They cannot be reused because the source and cache receipt schema have changed.
 
-## 2. Exact source binding
+## Gate 2 incident
 
-The executor receives externally:
-
-```text
-EXACT_FINAL_HEAD=<40-character final Draft PR head>
-```
-
-MiniMax must:
-
-1. fetch the Draft PR head directly;
-2. prove `FETCH_HEAD == EXACT_FINAL_HEAD`;
-3. materialize every authority document and runner from that exact Git object;
-4. create a new detached worktree at that exact commit;
-5. prove local `git HEAD == EXACT_FINAL_HEAD` and `git status --porcelain=v1 --untracked-files=all` is empty;
-6. never repair source in the deployment worktree.
-
-Any mismatch is a blocker. Earlier source SHAs, dirty local worktrees, old candidate folders and old evidence directories are reference-only and cannot be reused.
-
-## 3. Allowed platform and scope
-
-- macOS only;
-- arm64 authority for this MVP attempt;
-- local-first desktop truth only;
-- synthetic deterministic test data must be labeled `SYNTHETIC_E2E_FIXTURE_ONLY`;
-- no Windows, mobile, cloud deployment, Remote, Backup, signing, notarization or global configuration changes.
-
-## 4. Cache hydration
-
-The candidate remains offline and deny-network. A separate bounded cache hydration is permitted only when the exact authority token is supplied:
+The old hydration performed:
 
 ```text
-OWNER_APPROVAL_FOR_MINIMAL_NPM_REGISTRY_READ_ONLY_EGRESS
+npm ci --ignore-scripts --offline
 ```
 
-Hydration must use:
-
-- a new clean detached hydration worktree;
-- a new cache directory outside the repository;
-- two distinct exclusive empty npm user/global config files;
-- inherited proxy, registry, token and npm-config authority stripped;
-- lifecycle scripts disabled;
-- a localhost CONNECT proxy whose only allowed upstream is `registry.npmjs.org:443`;
-- an offline `npm ci --ignore-scripts --offline --replace-registry-host=always` probe under `(deny network*)`;
-- an exclusive receipt binding source commit, lock SHA-256, npm identity, command logs, proxy audit, cache file hashes and aggregate SHA-256.
-
-The candidate runner must receive the cache directory and receipt as a pair. No automatic online fallback or second retry is allowed.
-
-## 5. Candidate execution
-
-Use a new evidence directory outside the repository. Run source contracts and dry-run first. Dry-run must end with:
+The candidate then performed:
 
 ```text
-PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE
+npm ci --offline
 ```
 
-Then execute the candidate once. The twelve gates remain:
+with lifecycle scripts enabled under `(deny network*)`. `better-sqlite3` attempted a prebuilt download and then a node-gyp header download. Both were correctly denied, so the candidate stopped before build or Electron launch.
 
-1. exact source identity and clean source;
-2. receipt-bound offline install under deny-network authority;
-3. SHA-256 ledger for every tracked regular file;
-4. source contracts and ordered LLM → KB → KG → RAG build;
-5. checks, tests, integration, strict coverage, desktop build, Phase 1 suite and SBOM;
-6. canonical unsigned macOS arm64 ZIP/DMG authority;
-7. source, ZIP, DMG, app, executable and `app.asar` identities;
-8. focused packaged Electron journeys;
-9. exact `113 tests in 9 files` discovery and source manifest;
-10. packaged Electron `113/113`, zero skipped/unexpected/flaky and clean termination;
-11. three distinct candidate-bound performance runs and aggregate;
-12. final manifest, receipts, screenshots, hashes, runtime ID and terminal state.
+The repair does not weaken the candidate sandbox and does not add `--ignore-scripts` to the candidate. Instead it requires a new native-toolchain receipt that proves the exact full lifecycle install and Electron arm64 native rebuild can both complete offline before candidate execution begins.
 
-Stop at the first blocker. Do not edit source or retry online.
+## New owner authority
 
-## 6. Required product journeys
+The new hydration requires the exact token:
 
-On the exact packaged candidate, MiniMax must exercise and record:
+```text
+OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+```
 
-1. local material is visible in Knowledge;
-2. Ask returns the expected answer from the local fixture;
-3. every source can be opened and matched to the exact local text;
-4. returning from the full reader restores the same question, answer, sources and action state;
-5. creating an unscheduled Todo preserves answer text and source links;
-6. the success receipt opens the exact Todo in Unscheduled;
-7. the Todo can be edited and canonically read back;
-8. a due date can be added and the Todo becomes visible in the matching day/plan view;
-9. Electron fully quits;
-10. the same packaged candidate relaunches with the Ask exchange, sources and Todo still discoverable.
+The token authorizes one hydration attempt for one exact commit. It does not authorize the candidate to use network.
 
-Failures in persistence, canonical readback or source continuity are fail-closed and must not be described as success.
+Hydration is restricted to a source-defined allowlist of official package and toolchain hosts. Every child command runs under `sandbox-exec`, can connect only to a localhost CONNECT proxy, and the proxy records and rejects destinations outside the allowlist. Inherited credentials, Electron mirrors, npm registry overrides, dist URLs, proxy authority, and npm config files are removed.
 
-## 7. Required output package
+## Required hydration proof
 
-Create outside the repository:
+The new hydrator must produce one receipt that binds:
+
+- exact source commit;
+- package-lock SHA-256;
+- exact reviewed install-script package set;
+- npm executable and version;
+- exact allowed hosts and complete CONNECT audit;
+- npm, Electron, electron-builder, node-gyp/header, and prebuild cache layout;
+- all regular cache-file hashes and aggregate SHA-256;
+- exact Electron header root;
+- online full lifecycle install result;
+- online Electron 38 arm64 native rebuild result;
+- deny-network full lifecycle `npm ci --offline` result;
+- deny-network Electron arm64 native rebuild result;
+- restored Electron executable proof;
+- final clean detached source state;
+- `candidateCreated=false` and `evidenceCreated=false`.
+
+The hydrator deletes all `node_modules` trees before producing the receipt. It does not create a candidate.
+
+## Candidate requirements
+
+MiniMax must receive the externally frozen final 40-character fix SHA, fetch the exact open Draft PR head, and prove:
+
+```text
+FETCH_HEAD = supplied SHA = detached candidate git HEAD
+```
+
+The candidate runner then:
+
+1. validates the native receipt, source, lockfile, lifecycle set, headers, and every cache byte;
+2. runs a full lifecycle `npm ci --offline` under `(deny network*)`;
+3. directs `better-sqlite3` to build from source with the receipt-bound Node headers;
+4. redirects npm logs to evidence;
+5. revalidates the cache identity after install;
+6. supplies the receipt-bound Electron headers to later native staging;
+7. continues the unchanged Gate 3–12 contract only after Gate 2 passes.
+
+No candidate command receives the hydration proxy or online authority. A missing or invalid receipt fails closed.
+
+## Required candidate output
+
+MiniMax must use a new detached hydration worktree, new cache, new receipt, separate detached candidate worktree, and new evidence directory. It must not edit source locally.
+
+The evidence package must contain:
 
 ```text
 PLAN.md
@@ -125,31 +112,36 @@ CANDIDATE-MANIFEST.json
 R30-COMPLETE.json
 ```
 
-The package must include:
+It must bind source snapshot, artifact, app, executable, `app.asar`, runtime, test-data, commands, screenshots, test results, performance receipts, and process terminal state.
 
-- exact source commit and source snapshot SHA-256;
-- artifact SHA-256 and artifact paths;
-- app, executable and `app.asar` identities;
-- runtime ID;
-- ecosystem baseline commit;
-- test-data manifest and explicit synthetic label;
-- all commands, exit codes and durations;
-- Gate 2 cache/hydration receipt and audit;
-- test and coverage summaries;
-- exact Electron suite summary;
-- three performance receipts;
-- screenshots and SHA-256;
-- process terminal state;
-- final source and evidence Git status;
-- exact blocker if incomplete.
+## Product journey
 
-## 8. Codex boundary
-
-MiniMax's package is technical execution evidence, not product acceptance. Codex must independently launch and operate the same source/artifact/runtime identity on the real Mac. Until Codex returns a candidate-bound verdict:
+The exact packaged candidate must still prove:
 
 ```text
-NOT_RUNTIME_PROOF
+local material
+→ grounded Ask answer
+→ click and verify local source
+→ return to the same Ask exchange
+→ canonical Todo create/readback
+→ exact Todo in All / Unscheduled
+→ edit and source preservation
+→ due-date / plan association
+→ complete Electron quit
+→ same-artifact relaunch and persistence readback
+```
+
+## Codex boundary
+
+MiniMax technical evidence is not product acceptance. Codex may begin only after a complete internally consistent evidence package exists and must independently operate the same source commit, artifact SHA-256, runtime ID, and test-data manifest.
+
+Until then, and even after a successful unsigned technical candidate, the truthful status remains:
+
+```text
+NOT_RUNTIME_PROOF_BY_CODEX
 MVP_NOT_COMPLETE
 NOT_RELEASE_READY
 NOT_EXPERIENCE_READY
 ```
+
+MiniMax must not merge the PR, change `main`, sign, notarize, alter credentials or global configuration, run Windows/mobile scope, or declare `MVP_READY`, `RELEASE_READY`, `EXPERIENCE_READY`, or `HUMAN_OWNER_GATE_PASS`.
