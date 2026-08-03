@@ -1,7 +1,7 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "project": "copilot-app",
-  "updated_at": "2026-07-31",
+  "updated_at": "2026-08-03",
   "confidence": "authoritative_mirror",
   "authority": {
     "root_baseline": [
@@ -24,6 +24,7 @@
   "mvp_status": "MVP_NOT_COMPLETE",
   "release_status": "RELEASE_NOT_READY",
   "experience_status": "EXPERIENCE_NOT_READY",
+  "runtime_proof_status": "NOT_RUNTIME_PROOF",
   "github_source_status": "SOURCE_COMPLETE",
   "source": {
     "repository": "zhouzengrui369-commits/copilot-app",
@@ -32,14 +33,16 @@
       "commit": "6aa6b8c0792c5549b818107a0f64e4f32651dacd",
       "pull_request": 12
     },
-    "runner_parent": {
-      "branch": "agent/r30-github-bound-candidate-runner",
-      "pull_request": 13
+    "product_source": {
+      "branch": "chatgpt/mvp-source-finalization",
+      "commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
+      "pull_request": 20,
+      "workflow_run": 30784565586,
+      "workflow_result": "SUCCESS"
     },
-    "active": {
-      "branch": "agent/r31-source-completion",
-      "pull_request": 14,
-      "final_commit_source": "external final 40-hex PR #14 HEAD after final governance CI"
+    "active_fix": {
+      "branch": "chatgpt/gate2-native-cache-hydration",
+      "final_commit_source": "external final 40-hex active-fix PR head after complete source gate"
     }
   },
   "r28": {
@@ -65,38 +68,18 @@
       "ollama": "explicit_opt_in_local_service_only",
       "vector_model_scope": "single_model_preserve_durable_text",
       "candidate_gate_count": 12,
-      "canonical_arm64_authority": "independent selected ZIP/DMG and identity-report validation; legacy x64/Windows blockers quarantined only after arm64 authority passes",
+      "canonical_arm64_authority": "selected arm64 ZIP and DMG plus release and artifact identities are independently revalidated",
       "deployment_authority_bootstrap": "exact_git_object"
-    },
-    "deployment_authority": {
-      "document": "docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md",
-      "verifier": "scripts/candidate-r30/minimax-authority.mjs",
-      "source": "git-object-at-exact-commit",
-      "stale_worktree_lookup_authoritative": false,
-      "network_used_by_verifier": false,
-      "worktree_created_by_verifier": false,
-      "evidence_created_by_verifier": false,
-      "detached_worktree_command_validation": "accept direct git and repository-scoped git -C forms; require --detach",
-      "resolved_incidents": [
-        "MISSING_DEPLOYMENT_AUTHORITY was caused by checking stale worktrees before fetching the exact commit",
-        "BLOCKED_DEPLOYMENT_AUTHORITY_INVALID was caused by a brittle contiguous command marker that rejected the valid git -C repository-scoped form"
-      ]
     },
     "source_validation_checkpoint": {
       "node": 24,
       "platform": "macOS",
       "workflow": "copilot-source-gate",
       "workflow_steps": 17,
-      "last_green_source_commit_before_authority_bootstrap": "309fafd2ca4791037a51f969c360a479c42316b2",
+      "exact_source_commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
       "desktop_phase1_tests": {
         "passed": 1107,
         "total": 1107
-      },
-      "authority_contract_tests": {
-        "versioned_document": "PASS",
-        "direct_detached_worktree": "PASS",
-        "repository_scoped_detached_worktree": "PASS",
-        "missing_detach": "BLOCKED"
       },
       "strict_global_coverage": "PASS",
       "strict_critical_coverage": "PASS",
@@ -109,26 +92,66 @@
         "exact": true
       },
       "tracked_source_unchanged": "PASS"
-    },
-    "gates": {
-      "1": "exact source and clean preimage",
-      "2": "absolute npm under deny-network offline sandbox",
-      "3": "all tracked regular files and aggregate SHA256",
-      "4": "candidate contracts and ordered workspace build",
-      "5": "checks tests coverage build and CycloneDX SBOM",
-      "6": "arm64-authority wrapper revalidates canonical unsigned macOS arm64 ZIP DMG release identity artifact reports and hashes while quarantining only non-authoritative legacy matrix blockers",
-      "7": "snapshot and artifact runtime identities",
-      "8": "focused packaged Electron 2 of 2",
-      "9": "exact 113 tests in 9 files plus complete E2E source manifest",
-      "10": "full packaged Electron 113 of 113 and clean exit",
-      "11": "three candidate-bound r31-v1 performance runs and aggregate",
-      "12": "final receipt SBOM screenshots commands identities and terminal state"
     }
+  },
+  "first_mvp_candidate_attempt": {
+    "source_commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
+    "exact_object_setup": "PASS",
+    "registry_only_hydration": "PASS",
+    "registry_cache_contract_tests": "34/34 PASS",
+    "candidate_source_contracts": "68/68 PASS",
+    "dry_run": "PASS",
+    "candidate_execution_count": 1,
+    "failed_gate": 2,
+    "blocker": "BLOCKED_NPM_OFFLINE_INSTALL_FAILED",
+    "root_cause": "hydration disabled lifecycle scripts while candidate enabled them under deny-network; native prebuild and header inputs were absent",
+    "source_changes_by_minimax": "NONE",
+    "candidate_established": false,
+    "artifact_sha256": null,
+    "runtime_id": null,
+    "old_cache_reuse": "FORBIDDEN_REFERENCE_ONLY"
+  },
+  "r45": {
+    "status": "SOURCE_UNDER_REVIEW",
+    "role": "receipt_bound_native_toolchain_cache_repair",
+    "owner_authority": "OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION",
+    "hydrator": "scripts/candidate-r30/npm-native-cache-hydrate.mjs",
+    "policy": "scripts/candidate-r30/native-cache-policy.mjs",
+    "runtime": "scripts/candidate-r30/native-cache-runtime.mjs",
+    "candidate_network_authority": "deny-network",
+    "hydration": {
+      "child_network": "localhost_connect_proxy_only",
+      "host_policy": "exact_source_allowlist",
+      "lifecycle_scripts": "enabled",
+      "build_from_source": true,
+      "online_electron_arm64_rebuild": "required",
+      "offline_full_install_proof": "required",
+      "offline_electron_arm64_rebuild_proof": "required",
+      "automatic_retry": false
+    },
+    "receipt": {
+      "source_commit": "required",
+      "lock_sha256": "required",
+      "lifecycle_package_set": "required",
+      "connect_audit": "required",
+      "electron_nodedir": "required",
+      "cache_all_regular_files_sha256": "required",
+      "cache_aggregate_sha256": "required",
+      "candidate_created": false,
+      "evidence_created": false
+    },
+    "candidate_gate_2": {
+      "full_lifecycle_offline_install": "required",
+      "cache_immutable_after_install": "required",
+      "online_fallback": false
+    },
+    "local_execution": "NOT_RUN"
   },
   "candidate": {
     "established": false,
     "candidate_id": null,
     "source_snapshot_sha256": null,
+    "native_cache_receipt_sha256": null,
     "artifact_sha256": null,
     "app_asar_sha256": null,
     "runtime_id": null,
@@ -137,18 +160,5 @@
     "screenshots": null,
     "process_terminal_state": null
   },
-  "independent_acceptance": {
-    "minimax_receipt": "NOT_RECEIVED",
-    "codex_focused_retest": "NOT_RUN",
-    "codex_release_gate": "NOT_RUN"
-  },
-  "release_gates": {
-    "developer_id_signing": "BLOCKED",
-    "apple_notarization": "BLOCKED",
-    "staple_validate_gatekeeper": "BLOCKED",
-    "verify_fix_rounds": "0/3",
-    "embedded_local_asr_runtime": "BLOCKED",
-    "human_owner_gate": "BLOCKED"
-  },
-  "next_single_action": "After final governance CI passes, MiniMax Code fetches and verifies the externally reported final PR #14 HEAD, materializes deployment authority from the exact Git object with scripts/candidate-r30/minimax-authority.mjs, then creates a new clean detached worktree and executes the twelve-gate candidate exactly once. Codex starts only after the complete receipt exists."
+  "next_action": "pass the complete source gate on the exact R45 fix head, obtain explicit bounded native-toolchain hydration authority, and run one new hydration plus one new candidate attempt using entirely new identities"
 }
