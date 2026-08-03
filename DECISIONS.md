@@ -1,5 +1,34 @@
 # DECISIONS
 
+## D-2026-08-03-03: Hydration Transport Is Hardened Without Hidden Retry
+
+### Background
+
+The first R45 native-toolchain hydration used exact source `43f151a3a1eb7e0592ff833f0e42892db47d3d65`, a new cache root, a localhost-only CONNECT proxy, and the exact Owner authority token. Source authority and `83/83` contracts passed. During the single online hydration, npm fetched thousands of package objects over unusually slow connections and then stopped with `ECONNRESET`. No PASS receipt or candidate was created.
+
+A second hydrator invocation was attempted contrary to the one-invocation contract and was immediately rejected because the partial cache path already existed. It performed no second online hydration. The first transport failure and the process deviation remain immutable evidence.
+
+### Decision
+
+1. `automaticRetry=false` remains an invariant. The hydrator performs no hidden retry, resume, or second npm invocation after a failed online install.
+2. Candidate Gate 1–12 remains `(deny network*)`; no candidate egress or fallback is added.
+3. The exact official-host allowlist and localhost CONNECT proxy architecture remain unchanged.
+4. Both client and upstream tunnel sockets use TCP keepalive, no-delay, and a twenty-minute idle timeout.
+5. npm fetch retries are explicitly zero, fetch timeout is explicit, and socket concurrency is bounded.
+6. Each CONNECT receipt records start/end time, duration, directional bytes, socket policy, and any terminal transport error.
+7. Transport resets, timeouts, pipe failures, and aborts use stable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_*` codes.
+8. A transport-failed cache receives exclusive `HYDRATION-FAILED.json` with `status=partial_failed_transport`, `reusable=false`, `passReceiptCreated=false`, and `automaticRetry=false`.
+9. Candidate receipt validation rejects any partial marker, transport-policy mismatch, fatal tunnel record, or nonzero transport error count.
+10. A new attempt requires a new exact source SHA, explicit Owner handoff, new run stamp, new paths, and a fresh single hydration invocation. The partial R45 cache is evidence only.
+
+### Consequences
+
+- Slow official downloads can remain connected longer without weakening network authority.
+- A network reset remains an explicit blocker rather than an automatic retry.
+- Partial cache bytes cannot be promoted to a valid receipt or candidate input.
+- The next MiniMax handoff is valid only when it includes `SOURCE_COMMIT`, `PR`, `SOURCE_GATE=PASS`, and a new `RUN_STAMP`.
+- This decision changes no product feature, package version, database, local-first truth store, credential, signing configuration, or release authority.
+
 ## D-2026-08-03-01: Gate 2 Uses A Receipt-Bound Native Toolchain Cache
 
 ### Background

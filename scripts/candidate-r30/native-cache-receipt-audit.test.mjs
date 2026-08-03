@@ -7,6 +7,7 @@ import {
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NativeCacheHydrationBlocked,
+  nativeHydrationTransportPolicy,
 } from './npm-native-cache-hydrate.mjs';
 import { auditNativeHydrationReceiptShape } from './native-cache-receipt-audit.mjs';
 
@@ -38,6 +39,61 @@ function nativeProof(name, command) {
   };
 }
 
+function proxyRequest(host, {
+  bytesClientToUpstream = 100,
+  bytesUpstreamToClient = 200,
+  fatal = false,
+  error = null,
+} = {}) {
+  const policy = nativeHydrationTransportPolicy();
+  return {
+    method: 'CONNECT',
+    host,
+    port: 443,
+    allowed: true,
+    transport: {
+      startedAt: NOW,
+      endedAt: NOW,
+      durationMs: 0,
+      bytesClientToUpstream,
+      bytesUpstreamToClient,
+      fatal,
+      error,
+      socketPolicy: {
+        keepAlive: true,
+        keepAliveMs: policy.proxyKeepAliveMs,
+        noDelay: true,
+        idleTimeoutMs: policy.proxyIdleTimeoutMs,
+      },
+    },
+  };
+}
+
+function proxySummary(requests) {
+  const policy = nativeHydrationTransportPolicy();
+  return {
+    requestCount: requests.length,
+    allowedCount: requests.filter((request) => request.allowed).length,
+    deniedCount: requests.filter((request) => !request.allowed).length,
+    completedCount: requests.filter((request) => request.transport.endedAt).length,
+    transportErrorCount: requests.filter((request) => request.transport.fatal).length,
+    bytesClientToUpstream: requests.reduce(
+      (sum, request) => sum + request.transport.bytesClientToUpstream,
+      0,
+    ),
+    bytesUpstreamToClient: requests.reduce(
+      (sum, request) => sum + request.transport.bytesUpstreamToClient,
+      0,
+    ),
+    socketPolicy: {
+      keepAlive: true,
+      keepAliveMs: policy.proxyKeepAliveMs,
+      noDelay: true,
+      idleTimeoutMs: policy.proxyIdleTimeoutMs,
+    },
+  };
+}
+
 function canonicalReceipt() {
   const hosts = [...NATIVE_HYDRATION_HOSTS].sort();
   const npm = '/opt/homebrew/bin/npm';
@@ -45,6 +101,11 @@ function canonicalReceipt() {
   const installOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline`;
   const rebuildOnline = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
   const rebuildOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
+  const requests = [
+    proxyRequest('registry.npmjs.org'),
+    proxyRequest('nodejs.org'),
+    proxyRequest('electronjs.org'),
+  ];
   return {
     status: 'PASS',
     ownerAuthority: OWNER_NATIVE_CACHE_AUTHORITY,
@@ -52,6 +113,7 @@ function canonicalReceipt() {
     profile: NATIVE_TOOLCHAIN_PROFILE,
     nativeBuildMode: NATIVE_BUILD_MODE,
     allowedHosts: hosts,
+    transportPolicy: nativeHydrationTransportPolicy(),
     reviewedLifecyclePackages: EXPECTED_LIFECYCLE_PACKAGES,
     npmExecutable: npm,
     npmVersion: '11.8.0',
@@ -66,11 +128,8 @@ function canonicalReceipt() {
       proxy: {
         allowedHosts: hosts,
         allRequestsAllowed: true,
-        requests: [
-          { method: 'CONNECT', host: 'registry.npmjs.org', port: 443, allowed: true },
-          { method: 'CONNECT', host: 'nodejs.org', port: 443, allowed: true },
-          { method: 'CONNECT', host: 'electronjs.org', port: 443, allowed: true },
-        ],
+        requests,
+        transportSummary: proxySummary(requests),
       },
     },
     offlineInstallProof: {
@@ -106,10 +165,12 @@ function expectInvalid(receipt, expectedFailure) {
   );
 }
 
-test('strict receipt audit accepts the complete hydrator proof shape', () => {
+test('strict receipt audit accepts the complete transport and hydrator proof shape', () => {
   const result = audit(canonicalReceipt());
+  assert.equal(result.schemaVersion, 2);
   assert.equal(result.status, 'PASS');
   assert.equal(result.proxyRequestCount, 3);
+  assert.equal(result.transportPolicy.automaticRetry, false);
   assert.equal(result.offlineNativeExitCode, 0);
 });
 
@@ -156,4 +217,21 @@ test('strict receipt audit rejects lifecycle-set and command contradictions', ()
       && error.context.failures.includes('reviewedLifecyclePackages')
       && error.context.failures.includes('onlineHydration.install.command'),
   );
+});
+
+test('strict receipt audit rejects retry-policy drift and a fatal tunnel receipt', () => {
+  const receipt = canonicalReceipt();
+  receipt.transportPolicy.npmFetchRetries = 1;
+  expectInvalid(receipt, 'transportPolicy');
+
+  const fatal = canonicalReceipt();
+  fatal.onlineHydration.proxy.requests[0].transport.fatal = true;
+  fatal.onlineHydration.proxy.requests[0].transport.error = {
+    side: 'upstream',
+    code: 'ECONNRESET',
+  };
+  fatal.onlineHydration.proxy.transportSummary = proxySummary(
+    fatal.onlineHydration.proxy.requests,
+  );
+  expectInvalid(fatal, 'onlineHydration.proxy');
 });

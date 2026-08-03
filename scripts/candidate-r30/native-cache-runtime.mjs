@@ -18,12 +18,18 @@ import path from 'node:path';
 import { cleanEnvironment, ensureIsolatedNpmConfigFiles } from './npm-cache-hydrate.mjs';
 import {
   NATIVE_HYDRATION_HOSTS,
+  NATIVE_NPM_FETCH_RETRIES,
+  NATIVE_NPM_FETCH_TIMEOUT_MS,
+  NATIVE_NPM_MAX_SOCKETS,
+  NATIVE_PROXY_IDLE_TIMEOUT_MS,
+  NATIVE_PROXY_KEEPALIVE_MS,
   NATIVE_TOOLCHAIN_PROFILE,
   NATIVE_BUILD_MODE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NativeCacheHydrationBlocked,
   blockNativeCache,
   nativeCacheLayout,
+  nativeHydrationTransportPolicy,
   nativeRebuildArgs,
 } from './native-cache-policy.mjs';
 
@@ -200,18 +206,158 @@ export function nativeHydrationProxyProfile(port) {
   ].join('\n');
 }
 
-export async function startAllowlistedConnectProxy(hosts = NATIVE_HYDRATION_HOSTS) {
+export function configureNativeTunnelSocket(
+  socket,
+  {
+    keepAliveMs = NATIVE_PROXY_KEEPALIVE_MS,
+    idleTimeoutMs = NATIVE_PROXY_IDLE_TIMEOUT_MS,
+  } = {},
+) {
+  if (
+    !socket
+    || typeof socket.setKeepAlive !== 'function'
+    || typeof socket.setNoDelay !== 'function'
+    || typeof socket.setTimeout !== 'function'
+  ) {
+    throw new TypeError('native hydration tunnel requires a TCP socket');
+  }
+  socket.setKeepAlive(true, keepAliveMs);
+  socket.setNoDelay(true);
+  socket.setTimeout(idleTimeoutMs);
+  return {
+    keepAlive: true,
+    keepAliveMs,
+    noDelay: true,
+    idleTimeoutMs,
+  };
+}
+
+export function classifyNativeTransportFailure(output) {
+  const text = String(output ?? '');
+  const cases = [
+    {
+      pattern: /\bECONNRESET\b|network\s+aborted|socket\s+hang\s+up/iu,
+      blockerCode: 'BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET',
+      transportCode: 'ECONNRESET',
+    },
+    {
+      pattern: /\bETIMEDOUT\b|network\s+timeout|timed\s+out/iu,
+      blockerCode: 'BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT',
+      transportCode: 'ETIMEDOUT',
+    },
+    {
+      pattern: /\bEPIPE\b/iu,
+      blockerCode: 'BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_PIPE',
+      transportCode: 'EPIPE',
+    },
+    {
+      pattern: /\bECONNABORTED\b/iu,
+      blockerCode: 'BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_ABORTED',
+      transportCode: 'ECONNABORTED',
+    },
+  ];
+  const match = cases.find((entry) => entry.pattern.test(text));
+  return match
+    ? {
+      blockerCode: match.blockerCode,
+      transportCode: match.transportCode,
+      automaticRetry: false,
+      retryAllowed: false,
+    }
+    : null;
+}
+
+export function proxyTransportSummary(proxy) {
+  const requests = Array.isArray(proxy?.requests) ? proxy.requests : [];
+  return {
+    requestCount: requests.length,
+    allowedCount: requests.filter((request) => request.allowed === true).length,
+    deniedCount: requests.filter((request) => request.allowed !== true).length,
+    completedCount: requests.filter((request) => request.transport?.endedAt).length,
+    transportErrorCount: requests.filter((request) => request.transport?.fatal === true).length,
+    bytesClientToUpstream: requests.reduce(
+      (sum, request) => sum + Number(request.transport?.bytesClientToUpstream ?? 0),
+      0,
+    ),
+    bytesUpstreamToClient: requests.reduce(
+      (sum, request) => sum + Number(request.transport?.bytesUpstreamToClient ?? 0),
+      0,
+    ),
+    socketPolicy: proxy?.socketPolicy ?? nativeHydrationTransportPolicy(),
+  };
+}
+
+export async function startAllowlistedConnectProxy(
+  hosts = NATIVE_HYDRATION_HOSTS,
+  {
+    keepAliveMs = NATIVE_PROXY_KEEPALIVE_MS,
+    idleTimeoutMs = NATIVE_PROXY_IDLE_TIMEOUT_MS,
+  } = {},
+) {
   const allowedHosts = new Set(hosts.map((host) => host.toLowerCase()));
   const requests = [];
   const sockets = new Set();
-  const server = createServer((client) => {
+  const socketPolicy = {
+    keepAlive: true,
+    keepAliveMs,
+    noDelay: true,
+    idleTimeoutMs,
+  };
+  let closing = false;
+  const server = createServer({ allowHalfOpen: true }, (client) => {
     sockets.add(client);
+    configureNativeTunnelSocket(client, { keepAliveMs, idleTimeoutMs });
     client.once('close', () => sockets.delete(client));
     let header = Buffer.alloc(0);
+    let upstream = null;
+    let request = null;
+    let finalized = false;
+
+    const finish = () => {
+      if (finalized || !request) return;
+      finalized = true;
+      request.transport.endedAt = new Date().toISOString();
+      request.transport.durationMs = Date.now() - request.transport.startedAtMs;
+      delete request.transport.startedAtMs;
+      request.transport.clientDestroyed = client.destroyed;
+      request.transport.upstreamDestroyed = upstream?.destroyed ?? true;
+    };
+
+    const recordError = (side, error) => {
+      if (!request || closing || finalized) return;
+      if (!request.transport.error) {
+        request.transport.error = {
+          side,
+          code: error?.code ?? 'UNKNOWN',
+          message: error instanceof Error ? error.message : String(error),
+        };
+        request.transport.fatal = true;
+      }
+    };
+
+    client.on('error', (error) => {
+      recordError('client', error);
+      finish();
+    });
+    client.on('timeout', () => {
+      const error = Object.assign(new Error('native hydration proxy client idle timeout'), {
+        code: 'ETIMEDOUT',
+      });
+      recordError('client', error);
+      client.destroy(error);
+      upstream?.destroy(error);
+    });
+
     const onData = (chunk) => {
       header = Buffer.concat([header, chunk]);
       if (header.length > 16 * 1024) {
-        requests.push({ method: 'INVALID', host: null, port: null, allowed: false });
+        requests.push({
+          method: 'INVALID',
+          host: null,
+          port: null,
+          allowed: false,
+          transport: { fatal: true, error: { side: 'proxy', code: 'HEADER_TOO_LARGE' } },
+        });
         client.end('HTTP/1.1 431 Request Header Fields Too Large\r\n\r\n');
         return;
       }
@@ -223,25 +369,74 @@ export async function startAllowlistedConnectProxy(hosts = NATIVE_HYDRATION_HOST
       const host = match?.[1]?.toLowerCase() ?? null;
       const port = match ? Number(match[2]) : null;
       const allowed = Boolean(host) && allowedHosts.has(host) && port === 443;
-      requests.push({ method: 'CONNECT', host, port, allowed });
+      request = {
+        method: 'CONNECT',
+        host,
+        port,
+        allowed,
+        transport: {
+          startedAt: new Date().toISOString(),
+          startedAtMs: Date.now(),
+          endedAt: null,
+          durationMs: null,
+          bytesClientToUpstream: 0,
+          bytesUpstreamToClient: 0,
+          fatal: false,
+          error: null,
+          socketPolicy,
+        },
+      };
+      requests.push(request);
+      client.once('close', finish);
       if (!allowed) {
+        request.transport.fatal = true;
+        request.transport.error = { side: 'proxy', code: 'DESTINATION_DENIED' };
         client.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+        finish();
         return;
       }
-      const upstream = connect({ host, port: 443 });
+
+      upstream = connect({ host, port: 443, allowHalfOpen: true });
+      configureNativeTunnelSocket(upstream, { keepAliveMs, idleTimeoutMs });
       sockets.add(upstream);
-      upstream.once('close', () => sockets.delete(upstream));
+      upstream.once('close', () => {
+        sockets.delete(upstream);
+        finish();
+      });
+      upstream.on('error', (error) => {
+        recordError('upstream', error);
+        if (!client.destroyed) {
+          if (request.transport.bytesUpstreamToClient === 0) {
+            client.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+          } else {
+            client.destroy(error);
+          }
+        }
+        finish();
+      });
+      upstream.on('timeout', () => {
+        const error = Object.assign(new Error('native hydration proxy upstream idle timeout'), {
+          code: 'ETIMEDOUT',
+        });
+        recordError('upstream', error);
+        upstream.destroy(error);
+        client.destroy(error);
+      });
       upstream.once('connect', () => {
         client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
         const remainder = header.subarray(end + 4);
-        if (remainder.length) upstream.write(remainder);
-        client.pipe(upstream);
-        upstream.pipe(client);
-      });
-      upstream.once('error', (error) => {
-        if (!client.destroyed) {
-          client.end(`HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n${error.message}`);
+        if (remainder.length) {
+          request.transport.bytesClientToUpstream += remainder.length;
+          upstream.write(remainder);
         }
+        client.on('data', (payload) => {
+          request.transport.bytesClientToUpstream += payload.length;
+        });
+        upstream.on('data', (payload) => {
+          request.transport.bytesUpstreamToClient += payload.length;
+        });
+        client.pipe(upstream, { end: true });
+        upstream.pipe(client, { end: true });
       });
     };
     client.on('data', onData);
@@ -258,7 +453,9 @@ export async function startAllowlistedConnectProxy(hosts = NATIVE_HYDRATION_HOST
     port: address.port,
     requests,
     allowedHosts: [...allowedHosts].sort(),
+    socketPolicy,
     async close() {
+      closing = true;
       for (const socket of sockets) socket.destroy();
       await new Promise((resolve) => server.close(resolve));
     },
@@ -266,12 +463,19 @@ export async function startAllowlistedConnectProxy(hosts = NATIVE_HYDRATION_HOST
 }
 
 export function verifyProxyAudit(proxy) {
-  if (proxy.requests.length === 0 || proxy.requests.some((request) => request.allowed !== true)) {
-    blockNativeCache('BLOCKED_NATIVE_CACHE_HYDRATION_PROXY', 'proxy observed no request or a denied destination', {
+  const summary = proxyTransportSummary(proxy);
+  if (
+    proxy.requests.length === 0
+    || proxy.requests.some((request) => request.allowed !== true)
+    || summary.transportErrorCount > 0
+  ) {
+    blockNativeCache('BLOCKED_NATIVE_CACHE_HYDRATION_PROXY', 'proxy observed no request, a denied destination, or a fatal tunnel error', {
       allowedHosts: proxy.allowedHosts,
       requests: proxy.requests,
+      transportSummary: summary,
     });
   }
+  return summary;
 }
 
 export async function prepareNativeCacheLayout(repository, cacheTarget) {
@@ -319,6 +523,14 @@ export function onlineNativeEnvironment({ layout, proxyUrl }) {
     npm_config_replace_registry_host: 'always',
     npm_config_prefer_online: 'true',
     npm_config_offline: 'false',
+    npm_config_fetch_retries: String(NATIVE_NPM_FETCH_RETRIES),
+    npm_config_fetch_retry_factor: '0',
+    npm_config_fetch_retry_mintimeout: '0',
+    npm_config_fetch_retry_maxtimeout: '0',
+    npm_config_fetch_timeout: String(NATIVE_NPM_FETCH_TIMEOUT_MS),
+    npm_config_maxsockets: String(NATIVE_NPM_MAX_SOCKETS),
+    npm_config_progress: 'false',
+    npm_config_foreground_scripts: 'true',
     npm_config_build_from_source: 'true',
     npm_config_python: '/usr/bin/python3',
     PYTHON: '/usr/bin/python3',
@@ -336,6 +548,7 @@ export function offlineNativeEnvironment(layout, electronNodedir = null) {
   return cleanNativeEnvironment({
     npm_config_cache: layout.npm,
     npm_config_offline: 'true',
+    npm_config_fetch_retries: String(NATIVE_NPM_FETCH_RETRIES),
     npm_config_build_from_source: 'true',
     npm_config_python: '/usr/bin/python3',
     PYTHON: '/usr/bin/python3',
@@ -439,5 +652,6 @@ export function nativeHydrationPublicReceiptFields() {
     profile: NATIVE_TOOLCHAIN_PROFILE,
     nativeBuildMode: NATIVE_BUILD_MODE,
     allowedHosts: [...NATIVE_HYDRATION_HOSTS].sort(),
+    transportPolicy: nativeHydrationTransportPolicy(),
   };
 }
