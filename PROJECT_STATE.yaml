@@ -1,4 +1,4 @@
-schema_version: 5
+schema_version: 6
 project: copilot-app
 updated_at: "2026-08-03"
 authority:
@@ -32,8 +32,8 @@ status:
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
-  github_source: SOURCE_COMPLETE
-  local_candidate: NOT_RUN
+  github_source: SOURCE_FIX_UNDER_REVIEW
+  local_candidate: NOT_RUN_ON_SUCCESSOR
   runtime_proof: NOT_RUNTIME_PROOF
 source:
   repository: zhouzengrui369-commits/copilot-app
@@ -41,22 +41,32 @@ source:
   original_takeover_branch: codex/p0-owner-gate
   original_takeover_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
   product_source_branch: chatgpt/mvp-source-finalization
-  product_source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
   product_source_pr: 20
-  active_fix_branch: chatgpt/gate2-native-cache-hydration
-  active_fix_pr: "externally assigned after branch publication"
-  exact_final_commit: "externally supplied final 40-hex active-fix PR HEAD after the final source gate; tracked documents do not self-embed their own commit"
-  final_commit_binding: "MiniMax fetches the open active-fix PR head, proves equality with the supplied SHA, reads authority from that exact Git object, and the runner verifies equality with git HEAD"
+  r45_frozen_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
+  r45_source_gate:
+    workflow: copilot-source-gate
+    run: 30793536929
+    result: PASS_ALL_17_STEPS
+  active_fix_branch: chatgpt/r45-native-hydration-transport-fix
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after the R46 fix is merged and the complete source gate passes; tracked documents do not self-embed their containing commit"
+  final_commit_binding: "MiniMax fetches refs/pull/20/head, proves equality with SOURCE_COMMIT, reads authority from that exact Git object, and the runner verifies equality with detached git HEAD"
 workflow:
   chatgpt:
     role: GitHub remote source developer and task-contract author
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA clean-worktree hydrator, candidate executor, build/package worker, and technical evidence producer
+    current_state: STOPPED
+    resume_fields:
+      - SOURCE_COMMIT
+      - PR
+      - SOURCE_GATE=PASS
+      - RUN_STAMP
     source_modification_during_candidate: FORBIDDEN
     worker_self_test_is_acceptance: false
   codex:
     role: independent real-computer Electron product-experience and runtime acceptance owner
+    current_state: WAITING
     source_repair_during_acceptance: FORBIDDEN
 r28:
   status: NEVER_RUN_PERMANENTLY_REJECTED
@@ -71,12 +81,11 @@ r30:
 r31:
   role: PHASE1_SOURCE_COMPLETION
   status: SOURCE_COMPLETE
-  product_source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
+  product_source_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
   source_gate:
     workflow: copilot-source-gate
-    run: 30784565586
+    run: 30793536929
     result: PASS_ALL_17_STEPS
-    desktop_phase1_tests: "1107/1107"
     electron_list_only_discovery: "exact 113 tests in 9 files"
     strict_global_coverage: PASS
     strict_critical_per_file_coverage: PASS
@@ -89,8 +98,8 @@ r31:
     local_asr: "source and package contracts retained; real packaged offline runtime remains an acceptance gate"
     candidate_runner: "12 fail-closed gates"
     deployment_authority_bootstrap: "read and hash docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object; generic PR number and externally supplied exact head"
-  local_execution: NOT_RUN
-  electron_candidate: NOT_RUN
+  local_execution: NOT_RUN_ON_SUCCESSOR
+  electron_candidate: NOT_RUN_ON_SUCCESSOR
 r44_first_mvp_candidate_attempt:
   source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
   setup_steps_1_to_9: PASS
@@ -112,39 +121,62 @@ r44_first_mvp_candidate_attempt:
   artifact_sha256: null
   runtime_id: null
   old_cache_and_receipts: FORBIDDEN_REFERENCE_ONLY
-r45_gate2_native_cache_repair:
-  role: BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
-  branch: chatgpt/gate2-native-cache-hydration
+r45_native_toolchain_hydration_attempt:
+  source_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
+  exact_object_and_contracts: PASS
+  source_contracts: "83/83 PASS"
+  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+  authorized_online_hydration_count: 1
+  canonical_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+  observed_error: ECONNRESET
+  candidate_execution_count: 0
+  candidate_established: false
+  artifact_sha256: null
+  runtime_id: null
+  partial_cache:
+    approximate_bytes: 477000000
+    status: EVIDENCE_ONLY
+    reusable: false
+    deletion_authorized: false
+  process_deviation:
+    second_hydrator_invocation_attempted: true
+    result: BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS
+    additional_online_hydration: false
+    candidate_state_created: false
+  all_assets: FORBIDDEN_REFERENCE_ONLY
+r46_native_hydration_transport_stability:
+  role: SINGLE_INVOCATION_TRANSPORT_HARDENING
+  branch: chatgpt/r45-native-hydration-transport-fix
   status: SOURCE_UNDER_REVIEW
+  product_code_changed: false
   owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
   hydrator: scripts/candidate-r30/npm-native-cache-hydrate.mjs
   policy: scripts/candidate-r30/native-cache-policy.mjs
   runtime: scripts/candidate-r30/native-cache-runtime.mjs
+  receipt_audit: scripts/candidate-r30/native-cache-receipt-audit.mjs
   candidate_network_authority: deny-network
-  hydration_network_authority:
-    child: localhost_connect_proxy_only
-    destinations: exact_source_allowlist_official_npm_node_electron_github_release_hosts
-    credentials_and_mirrors_inherited: false
-    automatic_retry: false
-  lifecycle_contract:
-    reviewed_package_set: exact_package_lock_hasInstallScript_set
-    hydration_install_scripts: enabled
-    candidate_install_scripts: enabled
-    native_build_mode: build-from-source-with-receipt-bound-headers
-    online_electron_arm64_rebuild: required
-    offline_full_install_proof: required
-    offline_electron_arm64_rebuild_proof: required
+  automatic_retry: false
+  hidden_retry: false
+  allowed_hosts_changed: false
+  transport_policy:
+    tcp_keepalive: true
+    tcp_no_delay: true
+    idle_timeout_ms: 1200000
+    npm_fetch_retries: 0
+    npm_fetch_timeout_ms: 900000
+    npm_max_sockets: 4
+  failure_evidence:
+    stable_blockers: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_*
+    marker: HYDRATION-FAILED.json
+    marker_status: partial_failed_transport
+    reusable: false
+    pass_receipt_created: false
   receipt_contract:
-    source_commit: required
-    lock_sha256: required
-    cache_aggregate_sha256: required
-    connect_audit: required
-    electron_nodedir: required
-    cache_immutable_after_candidate_install: required
-    candidate_created_by_hydrator: false
-    evidence_created_by_hydrator: false
-  local_execution: NOT_RUN
-  unlock: "complete GitHub source gate on exact final fix SHA, then one new explicit owner-authorized hydration and one new candidate attempt"
+    transport_policy_exact: required
+    per_connect_receipts: required
+    fatal_transport_errors: 0
+    partial_marker_absent: required
+  unlock: "merge the bounded fix into PR #20, pass the complete source gate on the resulting PR #20 exact head, then issue SOURCE_COMMIT + PR=20 + SOURCE_GATE=PASS + new RUN_STAMP"
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; cache immutable after install; no automatic network fallback"
@@ -190,5 +222,5 @@ deferred_scope:
   multi_user_enterprise_security: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Pass the complete source gate on the exact R45 fix head, obtain explicit bounded native-toolchain hydration authority, and run one new hydration plus one new candidate attempt without reusing prior cache, receipt, worktree, evidence, artifact, or runtime identity."
+next_single_action: "Pass the complete source gate on the exact R46 fix, merge it into Draft PR #20, pass the resulting PR #20 source gate, and issue a four-field exact-object handoff for one fresh hydration plus one fresh candidate attempt."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE"
