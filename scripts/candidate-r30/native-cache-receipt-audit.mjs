@@ -107,6 +107,9 @@ export function auditNativeHydrationReceiptShape({
     commandShape(
       onlineInstall,
       [
+        '/usr/bin/sandbox-exec',
+        '(deny network*)',
+        'localhost:',
         'npm ci',
         '--prefer-online',
         '--registry https://registry.npmjs.org/',
@@ -127,6 +130,9 @@ export function auditNativeHydrationReceiptShape({
     commandShape(
       onlineNative,
       [
+        '/usr/bin/sandbox-exec',
+        '(deny network*)',
+        'localhost:',
         'npm rebuild',
         '--runtime=electron',
         `--target=${electronVersion}`,
@@ -165,6 +171,7 @@ export function auditNativeHydrationReceiptShape({
     commandShape(
       offlineInstall,
       [
+        '/usr/bin/sandbox-exec',
         '(deny network*)',
         'npm ci',
         '--offline',
@@ -191,6 +198,7 @@ export function auditNativeHydrationReceiptShape({
     commandShape(
       offlineNative,
       [
+        '/usr/bin/sandbox-exec',
         '(deny network*)',
         'npm rebuild',
         '--runtime=electron',
