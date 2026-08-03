@@ -4,14 +4,14 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-The macOS MVP product source and fail-closed Candidate pipeline are source-complete. R46 transport hardening is under GitHub review. There is no current Candidate, artifact SHA-256, runtime ID, packaged Electron result, independent Codex acceptance, signing, notarization, Release, or Human Owner Gate.
+The R31 macOS MVP product source and fail-closed Candidate pipeline are source-complete. R46 transport hardening is under GitHub review. There is no current Candidate, artifact SHA-256, runtime ID, packaged Electron result, independent Codex acceptance, signing, notarization, Release, or Human Owner Gate.
 
 ## Current source chain
 
 - Repository: `zhouzengrui369-commits/copilot-app`
 - Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
 - Original product takeover: `codex/p0-owner-gate@6aa6b8c0792c5549b818107a0f64e4f32651dacd`
-- Consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
+- R31 consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
 - R45 frozen source: `43f151a3a1eb7e0592ff833f0e42892db47d3d65`
 - R45 source gate: run `30793536929`, all 17 steps PASS
 - Desktop Phase 1 source suite: `1107/1107`
@@ -23,7 +23,7 @@ The exact Git commit object, not a branch tip, stale worktree, chat transcript, 
 
 ## Product source checkpoint
 
-The source contains:
+The R31 source contains:
 
 - local-first notes, KB, WIKI, MOC, KG, RAG, Todo, schedule, and persistence;
 - grounded Ask answers with verifiable local sources;
