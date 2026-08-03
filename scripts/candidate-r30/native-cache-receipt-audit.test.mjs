@@ -13,7 +13,8 @@ import { auditNativeHydrationReceiptShape } from './native-cache-receipt-audit.m
 const ELECTRON_VERSION = '38.8.6';
 const NOW = '2026-08-03T06:00:00.000Z';
 const SHA = 'a'.repeat(64);
-const PROFILE = "'(version 1)\n(allow default)\n(deny network*)\n'";
+const OFFLINE_PROFILE = "'(version 1)\n(allow default)\n(deny network*)\n'";
+const ONLINE_PROFILE = "'(version 1)\n(allow default)\n(deny network*)\n(allow network-outbound (remote tcp \"localhost:43123\"))\n'";
 
 function commandReceipt(name, command) {
   return {
@@ -40,10 +41,10 @@ function nativeProof(name, command) {
 function canonicalReceipt() {
   const hosts = [...NATIVE_HYDRATION_HOSTS].sort();
   const npm = '/opt/homebrew/bin/npm';
-  const installOnline = `${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --prefer-online --registry https://registry.npmjs.org/`;
-  const installOffline = `/usr/bin/sandbox-exec -p ${PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline`;
-  const rebuildOnline = `/usr/bin/sandbox-exec -p ${PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
-  const rebuildOffline = `/usr/bin/sandbox-exec -p ${PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
+  const installOnline = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --prefer-online --registry https://registry.npmjs.org/`;
+  const installOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline`;
+  const rebuildOnline = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
+  const rebuildOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
   return {
     status: 'PASS',
     ownerAuthority: OWNER_NATIVE_CACHE_AUTHORITY,
@@ -122,6 +123,14 @@ test('strict receipt audit rejects an unreviewed proxy destination', () => {
   const receipt = canonicalReceipt();
   receipt.onlineHydration.proxy.requests[0].host = 'attacker.invalid';
   expectInvalid(receipt, 'onlineHydration.proxy');
+});
+
+test('strict receipt audit rejects online work outside the localhost sandbox', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.install.command = receipt.onlineHydration.install.command
+    .replace('/usr/bin/sandbox-exec -p ', '')
+    .replace(ONLINE_PROFILE, '');
+  expectInvalid(receipt, 'onlineHydration.install.command');
 });
 
 test('strict receipt audit rejects a failed offline install hidden behind PASS', () => {
