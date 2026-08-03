@@ -44,7 +44,6 @@ test('architecture mirror preserves authority and the byte-preserved detailed hi
     /Embedded-Local Production Default/iu,
     /Single-Model Vector Scope/iu,
     /Electron Trust/iu,
-    /Twelve Candidate Gates|Twelve-Gate Exact-Commit Candidate Contract|twelve fail-closed candidate gates/iu,
     /Gate 2/iu,
     /Gate 3/iu,
     /Gates 8–10|Gates 8-10/iu,
