@@ -25,8 +25,8 @@ import {
   OWNER_NATIVE_CACHE_AUTHORITY,
   candidateNativeBuildEnvironment,
   candidateNativeCacheEnvironment,
-  validateNativeHydrationReceipt,
 } from './npm-native-cache-hydrate.mjs';
+import { validateAuditedNativeHydrationReceipt } from './native-cache-receipt-audit.mjs';
 import { parseAndValidateCycloneDxSbom } from './sbom.mjs';
 
 const CORE_WORKSPACES = Object.freeze([
@@ -79,7 +79,7 @@ export async function runBuildGates({
       );
     }
     try {
-      hydratedCache = await validateNativeHydrationReceipt({
+      hydratedCache = await validateAuditedNativeHydrationReceipt({
         repository: repoRoot,
         sourceCommit,
         cacheDir: npmCacheDir,
@@ -164,7 +164,7 @@ export async function runBuildGates({
 
   let postInstallCache;
   try {
-    postInstallCache = await validateNativeHydrationReceipt({
+    postInstallCache = await validateAuditedNativeHydrationReceipt({
       repository: repoRoot,
       sourceCommit,
       cacheDir: npmCacheDir,
@@ -214,6 +214,7 @@ export async function runBuildGates({
       ownerAuthority: hydratedCache.receipt.ownerAuthority,
       receiptPath: npmCacheReceipt,
       receiptSha256: hydratedCache.receiptSha256,
+      receiptProofAudit: hydratedCache.receiptAudit,
       cacheDir: hydratedCache.cacheIdentity.path,
       cacheScope: hydratedCache.cacheIdentity.scope,
       cacheFileCount: hydratedCache.cacheIdentity.fileCount,
