@@ -11,6 +11,12 @@ export const OWNER_NATIVE_CACHE_AUTHORITY =
 export const NPM_REGISTRY = 'https://registry.npmjs.org/';
 export const NATIVE_TOOLCHAIN_PROFILE = 'macos-arm64-node24-electron38-v1';
 export const NATIVE_BUILD_MODE = 'build-from-source-with-receipt-bound-headers';
+export const NATIVE_PROXY_KEEPALIVE_MS = 30_000;
+export const NATIVE_PROXY_IDLE_TIMEOUT_MS = 20 * 60 * 1_000;
+export const NATIVE_NPM_FETCH_RETRIES = 0;
+export const NATIVE_NPM_FETCH_TIMEOUT_MS = 15 * 60 * 1_000;
+export const NATIVE_NPM_MAX_SOCKETS = 4;
+export const NATIVE_PARTIAL_CACHE_MARKER = 'HYDRATION-FAILED.json';
 export const NATIVE_HYDRATION_HOSTS = Object.freeze([
   'artifacts.electronjs.org',
   'electronjs.org',
@@ -48,6 +54,18 @@ export class NativeCacheHydrationBlocked extends Error {
 
 export function blockNativeCache(code, detail, context = {}) {
   throw new NativeCacheHydrationBlocked(code, detail, context);
+}
+
+export function nativeHydrationTransportPolicy() {
+  return {
+    automaticRetry: false,
+    npmFetchRetries: NATIVE_NPM_FETCH_RETRIES,
+    npmFetchTimeoutMs: NATIVE_NPM_FETCH_TIMEOUT_MS,
+    npmMaxSockets: NATIVE_NPM_MAX_SOCKETS,
+    proxyKeepAliveMs: NATIVE_PROXY_KEEPALIVE_MS,
+    proxyIdleTimeoutMs: NATIVE_PROXY_IDLE_TIMEOUT_MS,
+    partialCacheReuse: false,
+  };
 }
 
 function requiredValue(argv, index, flag) {
@@ -144,6 +162,7 @@ export function candidateNativeCacheEnvironment(validated) {
     npm_config_cache: checked.npm,
     npm_config_devdir: checked.nodeGyp,
     npm_config_offline: 'true',
+    npm_config_fetch_retries: String(NATIVE_NPM_FETCH_RETRIES),
     npm_config_build_from_source: 'true',
     npm_config_python: '/usr/bin/python3',
     PYTHON: '/usr/bin/python3',
@@ -336,6 +355,18 @@ export async function validateNativeHydrationReceipt({
   }
   const canonicalRepository = await realpath(repository);
   const canonicalCache = await realpath(cacheDir);
+  const partialMarker = await stat(path.join(canonicalCache, NATIVE_PARTIAL_CACHE_MARKER))
+    .then(() => true)
+    .catch((error) => {
+      if (error?.code === 'ENOENT') return false;
+      throw error;
+    });
+  if (partialMarker) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_RECEIPT_PARTIAL_CACHE',
+      'cache contains a fail-closed partial hydration marker and cannot be reused',
+    );
+  }
   const { bytes: receiptBytes } = await regularFileBytes(
     receiptPath,
     'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
@@ -351,6 +382,7 @@ export async function validateNativeHydrationReceipt({
   const layout = validateNativeCacheLayout(canonicalCache, receipt?.cacheLayout);
   const electronNodedir = await findElectronNodedir(layout.nodeGyp, lockfile.electronVersion);
   const expectedHosts = [...NATIVE_HYDRATION_HOSTS].sort();
+  const expectedTransportPolicy = nativeHydrationTransportPolicy();
   if (
     receipt?.schemaVersion !== NATIVE_CACHE_HYDRATION_SCHEMA_VERSION
     || receipt?.status !== 'PASS'
@@ -362,6 +394,7 @@ export async function validateNativeHydrationReceipt({
     || receipt?.nativeBuildMode !== NATIVE_BUILD_MODE
     || receipt?.candidateInstallMode !== 'offline-lifecycle-scripts-enabled'
     || receipt?.automaticRetry !== false
+    || JSON.stringify(receipt?.transportPolicy) !== JSON.stringify(expectedTransportPolicy)
     || receipt?.candidateCreated !== false
     || receipt?.evidenceCreated !== false
     || receipt?.offlineInstallProof?.status !== 'PASS'
@@ -371,6 +404,7 @@ export async function validateNativeHydrationReceipt({
     || receipt?.electronNodedir !== electronNodedir
     || receipt?.onlineHydration?.status !== 'PASS'
     || receipt?.onlineHydration?.proxy?.allRequestsAllowed !== true
+    || receipt?.onlineHydration?.proxy?.transportSummary?.transportErrorCount !== 0
     || JSON.stringify(receipt?.onlineHydration?.proxy?.allowedHosts) !== JSON.stringify(expectedHosts)
     || receipt?.lockfile?.sha256 !== lockfile.sha256
     || JSON.stringify(receipt?.lockfile?.lifecyclePackages) !== JSON.stringify(lockfile.lifecyclePackages)
@@ -382,7 +416,7 @@ export async function validateNativeHydrationReceipt({
   ) {
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
-      'receipt, source, lifecycle set, offline proofs, lockfile, or cache identity mismatch',
+      'receipt, source, transport policy, lifecycle set, offline proofs, lockfile, or cache identity mismatch',
     );
   }
   return {
