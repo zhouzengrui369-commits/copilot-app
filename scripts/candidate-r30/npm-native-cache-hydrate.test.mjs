@@ -16,6 +16,10 @@ import {
   NATIVE_BUILD_MODE,
   NATIVE_CACHE_HYDRATION_SCHEMA_VERSION,
   NATIVE_HYDRATION_HOSTS,
+  NATIVE_NPM_FETCH_RETRIES,
+  NATIVE_NPM_FETCH_TIMEOUT_MS,
+  NATIVE_NPM_MAX_SOCKETS,
+  NATIVE_PARTIAL_CACHE_MARKER,
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NativeCacheHydrationBlocked,
@@ -23,6 +27,7 @@ import {
   candidateNativeCacheEnvironment,
   fullInstallArgs,
   nativeHydrationProxyProfile,
+  nativeHydrationTransportPolicy,
   nativeRebuildArgs,
   parseNativeHydrationArgs,
   validateNativeHydrationReceipt,
@@ -103,7 +108,7 @@ test('online child sees only one localhost proxy while host policy remains exact
   ]);
 });
 
-test('native hydration strips inherited mirrors, dist URLs, and credentials', async () => {
+test('native hydration strips inherited authority and applies explicit no-retry transport policy', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-native-env-'));
   try {
     await ensureIsolatedNpmConfigFiles({
@@ -135,6 +140,11 @@ test('native hydration strips inherited mirrors, dist URLs, and credentials', as
       assert.equal(env.npm_config_disturl, undefined);
       assert.equal(env.npm_config_build_from_source, 'true');
       assert.equal(env.HTTPS_PROXY, 'http://127.0.0.1:43123');
+      assert.equal(env.npm_config_fetch_retries, String(NATIVE_NPM_FETCH_RETRIES));
+      assert.equal(env.npm_config_fetch_timeout, String(NATIVE_NPM_FETCH_TIMEOUT_MS));
+      assert.equal(env.npm_config_maxsockets, String(NATIVE_NPM_MAX_SOCKETS));
+      assert.equal(env.npm_config_fetch_retry_factor, '0');
+      assert.equal(env.npm_config_progress, 'false');
     } finally {
       for (const [key, value] of Object.entries(previous)) {
         if (value === undefined) delete process.env[key];
@@ -215,13 +225,14 @@ test('candidate environment is receipt-bound and separates host and Electron hea
   assert.equal(install.ELECTRON_BUILDER_CACHE, '/tmp/native-cache/electron-builder');
   assert.equal(install.PREBUILD_INSTALL_CACHE, '/tmp/native-cache/prebuild');
   assert.equal(install.npm_config_offline, 'true');
+  assert.equal(install.npm_config_fetch_retries, '0');
   assert.equal(install.npm_config_build_from_source, 'true');
   assert.equal(install.COPILOT_NATIVE_CACHE_PROFILE, NATIVE_TOOLCHAIN_PROFILE);
   const build = candidateNativeBuildEnvironment(input);
   assert.equal(build.npm_config_nodedir, '/tmp/native-cache/node-gyp/38.8.6');
 });
 
-test('receipt validation accepts canonical proof and rejects lifecycle-disabled proof', async () => {
+test('receipt validation accepts canonical transport proof and rejects lifecycle or policy drift', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-native-receipt-'));
   const repository = path.join(root, 'repo');
   const requestedCacheDir = path.join(root, 'cache');
@@ -274,6 +285,7 @@ test('receipt validation accepts canonical proof and rejects lifecycle-disabled 
       nativeBuildMode: NATIVE_BUILD_MODE,
       candidateInstallMode: 'offline-lifecycle-scripts-enabled',
       automaticRetry: false,
+      transportPolicy: nativeHydrationTransportPolicy(),
       candidateCreated: false,
       evidenceCreated: false,
       cacheLayout: layout,
@@ -288,6 +300,7 @@ test('receipt validation accepts canonical proof and rejects lifecycle-disabled 
         proxy: {
           allowedHosts: [...NATIVE_HYDRATION_HOSTS].sort(),
           allRequestsAllowed: true,
+          transportSummary: { transportErrorCount: 0 },
         },
       },
       offlineInstallProof: { status: 'PASS', networkAuthority: 'deny-network' },
@@ -310,6 +323,44 @@ test('receipt validation accepts canonical proof and rejects lifecycle-disabled 
       validateNativeHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
       (error) => error instanceof NativeCacheHydrationBlocked
         && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
+    );
+
+    await writeFile(receiptPath, `${JSON.stringify({
+      ...baseReceipt,
+      transportPolicy: { ...baseReceipt.transportPolicy, npmFetchRetries: 1 },
+    }, null, 2)}\n`);
+    await assert.rejects(
+      validateNativeHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
+      (error) => error instanceof NativeCacheHydrationBlocked
+        && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('receipt validation rejects any cache marked as partial transport failure', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-native-partial-'));
+  const repository = path.join(root, 'repo');
+  const cacheDir = path.join(root, 'cache');
+  const receiptPath = path.join(root, 'receipt.json');
+  try {
+    await mkdir(path.join(repository, 'apps/copilot-desktop'), { recursive: true });
+    await mkdir(cacheDir);
+    await writeFile(path.join(cacheDir, NATIVE_PARTIAL_CACHE_MARKER), JSON.stringify({
+      status: 'partial_failed_transport',
+      reusable: false,
+    }));
+    await writeFile(receiptPath, '{}\n');
+    await assert.rejects(
+      validateNativeHydrationReceipt({
+        repository,
+        sourceCommit: 'c'.repeat(40),
+        cacheDir,
+        receiptPath,
+      }),
+      (error) => error instanceof NativeCacheHydrationBlocked
+        && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_PARTIAL_CACHE',
     );
   } finally {
     await rm(root, { recursive: true, force: true });
