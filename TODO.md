@@ -2,59 +2,63 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
-The R31/R44 macOS MVP source has passed the complete GitHub source gate, but the first exact candidate stopped correctly at Gate 2. No checked source task implies a packaged Electron candidate, Release, Experience acceptance, signing, notarization, or Human Owner Gate completion.
+The macOS MVP product source and candidate contracts are complete enough for another exact-SHA local attempt, but no current candidate, artifact SHA-256, runtime ID, packaged Electron result, Codex acceptance, Release, or Human Owner Gate exists.
 
-## P0 — R45 Gate 2 Native-Cache Repair
+## P0 — R46 Native Hydration Transport Stability
 
-- [x] Freeze PR #20 source `74454d21910f0c01e0b9d4f8117b4394defe3228` after complete `copilot-source-gate` run `30784565586` PASS.
-- [x] Execute exact-object setup, source authority, and new-path gates.
-- [x] Complete one registry-only cache hydration and deny-network `--ignore-scripts` probe.
-- [x] Pass hydration contracts `34/34`, candidate source contracts `68/68`, and dry-run.
-- [x] Execute the candidate exactly once and stop at the first fail-closed blocker.
-- [x] Record `BLOCKED_NPM_OFFLINE_INSTALL_FAILED` at Gate 2 with `SOURCE_CHANGES_BY_MINIMAX = NONE`.
-- [x] Identify the exact contradiction: hydration disabled lifecycle scripts while candidate correctly enabled them under deny-network.
-- [x] Reject candidate `--ignore-scripts` because native runtime truth must not be hidden.
-- [x] Reject candidate egress because Gate 2 remains deny-network.
-- [x] Add `scripts/candidate-r30/native-cache-policy.mjs`.
-- [x] Add `scripts/candidate-r30/native-cache-runtime.mjs`.
-- [x] Add `scripts/candidate-r30/npm-native-cache-hydrate.mjs`.
-- [x] Require `OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION`.
-- [x] Lock the exact package-lock `hasInstallScript` package set.
-- [x] Restrict hydration child processes to a localhost CONNECT proxy and exact official-host allowlist.
-- [x] Strip inherited npm config, registry, proxy, credentials, Electron mirrors, dist URLs, and native-build overrides.
-- [x] Require lifecycle scripts and build-from-source native work during hydration.
-- [x] Require Node/Electron headers and Electron distribution caches under one new receipt-bound root.
-- [x] Require online Electron 38 arm64 `better-sqlite3` rebuild.
-- [x] Require full lifecycle `npm ci --offline` under `(deny network*)` before receipt emission.
-- [x] Require offline Electron arm64 native rebuild using the exact receipt-bound header root.
-- [x] Hash every regular cache file and aggregate cache identity.
-- [x] Require candidate Gate 2 to revalidate the receipt and prove cache immutability after full lifecycle install.
-- [x] Replace historical PR #14 bootstrap literals with generic `PR_NUMBER` + `EXACT_FINAL_HEAD` exact-object authority.
-- [ ] Pass all source contracts and the complete 17-step GitHub source gate on the exact final R45 repair head.
-- [ ] Freeze and externally report the new exact 40-character `EXACT_FINAL_HEAD` without another tracked source change.
+- [x] Freeze R45 source `43f151a3a1eb7e0592ff833f0e42892db47d3d65` after complete source gate run `30793536929` PASS.
+- [x] Execute exact-object authority, new-path checks, and `83/83` source contracts.
+- [x] Stop the single authorized hydration on npm `ECONNRESET` before candidate creation.
+- [x] Preserve the 477 MiB partial cache and task evidence as immutable `FORBIDDEN_REFERENCE_ONLY` diagnosis.
+- [x] Record the prohibited second hydrator invocation; confirm it was immediately rejected by `BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS` and performed no second hydration.
+- [x] Reject hidden retry, candidate network access, host-allowlist expansion, mirror switching, and partial-cache reuse.
+- [x] Add TCP keepalive and no-delay to both tunnel sockets.
+- [x] Add a twenty-minute idle timeout for long official artifact transfers.
+- [x] Fix npm fetch retries at zero, set an explicit fetch timeout, and bound socket concurrency.
+- [x] Record per-CONNECT timestamps, duration, directional bytes, socket policy, and terminal errors.
+- [x] Classify reset, timeout, pipe, and abort failures with stable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_*` codes.
+- [x] Write exclusive `HYDRATION-FAILED.json` with `partial_failed_transport`, `reusable=false`, and `passReceiptCreated=false` after a transport failure.
+- [x] Reject a cache carrying the partial marker.
+- [x] Bind the exact no-retry transport policy and zero fatal tunnel errors into the PASS receipt audit.
+- [x] Add direct RED→GREEN transport and receipt tests.
+- [x] Update `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `CHANGELOG.md`, `DECISIONS.md`, and the MiniMax handoff.
+- [ ] Pass all source contracts and the complete 17-step GitHub source gate on the exact final R46 fix head.
+- [ ] Merge the bounded R46 fix into Draft PR #20 only; do not merge PR #20 to `main`.
+- [ ] Pass the complete source gate on the resulting exact PR #20 head.
+- [ ] Externally freeze the new 40-character `EXACT_FINAL_HEAD` without another tracked source change.
 
-## P0 — MiniMax Code New Hydration And Candidate
+## P0 — MiniMax Code Fresh R46 Hydration And Candidate
 
-- [ ] Use a new clean detached hydration worktree at the exact R45 head.
-- [ ] Treat the prior 74454d registry-only cache, receipt, worktrees, evidence, and blocker package as `FORBIDDEN_REFERENCE_ONLY`.
-- [ ] Use a new native cache root and new exclusive receipt outside the repository.
-- [ ] Run `scripts/candidate-r30/npm-native-cache-hydrate.mjs` exactly once with the exact Owner token.
-- [ ] Return exact source, package-lock, lifecycle set, CONNECT audit, header root, cache ledger, and offline proof identities.
-- [ ] Create a separate new clean detached candidate worktree and evidence directory.
-- [ ] Fetch the active Draft PR head and prove `FETCH_HEAD == EXACT_FINAL_HEAD == git HEAD`.
-- [ ] Materialize authority through `scripts/candidate-r30/minimax-authority.mjs` from the exact Git object.
-- [ ] Run `node --test scripts/candidate-r30/*.test.mjs`.
+MiniMax remains `STOPPED` until one handoff supplies all four fields:
+
+```text
+SOURCE_COMMIT=<new exact SHA>
+PR=20
+SOURCE_GATE=PASS
+RUN_STAMP=<new unique value>
+```
+
+- [ ] Fetch `refs/pull/20/head` and prove `FETCH_HEAD == SOURCE_COMMIT`.
+- [ ] Read authority through `scripts/candidate-r30/minimax-authority.mjs` from the exact Git object.
+- [ ] Use a new run stamp; never reuse `20260803T123238Z`.
+- [ ] Use new hydration and candidate worktrees, cache, receipt, task root, and evidence directory.
+- [ ] Keep R45 source, partial cache, evidence, logs, screenshots, and `/tmp` probes untouched and `FORBIDDEN_REFERENCE_ONLY`.
+- [ ] Execute `node --test scripts/candidate-r30/*.test.mjs` in the clean hydration worktree.
+- [ ] Run `scripts/candidate-r30/npm-native-cache-hydrate.mjs` once with `OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION`.
+- [ ] Do not retry, resume, reuse a partial cache, broaden the allowlist, or switch mirrors after any blocker.
+- [ ] Return exact source, lock, lifecycle set, transport policy, CONNECT audit, cache ledger, headers, offline proof, and receipt identities.
+- [ ] Create a separate clean detached candidate worktree and new evidence directory.
 - [ ] Run `scripts/candidate-r30/run-candidate.mjs --dry-run`; require `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`.
-- [ ] Execute `scripts/candidate-r30/run-candidate.mjs` exactly once with the native cache and receipt.
+- [ ] Execute the real candidate exactly once.
 - [ ] Pass Gate 2 full lifecycle install under deny-network with no cache mutation.
 - [ ] Pass Gates 3–12 without source edits, online retry, authority expansion, or skipped evidence.
-- [ ] Return complete source/artifact/runtime/test-data identities, packaged Electron `113/113`, three performance runs, screenshots, terminal state, `CANDIDATE-MANIFEST.json`, and `R30-COMPLETE.json`.
-- [ ] Stop and return exact evidence on any `BLOCKED_NATIVE_CACHE_*`, candidate, build, package, Electron, performance, identity, or process blocker.
+- [ ] Return packaged Electron `113/113`, three performance runs, screenshots, identities, clean terminal state, `CANDIDATE-MANIFEST.json`, and `R30-COMPLETE.json`.
+- [ ] Stop and return the exact first blocker if any step fails.
 
 ## P0 — Codex Independent Acceptance
 
 - [ ] Start only after a complete internally consistent MiniMax receipt.
-- [ ] Independently verify source, native-cache receipt, artifact, runtime, ecosystem baseline, and test-data identity.
+- [ ] Independently verify source, native-cache receipt, artifact, runtime, ecosystem baseline, and test-data identities.
 - [ ] Operate the exact packaged Electron candidate on the real macOS computer.
 - [ ] Verify local material → grounded Ask → source → return → Todo → edit → schedule → full quit/relaunch.
 - [ ] Verify All / Unscheduled discoverability and exact Todo navigation.
