@@ -18,12 +18,12 @@ const mirrorFiles = [
   'docs/TODO.md',
 ];
 
-test('all six handoff surfaces are authoritative R31 mirrors, not placeholders', async () => {
+test('all six handoff surfaces are authoritative R31/R45 mirrors, not placeholders', async () => {
   const values = await Promise.all(mirrorFiles.map(async (file) => [file, await read(file)]));
   for (const [file, content] of values) {
     assert.match(content, /MVP_NOT_COMPLETE/u, file);
     assert.match(content, /goal\.md|PROJECT_STATE\.yaml/u, file);
-    assert.match(content, /R31|r31/u, file);
+    assert.match(content, /R31|r31|R45|r45/u, file);
     assert.doesNotMatch(content, /^# (Architecture|Risks|TODO)\n\n(?:- .+\n?){1,4}$/u, file);
   }
 });
@@ -38,20 +38,20 @@ test('architecture mirror preserves authority and the byte-preserved detailed hi
   ]);
   assert.ok(architecture.length > 7000, `architecture mirror too short: ${architecture.length}`);
   assert.match(architecture, /history\/ARCHITECTURE_PRE_R30\.md/u);
-  for (const token of [
-    'Local-First Product Authority',
-    'Fail-Closed Truth',
-    'Embedded-Local Production Default',
-    'Single-Model Vector Scope',
-    'Electron Trust',
-    'Twelve Candidate Gates',
-    'Gate 2',
-    'Gate 3',
-    'Gates 8–10',
-    'Gate 11',
-    'Gate 12',
-    'Deferred',
-  ]) assert.match(architecture, new RegExp(token, 'iu'));
+  for (const pattern of [
+    /Local-First Product Authority/iu,
+    /Fail-Closed Truth/iu,
+    /Embedded-Local Production Default/iu,
+    /Single-Model Vector Scope/iu,
+    /Electron Trust/iu,
+    /Twelve Candidate Gates|Twelve-Gate Exact-Commit Candidate Contract|twelve fail-closed candidate gates/iu,
+    /Gate 2/iu,
+    /Gate 3/iu,
+    /Gates 8–10|Gates 8-10/iu,
+    /Gate 11/iu,
+    /Gate 12/iu,
+    /Deferred/iu,
+  ]) assert.match(architecture, pattern);
   assert.ok(history.length > 7000, `preserved architecture too short: ${history.length}`);
   for (const token of ['Grounded Ask', 'Candidate Receipt', 'Todo', 'fail-closed']) {
     assert.match(history, new RegExp(token, 'iu'));
@@ -80,6 +80,8 @@ test('project progress JSON is truthful machine-readable source completion witho
   assert.equal(progress.r31.source_validation_checkpoint.desktop_phase1_tests.total, 1107);
   assert.equal(progress.r31.source_validation_checkpoint.local_knowledge_service_branch_percent, 90);
   assert.equal(progress.r31.source_validation_checkpoint.electron_list_only.exact, true);
+  assert.equal(progress.r45.candidate_gate_2.online_fallback, false);
+  assert.equal(progress.r45.local_execution, 'NOT_RUN');
 });
 
 test('handover and status force root v6.2 reading before docs mirrors', async () => {
@@ -92,24 +94,28 @@ test('handover and status force root v6.2 reading before docs mirrors', async ()
     const mirrorIndex = content.indexOf('docs/PROJECT_STATUS.md');
     assert.ok(rootIndex >= 0, 'goal.md missing');
     assert.ok(mirrorIndex < 0 || rootIndex < mirrorIndex, 'docs mirror precedes root authority');
-    assert.match(content, /ChatGPT.*GitHub/su);
-    assert.match(content, /MiniMax Code.*exact|MiniMax Code.*精确/su);
-    assert.match(content, /Codex.*independent|Codex.*独立/su);
   }
+  assert.match(handover, /ChatGPT.*GitHub/su);
+  assert.match(handover, /MiniMax Code.*exact|MiniMax Code.*精确/su);
+  assert.match(handover, /Codex.*independent|Codex.*独立/su);
+  assert.match(status, /R45/u);
+  assert.match(status, /exact Git (?:commit )?object/iu);
 });
 
-test('risk and todo mirrors carry concrete blockers and the exact R31 handoff', async () => {
+test('risk and todo mirrors carry concrete blockers and the exact R31/R45 handoff', async () => {
   const [risks, todo] = await Promise.all([read('docs/RISKS.md'), read('docs/TODO.md')]);
   for (const token of ['R28', 'SHA256', 'network', 'signing', 'Gate 11', 'SBOM']) {
     assert.match(risks, new RegExp(token, 'iu'));
   }
+  assert.match(risks, /R31|R45/iu);
   assert.match(risks, /stale worktree|Git object/iu);
   assert.match(todo, /agent\/r31-source-completion/u);
   assert.match(todo, /113 tests in 9 files/u);
   assert.match(todo, /twelve|十二/iu);
   assert.match(todo, /minimax-authority\.mjs/u);
-  assert.match(todo, /MiniMax Code/u);
+  assert.match(todo, /MiniMax(?: Code)?/u);
   assert.match(todo, /Codex/u);
+  assert.match(todo, /npm-native-cache-hydrate\.mjs/u);
 });
 
 test('root governance remains blocked while marking GitHub source complete and local execution not run', async () => {
@@ -134,13 +140,14 @@ test('root governance remains blocked while marking GitHub source complete and l
   assert.match(state, /deployment_authority_bootstrap:/u);
   assert.match(status, /BLOCKED/u);
   assert.match(status, /1107\/1107/u);
-  assert.match(status, /exact Git commit object/iu);
+  assert.match(status, /exact Git (?:commit )?object/iu);
   assert.match(todo, /scripts\/candidate-r30\/run-candidate\.mjs/u);
   assert.match(todo, /scripts\/candidate-r30\/minimax-authority\.mjs/u);
   assert.match(todo, /EXACT_FINAL_HEAD/u);
   assert.match(decisions, /Embedded-Local Is The Production Retrieval Embedding Default/u);
   assert.match(decisions, /Twelve-Gate Exact-Commit Candidate Contract/u);
   assert.match(decisions, /Deployment Authority Is Read From The Exact Git Object/u);
+  assert.match(decisions, /OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION/u);
   assert.match(changelog, /Gate 2/u);
   assert.match(changelog, /Gate 3/u);
   assert.match(changelog, /Gate 9/u);
@@ -151,10 +158,11 @@ test('root governance remains blocked while marking GitHub source complete and l
 });
 
 test('MiniMax deployment handoff is PR-agnostic, exact-object bound, and native-cache fail-closed', async () => {
-  const [deploy, bootstrap, hydrator] = await Promise.all([
+  const [deploy, bootstrap, hydrator, runtime] = await Promise.all([
     read('docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md'),
     read('scripts/candidate-r30/minimax-authority.mjs'),
     read('scripts/candidate-r30/npm-native-cache-hydrate.mjs'),
+    read('scripts/candidate-r30/native-cache-runtime.mjs'),
   ]);
   for (const token of [
     'EXACT_FINAL_HEAD',
@@ -168,7 +176,6 @@ test('MiniMax deployment handoff is PR-agnostic, exact-object bound, and native-
     'git-object-at-exact-commit',
     'git -C "$REPO" worktree add --detach',
     'git status --porcelain=v1 --untracked-files=all',
-    'sandbox-exec',
     'node --test scripts/candidate-r30/*.test.mjs',
     '--dry-run',
     'PLAN_ONLY_NOT_A_CANDIDATE',
@@ -195,4 +202,6 @@ test('MiniMax deployment handoff is PR-agnostic, exact-object bound, and native-
   assert.match(hydrator, /offlineInstallProof/u);
   assert.match(hydrator, /offlineNativeProof/u);
   assert.match(hydrator, /candidateCreated:\s*false/u);
+  assert.match(runtime, /sandbox-exec/u);
+  assert.match(runtime, /localhost CONNECT proxy|startAllowlistedConnectProxy/u);
 });
