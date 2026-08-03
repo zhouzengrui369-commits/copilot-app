@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { cleanEnvironment, computeCacheIdentity } from './npm-cache-hydrate.mjs';
 import {
   NATIVE_CACHE_HYDRATION_SCHEMA_VERSION,
+  NATIVE_PARTIAL_CACHE_MARKER,
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NPM_REGISTRY,
@@ -21,6 +22,7 @@ import {
 } from './native-cache-policy.mjs';
 import {
   OFFLINE_PROFILE,
+  classifyNativeTransportFailure,
   findExecutableNative,
   gitNative,
   nativeHydrationProxyProfile,
@@ -28,6 +30,7 @@ import {
   offlineNativeEnvironment,
   onlineNativeEnvironment,
   prepareNativeCacheLayout,
+  proxyTransportSummary,
   removeInstallTrees,
   requireNewExternalPath,
   runAsyncRecordedNative,
@@ -39,21 +42,153 @@ import {
 
 export {
   EXPECTED_LIFECYCLE_PACKAGES,
+  NATIVE_BUILD_MODE,
   NATIVE_CACHE_HYDRATION_SCHEMA_VERSION,
   NATIVE_HYDRATION_HOSTS,
+  NATIVE_NPM_FETCH_RETRIES,
+  NATIVE_NPM_FETCH_TIMEOUT_MS,
+  NATIVE_NPM_MAX_SOCKETS,
+  NATIVE_PARTIAL_CACHE_MARKER,
+  NATIVE_PROXY_IDLE_TIMEOUT_MS,
+  NATIVE_PROXY_KEEPALIVE_MS,
   NATIVE_TOOLCHAIN_PROFILE,
-  NATIVE_BUILD_MODE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NPM_REGISTRY,
   NativeCacheHydrationBlocked,
   candidateNativeBuildEnvironment,
   candidateNativeCacheEnvironment,
   fullInstallArgs,
+  nativeHydrationTransportPolicy,
   parseNativeHydrationArgs,
   validateNativeHydrationReceipt,
 } from './native-cache-policy.mjs';
 export { nativeRebuildArgs } from './native-cache-policy.mjs';
-export { nativeHydrationProxyProfile } from './native-cache-runtime.mjs';
+export {
+  classifyNativeTransportFailure,
+  configureNativeTunnelSocket,
+  nativeHydrationProxyProfile,
+  proxyTransportSummary,
+} from './native-cache-runtime.mjs';
+
+function failingProxyEndpoint(proxy) {
+  const requests = Array.isArray(proxy?.requests) ? proxy.requests : [];
+  const request = requests.find((entry) => entry.transport?.fatal === true) ?? requests.at(-1) ?? null;
+  return request
+    ? {
+      host: request.host ?? null,
+      port: request.port ?? null,
+      transportError: request.transport?.error ?? null,
+      durationMs: request.transport?.durationMs ?? null,
+      bytesClientToUpstream: request.transport?.bytesClientToUpstream ?? 0,
+      bytesUpstreamToClient: request.transport?.bytesUpstreamToClient ?? 0,
+    }
+    : null;
+}
+
+export function partialHydrationFailureDocument({
+  sourceCommit,
+  blockerCode,
+  phase,
+  transport,
+  proxy,
+  commandReceipt,
+  endedAt = new Date().toISOString(),
+}) {
+  return {
+    schemaVersion: 1,
+    status: 'partial_failed_transport',
+    reusable: false,
+    passReceiptCreated: false,
+    automaticRetry: false,
+    sourceCommit,
+    blockerCode,
+    phase,
+    transport,
+    proxy: {
+      allowedHosts: proxy?.allowedHosts ?? [],
+      summary: proxyTransportSummary(proxy),
+      failingEndpoint: failingProxyEndpoint(proxy),
+    },
+    command: commandReceipt
+      ? {
+        name: commandReceipt.name,
+        startedAt: commandReceipt.startedAt,
+        endedAt: commandReceipt.endedAt,
+        exitCode: commandReceipt.exitCode,
+        signal: commandReceipt.signal,
+        stdoutPath: commandReceipt.stdoutPath,
+        stderrPath: commandReceipt.stderrPath,
+      }
+      : null,
+    endedAt,
+  };
+}
+
+async function commandOutput(receipt) {
+  if (!receipt) return '';
+  const [stdout, stderr] = await Promise.all([
+    readFile(receipt.stdoutPath, 'utf8').catch(() => ''),
+    readFile(receipt.stderrPath, 'utf8').catch(() => ''),
+  ]);
+  return `${stdout}\n${stderr}`;
+}
+
+async function writeTransportFailureMarker({
+  layout,
+  sourceCommit,
+  blockerCode,
+  phase,
+  transport,
+  proxy,
+  commandReceipt,
+}) {
+  const markerPath = path.join(layout.root, NATIVE_PARTIAL_CACHE_MARKER);
+  const document = partialHydrationFailureDocument({
+    sourceCommit,
+    blockerCode,
+    phase,
+    transport,
+    proxy,
+    commandReceipt,
+  });
+  await writeExclusiveNative(markerPath, `${JSON.stringify(document, null, 2)}\n`);
+  return markerPath;
+}
+
+async function failOnlineStage({ layout, sourceCommit, proxy, stage, fallbackCode, detail }) {
+  const output = await commandOutput(stage);
+  const proxyErrors = (proxy?.requests ?? [])
+    .map((request) => request.transport?.error?.code)
+    .filter(Boolean)
+    .join('\n');
+  const transport = classifyNativeTransportFailure(`${output}\n${proxyErrors}`);
+  if (transport) {
+    const markerPath = await writeTransportFailureMarker({
+      layout,
+      sourceCommit,
+      blockerCode: transport.blockerCode,
+      phase: stage?.name ?? 'online-hydration',
+      transport,
+      proxy,
+      commandReceipt: stage,
+    });
+    blockNativeCache(transport.blockerCode, detail, {
+      ...stage,
+      transport,
+      transportSummary: proxyTransportSummary(proxy),
+      failingEndpoint: failingProxyEndpoint(proxy),
+      cacheStatus: 'partial_failed_transport',
+      cacheReusable: false,
+      partialMarkerPath: markerPath,
+      automaticRetry: false,
+    });
+  }
+  blockNativeCache(fallbackCode, detail, {
+    ...stage,
+    requests: proxy?.requests ?? [],
+    automaticRetry: false,
+  });
+}
 
 export async function hydrateNativeToolchainCache(options) {
   process.umask(0o077);
@@ -158,20 +293,29 @@ export async function hydrateNativeToolchainCache(options) {
   } finally {
     await proxy.close();
   }
-  verifyProxyAudit(proxy);
+
   if (onlineInstall?.exitCode !== 0) {
-    blockNativeCache('BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_INSTALL', 'bounded lifecycle install failed', {
-      ...onlineInstall,
-      requests: proxy.requests,
+    await failOnlineStage({
+      layout,
+      sourceCommit: options.sourceCommit,
+      proxy,
+      stage: onlineInstall,
+      fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_INSTALL',
+      detail: 'bounded lifecycle install failed',
     });
   }
   if (onlineNative?.exitCode !== 0 || !onlineNative?.binary) {
-    blockNativeCache('BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_NATIVE', 'Electron native hydration failed', {
-      ...onlineNative,
-      requests: proxy.requests,
+    await failOnlineStage({
+      layout,
+      sourceCommit: options.sourceCommit,
+      proxy,
+      stage: onlineNative,
+      fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_NATIVE',
+      detail: 'Electron native hydration failed',
     });
   }
 
+  const transportSummary = verifyProxyAudit(proxy);
   const electronNodedir = await findElectronNodedir(layout.nodeGyp, lockfile.electronVersion);
   await removeInstallTrees(repository);
   const offlineInstall = await runAsyncRecordedNative({
@@ -263,6 +407,7 @@ export async function hydrateNativeToolchainCache(options) {
       proxy: {
         allowedHosts: proxy.allowedHosts,
         requests: proxy.requests,
+        transportSummary,
         allRequestsAllowed: proxy.requests.length > 0
           && proxy.requests.every((request) => request.allowed === true),
       },
