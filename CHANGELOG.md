@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-08-03 — R46 Native Hydration Transport Stability
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.
+
+### Local incident
+
+- MiniMax executed the R45 exact source `43f151a3a1eb7e0592ff833f0e42892db47d3d65` in a fresh detached hydration worktree.
+- Exact-object authority, new-path checks, and `83/83` source contracts passed.
+- The one authorized native-toolchain hydration stopped before candidate creation after npm reported `ECONNRESET` during a long registry fetch sequence.
+- The failed run retained a partial 477 MiB cache as immutable diagnostic evidence and produced no PASS receipt, candidate, artifact, runtime ID, Electron process, signing, notarization, Release, or Human Owner Gate result.
+- A second hydrator invocation was attempted contrary to the one-invocation contract and was immediately rejected by `BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS`; it performed no second hydration and created no candidate state.
+
+### Decision
+
+- Preserve `automaticRetry=false`; no retry is hidden inside the hydrator.
+- Keep the candidate fully deny-network and keep the official-host allowlist unchanged.
+- Improve the single authorized invocation with TCP keepalive, no-delay, long idle timeout, explicit fetch timeout, and bounded socket concurrency.
+- Fix npm fetch retries at zero and make retry-policy drift part of the receipt contract.
+- Record per-CONNECT timing, directional bytes, socket policy, and terminal transport error.
+- Classify reset/timeout/pipe/abort failures with stable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_*` codes.
+- Mark transport-failed cache roots with exclusive `HYDRATION-FAILED.json`, `status=partial_failed_transport`, `reusable=false`, and `passReceiptCreated=false`.
+- Reject any cache containing the partial marker and reject any PASS receipt containing a fatal tunnel record.
+
+### Handoff
+
+- MiniMax remains stopped until one handoff supplies `SOURCE_COMMIT`, `PR`, `SOURCE_GATE=PASS`, and a new `RUN_STAMP`.
+- The next run must use entirely new hydration/candidate worktrees, cache, receipt, evidence, artifact, runtime, screenshots, and performance identities.
+- R45 source, run stamp `20260803T123238Z`, partial cache, evidence, and logs remain `FORBIDDEN_REFERENCE_ONLY`.
+
+Rollback: revert this bounded transport, audit, test, and handoff patch. Rollback changes no product data, package version, credential, cloud resource, signing state, candidate artifact, or runtime.
+
 ## 2026-08-03 — R45 Gate 2 Native-Toolchain Cache Repair
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.
