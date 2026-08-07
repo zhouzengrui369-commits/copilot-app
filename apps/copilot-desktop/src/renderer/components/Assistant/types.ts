@@ -1,4 +1,4 @@
-export type AssistantRoute = 'schedule' | 'knowledge' | 'ask' | 'voice' | 'settings';
+export type AssistantRoute = 'schedule' | 'knowledge' | 'studio' | 'ask' | 'voice' | 'settings';
 export type AssistantDock = 'left' | 'right';
 export type AssistantTruth =
   | 'IDLE'
