@@ -4,15 +4,16 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-The Owner-directed R47 clean-room llm_wiki + Demo UI Knowledge Studio source is implemented, source-green on its stacked PR, and integrated only into Draft PR #20. Final PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9` passed the complete Node 24/macOS source gate in run `31150946435`, job `92780309284`, with all 17 workflow steps successful; it was then merged into `chatgpt/mvp-source-finalization` as merge commit `292e2a6160cf009a13492c93af96f5ff3c320899`. This governance alignment is the last tracked-source update phase before the final PR #20 source gate. No packaged Electron Candidate, artifact SHA-256, runtime ID, independent Codex acceptance, signing, notarization, Release, Experience readiness, or Human Owner Gate exists.
+The Owner-directed R47 clean-room llm_wiki + Demo UI Knowledge Studio source is implemented, source-green on its stacked PR, and integrated only into Draft PR #20. Final PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9` passed the complete Node 24/macOS source gate in run `31150946435`, job `92780309284`, with all 17 workflow steps successful; it was then merged into `chatgpt/mvp-source-finalization` as merge commit `292e2a6160cf009a13492c93af96f5ff3c320899`. R31 remains the authoritative Phase 1 source-completion baseline beneath this additive R47 product slice. This governance alignment is the last tracked-source update phase before the final PR #20 source gate. No packaged Electron Candidate, artifact SHA-256, runtime ID, independent Codex acceptance, signing, notarization, Release, Experience readiness, or Human Owner Gate exists.
 
 ## Current source chain
 
 - Repository: `zhouzengrui369-commits/copilot-app`
 - Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
 - Consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
-- Pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`
-- Pre-Studio source gate: run `30819543111`, `17/17 PASS`
+- R31 pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`
+- R31 pre-Studio source gate: run `30819543111`, `17/17 PASS`
+- R31 Desktop Phase 1 source suite at that baseline: `1107/1107 PASS`
 - R47 implementation-only head: `6886bd37bbc80658b7e994bed052d1ec6b2b65e6`; source gate run `31150271762`, job `92778261873`, `17/17 PASS`
 - R47 final stacked head: `8f0d1604217c966e696e7caf8763496c6be681c9`; source gate run `31150946435`, job `92780309284`, `17/17 PASS`
 - R47 integration into PR #20 source branch: `292e2a6160cf009a13492c93af96f5ff3c320899`
