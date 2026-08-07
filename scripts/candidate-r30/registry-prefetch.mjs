@@ -2,8 +2,11 @@ import { createHash } from 'node:crypto';
 import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 import { NPM_REGISTRY, blockNativeCache } from './native-cache-policy.mjs';
 
-export const NATIVE_REGISTRY_PREFETCH_STRATEGY = 'lockfile-batched-npm-pack-v1';
+export const NATIVE_REGISTRY_PREFETCH_STRATEGY =
+  'lockfile-batched-name-version-npm-pack-v2';
 export const NATIVE_REGISTRY_PREFETCH_BATCH_SIZE = 24;
+export const NATIVE_REGISTRY_CLOSURE_STRATEGY =
+  'deny-network-offline-ci-ignore-scripts-v1';
 
 const REVIEWED_REGISTRY_HOSTS = new Set([
   'registry.npmjs.org',
@@ -37,6 +40,35 @@ function canonicalRegistryTarball(resolved) {
   return url.toString();
 }
 
+function packageNameFromRegistryTarball(resolved) {
+  let url;
+  try {
+    url = new URL(resolved);
+  } catch {
+    return null;
+  }
+  const marker = '/-/';
+  const markerIndex = url.pathname.indexOf(marker);
+  if (markerIndex <= 1) return null;
+  let name;
+  try {
+    name = decodeURIComponent(url.pathname.slice(1, markerIndex));
+  } catch {
+    return null;
+  }
+  if (
+    name.length === 0
+    || name.includes('\\')
+    || name.includes('..')
+    || /\s/u.test(name)
+    || (!name.startsWith('@') && name.includes('/'))
+    || (name.startsWith('@') && !/^@[^/]+\/[^/]+$/u.test(name))
+  ) {
+    return null;
+  }
+  return name;
+}
+
 export function buildRegistryPrefetchManifest(lockfileDocument) {
   if (
     !lockfileDocument
@@ -52,7 +84,7 @@ export function buildRegistryPrefetchManifest(lockfileDocument) {
     );
   }
 
-  const byResolved = new Map();
+  const bySpec = new Map();
   for (const [packagePath, entry] of Object.entries(lockfileDocument.packages)) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     const rawResolved = typeof entry.resolved === 'string' ? entry.resolved : '';
@@ -79,28 +111,48 @@ export function buildRegistryPrefetchManifest(lockfileDocument) {
         { packagePath, resolved },
       );
     }
-    const existing = byResolved.get(resolved);
-    if (existing && existing.integrity !== integrity) {
+    const name = packageNameFromRegistryTarball(resolved);
+    const version = typeof entry.version === 'string' ? entry.version : '';
+    if (!name || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/u.test(version)) {
       blockNativeCache(
-        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_INTEGRITY',
-        'one registry tarball URL maps to conflicting lockfile integrities',
-        { resolved, left: existing.integrity, right: integrity },
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
+        'registry dependency must map to one exact name@version spec',
+        { packagePath, resolved, name, version },
       );
     }
-    if (!existing) byResolved.set(resolved, { resolved, integrity });
+    const spec = `${name}@${version}`;
+    const existing = bySpec.get(spec);
+    if (
+      existing
+      && (existing.integrity !== integrity || existing.resolved !== resolved)
+    ) {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_INTEGRITY',
+        'one exact name@version maps to conflicting lockfile registry identity',
+        {
+          spec,
+          left: { resolved: existing.resolved, integrity: existing.integrity },
+          right: { resolved, integrity },
+        },
+      );
+    }
+    if (!existing) bySpec.set(spec, { name, version, spec, resolved, integrity });
   }
 
-  const entries = [...byResolved.values()]
-    .sort((left, right) => left.resolved.localeCompare(right.resolved));
+  const entries = [...bySpec.values()]
+    .sort((left, right) => left.spec.localeCompare(right.spec));
   if (entries.length === 0) {
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
-      'package-lock contains no registry tarballs to prefetch',
+      'package-lock contains no registry packages to prefetch',
     );
   }
-  const canonical = `${entries.map((entry) => `${entry.resolved}\0${entry.integrity}`).join('\n')}\n`;
+  const canonical = `${entries
+    .map((entry) => `${entry.spec}\0${entry.resolved}\0${entry.integrity}`)
+    .join('\n')}\n`;
   return {
     strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
+    metadataMode: 'name-version-packument-and-tarball',
     entryCount: entries.length,
     manifestSha256: sha256(canonical),
     entries,
@@ -138,34 +190,38 @@ export function registryPrefetchBatchArgs({
   packDestination,
   entries,
 }) {
-  const specs = (Array.isArray(entries) ? entries : []).map((entry) => entry?.resolved);
-  if (!npmExecutable || !npmCacheDir || !packDestination || specs.length === 0) {
+  const checkedEntries = Array.isArray(entries) ? entries : [];
+  if (!npmExecutable || !npmCacheDir || !packDestination || checkedEntries.length === 0) {
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_ARGUMENT',
-      'registry prefetch requires npm, cache, destination and at least one exact tarball',
+      'registry prefetch requires npm, cache, destination and at least one exact package',
     );
   }
-  for (const spec of specs) {
-    let url;
-    try {
-      url = new URL(spec);
-    } catch {
-      url = null;
-    }
+  const specs = checkedEntries.map((entry) => {
     if (
-      !url
-      || url.protocol !== 'https:'
-      || url.hostname !== CANONICAL_REGISTRY.hostname
-      || url.username
-      || url.password
+      !entry
+      || typeof entry.name !== 'string'
+      || typeof entry.version !== 'string'
+      || entry.spec !== `${entry.name}@${entry.version}`
+      || typeof entry.resolved !== 'string'
+      || typeof entry.integrity !== 'string'
     ) {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
+        'prefetch batch contains an incomplete name@version registry identity',
+        { entry },
+      );
+    }
+    const canonical = canonicalRegistryTarball(entry.resolved);
+    if (!canonical || canonical !== entry.resolved) {
       blockNativeCache(
         'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_ORIGIN',
         'prefetch batch contains a noncanonical registry tarball',
-        { spec },
+        { spec: entry.spec, resolved: entry.resolved },
       );
     }
-  }
+    return entry.spec;
+  });
   return [
     npmExecutable,
     'pack',
@@ -176,10 +232,31 @@ export function registryPrefetchBatchArgs({
     NPM_CACHE_KEY_ALIGNMENT_FLAG,
     '--no-audit',
     '--no-fund',
+    '--prefer-online',
     '--pack-destination',
     packDestination,
     '--registry',
     NPM_REGISTRY,
     ...specs,
+  ];
+}
+
+export function registryCacheClosureArgs({ npmExecutable, npmCacheDir }) {
+  if (!npmExecutable || !npmCacheDir) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CLOSURE_ARGUMENT',
+      'registry cache closure proof requires npm and an isolated cache',
+    );
+  }
+  return [
+    npmExecutable,
+    'ci',
+    '--cache',
+    npmCacheDir,
+    NPM_CACHE_KEY_ALIGNMENT_FLAG,
+    '--no-audit',
+    '--no-fund',
+    '--offline',
+    '--ignore-scripts',
   ];
 }
