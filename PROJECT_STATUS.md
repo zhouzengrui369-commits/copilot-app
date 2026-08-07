@@ -4,52 +4,48 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-The Owner-directed R47 clean-room llm_wiki + Demo UI Knowledge Studio is integrated into Draft PR #20. R31 remains the authoritative Phase 1 source-completion baseline beneath that additive product slice, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The first integrated R47 PR #20 source `7d8495a23e6372e5f7e99dd45d6e73466a90ca9f` was source-green but its single MiniMax native-toolchain hydration stopped before Candidate creation with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET` at `registry.npmjs.org:443`. R48 has now replaced the one registry-heavy online lifecycle install with lockfile-derived bounded registry prefetch plus a registry-offline lifecycle install, and that repair has been merged only into the Draft PR #20 source branch. No packaged Electron Candidate, artifact SHA-256, runtime ID, independent Codex acceptance, signing, notarization, Release, Experience readiness, or Human Owner Gate exists.
+R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. The R49 MiniMax attempt on exact source `32ff3ebc0b1dc217bf0954974127b0aa68de61f2` passed exact-object authority and `95/95` Candidate source contracts, then stopped before Candidate creation because R48 tarball-only prefetch did not prove npm registry metadata cache closure: strict `npm ci --offline` reported `ENOTCACHED` for `typescript`. R50 fixes that deterministic source defect with exact `name@version` metadata+tarball prefetch, a strict deny-network registry-cache closure proof, and a zero-registry-request-after-closure invariant. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing, notarization, Release, Experience readiness, or Human Owner Gate exists.
 
 ## Current source chain
 
 - Repository: `zhouzengrui369-commits/copilot-app`
 - Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
 - Consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
-- R31 pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`
-- R31 pre-Studio source gate: run `30819543111`, `17/17 PASS`
-- R31 Desktop Phase 1 source suite at that baseline: `1107/1107 PASS`
-- R47 final stacked head: `8f0d1604217c966e696e7caf8763496c6be681c9`; source gate run `31150946435`, job `92780309284`, `17/17 PASS`
-- R47 integration into PR #20: `292e2a6160cf009a13492c93af96f5ff3c320899`
-- First integrated R47 PR #20 head: `7d8495a23e6372e5f7e99dd45d6e73466a90ca9f`; source gate run `31152146196`, job `92783833715`, `17/17 PASS`
-- Local hydration on `7d8495…`: exact-object authority PASS, source contracts `90/90 PASS`, one hydration invocation, then `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`; Candidate not created
-- R48 repair PR: `#24`, branch `chatgpt/r48-segmented-registry-prefetch`
-- R48 implementation head: `a3f87e71930857ac71abe626fea115aa709996ee`; source gate run `31155823536`, job `92794967653`, `17/17 PASS`
-- R48 final stacked head: `8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb`; source gate run `31156362975`, job `92796663770`, `17/17 PASS`
-- R48 integration into PR #20: `1f9beaaf60f08b607204be8b99f93cca5d48c408`
-- Final PR #20 source gate: pending on the exact tracked head produced by this final R48 governance freeze
-- Electron list-only Candidate discovery contract remains exact `113 tests in 9 files`
-- Upstream product reference remains `nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530` (v0.6.7, GPLv3), clean-room adapted with no upstream implementation bytes copied
+- R31 pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`; source gate run `30819543111`, `17/17 PASS`; Desktop Phase 1 `1107/1107 PASS`
+- R47 final stacked head: `8f0d1604217c966e696e7caf8763496c6be681c9`; run `31150946435`, job `92780309284`, `17/17 PASS`; merged into PR #20 as `292e2a6160cf009a13492c93af96f5ff3c320899`
+- R48 final stacked head: `8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb`; run `31156362975`, job `92796663770`, `17/17 PASS`; merged as `1f9beaaf60f08b607204be8b99f93cca5d48c408`
+- R49 attempted source: `32ff3ebc0b1dc217bf0954974127b0aa68de61f2`; source gate run `31157162004`, job `92799120113`, `17/17 PASS`; local source contracts `95/95 PASS`; hydration only, no Candidate
+- R49 deterministic blocker: `npm ci --offline` → `ENOTCACHED https://registry.npmjs.org/typescript`; predecessor cache/evidence remains non-reusable reference-only
+- R50 repair PR #25 final head: `4707148f9402cddf5959067fee46f6686e0af6ad`; source gate run `31161050220`, job `92811240325`, `17/17 PASS`
+- R50 merged only into PR #20 as `42357ea7d48e691624c43c1c182c0d1c0ec9752d`
+- Final PR #20 source gate: pending on the exact tracked head created by this final R50 governance freeze
+- Electron list-only Candidate discovery remains exact `113 tests in 9 files`
 
-The exact Git commit object, not a branch name, stale worktree, browser fixture, CI summary, package output, or chat transcript, is the only deployment authority.
+The **exact Git commit object**, not a branch name, stale worktree, browser fixture, CI summary, package output, or chat transcript, is the only deployment authority.
 
-## R48 hydration repair
+## R50 registry metadata closure
 
-R46 transport hardening retained one large online `npm ci --prefer-online`. The MiniMax run on `7d8495…` showed that a very small number of allowed CONNECT tunnels could carry hundreds of MiB for long periods before an upstream registry reset. R48 changes the preparation shape without adding retry or network authority:
+R48 used exact tarball URLs with `npm pack`, which warmed tarball content but did not guarantee every npm packument/metadata cache key needed by offline reify. R50 changes the source contract to:
 
 ```text
 exact package-lock v3
-→ deterministic unique registry tarball manifest
-→ canonical registry.npmjs.org tarballs
-→ bounded 24-item npm pack --ignore-scripts batches
-→ isolated npm cache
-→ full lifecycle npm ci --offline inside the bounded hydration sandbox
-→ lifecycle-only official Node/Electron/GitHub asset access through the unchanged proxy
+→ deterministic exact name@version + canonical tarball + integrity manifest
+→ bounded 24-item npm pack --ignore-scripts name@version batches
+→ npm metadata/packument + tarball cache
+→ strict (deny network*) npm ci --offline --ignore-scripts registry-cache closure proof
+→ remove closure-proof node_modules
+→ full lifecycle npm ci --offline with the existing bounded lifecycle-asset proxy
+→ require zero registry.npmjs.org requests after closure
 → Electron arm64 native hydration
-→ full deny-network offline install/native proofs
+→ full deny-network install/native proofs
 → immutable cache ledger + PASS receipt
 ```
 
-The hydrator invocation remains single-shot. `automaticRetry=false`, partial-cache reuse is forbidden, the official-host allowlist is unchanged, and Candidate Gates 1–12 receive no online authority. A failed batch remains a transport blocker and cannot produce a PASS receipt.
+A registry-cache closure failure now stops deterministically before lifecycle assets with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE`. Any registry request after closure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH`. `automaticRetry=false`, no retry/backoff/resume, no predecessor cache reuse, no host allowlist expansion, and Candidate Gate 1–12 deny-network remain invariant.
 
 ## Integrated product source
 
-The demo-first Electron shell includes `知识台 / Wiki Studio` while retaining canonical `KnowledgeWorkspace`. The Studio provides Sources, digest-bound Wiki truth/provenance, projection-bound local Review Queue metadata, Activity over existing durable knowledge-build state, the existing Sigma/Graphology local KG, clean-room 4-Signal Connections, and explicit `重新整理`. It adds no Tauri/Rust/DuckDB runtime, second database, second KB, second vector store, Python daemon, or cloud truth.
+The demo-first Electron shell includes `知识台 / Wiki Studio` while retaining canonical `KnowledgeWorkspace`. The Studio provides Sources, digest-bound Wiki truth/provenance, projection-bound local Review Queue metadata, Activity over existing durable knowledge-build state, existing local Sigma/Graphology KG, clean-room 4-Signal Connections, and explicit `重新整理`. The GPLv3 `nashsu/llm_wiki` reference is clean-room adapted; no upstream implementation bytes, Tauri/Rust/DuckDB runtime, second DB/KB/vector store, Python daemon, or cloud truth is added.
 
 ## Preserved MVP critical loop
 
@@ -66,24 +62,21 @@ local material
 → full Electron quit/relaunch persistence gate
 ```
 
-EXP-COP-008/009 source closure, local-ASR contracts, R31/R30 Candidate runner, deny-network Gate 2, and receipt-bound native-cache controls remain in the PR #20 lineage.
-
 ## Role boundary
 
 1. ChatGPT Parent PM owns bounded GitHub source work, exact-source freeze, PR review, and MiniMax task contract.
 2. MiniMax starts only after the final exact PR #20 SHA passes the complete source gate; it cannot repair source during Candidate execution.
 3. Codex starts independent product acceptance only after a complete source/artifact/runtime/test-data-bound MiniMax receipt exists.
-4. CI, static tests, jsdom/browser fixture, build/package success, merge, or MiniMax self-test cannot substitute for real packaged Electron acceptance.
+4. Development Evidence Is Not Candidate Identity: CI, static tests, renderer/jsdom/browser fixture, build/package success, merge, or MiniMax self-test cannot substitute for packaged Electron acceptance.
 
 ## Remaining gates
 
-- Pass the complete `copilot-source-gate` on the exact PR #20 head after this final tracked R48 governance freeze.
+- Pass `copilot-source-gate` on the exact PR #20 head after this final tracked R50 governance freeze.
 - Freeze that 40-character `EXACT_FINAL_HEAD` and make no later tracked source change.
-- Issue a fresh exact-SHA MiniMax contract with a new run stamp; all prior sources, partial caches, worktrees, receipts, evidence, artifacts and runtime identities are reference-only.
-- Pass Candidate Gates 1–12 on macOS, including packaged Electron `113/113`, three distinct candidate-bound performance runs, Wiki Studio and the full Ask/source/Todo/schedule/quit-relaunch loop, screenshots, identities/manifests, local ASR and clean termination.
-- Let Codex independently operate the same packaged Electron Candidate and report P0/P1/P2.
-- Preserve Developer ID signing, notarization/staple/Gatekeeper and Human Owner Gate as separate release gates.
+- Issue a fresh exact-SHA MiniMax contract with a new run stamp and entirely new paths; R49 and all predecessor caches/evidence remain reference-only.
+- Pass Candidate Gates 1–12, packaged Electron `113/113`, three performance runs, Wiki Studio, full Ask/source/Todo/schedule/quit-relaunch loop, local ASR, screenshots, identities/manifests, and clean termination.
+- Let Codex independently operate that same packaged Candidate and report P0/P1/P2.
 
 ## Next single action
 
-Run the complete source gate on the exact PR #20 head created by this final R48 governance freeze, freeze that SHA, then hand only that exact Git object to MiniMax Code for one fresh macOS Candidate attempt. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
+Run the complete source gate on the final exact PR #20 head produced after this R50 governance freeze, freeze that SHA, then hand only that exact Git object to MiniMax Code for one fresh macOS Candidate attempt. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
