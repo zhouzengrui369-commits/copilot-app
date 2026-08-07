@@ -24,7 +24,9 @@ R31 remains the source lineage for the macOS-first MVP. The active Parent PM sli
 - [x] Add renderer tests for Review Queue/local decision separation/explicit retry.
 - [x] Add `THIRD_PARTY_NOTICES.md` and `docs/development/LLM_WIKI_CLEAN_ROOM_MVP.md` provenance.
 - [x] Open stacked Draft PR #23 targeting `chatgpt/mvp-source-finalization`.
-- [ ] Pass the complete Node 24/macOS `copilot-source-gate` on the final PR #23 head.
+- [x] Validate the implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` with `copilot-source-gate` run `31150271762` (`17/17 PASS`).
+- [x] Freeze Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts on PR #23.
+- [ ] Pass the complete Node 24/macOS `copilot-source-gate` on the final evidence-containing PR #23 head.
 - [ ] Merge PR #23 into Draft PR #20 only.
 - [ ] Pass the complete `copilot-source-gate` on the resulting exact PR #20 head.
 - [ ] Freeze the new 40-character `EXACT_FINAL_HEAD` with no subsequent tracked source change.
