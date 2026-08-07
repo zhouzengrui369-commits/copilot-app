@@ -31,7 +31,8 @@ source:
   r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
   r52_reauthorization_branch: chatgpt/r52-reauthorize-long-hydration-window
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after R52 governance merge and complete source-gate PASS"
+  r52_merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after this final R52 state sync and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -142,6 +143,7 @@ r51_outer_timeout_attempt:
 r52_reauthorization:
   role: GOVERNANCE_ONLY_NEW_EXACT_SHA_AND_EXECUTION_WINDOW
   branch: chatgpt/r52-reauthorize-long-hydration-window
+  pr: 26
   product_code_changed: false
   r50_hydrator_changed: false
   package_or_lockfile_changed: false
@@ -152,8 +154,19 @@ r52_reauthorization:
   candidate_network_authority: deny-network
   outer_driver_timeout_seconds_minimum: 3600
   same_sha_redispatch_allowed: false
-  source_gate: PENDING
-  integration_into_pr20: PENDING
+  first_source_gate:
+    head: b5461ea987d2f1e6bc1bf5460d6341e09cc51a5f
+    run: 31165670393
+    job: 92825767451
+    steps: 17/17_PASS
+  final_stacked_source_gate:
+    head: a08d9269f600f513b2e886c63a11fb3d42f2fbe7
+    run: 31166172292
+    job: 92827392312
+    steps: 17/17_PASS
+  integration_into_pr20:
+    merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
+  final_pr20_source_gate: PENDING_AFTER_FINAL_STATE_SYNC
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
@@ -188,5 +201,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the governance-only R52 stacked head, merge only into Draft PR #20, pass the complete source gate on the resulting new exact PR #20 head, then issue MiniMax a new SHA, new run stamp, all-new paths and outer driver timeout >=3600 seconds."
+next_single_action: "Pass the complete source gate on the exact PR #20 head produced by this final state sync, freeze that SHA, then issue MiniMax a new run stamp, all-new paths and outer driver timeout >=3600 seconds."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
