@@ -37,7 +37,10 @@ source:
   r47_stacked_branch: chatgpt/mvp-llm-wiki-demo-ui
   r47_stacked_pr: 23
   r47_merge_commit_into_product_source: 292e2a6160cf009a13492c93af96f5ff3c320899
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after complete source-gate PASS"
+  r48_repair_branch: chatgpt/r48-segmented-registry-prefetch
+  r48_repair_pr: 24
+  r48_merge_commit_into_product_source: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after this governance freeze and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -111,7 +114,7 @@ r47_llm_wiki_demo_ui_mvp:
   role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
   branch: chatgpt/mvp-llm-wiki-demo-ui
   pr: 23
-  source_status: INTEGRATED_INTO_PR20_FINAL_SOURCE_GATE_PENDING
+  source_status: INTEGRATED_SOURCE_COMPLETE
   implementation_source_gate:
     head: 6886bd37bbc80658b7e994bed052d1ec6b2b65e6
     workflow: copilot-source-gate
@@ -128,7 +131,12 @@ r47_llm_wiki_demo_ui_mvp:
     merged_into_branch: chatgpt/mvp-source-finalization
     merged_into_pr: 20
     merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
-  final_pr20_source_gate: PENDING
+  first_integrated_pr20_source_gate:
+    head: 7d8495a23e6372e5f7e99dd45d6e73466a90ca9f
+    workflow: copilot-source-gate
+    run: 31152146196
+    job: 92783833715
+    steps: 17/17_PASS
   upstream_reference:
     repository: nashsu/llm_wiki
     commit: ad215b51252ffc1c6721d5b057f0449a2fb51530
@@ -147,19 +155,60 @@ r47_llm_wiki_demo_ui_mvp:
     four_signal_relevance: clean_room_pure_model
     existing_local_graph_reused: true
     existing_knowledge_editor_preserved: true
-  architecture_boundaries:
-    tauri_added: false
-    rust_added: false
-    duckdb_added: false
-    second_database_added: false
-    second_kb_added: false
-    second_vector_store_added: false
-    cloud_truth_added: false
-    product_scope_expanded_beyond_macos_mvp: false
   local_execution: NOT_RUN
   electron_candidate: NOT_RUN
   artifact_sha256: null
   runtime_id: null
+r48_registry_transport_attempt:
+  source_commit: 7d8495a23e6372e5f7e99dd45d6e73466a90ca9f
+  source_gate:
+    run: 31152146196
+    job: 92783833715
+    steps: 17/17_PASS
+  source_contracts: 90/90_PASS
+  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  canonical_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+  observed_endpoint: registry.npmjs.org:443
+  observed_error: ECONNRESET
+  source_changes_by_minimax: NONE
+  candidate_established: false
+  artifact_sha256: null
+  runtime_id: null
+  failed_cache:
+    status: EVIDENCE_ONLY
+    marker: partial_failed_transport
+    reusable: false
+  assets: FORBIDDEN_REFERENCE_ONLY
+r48_segmented_registry_prefetch_repair:
+  role: NATIVE_HYDRATION_REGISTRY_TRANSPORT_REPAIR
+  branch: chatgpt/r48-segmented-registry-prefetch
+  pr: 24
+  product_code_changed: false
+  package_or_lockfile_changed: false
+  automatic_retry: false
+  partial_cache_reuse: false
+  host_allowlist_expanded: false
+  candidate_network_authority: deny-network
+  strategy: lockfile-batched-npm-pack-v1
+  batch_size: 24
+  lifecycle_install_registry_mode: offline
+  implementation_source_gate:
+    head: a3f87e71930857ac71abe626fea115aa709996ee
+    run: 31155823536
+    job: 92794967653
+    steps: 17/17_PASS
+  final_stacked_source_gate:
+    head: 8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb
+    run: 31156362975
+    job: 92796663770
+    steps: 17/17_PASS
+  integration:
+    merged_into_branch: chatgpt/mvp-source-finalization
+    merged_into_pr: 20
+    merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+  final_pr20_source_gate: PENDING_AFTER_GOVERNANCE_FREEZE
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
@@ -168,7 +217,7 @@ gates:
   gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
   gate_6: "canonical unsigned macOS arm64 ZIP/DMG authority"
   gate_7: "source snapshot and ZIP/DMG/app/executable/app.asar identities"
-  gate_8: "focused packaged Electron journeys"
+  gate_8: "focused packaged Electron journeys including Knowledge Studio"
   gate_9: "exact discovery 113 tests in 9 files and deterministic test-data manifest"
   gate_10: "packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
   gate_11: "three distinct candidate-bound performance runs and aggregate"
@@ -204,5 +253,5 @@ deferred_scope:
   multi_user_enterprise: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Pass the complete source gate on the resulting exact PR #20 head, freeze that 40-hex SHA, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
-conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
+next_single_action: "Pass the complete source gate on the exact PR #20 head produced after this final R48 governance freeze, freeze that SHA, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
+conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"}
