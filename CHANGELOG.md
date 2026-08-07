@@ -10,7 +10,7 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 - MiniMax exact-object authority and Candidate source contracts `95/95 PASS`.
 - One Owner-authorized hydration invocation ran; Candidate execution count remained zero.
 - R48 tarball-only prefetch completed far enough to reach strict lifecycle `npm ci --offline`, which reported `ENOTCACHED` for `https://registry.npmjs.org/typescript`.
-- The deterministic defect is incomplete npm registry metadata/packument cache closure, not a product-code defect. Cumulative proxy evidence also contained a registry `ECONNRESET`, but R50 now scopes stage errors so earlier tunnel errors cannot mask a later offline-cache blocker.
+- The deterministic defect is incomplete npm registry metadata/packument cache closure, not a product-code defect. Cumulative proxy evidence also contained a registry `ECONNRESET`, but R50 scopes stage errors so earlier tunnel errors cannot mask a later offline-cache blocker.
 - Source stayed clean; no PASS receipt, Candidate, artifact SHA-256 or runtime ID exists. R49 cache/evidence is immutable reference-only and cannot be retried/resumed/reused.
 
 ### R50 source repair
@@ -52,19 +52,20 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 
 ## R31 / R30 Candidate contract retained
 
-R31 remains the source-completion baseline and the macOS Candidate remains twelve ordered fail-closed gates:
+The complete detailed pre-R30 history remains byte-preserved at `history/CHANGELOG_PRE_R30.md` and repository history mirror `docs/history/CHANGELOG_PRE_R30.md`.
 
-1. exact source and clean preimage;
-2. receipt-bound lifecycle install under deny-network;
-3. complete tracked-file SHA-256 ledger;
-4. source contracts and ordered LLM → KB → KG → RAG build;
-5. checks/tests/coverage/build/SBOM;
-6. canonical unsigned macOS arm64 package authority;
-7. source/artifact identities;
-8. focused packaged Electron;
-9. exact `113 tests in 9 files` plus deterministic test-data manifest;
-10. packaged Electron `113/113` and clean termination;
-11. three Candidate-bound performance runs;
-12. final source/artifact/runtime/test-data/evidence receipt.
+The executable macOS Candidate remains twelve ordered fail-closed gates:
 
-Deployment authority is read from the exact Git object through `scripts/candidate-r30/minimax-authority.mjs`; stale worktrees, branch names, CI summaries and chat transcripts are not Candidate identity.
+- **Gate 2** — exact receipt-bound full lifecycle install under deny-network.
+- **Gate 3** — complete tracked-file SHA-256 ledger and aggregate.
+- Gate 4 — source contracts and ordered LLM → KB → KG → RAG build.
+- Gate 5 — checks/tests/coverage/build/SBOM.
+- Gate 6 — canonical unsigned macOS arm64 package authority.
+- Gate 7 — source/artifact identities.
+- Gate 8 — focused packaged Electron.
+- **Gate 9** — exact `113 tests in 9 files` plus deterministic test-data manifest.
+- Gate 10 — packaged Electron `113/113` and clean termination.
+- **Gate 11** — three Candidate-bound performance runs.
+- **Gate 12** — final source/artifact/runtime/test-data/evidence receipt.
+
+Deployment authority is read from the **exact Git object** through `scripts/candidate-r30/minimax-authority.mjs`; stale worktrees, branch names, CI summaries and chat transcripts are not Candidate identity.
