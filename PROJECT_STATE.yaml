@@ -34,9 +34,10 @@ source:
   product_source_branch: chatgpt/mvp-source-finalization
   product_source_pr: 20
   pre_mvp_studio_commit: 0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29
-  active_mvp_slice_branch: chatgpt/mvp-llm-wiki-demo-ui
-  active_mvp_slice_pr: 23
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after PR #23 merge and complete source-gate PASS"
+  r47_stacked_branch: chatgpt/mvp-llm-wiki-demo-ui
+  r47_stacked_pr: 23
+  r47_merge_commit_into_product_source: 292e2a6160cf009a13492c93af96f5ff3c320899
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -110,14 +111,24 @@ r47_llm_wiki_demo_ui_mvp:
   role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
   branch: chatgpt/mvp-llm-wiki-demo-ui
   pr: 23
-  source_status: SOURCE_IMPLEMENTATION_PASS_FINAL_EVIDENCE_GATE_PENDING
+  source_status: INTEGRATED_INTO_PR20_FINAL_SOURCE_GATE_PENDING
   implementation_source_gate:
     head: 6886bd37bbc80658b7e994bed052d1ec6b2b65e6
     workflow: copilot-source-gate
     run: 31150271762
     job: 92778261873
     steps: 17/17_PASS
-  final_evidence_head_source_gate: PENDING
+  final_stacked_source_gate:
+    head: 8f0d1604217c966e696e7caf8763496c6be681c9
+    workflow: copilot-source-gate
+    run: 31150946435
+    job: 92780309284
+    steps: 17/17_PASS
+  integration:
+    merged_into_branch: chatgpt/mvp-source-finalization
+    merged_into_pr: 20
+    merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
+  final_pr20_source_gate: PENDING
   upstream_reference:
     repository: nashsu/llm_wiki
     commit: ad215b51252ffc1c6721d5b057f0449a2fb51530
@@ -193,5 +204,5 @@ deferred_scope:
   multi_user_enterprise: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Pass the complete source gate on the final evidence-containing PR #23 head, merge only into Draft PR #20, pass source gate on the resulting exact PR #20 head, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
+next_single_action: "Pass the complete source gate on the resulting exact PR #20 head, freeze that 40-hex SHA, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
