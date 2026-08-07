@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { constants as fsConstants } from 'node:fs';
-import { access, lstat, readFile, realpath, stat } from 'node:fs/promises';
+import { access, lstat, mkdir, readFile, realpath, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanEnvironment, computeCacheIdentity } from './npm-cache-hydrate.mjs';
@@ -20,6 +20,13 @@ import {
   candidateNativeBuildEnvironment,
   candidateNativeCacheEnvironment,
 } from './native-cache-policy.mjs';
+import {
+  NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
+  NATIVE_REGISTRY_PREFETCH_STRATEGY,
+  buildRegistryPrefetchManifest,
+  registryPrefetchBatchArgs,
+  registryPrefetchBatches,
+} from './registry-prefetch.mjs';
 import {
   OFFLINE_PROFILE,
   classifyNativeTransportFailure,
@@ -190,6 +197,70 @@ async function failOnlineStage({ layout, sourceCommit, proxy, stage, fallbackCod
   });
 }
 
+async function prefetchRegistryTarballs({
+  repository,
+  npmExecutable,
+  layout,
+  proxy,
+  onlineEnv,
+  logRoot,
+  sourceCommit,
+  manifest,
+}) {
+  const batches = registryPrefetchBatches(manifest);
+  const prefetchRoot = path.join(layout.root, 'registry-prefetch');
+  await mkdir(prefetchRoot, { recursive: true, mode: 0o700 });
+  const receipts = [];
+  for (let index = 0; index < batches.length; index += 1) {
+    const batchNumber = index + 1;
+    const destination = path.join(
+      prefetchRoot,
+      `batch-${String(batchNumber).padStart(4, '0')}`,
+    );
+    await mkdir(destination, { recursive: true, mode: 0o700 });
+    const stage = await runAsyncRecordedNative({
+      name: `bounded-registry-prefetch-${String(batchNumber).padStart(4, '0')}`,
+      command: '/usr/bin/sandbox-exec',
+      args: [
+        '-p',
+        nativeHydrationProxyProfile(proxy.port),
+        ...registryPrefetchBatchArgs({
+          npmExecutable,
+          npmCacheDir: layout.npm,
+          packDestination: destination,
+          entries: batches[index],
+        }),
+      ],
+      cwd: repository,
+      env: onlineEnv,
+      logRoot,
+    });
+    if (stage.exitCode !== 0) {
+      await failOnlineStage({
+        layout,
+        sourceCommit,
+        proxy,
+        stage,
+        fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH',
+        detail: `registry prefetch batch ${batchNumber}/${batches.length} failed`,
+      });
+    }
+    receipts.push(stage);
+    await rm(destination, { recursive: true, force: true });
+  }
+  await rm(prefetchRoot, { recursive: true, force: true });
+  return {
+    status: 'PASS',
+    strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
+    batchSize: NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
+    entryCount: manifest.entryCount,
+    manifestSha256: manifest.manifestSha256,
+    batchCount: batches.length,
+    batches: receipts,
+    automaticRetry: false,
+  };
+}
+
 export async function hydrateNativeToolchainCache(options) {
   process.umask(0o077);
   if (process.platform !== 'darwin' || process.arch !== 'arm64') {
@@ -245,6 +316,10 @@ export async function hydrateNativeToolchainCache(options) {
   );
   const layout = await prepareNativeCacheLayout(repository, cacheTarget);
   const lockfile = await inspectNativeLockfile(repository);
+  const lockfileDocument = JSON.parse(
+    await readFile(path.join(repository, 'package-lock.json'), 'utf8'),
+  );
+  const registryManifest = buildRegistryPrefetchManifest(lockfileDocument);
   const npmExecutable = await findExecutableNative('npm');
   const logRoot = options.receiptOutput.replace(/\.json$/u, '');
   const npmVersion = await runAsyncRecordedNative({
@@ -263,16 +338,27 @@ export async function hydrateNativeToolchainCache(options) {
   const proxy = await startAllowlistedConnectProxy();
   const proxyUrl = `http://127.0.0.1:${proxy.port}`;
   const onlineEnv = onlineNativeEnvironment({ layout, proxyUrl });
+  let registryPrefetch;
   let onlineInstall;
   let onlineNative;
   try {
+    registryPrefetch = await prefetchRegistryTarballs({
+      repository,
+      npmExecutable,
+      layout,
+      proxy,
+      onlineEnv,
+      logRoot,
+      sourceCommit: options.sourceCommit,
+      manifest: registryManifest,
+    });
     onlineInstall = await runAsyncRecordedNative({
-      name: 'bounded-native-toolchain-install',
+      name: 'bounded-native-toolchain-lifecycle-install',
       command: '/usr/bin/sandbox-exec',
       args: [
         '-p',
         nativeHydrationProxyProfile(proxy.port),
-        ...fullInstallArgs({ npmExecutable, npmCacheDir: layout.npm, online: true }),
+        ...fullInstallArgs({ npmExecutable, npmCacheDir: layout.npm, online: false }),
       ],
       cwd: repository,
       env: onlineEnv,
@@ -301,7 +387,7 @@ export async function hydrateNativeToolchainCache(options) {
       proxy,
       stage: onlineInstall,
       fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_INSTALL',
-      detail: 'bounded lifecycle install failed',
+      detail: 'registry-offline lifecycle install failed',
     });
   }
   if (onlineNative?.exitCode !== 0 || !onlineNative?.binary) {
@@ -397,11 +483,13 @@ export async function hydrateNativeToolchainCache(options) {
     npmExecutable,
     npmVersion: npmVersionText,
     lockfile,
+    registryPrefetch,
     cacheLayout: layout,
     electronNodedir,
     cacheIdentity,
     onlineHydration: {
       status: 'PASS',
+      registryMode: 'lockfile-batched-prefetch-then-offline-ci',
       install: onlineInstall,
       nativeArm64: onlineNative,
       proxy: {
