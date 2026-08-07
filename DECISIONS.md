@@ -1,5 +1,33 @@
 # DECISIONS
 
+## D-2026-08-07-02: Segment Registry Prefetch Before Native Lifecycle Hydration
+
+### Background
+
+The first source-green R47 PR #20 head `7d8495a23e6372e5f7e99dd45d6e73466a90ca9f` was executed once by MiniMax. Exact-object authority and `90/90` source contracts passed, but the single Owner-authorized native-toolchain hydration stopped before Candidate creation with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET` at `registry.npmjs.org:443`. The failed cache was marked `partial_failed_transport`, `reusable=false`, and no PASS receipt, Candidate, artifact, or runtime identity was produced.
+
+R46 had already added keepalive, long idle timeout, zero npm fetch retries and detailed CONNECT evidence. The remaining exposure was architectural: one registry-heavy `npm ci --prefer-online` could keep a very small number of registry tunnels alive while hundreds of MiB were transferred.
+
+### Decision
+
+1. Keep one Owner authorization and one hydrator invocation. `automaticRetry=false` remains invariant.
+2. Do not reuse, resume, repair or promote any failed partial cache.
+3. Derive one deterministic, integrity-bound registry tarball manifest from the exact package-lock v3 object.
+4. Canonicalize only already-reviewed npm registry origins to `registry.npmjs.org`; do not expand the source-defined host allowlist.
+5. Prefetch registry tarballs in bounded 24-item `npm pack --ignore-scripts` batches. Every batch uses a fresh npm child process and zero retry.
+6. Temporary packed tarballs are removed after each successful batch; the isolated npm content cache remains the durable hydration input.
+7. After registry prefetch, execute the full lifecycle `npm ci --offline`. Registry resolution is therefore cache-only while lifecycle scripts remain enabled.
+8. Keep the existing bounded localhost CONNECT proxy active during that lifecycle phase only for reviewed Node/Electron/GitHub official asset hosts required by install scripts and native hydration.
+9. Preserve the existing Electron arm64 rebuild, full deny-network install proof, deny-network Electron native proof, cache ledger, receipt validation and Candidate Gate 1–12 deny-network authority.
+10. Any failed prefetch batch or lifecycle asset transfer is a fail-closed blocker. The invocation stops immediately; there is no internal retry, backoff, alternate mirror, resume, or Candidate fallback.
+
+### Consequences
+
+- A single registry TCP reset no longer needs to invalidate a monolithic long-running registry install; the registry phase is split into bounded deterministic transfers.
+- Auditability improves because the receipt binds the exact lockfile-derived manifest, batch count and individual command receipts.
+- Security boundaries do not widen: the Candidate remains offline and the official host allowlist is unchanged.
+- A source change is required for this hydration behavior, so every previous source/cache/receipt identity remains reference-only and a fresh exact-SHA MiniMax attempt is required.
+
 ## D-2026-08-07-01: Adapt llm_wiki Behavior Clean-Room Into Existing Copilot Architecture
 
 ### Background
