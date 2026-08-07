@@ -32,6 +32,10 @@ export const defaultRouteLoader: RouteLoader = (route) => {
       return import('./workspaces/KnowledgeWorkspace.js').then((module) => ({
         default: module.KnowledgeWorkspace as unknown as ComponentType<Record<string, unknown>>,
       }));
+    case 'studio':
+      return import('./workspaces/KnowledgeStudioWorkspace.js').then((module) => ({
+        default: module.KnowledgeStudioWorkspace as unknown as ComponentType<Record<string, unknown>>,
+      }));
     case 'ask':
       return import('./workspaces/AskWorkspace.js').then((module) => ({
         default: module.AskWorkspace as unknown as ComponentType<Record<string, unknown>>,
@@ -54,6 +58,7 @@ export const defaultRouteLoader: RouteLoader = (route) => {
 const NAV: ReadonlyArray<{ id: View; label: string; href: string }> = [
   { id: 'schedule', label: '今天', href: '#today' },
   { id: 'knowledge', label: '知识', href: '#knowledge' },
+  { id: 'studio', label: '知识台', href: '#studio' },
   { id: 'ask', label: '对话', href: '#conversations' },
   { id: 'settings', label: '设置', href: '#settings' },
 ];
@@ -61,6 +66,7 @@ const NAV: ReadonlyArray<{ id: View; label: string; href: string }> = [
 const VIEW_HASH: Readonly<Record<View, string>> = {
   schedule: '#today',
   knowledge: '#knowledge',
+  studio: '#studio',
   ask: '#conversations',
   voice: '#voice',
   settings: '#settings',
@@ -72,6 +78,8 @@ function defaultAssistantContext(view: View): GlobalAssistantContext {
       return { route: view, subtitle: '今天 · 当前日期', truth: 'NOT_PROBED' };
     case 'knowledge':
       return { route: view, subtitle: '知识 · 当前文件夹', truth: 'NOT_PROBED' };
+    case 'studio':
+      return { route: view, subtitle: '知识台 · Wiki / Review / Graph', truth: 'NOT_PROBED' };
     case 'ask':
       return { route: view, subtitle: '对话 · 当前会话', truth: 'NOT_PROBED' };
     case 'voice':
@@ -99,11 +107,13 @@ function sanitizeAssistantContext(
         notePath: context.notePath,
       };
     case 'knowledge':
+    case 'studio':
       return {
         ...shared,
         sourceCount: context.sourceCount,
         folderPath: context.folderPath,
         documentPath: context.documentPath,
+        notePath: context.notePath,
         wikiTruth: context.wikiTruth,
       };
     case 'ask':
@@ -128,6 +138,8 @@ export function App({
     switch (window.location.hash) {
       case '#knowledge':
         return 'knowledge';
+      case '#studio':
+        return 'studio';
       case '#conversations':
         return 'ask';
       case '#settings':
@@ -220,6 +232,16 @@ export function App({
           },
           onOpenAsk: () => navigateTo('ask'),
           onAssistantContextChange: handleAssistantContextChange,
+        };
+      case 'studio':
+        return {
+          api: product.api,
+          onOpenKnowledge: (path?: string) => {
+            setAskSourceOrigin(null);
+            if (path) setRequestedNotePath(path);
+            navigateTo('knowledge');
+          },
+          onOpenAsk: () => navigateTo('ask'),
         };
       case 'ask':
         return {
