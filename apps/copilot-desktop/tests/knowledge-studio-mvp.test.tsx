@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WikiTruthReceipt } from '../src/shared/domain-api.js';
 import type { CopilotProductApi } from '../src/renderer/lib/copilot-api.js';
@@ -146,8 +146,9 @@ describe('KnowledgeStudioWorkspace', () => {
     expect(screen.getByText(/整理摘要 notes\/current\.md/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Review/ }));
-    expect(screen.getByTestId('studio-review-queue')).toBeInTheDocument();
-    expect(screen.getByText('Failed note')).toBeInTheDocument();
+    const reviewQueue = screen.getByTestId('studio-review-queue');
+    expect(reviewQueue).toBeInTheDocument();
+    expect(within(reviewQueue).getByText('Failed note')).toBeInTheDocument();
     expect(screen.getAllByText('待审核').length).toBeGreaterThan(0);
   });
 
