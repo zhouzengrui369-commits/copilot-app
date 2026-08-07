@@ -1,6 +1,6 @@
-schema_version: 6
+schema_version: 7
 project: copilot-app
-updated_at: "2026-08-03"
+updated_at: "2026-08-07"
 authority:
   baseline:
     - AGENTS.md
@@ -30,32 +30,26 @@ status:
   runtime_proof: NOT_RUNTIME_PROOF
 source:
   repository: zhouzengrui369-commits/copilot-app
-  main_observed: e91cafaa22ea100428b404b371aa35dce535c5bf
-  original_takeover_branch: codex/p0-owner-gate
-  original_takeover_commit: 6aa6b8c0792c5549b818107a0f64e4f32651dacd
+  main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
   product_source_branch: chatgpt/mvp-source-finalization
   product_source_pr: 20
-  r45_frozen_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
-  active_fix_branch: chatgpt/r45-native-hydration-transport-fix
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after R46 merge and complete source-gate PASS"
+  pre_mvp_studio_commit: 0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29
+  active_mvp_slice_branch: chatgpt/mvp-llm-wiki-demo-ui
+  active_mvp_slice_pr: 23
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after PR #23 merge and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
-    role: GitHub remote source developer and task-contract author
+    role: Parent PM, GitHub remote source developer, PR reviewer, and local handoff contract author
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: exact-SHA clean-worktree hydrator, candidate executor, build/package worker, and technical evidence producer
-    current_state: STOPPED
-    resume_requires:
-      - SOURCE_COMMIT
-      - PR
-      - SOURCE_GATE=PASS
-      - RUN_STAMP
+    role: exact-SHA clean-worktree build/package/candidate worker and technical evidence producer
+    current_state: STOPPED_UNTIL_NEW_EXACT_HEAD
     source_modification_during_candidate: FORBIDDEN
     worker_self_test_is_acceptance: false
   codex:
     role: independent real-computer Electron product-experience and runtime acceptance owner
-    current_state: WAITING
+    current_state: WAITING_FOR_CANDIDATE_IDENTITY
     source_repair_during_acceptance: FORBIDDEN
 r30:
   role: GITHUB_BOUND_CANDIDATE_RUNNER
@@ -65,13 +59,13 @@ r30:
 r31:
   role: PHASE1_SOURCE_COMPLETION
   status: SOURCE_COMPLETE
-  product_source_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
   local_execution: NOT_RUN
   deployment_authority_bootstrap: "scripts/candidate-r30/minimax-authority.mjs reads docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object"
-  source_validation:
+  latest_source_validation_before_studio:
     workflow: copilot-source-gate
-    run: 30793536929
+    run: 30819543111
     steps: 17/17_PASS
+    candidate_source_contracts: 90/90_PASS
     desktop_phase1_tests: 1107/1107
     electron_discovery: 113_tests_in_9_files
     strict_coverage: PASS
@@ -93,7 +87,6 @@ r45_native_hydration_attempt:
   source_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
   source_contracts: 83/83_PASS
   owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
-  authorized_online_hydration_count: 1
   canonical_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
   observed_error: ECONNRESET
   candidate_execution_count: 0
@@ -101,55 +94,66 @@ r45_native_hydration_attempt:
   artifact_sha256: null
   runtime_id: null
   partial_cache:
-    approximate_bytes: 477000000
     status: EVIDENCE_ONLY
     reusable: false
-    deletion_authorized: false
-  process_deviation:
-    second_hydrator_invocation_attempted: true
-    result: BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS
-    additional_online_hydration: false
-    candidate_state_created: false
   assets: FORBIDDEN_REFERENCE_ONLY
 r46_transport_fix:
-  branch: chatgpt/r45-native-hydration-transport-fix
-  status: SOURCE_UNDER_REVIEW
+  merged_commit: 0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29
   product_code_changed: false
-  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
   candidate_network_authority: deny-network
-  allowed_hosts_changed: false
   automatic_retry: false
   hidden_retry: false
-  transport_policy:
-    tcp_keepalive: true
-    tcp_no_delay: true
-    idle_timeout_ms: 1200000
-    npm_fetch_retries: 0
-    npm_fetch_timeout_ms: 900000
-    npm_max_sockets: 4
-  failure_marker:
-    file: HYDRATION-FAILED.json
-    status: partial_failed_transport
-    reusable: false
-    pass_receipt_created: false
-  receipt_requirements:
-    exact_transport_policy: true
-    complete_connect_receipts: true
-    fatal_transport_error_count: 0
-    partial_marker_absent: true
-  unlock: "merge R46 into Draft PR #20, pass PR #20 source gate, issue SOURCE_COMMIT + PR=20 + SOURCE_GATE=PASS + new RUN_STAMP"
+  source_gate:
+    run: 30819543111
+    steps: 17/17_PASS
+r47_llm_wiki_demo_ui_mvp:
+  role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
+  branch: chatgpt/mvp-llm-wiki-demo-ui
+  pr: 23
+  source_status: UNDER_REVIEW
+  upstream_reference:
+    repository: nashsu/llm_wiki
+    commit: ad215b51252ffc1c6721d5b057f0449a2fb51530
+    release: v0.6.7
+    license: GPL-3.0
+    implementation_bytes_copied: false
+  internal_demo_ui:
+    - apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css
+    - apps/copilot-desktop/src/renderer/styles/demo-source-v4.css
+  clean_room_features:
+    wiki_studio_route: true
+    three_column_workbench: true
+    digest_bound_wiki: existing_local_truth
+    review_queue: local_projection_bound_metadata
+    activity_queue: existing_kg_pending_truth
+    four_signal_relevance: clean_room_pure_model
+    existing_local_graph_reused: true
+    existing_knowledge_editor_preserved: true
+  architecture_boundaries:
+    tauri_added: false
+    rust_added: false
+    duckdb_added: false
+    second_database_added: false
+    second_kb_added: false
+    second_vector_store_added: false
+    cloud_truth_added: false
+    product_scope_expanded_beyond_macos_mvp: false
+  local_execution: NOT_RUN
+  electron_candidate: NOT_RUN
+  artifact_sha256: null
+  runtime_id: null
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-  gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic fallback"
-  gate_3: "all git-tracked regular files; per-file and aggregate SHA256"
+  gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
+  gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
-  gate_5: "checks, unit, integration, strict coverage, desktop build, Phase 1 suite, SBOM"
+  gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
   gate_6: "canonical unsigned macOS arm64 ZIP/DMG authority"
   gate_7: "source snapshot and ZIP/DMG/app/executable/app.asar identities"
-  gate_8: "focused packaged Electron 2/2"
-  gate_9: "exact discovery 113 tests in 9 files and E2E source manifest"
-  gate_10: "packaged Electron 113/113; zero skipped/unexpected/flaky; clean exit"
-  gate_11: "three candidate-bound performance runs and aggregate"
+  gate_8: "focused packaged Electron journeys"
+  gate_9: "exact discovery 113 tests in 9 files and deterministic test-data manifest"
+  gate_10: "packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
+  gate_11: "three distinct candidate-bound performance runs and aggregate"
   gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
 candidate:
   established: false
@@ -163,7 +167,6 @@ candidate:
   screenshots: null
   process_terminal_state: null
 independent_acceptance:
-  minimax_native_cache_receipt: NOT_RECEIVED
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
   codex_release_gate: NOT_RUN
@@ -172,16 +175,16 @@ release_gates:
   apple_notarization: BLOCKED
   staple_and_validate: BLOCKED
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
-  verify_fix_rounds: 0/3
+  verify_fix_rounds: "0/3 current final candidate"
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
 deferred_scope:
   windows: OWNER_DEFERRED_PHASE_1_1
-  cloud_remote_backup: OWNER_DEFERRED_POST_MVP
+  tencent_deployment_remote_backup: OWNER_DEFERRED_POST_MVP
   graph_3d: POST_MVP
   mobile_web: POST_MVP
   multi_user_enterprise: POST_MVP
   plugins_i18n: POST_MVP
   major_dependency_upgrades: POST_MVP
-next_single_action: "Pass the complete source gate on R46, merge it into Draft PR #20, pass the resulting PR #20 source gate, then issue the four-field exact-object MiniMax handoff."
-conclusion: "BLOCKED / MVP_NOT_COMPLETE"
+next_single_action: "Pass PR #23 source gate, merge only into Draft PR #20, pass source gate on resulting exact PR #20 head, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
+conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
