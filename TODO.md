@@ -2,7 +2,7 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
-R31 remains the source lineage for the macOS-first MVP. The active Parent PM slice is PR #23 (`chatgpt/mvp-llm-wiki-demo-ui`), which clean-room adapts the researched llm_wiki product patterns into the existing Electron/demo UI source. No current packaged Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
+R31 remains the source lineage for the macOS-first MVP. R47 clean-room llm_wiki + Demo UI source is now integrated into Draft PR #20 (`chatgpt/mvp-source-finalization`). No current packaged Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
 ## P0 — Owner-directed llm_wiki + Demo UI MVP source
 
@@ -23,20 +23,20 @@ R31 remains the source lineage for the macOS-first MVP. The active Parent PM sli
 - [x] Add model tests for review identity, activity truth, and 4-Signal ranking.
 - [x] Add renderer tests for Review Queue/local decision separation/explicit retry.
 - [x] Add `THIRD_PARTY_NOTICES.md` and `docs/development/LLM_WIKI_CLEAN_ROOM_MVP.md` provenance.
-- [x] Open stacked Draft PR #23 targeting `chatgpt/mvp-source-finalization`.
+- [x] Open stacked PR #23 targeting `chatgpt/mvp-source-finalization`.
 - [x] Validate the implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` with `copilot-source-gate` run `31150271762` (`17/17 PASS`).
 - [x] Freeze Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts on PR #23.
-- [ ] Pass the complete Node 24/macOS `copilot-source-gate` on the final evidence-containing PR #23 head.
-- [ ] Merge PR #23 into Draft PR #20 only.
-- [ ] Pass the complete `copilot-source-gate` on the resulting exact PR #20 head.
+- [x] Pass the complete Node 24/macOS `copilot-source-gate` on final PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9`: run `31150946435`, job `92780309284`, `17/17 PASS`.
+- [x] Merge PR #23 only into Draft PR #20 source branch: merge commit `292e2a6160cf009a13492c93af96f5ff3c320899`.
+- [ ] Pass the complete `copilot-source-gate` on the final resulting exact PR #20 head after this governance freeze.
 - [ ] Freeze the new 40-character `EXACT_FINAL_HEAD` with no subsequent tracked source change.
 
 ## P0 — MiniMax Code fresh macOS Candidate
 
-MiniMax remains stopped until ChatGPT supplies a new exact PR #20 head after PR #23 integration.
+MiniMax remains stopped until ChatGPT supplies the source-green exact PR #20 head.
 
 - [ ] Fetch `refs/pull/20/head` and prove `FETCH_HEAD == EXACT_FINAL_HEAD`.
-- [ ] Read `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and `scripts/candidate-r30/minimax-authority.mjs` from that exact Git object.
+- [ ] Read `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`, `docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md`, and `scripts/candidate-r30/minimax-authority.mjs` from that exact Git object.
 - [ ] Use all-new hydration/candidate worktrees, cache, receipt, task root, evidence, artifact and runtime identities.
 - [ ] Never reuse R44/R45/R46 caches, worktrees, evidence or old exact SHAs.
 - [ ] Run `node --test scripts/candidate-r30/*.test.mjs` from the clean detached source.
