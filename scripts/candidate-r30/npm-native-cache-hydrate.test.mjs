@@ -232,7 +232,7 @@ test('candidate environment is receipt-bound and separates host and Electron hea
   assert.equal(build.npm_config_nodedir, '/tmp/native-cache/node-gyp/38.8.6');
 });
 
-test('receipt validation accepts canonical transport proof and rejects lifecycle or policy drift', async () => {
+test('receipt validation requires metadata-complete registry closure and canonical transport proof', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-native-receipt-'));
   const repository = path.join(root, 'repo');
   const requestedCacheDir = path.join(root, 'cache');
@@ -288,6 +288,22 @@ test('receipt validation accepts canonical transport proof and rejects lifecycle
       transportPolicy: nativeHydrationTransportPolicy(),
       candidateCreated: false,
       evidenceCreated: false,
+      registryPrefetch: {
+        status: 'PASS',
+        strategy: 'lockfile-batched-name-version-npm-pack-v2',
+        metadataMode: 'name-version-packument-and-tarball',
+        automaticRetry: false,
+        batchSize: 24,
+        entryCount: 1,
+        batchCount: 1,
+        manifestSha256: 'a'.repeat(64),
+      },
+      registryCacheClosure: {
+        status: 'PASS',
+        strategy: 'deny-network-offline-ci-ignore-scripts-v1',
+        networkAuthority: 'deny-network',
+        lifecycleScriptsEnabled: false,
+      },
       cacheLayout: layout,
       electronNodedir,
       cacheIdentity,
@@ -297,6 +313,8 @@ test('receipt validation accepts canonical transport proof and rejects lifecycle
       },
       onlineHydration: {
         status: 'PASS',
+        registryMode: 'lockfile-name-version-prefetch-closure-then-offline-ci',
+        registryRequestCountAfterClosure: 0,
         proxy: {
           allowedHosts: [...NATIVE_HYDRATION_HOSTS].sort(),
           allRequestsAllowed: true,
@@ -315,31 +333,34 @@ test('receipt validation accepts canonical transport proof and rejects lifecycle
     });
     assert.match(validated.receiptSha256, /^[0-9a-f]{64}$/u);
 
-    await writeFile(receiptPath, `${JSON.stringify({
-      ...baseReceipt,
-      lifecycleScriptsEnabled: false,
-    }, null, 2)}\n`);
-    await assert.rejects(
-      validateNativeHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
-      (error) => error instanceof NativeCacheHydrationBlocked
-        && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
-    );
-
-    await writeFile(receiptPath, `${JSON.stringify({
-      ...baseReceipt,
-      transportPolicy: { ...baseReceipt.transportPolicy, npmFetchRetries: 1 },
-    }, null, 2)}\n`);
-    await assert.rejects(
-      validateNativeHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
-      (error) => error instanceof NativeCacheHydrationBlocked
-        && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
-    );
+    for (const mutated of [
+      { ...baseReceipt, lifecycleScriptsEnabled: false },
+      {
+        ...baseReceipt,
+        transportPolicy: { ...baseReceipt.transportPolicy, npmFetchRetries: 1 },
+      },
+      {
+        ...baseReceipt,
+        registryCacheClosure: { ...baseReceipt.registryCacheClosure, status: 'BLOCKED' },
+      },
+      {
+        ...baseReceipt,
+        onlineHydration: { ...baseReceipt.onlineHydration, registryRequestCountAfterClosure: 1 },
+      },
+    ]) {
+      await writeFile(receiptPath, `${JSON.stringify(mutated, null, 2)}\n`);
+      await assert.rejects(
+        validateNativeHydrationReceipt({ repository, sourceCommit, cacheDir, receiptPath }),
+        (error) => error instanceof NativeCacheHydrationBlocked
+          && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
+      );
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('receipt validation rejects any cache marked as partial transport failure', async () => {
+test('receipt validation rejects any cache marked as partial hydration failure', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'copilot-native-partial-'));
   const repository = path.join(root, 'repo');
   const cacheDir = path.join(root, 'cache');
@@ -348,7 +369,7 @@ test('receipt validation rejects any cache marked as partial transport failure',
     await mkdir(path.join(repository, 'apps/copilot-desktop'), { recursive: true });
     await mkdir(cacheDir);
     await writeFile(path.join(cacheDir, NATIVE_PARTIAL_CACHE_MARKER), JSON.stringify({
-      status: 'partial_failed_transport',
+      status: 'partial_failed_registry_cache',
       reusable: false,
     }));
     await writeFile(receiptPath, '{}\n');
