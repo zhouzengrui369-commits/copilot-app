@@ -59,3 +59,7 @@ R31 keeps `embedded-local-hash-v1` as the self-contained production default; Oll
 ## Twelve-Gate Exact-Commit Candidate Contract
 
 The macOS Candidate executes exactly twelve ordered fail-closed gates: exact source; deny-network receipt-bound install; tracked SHA ledger; source/build chain; tests/coverage/build/SBOM; canonical unsigned arm64 package; identities; focused packaged Electron; exact `113 tests in 9 files`; packaged Electron `113/113`; three performance runs; final source/artifact/runtime/test-data/evidence receipt. No later gate may repair or reinterpret an earlier blocker.
+
+## Deployment Authority Is Read From The Exact Git Object
+
+MiniMax must not infer execution authority from a current checkout, branch tip, stale worktree, CI summary or chat transcript. It fetches the externally supplied PR head, proves the full `EXACT_FINAL_HEAD`, reads `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and controlling scripts from that exact Git object, and materializes a hash-bound authority receipt before hydration or Candidate state is created.
