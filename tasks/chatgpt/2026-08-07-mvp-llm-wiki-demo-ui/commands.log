@@ -1,0 +1,15 @@
+# R47 Parent PM remote execution log
+
+2026-08-07 GitHub remote branch: chatgpt/mvp-llm-wiki-demo-ui
+2026-08-07 Draft PR: #23 -> base chatgpt/mvp-source-finalization
+2026-08-07 Read governance baseline and prior llm_wiki research from repository
+2026-08-07 Pinned upstream architecture reference: nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530 (GPL-3.0)
+2026-08-07 Selected clean-room adaptation; no GPL implementation bytes copied
+2026-08-07 Implemented Knowledge Studio route/model/UI/tests/provenance
+2026-08-07 Fixed jsdom Sigma/WebGL collection boundary by isolating graph renderer in Studio tests
+2026-08-07 Fixed renderer assertion ambiguity by scoping Failed note assertion to Review Queue
+2026-08-07 Exact implementation head validated: 6886bd37bbc80658b7e994bed052d1ec6b2b65e6
+2026-08-07 GitHub Actions copilot-source-gate run 31150271762 job 92778261873: SUCCESS, 17/17 steps
+2026-08-07 Evidence/governance receipts committed after implementation validation; fresh complete gate required on final PR #23 head before merge
+
+No local shell, Electron runtime, signing, notarization, cloud mutation, credential change, package-major upgrade, database migration, or MiniMax/Codex acceptance was performed by ChatGPT in this task.
