@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-08-07 — R48 Segmented Registry Prefetch
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF` until a same-SHA packaged Electron Candidate is executed by MiniMax and independently accepted by Codex.
+
+### Local blocker
+
+- The first source-green R47 PR #20 head `7d8495a23e6372e5f7e99dd45d6e73466a90ca9f` passed GitHub `copilot-source-gate` run `31152146196`, job `92783833715`, `17/17 PASS`.
+- MiniMax fetched that exact PR #20 object, passed deployment authority and `90/90` Candidate source contracts, and invoked native-toolchain hydration exactly once.
+- The hydration stopped before Candidate creation with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET` / `ECONNRESET` at `registry.npmjs.org:443`.
+- Source stayed clean; no PASS cache receipt, Candidate, artifact SHA-256, runtime ID or Electron runtime evidence was created.
+- The failed cache is `partial_failed_transport`, `reusable=false`, evidence-only, and cannot be retried, resumed or reused.
+
+### Source repair
+
+- Added `scripts/candidate-r30/registry-prefetch.mjs` and direct source contracts.
+- Registry tarballs are now derived deterministically from exact package-lock v3, integrity-bound, deduplicated and canonicalized only from already-reviewed registry origins to `registry.npmjs.org`.
+- Hydration prefetches exact tarballs in bounded 24-item `npm pack --ignore-scripts` batches; every batch is a fresh npm child process with retries disabled.
+- Temporary packed tarballs are removed after successful batches while the isolated npm content cache remains.
+- The following full lifecycle dependency install now runs `npm ci --offline`, so npm registry resolution is cache-only during lifecycle execution.
+- Lifecycle-only Node/Electron/GitHub official assets retain the existing bounded localhost CONNECT proxy; the source-defined host allowlist was not expanded.
+- Existing Electron arm64 native hydration, full deny-network install/native proofs, immutable cache ledger and Candidate Gate 1–12 deny-network authority remain intact.
+- `automaticRetry=false`, no hidden retry/backoff/resume, and partial-cache nonreuse remain invariant.
+
+### Source validation and integration
+
+- R48 implementation head `a3f87e71930857ac71abe626fea115aa709996ee` passed complete source gate run `31155823536`, job `92794967653`, `17/17 PASS`.
+- Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts were added under `tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/`.
+- Final PR #24 head `8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb` passed complete source gate run `31156362975`, job `92796663770`, `17/17 PASS`.
+- PR #24 was squash-merged only into Draft PR #20 source branch as `1f9beaaf60f08b607204be8b99f93cca5d48c408`; `main` remains untouched.
+- The exact PR #20 head produced after this final governance alignment must pass the complete source gate before a new MiniMax attempt is authorized.
+
+Rollback: revert the R48 registry-prefetch repair from unmerged Draft PR #20. No product data, package version, lockfile, credential, cloud resource, signing or notarization state was changed.
+
 ## 2026-08-07 — R47 Owner-Directed llm_wiki + Demo UI MVP Integration
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF` until a same-SHA packaged Electron Candidate is executed by MiniMax and independently accepted by Codex.
@@ -34,19 +67,15 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 - Added model tests for Review Queue priority/identity rollover, activity fail-closed truth and 4-Signal scoring.
 - Added renderer tests for local human review metadata and explicit reindex behavior.
 - Implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` passed complete `copilot-source-gate` run `31150271762`, job `92778261873`, `17/17 PASS`.
-- Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts were frozen on the stacked source branch.
-- Final stacked PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9` passed complete `copilot-source-gate` run `31150946435`, job `92780309284`, `17/17 PASS`.
-- PR #23 was merged only into Draft PR #20's source branch `chatgpt/mvp-source-finalization`; integration merge commit is `292e2a6160cf009a13492c93af96f5ff3c320899`.
+- Final stacked PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9` passed complete source gate run `31150946435`, job `92780309284`, `17/17 PASS`.
+- PR #23 was merged only into Draft PR #20's source branch as `292e2a6160cf009a13492c93af96f5ff3c320899`.
 - PR #20 was not merged to `main`.
-- The exact final PR #20 head created after final governance alignment must pass the complete source gate before MiniMax receives deployment authority.
 
 ### Acceptance boundary
 
 - Any new tracked commit invalidates a prior exact Candidate source handoff.
-- MiniMax must use the final source-green PR #20 Git object in new detached worktrees and cannot reuse old R44/R45/R46 caches/evidence.
+- MiniMax must use the final source-green PR #20 Git object in new detached worktrees and cannot reuse old caches/evidence.
 - Codex must independently operate the same packaged Electron Candidate; GitHub CI, renderer/browser tests, merge, build or packaging alone are not runtime proof.
-
-Rollback: revert the R47 Knowledge Studio, route/tests, clean-room provenance and governance commits from the unmerged PR #20 source branch. No database migration, package-version change, local user-data mutation, credential, cloud, signing or notarization state is created by this source slice.
 
 ## 2026-08-03 — R46 Native Hydration Transport Stability
 
