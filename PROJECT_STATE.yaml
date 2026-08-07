@@ -30,7 +30,8 @@ source:
   r47_merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
   r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after this governance freeze and complete source-gate PASS"
+  r52_reauthorization_branch: chatgpt/r52-reauthorize-long-hydration-window
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after R52 governance merge and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -83,17 +84,11 @@ r49_local_hydration_attempt:
   owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
   hydration_execution_count: 1
   candidate_execution_count: 0
-  failed_phase: bounded-native-toolchain-lifecycle-install
-  observed_npm_error: ENOTCACHED_typescript_packument_metadata_missing
-  reported_transport_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
   deterministic_root_cause: R48_tarball_prefetch_did_not_prove_npm_registry_metadata_cache_closure
   source_changes_by_minimax: NONE
   candidate_established: false
   artifact_sha256: null
   runtime_id: null
-  failed_cache:
-    status: EVIDENCE_ONLY
-    reusable: false
   assets: FORBIDDEN_REFERENCE_ONLY
 r50_metadata_complete_registry_prefetch:
   role: NPM_REGISTRY_METADATA_CACHE_CLOSURE_REPAIR
@@ -110,11 +105,6 @@ r50_metadata_complete_registry_prefetch:
   batch_size: 24
   registry_cache_closure: deny-network-offline-ci-ignore-scripts-v1
   post_closure_registry_requests_required: 0
-  implementation_source_gate:
-    head: 88d66a34b3416a917ef1a39ac6d1e72ea8540922
-    run: 31160628979
-    job: 92809916272
-    steps: 17/17_PASS
   final_stacked_source_gate:
     head: 4707148f9402cddf5959067fee46f6686e0af6ad
     run: 31161050220
@@ -123,7 +113,47 @@ r50_metadata_complete_registry_prefetch:
   integration:
     merged_into_pr: 20
     merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  final_pr20_source_gate: PENDING_AFTER_GOVERNANCE_FREEZE
+  final_pr20_source_gate:
+    head: 2835e36ee37a417bd88e5a8dc1187421eb61e966
+    run: 31162006562
+    job: 92814322597
+    steps: 17/17_PASS
+r51_outer_timeout_attempt:
+  source_commit: 2835e36ee37a417bd88e5a8dc1187421eb61e966
+  source_gate_run: 31162006562
+  source_gate_job: 92814322597
+  source_gate: 17/17_PASS
+  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
+  first_dispatch:
+    hydration_execution_count: 1
+    candidate_execution_count: 0
+    terminal_condition: OUTER_DRIVER_TIMEOUT_120S
+    pass_receipt_created: false
+    candidate_established: false
+    partial_cache_reusable: false
+  second_dispatch:
+    hydration_execution_count: 0
+    candidate_execution_count: 0
+    blocker: BLOCKED_NEW_PATH_ALREADY_EXISTS
+  source_changes_by_minimax: NONE
+  artifact_sha256: null
+  runtime_id: null
+  assets: FORBIDDEN_REFERENCE_ONLY
+r52_reauthorization:
+  role: GOVERNANCE_ONLY_NEW_EXACT_SHA_AND_EXECUTION_WINDOW
+  branch: chatgpt/r52-reauthorize-long-hydration-window
+  product_code_changed: false
+  r50_hydrator_changed: false
+  package_or_lockfile_changed: false
+  tests_changed: false
+  host_allowlist_expanded: false
+  automatic_retry: false
+  partial_cache_reuse: false
+  candidate_network_authority: deny-network
+  outer_driver_timeout_seconds_minimum: 3600
+  same_sha_redispatch_allowed: false
+  source_gate: PENDING
+  integration_into_pr20: PENDING
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
@@ -158,5 +188,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the exact PR #20 head after this final R50 governance freeze, freeze that SHA, then issue one fresh exact-SHA MiniMax Candidate attempt and independent Codex acceptance."
+next_single_action: "Pass the complete source gate on the governance-only R52 stacked head, merge only into Draft PR #20, pass the complete source gate on the resulting new exact PR #20 head, then issue MiniMax a new SHA, new run stamp, all-new paths and outer driver timeout >=3600 seconds."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
