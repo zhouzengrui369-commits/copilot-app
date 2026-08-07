@@ -14,12 +14,6 @@ authority:
     - TODO.md
     - DECISIONS.md
     - CHANGELOG.md
-  preserved_history:
-    - docs/history/PROJECT_STATE_PRE_R30.yaml
-    - docs/history/PROJECT_STATUS_PRE_R30.md
-    - docs/history/TODO_PRE_R30.md
-    - docs/history/CHANGELOG_PRE_R30.md
-    - docs/history/ARCHITECTURE_PRE_R30.md
 status:
   verdict: BLOCKED
   mvp: MVP_NOT_COMPLETE
@@ -33,13 +27,9 @@ source:
   main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
   product_source_branch: chatgpt/mvp-source-finalization
   product_source_pr: 20
-  pre_mvp_studio_commit: 0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29
-  r47_stacked_branch: chatgpt/mvp-llm-wiki-demo-ui
-  r47_stacked_pr: 23
-  r47_merge_commit_into_product_source: 292e2a6160cf009a13492c93af96f5ff3c320899
-  r48_repair_branch: chatgpt/r48-segmented-registry-prefetch
-  r48_repair_pr: 24
-  r48_merge_commit_into_product_source: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+  r47_merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
+  r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+  r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
   exact_final_commit: "externally supplied final 40-hex PR #20 head after this governance freeze and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
@@ -47,167 +37,92 @@ workflow:
     role: Parent PM, GitHub remote source developer, PR reviewer, and local handoff contract author
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: exact-SHA clean-worktree build/package/candidate worker and technical evidence producer
+    role: exact-SHA clean-worktree build/package/Candidate technical evidence producer
     current_state: STOPPED_UNTIL_NEW_EXACT_HEAD
     source_modification_during_candidate: FORBIDDEN
-    worker_self_test_is_acceptance: false
   codex:
-    role: independent real-computer Electron product-experience and runtime acceptance owner
+    role: independent real-computer packaged Electron product-experience acceptance owner
     current_state: WAITING_FOR_CANDIDATE_IDENTITY
-    source_repair_during_acceptance: FORBIDDEN
 r30:
   role: GITHUB_BOUND_CANDIDATE_RUNNER
   runner_path: scripts/candidate-r30/run-candidate.mjs
-  candidate_id: "copilot-r30-<full-source-commit>"
   gate_count: 12
 r31:
   role: PHASE1_SOURCE_COMPLETION
   status: SOURCE_COMPLETE
   local_execution: NOT_RUN
   deployment_authority_bootstrap: "scripts/candidate-r30/minimax-authority.mjs reads docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object"
-  latest_source_validation_before_studio:
-    workflow: copilot-source-gate
-    run: 30819543111
-    steps: 17/17_PASS
-    candidate_source_contracts: 90/90_PASS
-    desktop_phase1_tests: 1107/1107
-    electron_discovery: 113_tests_in_9_files
-    strict_coverage: PASS
-    cyclonedx_sbom: PASS
-    tracked_source_unchanged: PASS
-r44_first_candidate:
-  source_commit: 74454d21910f0c01e0b9d4f8117b4394defe3228
-  source_contracts: 68/68_PASS
-  dry_run: PLAN_ONLY_NOT_A_CANDIDATE
-  candidate_execution_count: 1
-  failed_gate: 2
-  blocker: BLOCKED_NPM_OFFLINE_INSTALL_FAILED
-  source_changes_by_minimax: NONE
-  candidate_established: false
-  artifact_sha256: null
-  runtime_id: null
-  assets: FORBIDDEN_REFERENCE_ONLY
-r45_native_hydration_attempt:
-  source_commit: 43f151a3a1eb7e0592ff833f0e42892db47d3d65
-  source_contracts: 83/83_PASS
-  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
-  canonical_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
-  observed_error: ECONNRESET
-  candidate_execution_count: 0
-  candidate_established: false
-  artifact_sha256: null
-  runtime_id: null
-  partial_cache:
-    status: EVIDENCE_ONLY
-    reusable: false
-  assets: FORBIDDEN_REFERENCE_ONLY
-r46_transport_fix:
-  merged_commit: 0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29
-  product_code_changed: false
-  candidate_network_authority: deny-network
-  automatic_retry: false
-  hidden_retry: false
-  source_gate:
-    run: 30819543111
-    steps: 17/17_PASS
+  historical_source_suite: 1107/1107_PASS
+  electron_discovery: 113_tests_in_9_files
 r47_llm_wiki_demo_ui_mvp:
   role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
-  branch: chatgpt/mvp-llm-wiki-demo-ui
-  pr: 23
-  source_status: INTEGRATED_SOURCE_COMPLETE
-  implementation_source_gate:
-    head: 6886bd37bbc80658b7e994bed052d1ec6b2b65e6
-    workflow: copilot-source-gate
-    run: 31150271762
-    job: 92778261873
-    steps: 17/17_PASS
-  final_stacked_source_gate:
-    head: 8f0d1604217c966e696e7caf8763496c6be681c9
-    workflow: copilot-source-gate
-    run: 31150946435
-    job: 92780309284
-    steps: 17/17_PASS
-  integration:
-    merged_into_branch: chatgpt/mvp-source-finalization
-    merged_into_pr: 20
-    merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
-  first_integrated_pr20_source_gate:
-    head: 7d8495a23e6372e5f7e99dd45d6e73466a90ca9f
-    workflow: copilot-source-gate
-    run: 31152146196
-    job: 92783833715
-    steps: 17/17_PASS
-  upstream_reference:
-    repository: nashsu/llm_wiki
-    commit: ad215b51252ffc1c6721d5b057f0449a2fb51530
-    release: v0.6.7
-    license: GPL-3.0
-    implementation_bytes_copied: false
-  internal_demo_ui:
-    - apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css
-    - apps/copilot-desktop/src/renderer/styles/demo-source-v4.css
-  clean_room_features:
-    wiki_studio_route: true
-    three_column_workbench: true
-    digest_bound_wiki: existing_local_truth
-    review_queue: local_projection_bound_metadata
-    activity_queue: existing_kg_pending_truth
-    four_signal_relevance: clean_room_pure_model
-    existing_local_graph_reused: true
-    existing_knowledge_editor_preserved: true
+  final_stacked_head: 8f0d1604217c966e696e7caf8763496c6be681c9
+  source_gate_run: 31150946435
+  source_gate_job: 92780309284
+  source_gate: 17/17_PASS
+  integration_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
+  upstream_reference: nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530
+  upstream_license: GPL-3.0
+  implementation_bytes_copied: false
   local_execution: NOT_RUN
-  electron_candidate: NOT_RUN
-  artifact_sha256: null
-  runtime_id: null
-r48_registry_transport_attempt:
-  source_commit: 7d8495a23e6372e5f7e99dd45d6e73466a90ca9f
-  source_gate:
-    run: 31152146196
-    job: 92783833715
-    steps: 17/17_PASS
-  source_contracts: 90/90_PASS
+r48_segmented_registry_prefetch:
+  final_stacked_head: 8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb
+  source_gate_run: 31156362975
+  source_gate_job: 92796663770
+  source_gate: 17/17_PASS
+  integration_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+  strategy: lockfile-batched-npm-pack-v1
+  automatic_retry: false
+  partial_cache_reuse: false
+r49_local_hydration_attempt:
+  source_commit: 32ff3ebc0b1dc217bf0954974127b0aa68de61f2
+  source_gate_run: 31157162004
+  source_gate_job: 92799120113
+  source_gate: 17/17_PASS
+  source_contracts: 95/95_PASS
   owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
   hydration_execution_count: 1
   candidate_execution_count: 0
-  canonical_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
-  observed_endpoint: registry.npmjs.org:443
-  observed_error: ECONNRESET
+  failed_phase: bounded-native-toolchain-lifecycle-install
+  observed_npm_error: ENOTCACHED_typescript_packument_metadata_missing
+  reported_transport_blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+  deterministic_root_cause: R48_tarball_prefetch_did_not_prove_npm_registry_metadata_cache_closure
   source_changes_by_minimax: NONE
   candidate_established: false
   artifact_sha256: null
   runtime_id: null
   failed_cache:
     status: EVIDENCE_ONLY
-    marker: partial_failed_transport
     reusable: false
   assets: FORBIDDEN_REFERENCE_ONLY
-r48_segmented_registry_prefetch_repair:
-  role: NATIVE_HYDRATION_REGISTRY_TRANSPORT_REPAIR
-  branch: chatgpt/r48-segmented-registry-prefetch
-  pr: 24
+r50_metadata_complete_registry_prefetch:
+  role: NPM_REGISTRY_METADATA_CACHE_CLOSURE_REPAIR
+  branch: chatgpt/r50-metadata-complete-registry-prefetch
+  pr: 25
   product_code_changed: false
   package_or_lockfile_changed: false
+  host_allowlist_expanded: false
   automatic_retry: false
   partial_cache_reuse: false
-  host_allowlist_expanded: false
   candidate_network_authority: deny-network
-  strategy: lockfile-batched-npm-pack-v1
+  strategy: lockfile-batched-name-version-npm-pack-v2
+  metadata_mode: name-version-packument-and-tarball
   batch_size: 24
-  lifecycle_install_registry_mode: offline
+  registry_cache_closure: deny-network-offline-ci-ignore-scripts-v1
+  post_closure_registry_requests_required: 0
   implementation_source_gate:
-    head: a3f87e71930857ac71abe626fea115aa709996ee
-    run: 31155823536
-    job: 92794967653
+    head: 88d66a34b3416a917ef1a39ac6d1e72ea8540922
+    run: 31160628979
+    job: 92809916272
     steps: 17/17_PASS
   final_stacked_source_gate:
-    head: 8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb
-    run: 31156362975
-    job: 92796663770
+    head: 4707148f9402cddf5959067fee46f6686e0af6ad
+    run: 31161050220
+    job: 92811240325
     steps: 17/17_PASS
   integration:
-    merged_into_branch: chatgpt/mvp-source-finalization
     merged_into_pr: 20
-    merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
+    merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
   final_pr20_source_gate: PENDING_AFTER_GOVERNANCE_FREEZE
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
@@ -236,22 +151,12 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-  codex_release_gate: NOT_RUN
 release_gates:
   developer_id_signing: BLOCKED
   apple_notarization: BLOCKED
   staple_and_validate: BLOCKED
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
-  verify_fix_rounds: "0/3 current final candidate"
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-deferred_scope:
-  windows: OWNER_DEFERRED_PHASE_1_1
-  tencent_deployment_remote_backup: OWNER_DEFERRED_POST_MVP
-  graph_3d: POST_MVP
-  mobile_web: POST_MVP
-  multi_user_enterprise: POST_MVP
-  plugins_i18n: POST_MVP
-  major_dependency_upgrades: POST_MVP
-next_single_action: "Pass the complete source gate on the exact PR #20 head produced after this final R48 governance freeze, freeze that SHA, then run one fresh MiniMax candidate and independent Codex Electron acceptance."
-conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"}
+next_single_action: "Pass the complete source gate on the exact PR #20 head after this final R50 governance freeze, freeze that SHA, then issue one fresh exact-SHA MiniMax Candidate attempt and independent Codex acceptance."
+conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
