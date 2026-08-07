@@ -29,20 +29,24 @@ Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_
 - Added a clean-room 4-Signal relevance model: direct relation ×3, source-note overlap ×4, Adamic-Adar ×1.5, same entity type ×1.
 - Preserved the existing `KnowledgeWorkspace`, Ask/source return continuity, Todo canonical readback, Unscheduled discovery and schedule flow.
 
-### Source tests
+### Source validation and integration
 
 - Added model tests for Review Queue priority/identity rollover, activity fail-closed truth and 4-Signal scoring.
 - Added renderer tests for local human review metadata and explicit reindex behavior.
-- Opened stacked Draft PR #23 against `chatgpt/mvp-source-finalization`; the complete Node 24/macOS source gate remains mandatory.
+- Implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` passed complete `copilot-source-gate` run `31150271762`, job `92778261873`, `17/17 PASS`.
+- Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts were frozen on the stacked source branch.
+- Final stacked PR #23 head `8f0d1604217c966e696e7caf8763496c6be681c9` passed complete `copilot-source-gate` run `31150946435`, job `92780309284`, `17/17 PASS`.
+- PR #23 was merged only into Draft PR #20's source branch `chatgpt/mvp-source-finalization`; integration merge commit is `292e2a6160cf009a13492c93af96f5ff3c320899`.
+- PR #20 was not merged to `main`.
+- The exact final PR #20 head created after final governance alignment must pass the complete source gate before MiniMax receives deployment authority.
 
 ### Acceptance boundary
 
-- Any new tracked commit invalidates the previous exact Candidate source handoff.
-- After PR #23 is source-green it may merge only into Draft PR #20; PR #20 must then pass its complete source gate again.
-- MiniMax must use the resulting exact Git object in new detached worktrees and cannot reuse old caches/evidence.
-- Codex must independently operate the same packaged Electron Candidate; GitHub CI, renderer/browser tests or packaging alone are not runtime proof.
+- Any new tracked commit invalidates a prior exact Candidate source handoff.
+- MiniMax must use the final source-green PR #20 Git object in new detached worktrees and cannot reuse old R44/R45/R46 caches/evidence.
+- Codex must independently operate the same packaged Electron Candidate; GitHub CI, renderer/browser tests, merge, build or packaging alone are not runtime proof.
 
-Rollback: revert the R47 Knowledge Studio, route/tests, clean-room provenance and governance commits. No database migration, package-version change, local user-data mutation, credential, cloud, signing or notarization state is created by this source slice.
+Rollback: revert the R47 Knowledge Studio, route/tests, clean-room provenance and governance commits from the unmerged PR #20 source branch. No database migration, package-version change, local user-data mutation, credential, cloud, signing or notarization state is created by this source slice.
 
 ## 2026-08-03 — R46 Native Hydration Transport Stability
 
