@@ -21,9 +21,11 @@ import {
   candidateNativeCacheEnvironment,
 } from './native-cache-policy.mjs';
 import {
+  NATIVE_REGISTRY_CLOSURE_STRATEGY,
   NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
   NATIVE_REGISTRY_PREFETCH_STRATEGY,
   buildRegistryPrefetchManifest,
+  registryCacheClosureArgs,
   registryPrefetchBatchArgs,
   registryPrefetchBatches,
 } from './registry-prefetch.mjs';
@@ -77,8 +79,15 @@ export {
   proxyTransportSummary,
 } from './native-cache-runtime.mjs';
 
-function failingProxyEndpoint(proxy) {
-  const requests = Array.isArray(proxy?.requests) ? proxy.requests : [];
+function proxySince(proxy, startIndex = 0) {
+  return {
+    ...proxy,
+    requests: (proxy?.requests ?? []).slice(startIndex),
+  };
+}
+
+function failingProxyEndpoint(proxy, startIndex = 0) {
+  const requests = Array.isArray(proxy?.requests) ? proxy.requests.slice(startIndex) : [];
   const request = requests.find((entry) => entry.transport?.fatal === true) ?? requests.at(-1) ?? null;
   return request
     ? {
@@ -162,9 +171,55 @@ async function writeTransportFailureMarker({
   return markerPath;
 }
 
-async function failOnlineStage({ layout, sourceCommit, proxy, stage, fallbackCode, detail }) {
+async function writeRegistryFailureMarker({
+  layout,
+  sourceCommit,
+  blockerCode,
+  phase,
+  status,
+  commandReceipt = null,
+  context = {},
+}) {
+  const markerPath = path.join(layout.root, NATIVE_PARTIAL_CACHE_MARKER);
+  const document = {
+    schemaVersion: 1,
+    status,
+    reusable: false,
+    passReceiptCreated: false,
+    automaticRetry: false,
+    sourceCommit,
+    blockerCode,
+    phase,
+    command: commandReceipt
+      ? {
+        name: commandReceipt.name,
+        startedAt: commandReceipt.startedAt,
+        endedAt: commandReceipt.endedAt,
+        exitCode: commandReceipt.exitCode,
+        signal: commandReceipt.signal,
+        stdoutPath: commandReceipt.stdoutPath,
+        stderrPath: commandReceipt.stderrPath,
+      }
+      : null,
+    context,
+    endedAt: new Date().toISOString(),
+  };
+  await writeExclusiveNative(markerPath, `${JSON.stringify(document, null, 2)}\n`);
+  return markerPath;
+}
+
+async function failOnlineStage({
+  layout,
+  sourceCommit,
+  proxy,
+  stage,
+  fallbackCode,
+  detail,
+  requestStartIndex = 0,
+}) {
   const output = await commandOutput(stage);
-  const proxyErrors = (proxy?.requests ?? [])
+  const stageProxy = proxySince(proxy, requestStartIndex);
+  const proxyErrors = (stageProxy.requests ?? [])
     .map((request) => request.transport?.error?.code)
     .filter(Boolean)
     .join('\n');
@@ -176,14 +231,14 @@ async function failOnlineStage({ layout, sourceCommit, proxy, stage, fallbackCod
       blockerCode: transport.blockerCode,
       phase: stage?.name ?? 'online-hydration',
       transport,
-      proxy,
+      proxy: stageProxy,
       commandReceipt: stage,
     });
     blockNativeCache(transport.blockerCode, detail, {
       ...stage,
       transport,
-      transportSummary: proxyTransportSummary(proxy),
-      failingEndpoint: failingProxyEndpoint(proxy),
+      transportSummary: proxyTransportSummary(stageProxy),
+      failingEndpoint: failingProxyEndpoint(stageProxy),
       cacheStatus: 'partial_failed_transport',
       cacheReusable: false,
       partialMarkerPath: markerPath,
@@ -192,12 +247,12 @@ async function failOnlineStage({ layout, sourceCommit, proxy, stage, fallbackCod
   }
   blockNativeCache(fallbackCode, detail, {
     ...stage,
-    requests: proxy?.requests ?? [],
+    requests: stageProxy.requests ?? [],
     automaticRetry: false,
   });
 }
 
-async function prefetchRegistryTarballs({
+async function prefetchRegistryPackages({
   repository,
   npmExecutable,
   layout,
@@ -213,6 +268,7 @@ async function prefetchRegistryTarballs({
   const receipts = [];
   for (let index = 0; index < batches.length; index += 1) {
     const batchNumber = index + 1;
+    const requestStartIndex = proxy.requests.length;
     const destination = path.join(
       prefetchRoot,
       `batch-${String(batchNumber).padStart(4, '0')}`,
@@ -243,6 +299,7 @@ async function prefetchRegistryTarballs({
         stage,
         fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH',
         detail: `registry prefetch batch ${batchNumber}/${batches.length} failed`,
+        requestStartIndex,
       });
     }
     receipts.push(stage);
@@ -252,6 +309,7 @@ async function prefetchRegistryTarballs({
   return {
     status: 'PASS',
     strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
+    metadataMode: manifest.metadataMode,
     batchSize: NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
     entryCount: manifest.entryCount,
     manifestSha256: manifest.manifestSha256,
@@ -338,11 +396,18 @@ export async function hydrateNativeToolchainCache(options) {
   const proxy = await startAllowlistedConnectProxy();
   const proxyUrl = `http://127.0.0.1:${proxy.port}`;
   const onlineEnv = onlineNativeEnvironment({ layout, proxyUrl });
+  const lifecycleEnv = {
+    ...onlineEnv,
+    npm_config_offline: 'true',
+    npm_config_prefer_online: 'false',
+  };
   let registryPrefetch;
+  let registryCacheClosure;
   let onlineInstall;
   let onlineNative;
+  let registryRequestsAfterClosure = [];
   try {
-    registryPrefetch = await prefetchRegistryTarballs({
+    registryPrefetch = await prefetchRegistryPackages({
       repository,
       npmExecutable,
       layout,
@@ -352,6 +417,53 @@ export async function hydrateNativeToolchainCache(options) {
       sourceCommit: options.sourceCommit,
       manifest: registryManifest,
     });
+
+    registryCacheClosure = await runAsyncRecordedNative({
+      name: 'deny-network-registry-cache-closure-proof',
+      command: '/usr/bin/sandbox-exec',
+      args: [
+        '-p',
+        OFFLINE_PROFILE,
+        ...registryCacheClosureArgs({
+          npmExecutable,
+          npmCacheDir: layout.npm,
+        }),
+      ],
+      cwd: repository,
+      env: offlineNativeEnvironment(layout),
+      logRoot,
+    });
+    if (registryCacheClosure.exitCode !== 0) {
+      const markerPath = await writeRegistryFailureMarker({
+        layout,
+        sourceCommit: options.sourceCommit,
+        blockerCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE',
+        phase: registryCacheClosure.name,
+        status: 'partial_failed_registry_cache',
+        commandReceipt: registryCacheClosure,
+        context: {
+          strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
+          closureStrategy: NATIVE_REGISTRY_CLOSURE_STRATEGY,
+          manifestSha256: registryManifest.manifestSha256,
+          entryCount: registryManifest.entryCount,
+        },
+      });
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE',
+        'prefetched npm cache does not satisfy deny-network npm ci --ignore-scripts',
+        {
+          ...registryCacheClosure,
+          cacheStatus: 'partial_failed_registry_cache',
+          cacheReusable: false,
+          partialMarkerPath: markerPath,
+          automaticRetry: false,
+        },
+      );
+    }
+    await removeInstallTrees(repository);
+
+    const postClosureRequestStart = proxy.requests.length;
+    const lifecycleRequestStart = proxy.requests.length;
     onlineInstall = await runAsyncRecordedNative({
       name: 'bounded-native-toolchain-lifecycle-install',
       command: '/usr/bin/sandbox-exec',
@@ -361,44 +473,74 @@ export async function hydrateNativeToolchainCache(options) {
         ...fullInstallArgs({ npmExecutable, npmCacheDir: layout.npm, online: false }),
       ],
       cwd: repository,
-      env: onlineEnv,
+      env: lifecycleEnv,
       logRoot,
     });
-    if (onlineInstall.exitCode === 0) {
-      onlineNative = await runNativeRebuild({
-        repository,
-        npmExecutable,
-        electronVersion: lockfile.electronVersion,
-        arch: 'arm64',
-        env: onlineEnv,
-        sandboxProfile: nativeHydrationProxyProfile(proxy.port),
-        logRoot,
-        name: 'bounded-electron-native-arm64-hydration',
+    if (onlineInstall.exitCode !== 0) {
+      await failOnlineStage({
+        layout,
+        sourceCommit: options.sourceCommit,
+        proxy,
+        stage: onlineInstall,
+        fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_INSTALL',
+        detail: 'metadata-complete registry-offline lifecycle install failed',
+        requestStartIndex: lifecycleRequestStart,
       });
+    }
+
+    const nativeRequestStart = proxy.requests.length;
+    onlineNative = await runNativeRebuild({
+      repository,
+      npmExecutable,
+      electronVersion: lockfile.electronVersion,
+      arch: 'arm64',
+      env: lifecycleEnv,
+      sandboxProfile: nativeHydrationProxyProfile(proxy.port),
+      logRoot,
+      name: 'bounded-electron-native-arm64-hydration',
+    });
+    if (onlineNative?.exitCode !== 0 || !onlineNative?.binary) {
+      await failOnlineStage({
+        layout,
+        sourceCommit: options.sourceCommit,
+        proxy,
+        stage: onlineNative,
+        fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_NATIVE',
+        detail: 'Electron native hydration failed',
+        requestStartIndex: nativeRequestStart,
+      });
+    }
+
+    registryRequestsAfterClosure = proxy.requests
+      .slice(postClosureRequestStart)
+      .filter((request) => request.host === 'registry.npmjs.org');
+    if (registryRequestsAfterClosure.length > 0) {
+      const markerPath = await writeRegistryFailureMarker({
+        layout,
+        sourceCommit: options.sourceCommit,
+        blockerCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH',
+        phase: 'post-prefetch-lifecycle-assets',
+        status: 'partial_failed_registry_leak',
+        context: {
+          requestCount: registryRequestsAfterClosure.length,
+          requests: registryRequestsAfterClosure,
+        },
+      });
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH',
+        'registry network access occurred after deny-network cache closure proof',
+        {
+          requestCount: registryRequestsAfterClosure.length,
+          requests: registryRequestsAfterClosure,
+          cacheStatus: 'partial_failed_registry_leak',
+          cacheReusable: false,
+          partialMarkerPath: markerPath,
+          automaticRetry: false,
+        },
+      );
     }
   } finally {
     await proxy.close();
-  }
-
-  if (onlineInstall?.exitCode !== 0) {
-    await failOnlineStage({
-      layout,
-      sourceCommit: options.sourceCommit,
-      proxy,
-      stage: onlineInstall,
-      fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_INSTALL',
-      detail: 'registry-offline lifecycle install failed',
-    });
-  }
-  if (onlineNative?.exitCode !== 0 || !onlineNative?.binary) {
-    await failOnlineStage({
-      layout,
-      sourceCommit: options.sourceCommit,
-      proxy,
-      stage: onlineNative,
-      fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ONLINE_NATIVE',
-      detail: 'Electron native hydration failed',
-    });
   }
 
   const transportSummary = verifyProxyAudit(proxy);
@@ -484,12 +626,20 @@ export async function hydrateNativeToolchainCache(options) {
     npmVersion: npmVersionText,
     lockfile,
     registryPrefetch,
+    registryCacheClosure: {
+      status: 'PASS',
+      strategy: NATIVE_REGISTRY_CLOSURE_STRATEGY,
+      networkAuthority: 'deny-network',
+      lifecycleScriptsEnabled: false,
+      ...registryCacheClosure,
+    },
     cacheLayout: layout,
     electronNodedir,
     cacheIdentity,
     onlineHydration: {
       status: 'PASS',
-      registryMode: 'lockfile-batched-prefetch-then-offline-ci',
+      registryMode: 'lockfile-name-version-prefetch-closure-then-offline-ci',
+      registryRequestCountAfterClosure: registryRequestsAfterClosure.length,
       install: onlineInstall,
       nativeArm64: onlineNative,
       proxy: {
