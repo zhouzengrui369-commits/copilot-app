@@ -4,7 +4,7 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-The R31 macOS-first local-first product source remains the executable baseline. The Owner's 2026-08-07 direction is being implemented as a clean-room llm_wiki-inspired Knowledge Studio on Draft PR #23. No current packaged Electron Candidate, artifact SHA-256, runtime ID, independent Codex acceptance, signing, notarization, Release, or Human Owner Gate exists.
+The R31 macOS-first local-first product source remains the executable baseline. The Owner's 2026-08-07 direction has been implemented as a clean-room llm_wiki-inspired Knowledge Studio on Draft PR #23. The implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` passed the complete Node 24/macOS source gate (`31150271762`, 17/17 steps). Parent PM evidence/governance receipts were committed afterward, so the final evidence-containing PR #23 head still requires one fresh complete source gate before integration. No current packaged Electron Candidate, artifact SHA-256, runtime ID, independent Codex acceptance, signing, notarization, Release, or Human Owner Gate exists.
 
 ## Current source chain
 
@@ -15,9 +15,11 @@ The R31 macOS-first local-first product source remains the executable baseline. 
 - Pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`
 - Pre-Studio source gate: run `30819543111`, all 17 steps PASS
 - Candidate source contracts: `90/90`
-- Desktop Phase 1 source suite: `1107/1107`
+- Desktop Phase 1 source suite before Studio: `1107/1107`
 - Electron list-only discovery: exact `113 tests in 9 files`
 - Active Parent PM implementation: PR `#23`, branch `chatgpt/mvp-llm-wiki-demo-ui`
+- R47 implementation-only source gate: head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6`, run `31150271762`, job `92778261873`, `17/17 PASS`
+- R47 final evidence-containing source gate: pending on the final PR #23 head
 - Upstream architectural reference: `nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530` (v0.6.7, GPLv3)
 - Exact successor deployment SHA: supplied only after PR #23 is merged into Draft PR #20 and the resulting exact PR #20 head passes the complete source gate.
 
@@ -36,7 +38,7 @@ Because the upstream is GPLv3 and Copilot currently identifies its own internal 
 
 The detailed provenance is in `docs/development/LLM_WIKI_CLEAN_ROOM_MVP.md` and `THIRD_PARTY_NOTICES.md`.
 
-## Product implementation under PR #23
+## Product implementation on PR #23
 
 The existing demo-first Electron shell now has a dedicated `知识台 / Wiki Studio` route. The already-tested `KnowledgeWorkspace` remains intact for canonical note editing, full source reading, Ask-source return continuity and MOC behavior.
 
@@ -95,7 +97,7 @@ Those controls remain unchanged by PR #23:
 
 ## Remaining gates
 
-- Pass PR #23 complete Node 24/macOS source gate.
+- Pass the final evidence-containing PR #23 head through the complete Node 24/macOS source gate.
 - Merge PR #23 into Draft PR #20 only; do not merge PR #20 to `main` yet.
 - Pass the complete source gate on the resulting exact PR #20 head.
 - Freeze the new full source SHA and issue a new clean-worktree MiniMax contract.
@@ -106,4 +108,4 @@ Those controls remain unchanged by PR #23:
 
 ## Next single action
 
-Complete GitHub source validation for PR #23, integrate it into Draft PR #20, revalidate the resulting exact PR #20 source, then hand that SHA to MiniMax Code for a fresh macOS Candidate. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF` until independent Electron evidence exists.
+Pass the complete source gate on the final evidence-containing PR #23 head, integrate it into Draft PR #20, revalidate the resulting exact PR #20 source, then hand that SHA to MiniMax Code for a fresh macOS Candidate. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF` until independent Electron evidence exists.
