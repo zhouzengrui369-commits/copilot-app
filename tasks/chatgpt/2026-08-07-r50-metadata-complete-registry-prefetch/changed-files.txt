@@ -1,0 +1,19 @@
+SOURCE_CHANGES_BY_CHATGPT_PARENT_PM = YES
+PRODUCT_FEATURE_CHANGES = NONE
+PACKAGE_JSON_CHANGES = NONE
+PACKAGE_LOCK_CHANGES = NONE
+NETWORK_ALLOWLIST_CHANGES = NONE
+
+scripts/candidate-r30/registry-prefetch.mjs
+scripts/candidate-r30/npm-native-cache-hydrate.mjs
+scripts/candidate-r30/native-cache-policy.mjs
+scripts/candidate-r30/registry-prefetch.test.mjs
+scripts/candidate-r30/npm-native-cache-hydrate.test.mjs
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/GOAL.md
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/TASK.md
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/PLAN.md
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/RESULT.md
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/EVIDENCE.md
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/commands.log
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/changed-files.txt
+tasks/chatgpt/2026-08-07-r50-metadata-complete-registry-prefetch/DISPATCH_STATUS.md
