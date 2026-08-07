@@ -1,0 +1,5 @@
+2026-08-07 Parent PM remote task initialized from PR #20 source 32ff3ebc0b1dc217bf0954974127b0aa68de61f2.
+Read exact R48 registry-prefetch, native hydrator, runtime, policy, and source tests.
+Root cause accepted: tarball-URL npm pack warmed tarball content but did not guarantee npm packument metadata required by offline reify; R49 reported ENOTCACHED for typescript.
+Implemented exact name@version npm pack prefetch, deny-network registry cache closure proof, post-closure registry zero-request enforcement, receipt validation, and direct tests.
+No local Candidate execution performed by ChatGPT Parent PM.
