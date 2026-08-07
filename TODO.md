@@ -2,80 +2,92 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
-The R31 macOS MVP product source and Candidate contracts are complete enough for another exact-SHA local attempt, but no current Candidate, artifact SHA-256, runtime ID, packaged Electron result, Codex acceptance, Release, or Human Owner Gate exists.
+R31 remains the source lineage for the macOS-first MVP. The active Parent PM slice is PR #23 (`chatgpt/mvp-llm-wiki-demo-ui`), which clean-room adapts the researched llm_wiki product patterns into the existing Electron/demo UI source. No current packaged Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
-## P0 — R46 Native Hydration Transport Stability
+## P0 — Owner-directed llm_wiki + Demo UI MVP source
 
-- [x] Freeze R45 source `43f151a3a1eb7e0592ff833f0e42892db47d3d65` after complete source gate run `30793536929` PASS.
-- [x] Execute exact-object authority, new-path checks, and `83/83` source contracts.
-- [x] Stop the single authorized hydration on npm `ECONNRESET` before Candidate creation.
-- [x] Preserve the 477 MiB partial cache and task evidence as immutable `FORBIDDEN_REFERENCE_ONLY` diagnosis.
-- [x] Record the prohibited second hydrator invocation; confirm it was immediately rejected by `BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS` and performed no second hydration.
-- [x] Reject hidden retry, Candidate network access, host-allowlist expansion, mirror switching, and partial-cache reuse.
-- [x] Add TCP keepalive and no-delay to both tunnel sockets.
-- [x] Add a twenty-minute idle timeout for long official artifact transfers.
-- [x] Fix npm fetch retries at zero, set an explicit fetch timeout, and bound socket concurrency.
-- [x] Record per-CONNECT timestamps, duration, directional bytes, socket policy, and terminal errors.
-- [x] Classify reset, timeout, pipe, and abort failures with stable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_*` codes.
-- [x] Write exclusive `HYDRATION-FAILED.json` with `partial_failed_transport`, `reusable=false`, and `passReceiptCreated=false` after a transport failure.
-- [x] Reject a cache carrying the partial marker.
-- [x] Bind the exact no-retry transport policy and zero fatal tunnel errors into the PASS receipt audit.
-- [x] Add direct RED→GREEN transport and receipt tests.
-- [x] Update `PROJECT_STATE.yaml`, `PROJECT_STATUS.md`, `TODO.md`, `CHANGELOG.md`, `DECISIONS.md`, and the MiniMax handoff.
-- [ ] Pass all source contracts and the complete 17-step GitHub source gate on the exact final R46 fix head.
-- [ ] Merge the bounded R46 fix into Draft PR #20 only; do not merge PR #20 to `main`.
-- [ ] Pass the complete source gate on the resulting exact PR #20 head.
-- [ ] Externally freeze the new 40-character `EXACT_FINAL_HEAD` without another tracked source change.
+- [x] Read `goal.md`, `plan.md`, `rules.md`, `delivery.md`, README/state/status/TODO and current Candidate contracts.
+- [x] Read the existing `docs/llm-wiki-ecosystem-fit-report.md` research from project history.
+- [x] Pin upstream architectural reference `nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530` (v0.6.7).
+- [x] Identify upstream license as GPLv3 and choose clean-room adaptation instead of copying implementation bytes.
+- [x] Preserve current Electron / TypeScript / SQLite / local KG / local RAG architecture.
+- [x] Preserve `apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css` and `demo-source-v4.css` as the UI shell basis.
+- [x] Add `知识台 / Wiki Studio` route without replacing existing `KnowledgeWorkspace`.
+- [x] Add local Sources rail and three-column responsive workbench.
+- [x] Reuse digest-bound `WikiTruthReceipt` rather than create a second Wiki truth store.
+- [x] Add projection-bound human Review Queue metadata (`accepted` / `deferred`) stored locally and separated from canonical truth.
+- [x] Surface existing durable `kg_pending` / `knowledgeBuild` states as Activity instead of creating a second ingest database.
+- [x] Reuse the existing local Sigma/Graphology KG renderer.
+- [x] Add clean-room 4-Signal ranking: direct relation ×3, source overlap ×4, Adamic-Adar ×1.5, same type ×1.
+- [x] Keep retries explicit through the existing local `kg.reindexNote` path; no surprise model work on Studio open.
+- [x] Add model tests for review identity, activity truth, and 4-Signal ranking.
+- [x] Add renderer tests for Review Queue/local decision separation/explicit retry.
+- [x] Add `THIRD_PARTY_NOTICES.md` and `docs/development/LLM_WIKI_CLEAN_ROOM_MVP.md` provenance.
+- [x] Open stacked Draft PR #23 targeting `chatgpt/mvp-source-finalization`.
+- [x] Validate the implementation-only head `6886bd37bbc80658b7e994bed052d1ec6b2b65e6` with `copilot-source-gate` run `31150271762` (`17/17 PASS`).
+- [x] Freeze Parent PM GOAL/TASK/PLAN/RESULT/EVIDENCE/commands.log/changed-files receipts on PR #23.
+- [ ] Pass the complete Node 24/macOS `copilot-source-gate` on the final evidence-containing PR #23 head.
+- [ ] Merge PR #23 into Draft PR #20 only.
+- [ ] Pass the complete `copilot-source-gate` on the resulting exact PR #20 head.
+- [ ] Freeze the new 40-character `EXACT_FINAL_HEAD` with no subsequent tracked source change.
 
-## P0 — MiniMax Code Fresh R46 Hydration And Candidate
+## P0 — MiniMax Code fresh macOS Candidate
 
-MiniMax remains `STOPPED` until one handoff supplies all four fields:
+MiniMax remains stopped until ChatGPT supplies a new exact PR #20 head after PR #23 integration.
+
+- [ ] Fetch `refs/pull/20/head` and prove `FETCH_HEAD == EXACT_FINAL_HEAD`.
+- [ ] Read `docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md` and `scripts/candidate-r30/minimax-authority.mjs` from that exact Git object.
+- [ ] Use all-new hydration/candidate worktrees, cache, receipt, task root, evidence, artifact and runtime identities.
+- [ ] Never reuse R44/R45/R46 caches, worktrees, evidence or old exact SHAs.
+- [ ] Run `node --test scripts/candidate-r30/*.test.mjs` from the clean detached source.
+- [ ] Run one Owner-authorized native-toolchain hydration; no retry/resume or partial-cache reuse.
+- [ ] Run `scripts/candidate-r30/run-candidate.mjs --dry-run`; require `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`.
+- [ ] Execute the real Candidate once and stop at the first fail-closed blocker.
+- [ ] Pass Gate 2 full lifecycle install under deny-network.
+- [ ] Pass Gates 3–12 without source edits or authority expansion.
+- [ ] Return source snapshot, artifact SHA-256, runtime ID, test-data manifest, packaged Electron `113/113`, zero skipped/unexpected/flaky, three performance runs, screenshots and clean process termination.
+- [ ] `changed-files.txt` must state `SOURCE_CHANGES_BY_MINIMAX = NONE`.
+
+Required authority tokens remain:
 
 ```text
-SOURCE_COMMIT=<new exact SHA>
-PR=20
-SOURCE_GATE=PASS
-RUN_STAMP=<new unique value>
+scripts/candidate-r30/run-candidate.mjs
+scripts/candidate-r30/minimax-authority.mjs
+EXACT_FINAL_HEAD
 ```
 
-- [ ] Fetch `refs/pull/20/head` and prove `FETCH_HEAD == SOURCE_COMMIT`.
-- [ ] Read authority through `scripts/candidate-r30/minimax-authority.mjs` from the exact Git object.
-- [ ] Use a new run stamp; never reuse `20260803T123238Z`.
-- [ ] Use new hydration and Candidate worktrees, cache, receipt, task root, and evidence directory.
-- [ ] Keep R45 source, partial cache, evidence, logs, screenshots, and `/tmp` probes untouched and `FORBIDDEN_REFERENCE_ONLY`.
-- [ ] Execute `node --test scripts/candidate-r30/*.test.mjs` in the clean hydration worktree.
-- [ ] Run `scripts/candidate-r30/npm-native-cache-hydrate.mjs` once with `OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION`.
-- [ ] Do not retry, resume, reuse a partial cache, broaden the allowlist, or switch mirrors after any blocker.
-- [ ] Return exact source, lock, lifecycle set, transport policy, CONNECT audit, cache ledger, headers, offline proof, and receipt identities.
-- [ ] Create a separate clean detached Candidate worktree and new evidence directory.
-- [ ] Run `scripts/candidate-r30/run-candidate.mjs --dry-run`; require `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`.
-- [ ] Execute the real Candidate exactly once.
-- [ ] Pass Gate 2 full lifecycle install under deny-network with no cache mutation.
-- [ ] Pass Gates 3–12 without source edits, online retry, authority expansion, or skipped evidence.
-- [ ] Return packaged Electron `113/113`, three performance runs, screenshots, identities, clean terminal state, `CANDIDATE-MANIFEST.json`, and `R30-COMPLETE.json`.
-- [ ] Stop and return the exact first blocker if any step fails.
-
-## P0 — Codex Independent Acceptance
+## P0 — Codex independent Electron acceptance
 
 - [ ] Start only after a complete internally consistent MiniMax receipt.
-- [ ] Independently verify source, native-cache receipt, artifact, runtime, ecosystem baseline, and test-data identities.
+- [ ] Independently verify source commit, artifact SHA-256, runtime ID, ecosystem baseline and deterministic test-data manifest.
 - [ ] Operate the exact packaged Electron Candidate on the real macOS computer.
-- [ ] Verify local material → grounded Ask → source → return → Todo → edit → schedule → full quit/relaunch.
-- [ ] Verify All / Unscheduled discoverability and exact Todo navigation.
+- [ ] Verify Wiki Studio Sources/Wiki/Review/Graph/Activity UI with real local data.
+- [ ] Verify local material → grounded Ask → verified source → same-exchange return.
+- [ ] Verify Todo create/readback → View Todo → All/Unscheduled → edit → schedule association.
+- [ ] Verify complete Electron quit/relaunch persistence.
 - [ ] Verify real packaged offline local ASR.
-- [ ] Report P0/P1/P2 and a fail-closed product/release verdict without source repair.
-- [ ] Require candidate-bound `P0=0` before Human Owner Gate eligibility.
+- [ ] Report P0/P1/P2 and keep Human Owner Gate ineligible until candidate-bound P0=0.
+
+## Existing Candidate / native-cache controls — preserve
+
+- [x] R46 transport fix merged into PR #20 source lineage.
+- [x] Candidate network remains `(deny network*)`.
+- [x] Hydration remains one explicit Owner-authorized operation with `automaticRetry=false`.
+- [x] Partial native cache remains non-reusable and fail-closed.
+- [x] Gate 9 exact discovery remains `113 tests in 9 files`.
+- [x] Gate 11 remains three candidate-bound performance runs.
+- [x] Gate 12 remains final source/artifact/runtime/test-data/evidence receipt.
 
 ## Open release gates
 
 - [ ] Candidate-bound three verify-fix rounds.
 - [ ] Developer ID signing.
-- [ ] Apple notarization, stapling, validation, and Gatekeeper install/launch evidence.
+- [ ] Apple notarization, stapling, validation and Gatekeeper install/launch evidence.
 - [ ] Human Owner Gate and required use evidence.
 
 ## Deferred
 
 - Windows real-machine/signing/install/screenshots → Phase 1.1.
-- Tencent deployment, Remote/live, and optional Backup → post-MVP.
-- 3D graph and broader expansion → post-MVP.
-- Mobile/web, multi-user, plugins, i18n, enterprise expansion, and major dependency upgrades → post-MVP.
+- Tencent deployment, Remote/live and optional Backup → post-MVP.
+- 3D graph, Deep Research, MCP/API expansion → post-MVP.
+- Mobile/web, multi-user, plugins, i18n, enterprise and major dependency upgrades → post-MVP.
