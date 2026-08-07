@@ -1,0 +1,20 @@
+SOURCE_CHANGES_BY_MINIMAX = NONE
+
+R52_PARENT_PM_TRACKED_SCOPE:
+- docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+- PROJECT_STATE.yaml
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/GOAL.md
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/TASK.md
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/PLAN.md
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/RESULT.md
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/EVIDENCE.md
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/commands.log
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/changed-files.txt
+- tasks/chatgpt/2026-08-07-r52-reauthorize-long-hydration-window/DISPATCH_STATUS.md
+
+PRODUCT_CODE_CHANGED = NO
+R50_HYDRATOR_CHANGED = NO
+PACKAGE_LOCK_CHANGED = NO
+TESTS_CHANGED = NO
+HOST_ALLOWLIST_CHANGED = NO
+CANDIDATE_NETWORK_CHANGED = NO
