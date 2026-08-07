@@ -41,6 +41,15 @@ export const EXPECTED_LIFECYCLE_PACKAGES = Object.freeze([
 ]);
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/u;
+const SHA256 = /^[0-9a-f]{64}$/u;
+const EXPECTED_REGISTRY_PREFETCH_STRATEGY =
+  'lockfile-batched-name-version-npm-pack-v2';
+const EXPECTED_REGISTRY_METADATA_MODE = 'name-version-packument-and-tarball';
+const EXPECTED_REGISTRY_CLOSURE_STRATEGY =
+  'deny-network-offline-ci-ignore-scripts-v1';
+const EXPECTED_REGISTRY_MODE =
+  'lockfile-name-version-prefetch-closure-then-offline-ci';
+const EXPECTED_REGISTRY_BATCH_SIZE = 24;
 
 export class NativeCacheHydrationBlocked extends Error {
   constructor(code, detail, context = {}) {
@@ -383,6 +392,8 @@ export async function validateNativeHydrationReceipt({
   const electronNodedir = await findElectronNodedir(layout.nodeGyp, lockfile.electronVersion);
   const expectedHosts = [...NATIVE_HYDRATION_HOSTS].sort();
   const expectedTransportPolicy = nativeHydrationTransportPolicy();
+  const prefetchEntryCount = Number(receipt?.registryPrefetch?.entryCount ?? 0);
+  const prefetchBatchCount = Number(receipt?.registryPrefetch?.batchCount ?? 0);
   if (
     receipt?.schemaVersion !== NATIVE_CACHE_HYDRATION_SCHEMA_VERSION
     || receipt?.status !== 'PASS'
@@ -397,15 +408,31 @@ export async function validateNativeHydrationReceipt({
     || JSON.stringify(receipt?.transportPolicy) !== JSON.stringify(expectedTransportPolicy)
     || receipt?.candidateCreated !== false
     || receipt?.evidenceCreated !== false
+    || receipt?.registryPrefetch?.status !== 'PASS'
+    || receipt?.registryPrefetch?.strategy !== EXPECTED_REGISTRY_PREFETCH_STRATEGY
+    || receipt?.registryPrefetch?.metadataMode !== EXPECTED_REGISTRY_METADATA_MODE
+    || receipt?.registryPrefetch?.automaticRetry !== false
+    || receipt?.registryPrefetch?.batchSize !== EXPECTED_REGISTRY_BATCH_SIZE
+    || !Number.isInteger(prefetchEntryCount)
+    || prefetchEntryCount < 1
+    || !Number.isInteger(prefetchBatchCount)
+    || prefetchBatchCount !== Math.ceil(prefetchEntryCount / EXPECTED_REGISTRY_BATCH_SIZE)
+    || !SHA256.test(receipt?.registryPrefetch?.manifestSha256 ?? '')
+    || receipt?.registryCacheClosure?.status !== 'PASS'
+    || receipt?.registryCacheClosure?.strategy !== EXPECTED_REGISTRY_CLOSURE_STRATEGY
+    || receipt?.registryCacheClosure?.networkAuthority !== 'deny-network'
+    || receipt?.registryCacheClosure?.lifecycleScriptsEnabled !== false
+    || receipt?.onlineHydration?.status !== 'PASS'
+    || receipt?.onlineHydration?.registryMode !== EXPECTED_REGISTRY_MODE
+    || receipt?.onlineHydration?.registryRequestCountAfterClosure !== 0
+    || receipt?.onlineHydration?.proxy?.allRequestsAllowed !== true
+    || receipt?.onlineHydration?.proxy?.transportSummary?.transportErrorCount !== 0
+    || JSON.stringify(receipt?.onlineHydration?.proxy?.allowedHosts) !== JSON.stringify(expectedHosts)
     || receipt?.offlineInstallProof?.status !== 'PASS'
     || receipt?.offlineInstallProof?.networkAuthority !== 'deny-network'
     || receipt?.offlineNativeProof?.status !== 'PASS'
     || receipt?.offlineNativeProof?.arch !== 'arm64'
     || receipt?.electronNodedir !== electronNodedir
-    || receipt?.onlineHydration?.status !== 'PASS'
-    || receipt?.onlineHydration?.proxy?.allRequestsAllowed !== true
-    || receipt?.onlineHydration?.proxy?.transportSummary?.transportErrorCount !== 0
-    || JSON.stringify(receipt?.onlineHydration?.proxy?.allowedHosts) !== JSON.stringify(expectedHosts)
     || receipt?.lockfile?.sha256 !== lockfile.sha256
     || JSON.stringify(receipt?.lockfile?.lifecyclePackages) !== JSON.stringify(lockfile.lifecyclePackages)
     || receipt?.cacheIdentity?.path !== canonicalCache
@@ -416,7 +443,7 @@ export async function validateNativeHydrationReceipt({
   ) {
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID',
-      'receipt, source, transport policy, lifecycle set, offline proofs, lockfile, or cache identity mismatch',
+      'receipt, source, registry closure, transport policy, lifecycle set, offline proofs, lockfile, or cache identity mismatch',
     );
   }
   return {
