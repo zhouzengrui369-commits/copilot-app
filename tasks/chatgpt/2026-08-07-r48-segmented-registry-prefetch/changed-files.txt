@@ -1,0 +1,15 @@
+SOURCE_CHANGES_BY_CHATGPT_PARENT_PM = YES
+LOCAL_CANDIDATE_CHANGES = NONE
+
+scripts/candidate-r30/registry-prefetch.mjs
+scripts/candidate-r30/registry-prefetch.test.mjs
+scripts/candidate-r30/npm-native-cache-hydrate.mjs
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/GOAL.md
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/TASK.md
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/PLAN.md
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/RESULT.md
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/EVIDENCE.md
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/commands.log
+tasks/chatgpt/2026-08-07-r48-segmented-registry-prefetch/changed-files.txt
+
+No package.json, package-lock.json, product UI, database, vector-store, credentials, signing, notarization, cloud, or global-config changes.
