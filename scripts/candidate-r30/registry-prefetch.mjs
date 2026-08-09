@@ -1,4 +1,8 @@
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 import { NPM_REGISTRY, blockNativeCache } from './native-cache-policy.mjs';
 
@@ -15,6 +19,10 @@ const REVIEWED_REGISTRY_HOSTS = new Set([
 ]);
 const CANONICAL_REGISTRY = new URL(NPM_REGISTRY);
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/u;
+const SOURCE_REPOSITORY_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../..',
+);
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -101,6 +109,42 @@ function requireLockfileV3(lockfileDocument, label = 'package-lock') {
   }
 }
 
+function trackedSupplementalLockfileDocuments() {
+  const result = spawnSync(
+    'git',
+    ['-C', SOURCE_REPOSITORY_ROOT, 'ls-files', '--', ':(glob)**/package-lock.json'],
+    {
+      cwd: SOURCE_REPOSITORY_ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      maxBuffer: 16 * 1024 * 1024,
+    },
+  );
+  if ((result.status ?? 1) !== 0) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'unable to enumerate tracked supplemental package-lock files',
+      { stderr: (result.stderr ?? result.error?.message ?? '').trim() },
+    );
+  }
+  const lockfiles = (result.stdout ?? '')
+    .split('\n')
+    .map((value) => value.trim())
+    .filter((value) => value && value !== 'package-lock.json')
+    .sort();
+  return lockfiles.map((relativePath) => {
+    try {
+      return JSON.parse(readFileSync(path.join(SOURCE_REPOSITORY_ROOT, relativePath), 'utf8'));
+    } catch (error) {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+        'tracked supplemental package-lock must be readable JSON',
+        { relativePath, error: error instanceof Error ? error.message : String(error) },
+      );
+    }
+  });
+}
+
 function registryIdentityFromEntry(packagePath, entry) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
   const rawResolved = typeof entry.resolved === 'string' ? entry.resolved : '';
@@ -185,10 +229,13 @@ function supplementalRegistryIdentityIndex(supplementalLockfileDocuments) {
 
 export function buildRegistryPrefetchManifest(
   lockfileDocument,
-  supplementalLockfileDocuments = [],
+  supplementalLockfileDocuments,
 ) {
   requireLockfileV3(lockfileDocument);
-  const supplementalBySpec = supplementalRegistryIdentityIndex(supplementalLockfileDocuments);
+  const supplements = supplementalLockfileDocuments === undefined
+    ? trackedSupplementalLockfileDocuments()
+    : supplementalLockfileDocuments;
+  const supplementalBySpec = supplementalRegistryIdentityIndex(supplements);
   const bySpec = new Map();
   let supplementalIdentityCount = 0;
 
@@ -226,7 +273,7 @@ export function buildRegistryPrefetchManifest(
     strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
     metadataMode: 'name-version-packument-and-tarball',
     entryCount: entries.length,
-    supplementalLockfileCount: supplementalLockfileDocuments.length,
+    supplementalLockfileCount: supplements.length,
     supplementalIdentityCount,
     manifestSha256: sha256(canonical),
     entries,
