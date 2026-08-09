@@ -1,0 +1,48 @@
+capability_id: geo-context
+adoption_mode: PLAN_ONLY
+execution_owner: copilot-project-pm
+execution_mode: PROJECT_PM_OWNED
+current_release_scope: OUT_OF_CURRENT_PHASE1_MVP
+runtime_implementation: false
+planned_goal: COPILOT-SPATIAL-KNOWLEDGE-R1
+program_plan: docs/plans/COPILOT_SPATIAL_KNOWLEDGE_R1.md
+central_candidate:
+  repository: zhouzengrui369-commits/knowme-ecosystem
+  commit: 6edb5401084de24491038ac55525f584e9943bd7
+  schema_sha256: 8695f3d9d376bf5591138d78b1460c17758845312aeca52a4a0597ee873032df
+future_intent:
+  - local_first_spatial_knowledge_view
+  - location_linked_notes_and_knowledge_graph_nodes
+renderer_strategy:
+  first: 2d_local_first
+  three_d: explicitly_post_mvp_and_optional
+project_pm_responsibilities:
+  - activate_only_after_phase1_or_owner_reprioritization
+  - create_project_goal_and_milestones
+  - assign_implementation_workers
+  - preserve_local_first_authority
+  - freeze_exact_electron_candidate
+  - assign_electron_local_test_and_packaging
+  - assign_independent_spatial_product_review
+  - create_successor_candidates_for_findings
+  - hand_signed_notarized_customer_value_gate_to_human_owner
+milestones:
+  - M0_POST_MVP_ACTIVATION
+  - M1_LOCAL_SPATIAL_ENTITY_ADAPTER
+  - M2_2D_LOCAL_FIRST_VIEW
+  - M3_RAG_CONTEXT_INTEGRATION
+  - M4_RELIABILITY_PERFORMANCE_MIGRATION
+  - M5_EXACT_SHA_ELECTRON_ACCEPTANCE
+  - M6_INDEPENDENT_SPATIAL_REVIEW
+  - M7_OPTIONAL_3D_DECISION_GATE
+  - M8_HUMAN_OWNER_DELIVERY
+constraints:
+  - current_phase1_excludes_3d_knowledge_graph
+  - do_not_compete_with_macos_quality_signing_notarization_gates
+  - local_knowledge_remains_authoritative
+  - no_direct_upstream_GPL_source_templates_assets
+  - planning_pr_does_not_authorize_runtime
+activation_requires:
+  - current_phase1_mvp_gate_closed_or_owner_reprioritized
+  - separate_copilot_pm_active_goal
+  - exact_central_capability_revalidation
