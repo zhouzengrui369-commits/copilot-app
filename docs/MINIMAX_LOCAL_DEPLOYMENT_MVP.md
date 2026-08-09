@@ -1,6 +1,6 @@
 # MiniMax Code Local Handoff — Copilot App macOS MVP
 
-R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 defines metadata-complete npm registry closure. R54 defines durable single-process hydration and source-consumption rules. R56 repairs exact unresolved-root registry identities. R58 repairs bootstrap-safe repository authority after the consumed R57 runtime attempt proved that module-location inference is invalid when the hydrator is extracted under `/private/tmp`.
+R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 defines metadata-complete npm registry closure. R54 defines durable single-process hydration and source-consumption rules. R56 repairs exact unresolved-root registry identities. R58 repairs bootstrap-safe repository authority. R60 reduces the long registry-prefetch exposure window without adding retry, mirrors, hosts or Candidate network authority.
 
 ## Fixed truth
 
@@ -11,6 +11,8 @@ R55_FROZEN_CONSUMED_REGISTRY_CLOSURE_EVIDENCE_ONLY
 R56_EXACT_NESTED_LOCK_REGISTRY_IDENTITY_CLOSURE_IN_SOURCE
 R57_FROZEN_CONSUMED_BOOTSTRAP_RUNTIME_EVIDENCE_ONLY
 R58_BOOTSTRAP_SAFE_REPOSITORY_AUTHORITY_IN_SOURCE
+R58_FROZEN_CONSUMED_REGISTRY_TRANSPORT_EVIDENCE_ONLY
+R60_BOUNDED_REGISTRY_PREFETCH_THROUGHPUT_IN_SOURCE
 LOCAL_SUCCESSOR_NOT_RUN
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
@@ -58,55 +60,79 @@ SOURCE_COMMIT=2927d0e3cd81e3997bb229ce544b95a1e3cbce8b
 RUN_STAMP=20260809T044928Z
 ```
 
-Exact-head, fresh-path, authority bootstrap, detached worktree and `98/98` source contracts passed. One durable background hydrator then stopped in about three seconds before registry prefetch because R56 had derived a repository root from `import.meta.url`.
-
-The real hydrator is extracted into `/private/tmp/...`. Therefore module-relative `../..` resolved to `/private/tmp`, not the exact detached hydration worktree. `git ls-files` failed with `fatal: not a git repository`.
+Exact-head, fresh-path, authority bootstrap, detached worktree and `98/98` source contracts passed. One durable background hydrator then stopped before registry prefetch because R56 had derived a repository root from `import.meta.url` while the real hydrator had been extracted under `/private/tmp/...`.
 
 ```text
 FAILED_PHASE=registry_prefetch_manifest_enumeration
 BLOCKER=BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST
 HYDRATION_EXECUTIONS=1
 CANDIDATE_EXECUTIONS=0
-RETRY_ATTEMPTED=NO
 SOURCE_CONSUMED=true
 SOURCE_CHANGES_BY_MINIMAX=NONE
-CANDIDATE_ESTABLISHED=false
-ARTIFACT_SHA256=null
-RUNTIME_ID=null
 R55_BLOCKER_REGRESSION=UNVERIFIED
 ```
 
-All R57 task/worktree/cache/receipt/evidence identities are immutable `FORBIDDEN_REFERENCE_ONLY`. Because hydration executed once, the R54 Tier-B rule requires a new source SHA before another local run.
+All R57 local identities are immutable `FORBIDDEN_REFERENCE_ONLY`.
 
 ## R58 bootstrap-safe repository authority
 
-R58 removes all repository-root inference from module location.
-
-For production bootstrap execution, supplemental tracked-lock discovery obtains its repository root from the hydration CLI authority:
+R58 removes repository-root inference from module location. Supplemental tracked-lock discovery obtains its production repository root from exactly one absolute hydration CLI authority:
 
 ```text
 --repository <absolute detached hydration worktree>
 ```
 
-The parser requires exactly one repository argument and an absolute path. Missing, duplicate or relative repository authority fails closed with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST`.
+Direct library/test use may provide an explicit absolute `repositoryRoot`. Production bootstrap must not infer source location from `import.meta.url`, `fileURLToPath(import.meta.url)`, `process.cwd()` or module-relative `../..`.
 
-For direct library/test use, `buildRegistryPrefetchManifest` may receive an explicit absolute `repositoryRoot`. Production bootstrap must not infer source location from:
+R58 regression coverage proves a simulated `/private/tmp/.../npm-native-cache-hydrate.mjs` argv with `--repository <real worktree>` discovers the real tracked nested locks and retains canonical `typescript@6.0.3` identity.
+
+## R58 consumed registry-prefetch state
+
+A later local R58 run used source `d29da3e6dcc9c89d680f56c23e66262e9ee967c1` and RUN_STAMP `20260809T053600Z`.
+
+Bootstrap repository authority succeeded. One durable hydrator entered the online registry-prefetch stage and completed 21 of 35 deterministic batches. After roughly 71 minutes, one `registry.npmjs.org` transport reset stopped the run fail-closed:
 
 ```text
-import.meta.url
-fileURLToPath(import.meta.url)
-process.cwd()
-module-relative ../..
+FAILED_PHASE=bounded-registry-prefetch-0021
+BLOCKER=BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+HYDRATION_EXECUTIONS=1
+CANDIDATE_EXECUTIONS=0
+RETRY_ATTEMPTED=NO
+SOURCE_CONSUMED=true
+SOURCE_CHANGES_BY_MINIMAX=NONE
+REGISTRY_CACHE_CLOSURE=NOT_REACHED
+R55_BLOCKER_REGRESSION=UNVERIFIED
 ```
 
-R58 regression coverage proves:
+The fact that `typescript@6.0.3` was not among the first 21 completed alphabetically ordered batches is not evidence that the R56 identity supplement is absent. Closure was never reached, so the R55 regression must remain `UNVERIFIED`, not `FAIL`.
 
-1. a simulated `/private/tmp/.../npm-native-cache-hydrate.mjs` argv with `--repository <real worktree>` discovers tracked nested locks from the real worktree;
-2. canonical `typescript@6.0.3` remains in the manifest;
-3. missing/relative repository authority fails closed;
-4. source contracts forbid reintroduction of `SOURCE_REPOSITORY_ROOT` and `fileURLToPath(import.meta.url)` inference.
+A later same-source/same-RUN_STAMP dispatch correctly stopped at `BLOCKED_NEW_PATH_ALREADY_EXISTS` before authority/hydration. That second dispatch did not consume an additional hydration identity. All R58 local paths and partial cache remain immutable `FORBIDDEN_REFERENCE_ONLY`.
 
-R58 does not alter package/lockfiles, product UI/runtime, workflow, reviewed host allowlist, retry/resume policy, closure semantics, Candidate network authority, signing, notarization or cloud configuration.
+## R60 bounded registry-prefetch throughput
+
+R60 changes only the registry-prefetch npm subprocess throughput bound:
+
+```text
+registryPrefetch.batchSize=24
+registryPrefetch.npmPackMaxSockets=12
+```
+
+The `npm pack` subprocess receives explicit `--maxsockets=12`. The later lifecycle/native transport policy is unchanged. No parallel hydrators are introduced.
+
+This does **not** authorize retry:
+
+- `automaticRetry=false`;
+- npm fetch retries remain zero;
+- no retry/backoff/resume;
+- one hydrator process only;
+- no predecessor cache reuse;
+- no mirror switch;
+- no host-allowlist expansion;
+- Candidate Gates 1–12 remain deny-network.
+
+The purpose is to shorten the 35-batch registry exposure window that previously exceeded one hour.
+
+Before the next online hydration starts, MiniMax must materialize an exact-source runtime registry manifest into task evidence and prove canonical `typescript@6.0.3` plus exact integrity is present. This separates identity proof from transport completion; a later network blocker must not be misclassified as an identity-closure failure.
 
 ## Source identity policy
 
@@ -144,7 +170,7 @@ Partial caches are non-reusable. No retry, resume or promotion is permitted.
 
 ## Resume trigger
 
-A local R58 run starts only from an explicit Parent PM handoff containing:
+A local R60 successor starts only from an explicit Parent PM handoff containing:
 
 ```text
 PR=20
@@ -158,17 +184,11 @@ OUTER_DRIVER_TIMEOUT_SECONDS>=3600
 OWNER_AUTHORITY=OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-MiniMax must fetch `refs/pull/20/head` and prove:
-
-```text
-FETCH_HEAD = supplied SOURCE_COMMIT
-```
-
-Any missing or mismatched field means `STOPPED`. Branch-tip, local-main or stale-object assumptions are not authority.
+MiniMax must fetch `refs/pull/20/head` and prove `FETCH_HEAD = supplied SOURCE_COMMIT`. Any missing or mismatched field means `STOPPED`. Branch-tip, local-main or stale-object assumptions are not authority.
 
 ## Six new local paths
 
-Every run creates a new:
+Every authorized run creates a new:
 
 ```text
 TASK_ROOT
@@ -181,7 +201,7 @@ EVIDENCE_DIR
 
 All six must be absent before creation. Any existing path means `BLOCKED_NEW_PATH_ALREADY_EXISTS`; do not delete/move it and continue.
 
-The run must prove:
+The run must ultimately prove:
 
 ```text
 FETCH_HEAD = SOURCE_COMMIT = detached hydration HEAD = detached candidate HEAD
@@ -201,9 +221,9 @@ Record exactly one PID/process identity, start time, stdout and stderr, then pol
 OUTER_DRIVER_TIMEOUT_SECONDS>=3600
 ```
 
-The outer allowance is not retry budget. Process loss without a terminal hydrator result is a blocker and consumes the hydration identity once the hydrator has started.
+The outer allowance is not retry budget. Process loss without a terminal hydrator result is a blocker and consumes the source identity once the hydrator has started.
 
-## R50 + R56 + R58 hydration contract
+## R50 + R56 + R58 + R60 hydration contract
 
 The one Owner-authorized hydration executes:
 
@@ -212,7 +232,7 @@ exact detached repository from --repository
 → exact root package-lock v3
 → R56 exact unresolved-root identity supplementation from Git-tracked nested locks in THAT repository
 → deterministic exact name@version + canonical tarball + integrity manifest
-→ bounded 24-item npm pack --ignore-scripts name@version batches
+→ bounded 24-item npm pack --ignore-scripts name@version batches with explicit --maxsockets=12
 → isolated npm metadata/tarball cache
 → strict deny-network npm ci --offline --ignore-scripts registry-cache closure proof
 → remove closure-proof node_modules
@@ -231,24 +251,36 @@ Exact strategy values remain:
 registryPrefetch.strategy=lockfile-batched-name-version-npm-pack-v2
 registryPrefetch.metadataMode=name-version-packument-and-tarball
 registryPrefetch.batchSize=24
+registryPrefetch.npmPackMaxSockets=12
 registryCacheClosure.strategy=deny-network-offline-ci-ignore-scripts-v1
 registryCacheClosure.networkAuthority=deny-network
 onlineHydration.registryMode=lockfile-name-version-prefetch-closure-then-offline-ci
 onlineHydration.registryRequestCountAfterClosure=0
 ```
 
-Before accepting closure PASS, R58 must prove:
+Before the online hydrator starts, the successor must create a read-only task-evidence runtime manifest using the exact worktree and exact `buildRegistryPrefetchManifest` implementation and prove:
+
+```text
+RUNTIME_REGISTRY_MANIFEST_SOURCE=<exact SOURCE_COMMIT>
+RUNTIME_REGISTRY_MANIFEST_REPOSITORY=<exact detached hydration worktree>
+typescript@6.0.3 present
+resolved=https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz
+integrity=<exact tracked nested-lock integrity>
+```
+
+This manifest evidence is not a native-cache input and must not modify the source worktree.
+
+Before accepting closure PASS, the run must then prove:
 
 ```text
 BOOTSTRAP_REPOSITORY_AUTHORITY=PASS
 SUPPLEMENTAL_LOCK_ENUMERATION_ROOT=<exact detached hydration worktree>
-typescript@6.0.3 present with canonical registry resolved + exact integrity
 R55_BLOCKER_REGRESSION=PASS
 REGISTRY_CACHE_CLOSURE=PASS
 POST_CLOSURE_REGISTRY_REQUESTS=0
 ```
 
-A manifest-enumeration failure, closure `ENOTCACHED`, registry leak after closure or any other stable blocker stops immediately. If the hydrator started, report `SOURCE_CONSUMED=true`; no local source repair or second invocation is permitted.
+A manifest-enumeration failure, closure `ENOTCACHED`, registry leak after closure, transport failure or any other stable blocker stops immediately. If the hydrator started, report `SOURCE_CONSUMED=true`; no local source repair or second invocation is permitted.
 
 ## Security and retry boundary
 
@@ -258,15 +290,7 @@ Exact Owner token:
 OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-It authorizes one hydration invocation for one supplied exact source/run identity. Preserve:
-
-- `automaticRetry=false`;
-- no retry/backoff/online resume;
-- no predecessor cache, receipt, worktree or evidence reuse;
-- no deletion/mutation of predecessor evidence;
-- no mirror switch or host-allowlist expansion;
-- no package/lockfile/source/test/runner repair during local execution;
-- Candidate Gates 1–12 deny-network authority.
+It authorizes one hydration invocation for one supplied exact source/run identity. Preserve no retry/backoff/online resume, no predecessor cache/receipt/worktree/evidence reuse, no deletion/mutation of predecessor evidence, no mirror switch or host expansion, no package/lockfile/source/test/runner repair during local execution, and Candidate Gates 1–12 deny-network authority.
 
 ## Candidate after hydration PASS
 
@@ -315,7 +339,7 @@ CANDIDATE-MANIFEST.json
 R30-COMPLETE.json
 ```
 
-Bind source snapshot, bootstrap repository authority, R56 registry manifest including `typescript@6.0.3`, closure proof, native-cache receipt/cache aggregate, ZIP/DMG/app/executable/app.asar/native hashes, artifact SHA256, runtime ID, deterministic test-data manifest, `113/113`, three performance receipts, product-journey/Wiki Studio/local-ASR screenshots and final process/Git state. `changed-files.txt` must state `SOURCE_CHANGES_BY_MINIMAX = NONE`.
+Bind source snapshot, runtime registry manifest, bootstrap repository authority, R56 registry identity including `typescript@6.0.3`, closure proof, native-cache receipt/cache aggregate, ZIP/DMG/app/executable/app.asar/native hashes, artifact SHA256, runtime ID, deterministic test-data manifest, `113/113`, three performance receipts, product-journey/Wiki Studio/local-ASR screenshots and final process/Git state. `changed-files.txt` must state `SOURCE_CHANGES_BY_MINIMAX = NONE`.
 
 ## Codex boundary
 
