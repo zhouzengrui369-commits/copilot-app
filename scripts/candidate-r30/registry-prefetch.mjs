@@ -8,6 +8,7 @@ import { NPM_REGISTRY, blockNativeCache } from './native-cache-policy.mjs';
 export const NATIVE_REGISTRY_PREFETCH_STRATEGY =
   'lockfile-batched-name-version-npm-pack-v2';
 export const NATIVE_REGISTRY_PREFETCH_BATCH_SIZE = 24;
+export const NATIVE_REGISTRY_PREFETCH_MAX_SOCKETS = 12;
 export const NATIVE_REGISTRY_CLOSURE_STRATEGY =
   'deny-network-offline-ci-ignore-scripts-v1';
 
@@ -403,6 +404,7 @@ export function registryPrefetchBatchArgs({
     NPM_CACHE_KEY_ALIGNMENT_FLAG,
     '--no-audit',
     '--no-fund',
+    `--maxsockets=${NATIVE_REGISTRY_PREFETCH_MAX_SOCKETS}`,
     '--prefer-online',
     '--pack-destination',
     packDestination,
