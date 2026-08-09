@@ -28,19 +28,19 @@ source:
   product_source_branch: chatgpt/mvp-source-finalization
   product_source_pr: 20
   r47_merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
-  r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  r52_merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
   r54_merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after this R54 integration alignment and complete source-gate PASS"
-  final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
+  r56_merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after the R57 authority-alignment commit and complete source-gate PASS"
+  final_commit_binding: "FETCH_HEAD == supplied SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
+  final_source_gate_binding: "Parent PM external handoff must bind the supplied exact PR #20 head to one completed 17/17 source-gate run/job; any later tracked change invalidates it"
 workflow:
   chatgpt:
     role: Parent PM, GitHub remote source developer, PR reviewer, and local handoff contract author
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: exact-SHA clean-worktree build/package/Candidate technical evidence producer
-    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
+    role: exact-SHA clean-worktree hydration/build/package/Candidate technical evidence producer
+    current_state: AUTHORIZED_ONLY_BY_EXTERNAL_EXACT_SHA_HANDOFF_AFTER_SOURCE_GATE_PASS
     source_modification_during_candidate: FORBIDDEN
   codex:
     role: independent real-computer packaged Electron product-experience acceptance owner
@@ -54,13 +54,9 @@ r31:
   status: SOURCE_COMPLETE
   local_execution: NOT_RUN
   deployment_authority_bootstrap: "scripts/candidate-r30/minimax-authority.mjs reads docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object"
-  historical_source_suite: 1107/1107_PASS
   electron_discovery: 113_tests_in_9_files
 r47_llm_wiki_demo_ui_mvp:
   role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
-  final_stacked_head: 8f0d1604217c966e696e7caf8763496c6be681c9
-  source_gate_run: 31150946435
-  source_gate_job: 92780309284
   source_gate: 17/17_PASS
   integration_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
   upstream_reference: nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530
@@ -68,68 +64,26 @@ r47_llm_wiki_demo_ui_mvp:
   implementation_bytes_copied: false
   local_execution: NOT_RUN
 r50_metadata_complete_registry_prefetch:
-  role: NPM_REGISTRY_METADATA_CACHE_CLOSURE_REPAIR
-  branch: chatgpt/r50-metadata-complete-registry-prefetch
-  pr: 25
-  product_code_changed: false
-  package_or_lockfile_changed: false
-  host_allowlist_expanded: false
-  automatic_retry: false
-  partial_cache_reuse: false
-  candidate_network_authority: deny-network
+  role: NPM_REGISTRY_METADATA_CACHE_CLOSURE
   strategy: lockfile-batched-name-version-npm-pack-v2
   metadata_mode: name-version-packument-and-tarball
   batch_size: 24
   registry_cache_closure: deny-network-offline-ci-ignore-scripts-v1
   post_closure_registry_requests_required: 0
-  final_stacked_source_gate:
-    head: 4707148f9402cddf5959067fee46f6686e0af6ad
-    run: 31161050220
-    job: 92811240325
-    steps: 17/17_PASS
-  integration:
-    merged_into_pr: 20
-    merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-r52_reauthorization:
-  role: GOVERNANCE_ONLY_NEW_EXACT_SHA_AND_EXECUTION_WINDOW
-  branch: chatgpt/r52-reauthorize-long-hydration-window
-  pr: 26
-  product_code_changed: false
-  r50_hydrator_changed: false
-  outer_driver_timeout_seconds_minimum: 3600
-  final_stacked_source_gate:
-    head: a08d9269f600f513b2e886c63a11fb3d42f2fbe7
-    run: 31166172292
-    job: 92827392312
-    steps: 17/17_PASS
-  integration_into_pr20:
-    merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
-  final_pr20_source_gate:
-    head: 0e097811650e2ca79a79a1ab095fdbad1f933ce3
-    run: 31166884483
-    job: 92829691382
-    steps: 17/17_PASS
+  automatic_retry: false
+  partial_cache_reuse: false
+  candidate_network_authority: deny-network
+  integration_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
 r53_pre_hydration_dispatch_attempt:
   source_commit: 0e097811650e2ca79a79a1ab095fdbad1f933ce3
-  source_gate_run: 31166884483
-  source_gate_job: 92829691382
-  source_gate: 17/17_PASS
-  first_dispatch:
-    blocker: BLOCKED_OUTER_DRIVER_TIMEOUT
-    hydration_execution_count: 0
-    candidate_execution_count: 0
-    native_cache_dir_created: false
-    native_cache_receipt_created: false
-    candidate_worktree_created: false
-    source_changes_by_minimax: NONE
-  second_dispatch:
-    blocker: BLOCKED_NEW_PATH_ALREADY_EXISTS
-    hydration_execution_count: 0
-    candidate_execution_count: 0
+  hydration_execution_count: 0
+  candidate_execution_count: 0
+  source_changes_by_minimax: NONE
   source_consumed_by_hydration: false
   candidate_established: false
-  artifact_sha256: null
-  runtime_id: null
+  terminal_blockers:
+    - BLOCKED_OUTER_DRIVER_TIMEOUT
+    - BLOCKED_NEW_PATH_ALREADY_EXISTS
   assets: FORBIDDEN_REFERENCE_ONLY
 r54_pre_hydration_redispatch_policy:
   role: GOVERNANCE_ONLY_PRE_HYDRATION_REDISPATCH_AND_DURABLE_BACKGROUND_PROTOCOL
@@ -138,7 +92,6 @@ r54_pre_hydration_redispatch_policy:
   product_code_changed: false
   r50_hydrator_changed: false
   package_or_lockfile_changed: false
-  tests_changed: false
   host_allowlist_expanded: false
   automatic_retry: false
   partial_cache_reuse: false
@@ -170,14 +123,6 @@ r54_pre_hydration_redispatch_policy:
     outer_driver_timeout_seconds_minimum: 3600
     second_invocation_forbidden: true
     process_loss_retry_forbidden: true
-  implementation_head: 7f9811bc4ff07c5c22982975a083d83bf06bff72
-  initial_source_gate:
-    run: 31291356014
-    initial_job: 93188972469
-    initial_terminal: DESKTOP_COVERAGE_ONLY_FAILURE
-    input_diff_to_source_green_base: GOVERNANCE_ONLY
-    failed_job_rerun: 93189899802
-    rerun_result: 17/17_PASS
   final_stacked_source_gate:
     head: 05c5bee2e4fdd3ccc96b6ad29595386733381888
     run: 31291896148
@@ -185,10 +130,79 @@ r54_pre_hydration_redispatch_policy:
     steps: 17/17_PASS
   integration_into_pr20:
     merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
-  final_pr20_source_gate: PENDING_AFTER_THIS_ALIGNMENT
+r55_registry_cache_closure_attempt:
+  source_commit: 69a0e651f599403bf2427fd321d9491bd31f13b0
+  run_stamp: 20260809T032400Z
+  source_gate_before_local:
+    run: 31292107639
+    job: 93190952296
+    steps: 17/17_PASS
+  authority_bootstrap: PASS
+  exact_source_contracts: 96/96_PASS
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE
+  failed_phase: deny-network-registry-cache-closure-proof
+  missing_registry_identity: typescript@6.0.3
+  source_consumed: true
+  candidate_established: false
+  artifact_sha256: null
+  runtime_id: null
+  assets: FORBIDDEN_REFERENCE_ONLY
+r56_registry_prefetch_identity_closure:
+  role: EXACT_UNRESOLVED_ROOT_REGISTRY_IDENTITY_SUPPLEMENT
+  branch: chatgpt/r56-registry-prefetch-identity-closure
+  pr: 29
+  root_lock_remains_closure_authority: true
+  supplemental_identity_source: GIT_TRACKED_NESTED_PACKAGE_LOCK_V3_ONLY
+  supplemental_match: EXACT_NAME_AND_VERSION_ONLY
+  unrelated_nested_graph_import: false
+  package_or_lockfile_changed: false
+  product_ui_or_runtime_changed: false
+  workflow_changed: false
+  host_allowlist_expanded: false
+  retry_policy_changed: false
+  candidate_network_authority: deny-network
+  regression_proofs:
+    - unresolved_root_exact_spec_supplemented_from_nested_lock
+    - unrelated_nested_package_excluded
+    - current_repository_manifest_contains_canonical_typescript_6_0_3
+  code_green_head: 0b405ef6e9758e04320f60be6ff38682bfee6ca0
+  code_green_source_gate:
+    run: 31293949510
+    job: 93195844225
+    steps: 17/17_PASS
+  final_evidence_head: ecf2c65b1ef1d423fb864fc1d4f8ee3b52a66998
+  final_evidence_source_gate:
+    run: 31294196655
+    final_job: 93197668562
+    steps: 17/17_PASS
+    preceding_same_sha_ci_transients:
+      - DESKTOP_PHASE1_RELEASE_SOURCE_SUITE
+      - DESKTOP_GLOBAL_CRITICAL_COVERAGE
+    tracked_change_between_attempts: false
+    threshold_change_between_attempts: false
+  integration_into_pr20:
+    merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
+r57_authority_alignment:
+  role: GOVERNANCE_TRUTH_ALIGNMENT_BEFORE_LOCAL_SUCCESSOR
+  implementation_change: false
+  package_or_lockfile_change: false
+  product_change: false
+  files:
+    - docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+    - PROJECT_STATE.yaml
+  purpose:
+    - record R55 as consumed evidence-only
+    - record R56 exact nested-lock registry identity closure
+    - remove stale R54 pending/next-action truth
+    - require external exact SHA plus completed source-gate binding before MiniMax execution
+  local_execution: NOT_RUN
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-  gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
+  gate_2: "exact native-cache receipt; R56-complete registry identity manifest; strict registry-cache closure; full lifecycle npm ci under deny-network; no automatic network fallback"
   gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
   gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
@@ -220,5 +234,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the exact PR #20 head created by this final R54 integration alignment, freeze that SHA with no later tracked change, then issue MiniMax a fresh run stamp/all-new paths and persistent single hydrator invocation."
+next_single_action: "After Parent PM supplies the exact current PR #20 40-hex head bound to a completed 17/17 source-gate run/job, execute one fresh R57 MiniMax local run with a new run stamp, six all-new paths, one durable background hydrator, R56 typescript@6.0.3 manifest proof, strict registry-cache closure, then Candidate Gates 1-12 if hydration passes."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
