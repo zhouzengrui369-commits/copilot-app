@@ -1,13 +1,14 @@
 # MiniMax Code Local Handoff — Copilot App macOS MVP
 
-R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 remains the current registry metadata-cache closure implementation. R52 is a governance-only successor authorization after R51 was consumed by an outer dispatcher timeout and a later duplicate-run path collision.
+R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 remains the current registry metadata-cache closure implementation. R54 refines only the local dispatch/reauthorization contract after R53 failed before the hydrator ever started.
 
 ## Fixed truth
 
 ```text
 R50_METADATA_COMPLETE_REGISTRY_PREFETCH_IN_SOURCE
 R51_FROZEN_EVIDENCE_ONLY
-R52_NEW_EXACT_SHA_REQUIRED
+R53_FROZEN_PRE_HYDRATION_DISPATCH_EVIDENCE_ONLY
+R54_PRE_HYDRATION_REDISPATCH_POLICY_IN_SOURCE
 LOCAL_SUCCESSOR_NOT_RUN
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
@@ -25,29 +26,96 @@ scripts/candidate-r30/npm-native-cache-hydrate.mjs
 scripts/candidate-r30/run-candidate.mjs
 ```
 
-## R51 terminal state
+## R53 terminal state
 
-Exact source `2835e36ee37a417bd88e5a8dc1187421eb61e966` had already passed `copilot-source-gate` run `31162006562`, job `92814322597`, `17/17 PASS`. An earlier R51 local dispatch then created the fixed-run task root, detached hydration worktree and fresh native-cache root and entered the single Owner-authorized hydrator invocation. The outer command driver terminated that process at a 120-second wall-clock limit before a PASS receipt, registry-cache closure proof, Candidate worktree, artifact or runtime ID existed. The partial cache was marked non-reusable.
+R53 used exact source `0e097811650e2ca79a79a1ab095fdbad1f933ce3`. The first dispatch created a task root, detached clean hydration worktree and evidence directory, passed exact-source setup, then the caller/tool execution envelope terminated before `npm-native-cache-hydrate.mjs` was invoked. No native cache directory, PASS receipt, Candidate worktree, artifact or runtime ID existed. Reported counts were:
 
-A later R51 dispatch using the same fixed run stamp correctly stopped at `BLOCKED_NEW_PATH_ALREADY_EXISTS` before authority bootstrap or hydration because those R51 paths already existed. Both R51 evidence sets and all R51 paths are immutable `FORBIDDEN_REFERENCE_ONLY`.
+```text
+HYDRATION_EXECUTIONS=0
+CANDIDATE_EXECUTIONS=0
+SOURCE_CHANGES_BY_MINIMAX=NONE
+```
 
-The R51 event is not a product or R50 source defect. It is an execution-envelope failure. It does not authorize deletion, resume, partial-cache reuse, a second hydration invocation on the consumed source, or same-SHA re-dispatch.
+A later same-run dispatch correctly stopped at `BLOCKED_NEW_PATH_ALREADY_EXISTS`. Both R53 dispatch evidence sets and all R53 paths are immutable `FORBIDDEN_REFERENCE_ONLY`.
+
+This is a **pre-hydration dispatcher failure**, not a hydration attempt and not a Candidate attempt.
+
+## Two-tier successor identity policy
+
+### Tier A — pre-hydration dispatch failure
+
+Parent PM may explicitly reauthorize the **same exact source SHA** with a **new unique RUN_STAMP** only when every condition below is proven:
+
+```text
+HYDRATION_EXECUTIONS=0
+CANDIDATE_EXECUTIONS=0
+SOURCE_CHANGES_BY_MINIMAX=NONE
+NATIVE_CACHE_DIR=ABSENT
+NATIVE_CACHE_RECEIPT=ABSENT
+CANDIDATE_WORKTREE=ABSENT
+PR_HEAD_UNCHANGED=true
+SOURCE_GATE_STILL_PASS=true
+```
+
+The re-dispatch must create all-new paths for task root, hydration worktree, native cache, receipt, Candidate worktree and evidence. Previous task/worktree/evidence paths remain frozen and may not be deleted, moved, resumed or reused.
+
+Tier A does **not** authorize reuse of a predecessor hydration worktree even if it is clean. The new run uses a new run stamp and a new detached hydration worktree from the same exact Git object.
+
+### Tier B — hydration or Candidate consumed
+
+A **new source SHA is mandatory** if any of the following is true:
+
+```text
+HYDRATION_EXECUTIONS>=1
+NATIVE_CACHE_DIR exists or contains hydrator output
+NATIVE_CACHE_RECEIPT exists
+CANDIDATE_EXECUTIONS>=1
+CANDIDATE_WORKTREE exists because a real Candidate attempt began
+source changed
+```
+
+A partial/failed native cache remains non-reusable. No retry, resume or promotion is permitted. Parent PM must create/freeze a new exact source identity before another local attempt.
+
+This distinction prevents pure dispatcher/tool failures from causing needless source churn while preserving the stronger source-rotation rule once hydration or Candidate state has actually been consumed.
 
 ## Resume trigger
 
-MiniMax remains stopped until one handoff contains all fields:
+A local run starts only from an explicit Parent PM handoff containing:
 
 ```text
-SOURCE_COMMIT=<new exact 40-character PR #20 head>
+SOURCE_COMMIT=<exact 40-character PR #20 head>
 PR=20
 SOURCE_GATE=PASS
 RUN_STAMP=<new unique value>
 OUTER_DRIVER_TIMEOUT_SECONDS>=3600
+OWNER_AUTHORITY=OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-Any missing field means `STOPPED`. **The source SHA and run stamp must differ from every attempted predecessor.**
+Any missing field means `STOPPED`.
 
-`OUTER_DRIVER_TIMEOUT_SECONDS` is a caller/dispatcher wall-clock allowance only. It must not be implemented as hydrator retry logic. Do not wrap the hydrator in a 120-second command timeout; the caller must permit at least 3600 seconds for the one invocation to finish or emit its own stable blocker.
+If Tier A applies, `SOURCE_COMMIT` may equal the immediately preceding pre-hydration-dispatch source, but `RUN_STAMP` and all six local paths must be new. If Tier B applies, both source SHA and run stamp must be new.
+
+## Persistent hydrator invocation protocol
+
+The hydrator must not be coupled to a foreground tool/shell hard cap shorter than the approved outer window.
+
+Preferred MiniMax execution method:
+
+```text
+run_in_background=true
+```
+
+The background invocation must still be **one and only one** hydrator process. Record its PID/process identity, start time, stdout path and stderr path, then poll that same process until it exits. Do not launch a replacement if the caller disconnects or a poll fails.
+
+A shell-only fallback may use one durable background process such as `nohup` with stdout/stderr redirected to evidence paths, record `$!`, and poll that exact PID. The fallback must not create a second hydrator invocation.
+
+Required outer allowance:
+
+```text
+OUTER_DRIVER_TIMEOUT_SECONDS>=3600
+```
+
+Do not wrap the hydrator with a 120-second timeout. If the background process disappears without a terminal hydrator receipt/error, stop with a dispatcher/process-loss blocker and preserve evidence; do not retry.
 
 ## R50 metadata-complete hydration remains unchanged
 
@@ -92,12 +160,12 @@ The exact Owner token remains:
 OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-It authorizes **one hydration invocation for the new exact source only**. It does not authorize retry or resume. Preserve:
+It authorizes one hydration invocation for the supplied exact source and run identity. It does not authorize retry or resume. Preserve:
 
 - `automaticRetry=false`;
 - no retry/backoff/online resume;
-- no predecessor cache or receipt reuse;
-- no deletion or mutation of R51 evidence;
+- no predecessor cache, receipt, worktree or evidence reuse;
+- no deletion or mutation of predecessor evidence;
 - no mirror switching or host-allowlist expansion;
 - no package/lockfile/source repair during local execution;
 - Candidate Gate 1–12 `(deny network*)`.
@@ -106,7 +174,7 @@ If the single hydrator invocation returns a stable blocker, stop immediately and
 
 ## New paths only
 
-For the new source and new run stamp create a new detached hydration worktree, native cache root, exclusive receipt, detached Candidate worktree, evidence directory and task root. Every R44–R51 source/run/worktree/cache/receipt/evidence/artifact/runtime identity is `FORBIDDEN_REFERENCE_ONLY`.
+Every authorized run creates a new detached hydration worktree, native cache root, exclusive receipt, detached Candidate worktree, evidence directory and task root derived from its run stamp. Predecessor paths are evidence only.
 
 MiniMax must prove:
 

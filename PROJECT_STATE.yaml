@@ -1,6 +1,6 @@
 schema_version: 7
 project: copilot-app
-updated_at: "2026-08-07"
+updated_at: "2026-08-09"
 authority:
   baseline:
     - AGENTS.md
@@ -30,9 +30,9 @@ source:
   r47_merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
   r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  r52_reauthorization_branch: chatgpt/r52-reauthorize-long-hydration-window
   r52_merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after this final R52 state sync and complete source-gate PASS"
+  r54_redispatch_policy_branch: chatgpt/r54-prehydration-redispatch-policy
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after R54 governance merge and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -40,7 +40,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA clean-worktree build/package/Candidate technical evidence producer
-    current_state: STOPPED_UNTIL_NEW_EXACT_HEAD
+    current_state: STOPPED_UNTIL_R54_SOURCE_GREEN
     source_modification_during_candidate: FORBIDDEN
   codex:
     role: independent real-computer packaged Electron product-experience acceptance owner
@@ -67,30 +67,6 @@ r47_llm_wiki_demo_ui_mvp:
   upstream_license: GPL-3.0
   implementation_bytes_copied: false
   local_execution: NOT_RUN
-r48_segmented_registry_prefetch:
-  final_stacked_head: 8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb
-  source_gate_run: 31156362975
-  source_gate_job: 92796663770
-  source_gate: 17/17_PASS
-  integration_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
-  strategy: lockfile-batched-npm-pack-v1
-  automatic_retry: false
-  partial_cache_reuse: false
-r49_local_hydration_attempt:
-  source_commit: 32ff3ebc0b1dc217bf0954974127b0aa68de61f2
-  source_gate_run: 31157162004
-  source_gate_job: 92799120113
-  source_gate: 17/17_PASS
-  source_contracts: 95/95_PASS
-  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
-  hydration_execution_count: 1
-  candidate_execution_count: 0
-  deterministic_root_cause: R48_tarball_prefetch_did_not_prove_npm_registry_metadata_cache_closure
-  source_changes_by_minimax: NONE
-  candidate_established: false
-  artifact_sha256: null
-  runtime_id: null
-  assets: FORBIDDEN_REFERENCE_ONLY
 r50_metadata_complete_registry_prefetch:
   role: NPM_REGISTRY_METADATA_CACHE_CLOSURE_REPAIR
   branch: chatgpt/r50-metadata-complete-registry-prefetch
@@ -114,36 +90,50 @@ r50_metadata_complete_registry_prefetch:
   integration:
     merged_into_pr: 20
     merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  final_pr20_source_gate:
-    head: 2835e36ee37a417bd88e5a8dc1187421eb61e966
-    run: 31162006562
-    job: 92814322597
-    steps: 17/17_PASS
-r51_outer_timeout_attempt:
-  source_commit: 2835e36ee37a417bd88e5a8dc1187421eb61e966
-  source_gate_run: 31162006562
-  source_gate_job: 92814322597
-  source_gate: 17/17_PASS
-  owner_authority: OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
-  first_dispatch:
-    hydration_execution_count: 1
-    candidate_execution_count: 0
-    terminal_condition: OUTER_DRIVER_TIMEOUT_120S
-    pass_receipt_created: false
-    candidate_established: false
-    partial_cache_reusable: false
-  second_dispatch:
-    hydration_execution_count: 0
-    candidate_execution_count: 0
-    blocker: BLOCKED_NEW_PATH_ALREADY_EXISTS
-  source_changes_by_minimax: NONE
-  artifact_sha256: null
-  runtime_id: null
-  assets: FORBIDDEN_REFERENCE_ONLY
 r52_reauthorization:
   role: GOVERNANCE_ONLY_NEW_EXACT_SHA_AND_EXECUTION_WINDOW
   branch: chatgpt/r52-reauthorize-long-hydration-window
   pr: 26
+  product_code_changed: false
+  r50_hydrator_changed: false
+  outer_driver_timeout_seconds_minimum: 3600
+  final_stacked_source_gate:
+    head: a08d9269f600f513b2e886c63a11fb3d42f2fbe7
+    run: 31166172292
+    job: 92827392312
+    steps: 17/17_PASS
+  integration_into_pr20:
+    merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
+  final_pr20_source_gate:
+    head: 0e097811650e2ca79a79a1ab095fdbad1f933ce3
+    run: 31166884483
+    job: 92829691382
+    steps: 17/17_PASS
+r53_pre_hydration_dispatch_attempt:
+  source_commit: 0e097811650e2ca79a79a1ab095fdbad1f933ce3
+  source_gate_run: 31166884483
+  source_gate_job: 92829691382
+  source_gate: 17/17_PASS
+  first_dispatch:
+    blocker: BLOCKED_OUTER_DRIVER_TIMEOUT
+    hydration_execution_count: 0
+    candidate_execution_count: 0
+    native_cache_dir_created: false
+    native_cache_receipt_created: false
+    candidate_worktree_created: false
+    source_changes_by_minimax: NONE
+  second_dispatch:
+    blocker: BLOCKED_NEW_PATH_ALREADY_EXISTS
+    hydration_execution_count: 0
+    candidate_execution_count: 0
+  source_consumed_by_hydration: false
+  candidate_established: false
+  artifact_sha256: null
+  runtime_id: null
+  assets: FORBIDDEN_REFERENCE_ONLY
+r54_pre_hydration_redispatch_policy:
+  role: GOVERNANCE_ONLY_PRE_HYDRATION_REDISPATCH_AND_DURABLE_BACKGROUND_PROTOCOL
+  branch: chatgpt/r54-prehydration-redispatch-policy
   product_code_changed: false
   r50_hydrator_changed: false
   package_or_lockfile_changed: false
@@ -152,21 +142,34 @@ r52_reauthorization:
   automatic_retry: false
   partial_cache_reuse: false
   candidate_network_authority: deny-network
-  outer_driver_timeout_seconds_minimum: 3600
-  same_sha_redispatch_allowed: false
-  first_source_gate:
-    head: b5461ea987d2f1e6bc1bf5460d6341e09cc51a5f
-    run: 31165670393
-    job: 92825767451
-    steps: 17/17_PASS
-  final_stacked_source_gate:
-    head: a08d9269f600f513b2e886c63a11fb3d42f2fbe7
-    run: 31166172292
-    job: 92827392312
-    steps: 17/17_PASS
-  integration_into_pr20:
-    merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
-  final_pr20_source_gate: PENDING_AFTER_FINAL_STATE_SYNC
+  tier_a_same_source_allowed_when:
+    hydration_executions: 0
+    candidate_executions: 0
+    source_changes: NONE
+    native_cache_dir: ABSENT
+    native_cache_receipt: ABSENT
+    candidate_worktree: ABSENT
+    source_gate: PASS
+    pr_head_unchanged: true
+  tier_a_requires:
+    parent_pm_explicit_reauthorization: true
+    new_run_stamp: true
+    all_new_six_paths: true
+    predecessor_paths_frozen: true
+  tier_b_new_source_required_when:
+    - hydration_execution_count_gte_1
+    - native_cache_dir_exists_or_has_hydrator_output
+    - native_cache_receipt_exists
+    - candidate_execution_count_gte_1
+    - real_candidate_worktree_created
+    - source_changed
+  persistent_hydrator:
+    preferred_execution: run_in_background=true
+    shell_fallback: nohup_single_pid_with_polling
+    outer_driver_timeout_seconds_minimum: 3600
+    second_invocation_forbidden: true
+    process_loss_retry_forbidden: true
+  source_gate: PENDING
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
@@ -201,5 +204,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the exact PR #20 head produced by this final state sync, freeze that SHA, then issue MiniMax a new run stamp, all-new paths and outer driver timeout >=3600 seconds."
+next_single_action: "Pass the complete source gate on R54, merge only into Draft PR #20, pass the complete source gate on the resulting exact PR #20 head, then issue a fresh local run using a new run stamp/all-new paths and a persistent single hydrator invocation."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
