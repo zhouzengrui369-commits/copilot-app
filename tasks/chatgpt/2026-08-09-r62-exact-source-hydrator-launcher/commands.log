@@ -1,0 +1,18 @@
+2026-08-09 Parent PM GitHub execution log
+
+1. Read PR #20 exact source state at d805c6570366bc181612f712073ef7dd0e2912a8.
+2. Read R61 local blocker report: pre-network manifest PASS; one real hydrator blocked OUTPUT_EXISTS after ad-hoc wrapper pre-created empty cache target; source consumed.
+3. Created branch chatgpt/r62-exact-source-hydrator-launcher from exact PR #20 head.
+4. Added scripts/candidate-r30/native-cache-background-launch.mjs.
+5. Added scripts/candidate-r30/native-cache-background-launch.test.mjs.
+6. Opened Draft PR #33 against chatgpt/mvp-source-finalization.
+7. Ran copilot-source-gate run 31311068596 on code Head 4eefd70786c8e8a4c5c5a5b7aeda1205e8918735.
+8. Initial job 93238866921 passed steps 1-11 and failed Desktop Phase 1 step 12.
+9. Compared exact base d805c657... to code Head 4eefd707...; diff contained only the R62 launcher and candidate-r30 test, no Desktop/product/package/lock/workflow changes.
+10. Re-ran only the same GitHub job with zero tracked/threshold changes.
+11. Final same-SHA job 93239595966 completed 17/17 SUCCESS.
+12. Adjudicated initial Step 12 failure as CI transient.
+13. Updated PROJECT_STATE.yaml with R61 terminal truth and R62 launcher source-gate receipt.
+14. Updated docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md to make scripts/candidate-r30/native-cache-background-launch.mjs the only authorized next-run hydrator launcher.
+15. Added R62 development note and standard Parent PM evidence.
+16. Next: run complete source gate on the final evidence-containing R62 Head. No merge to PR #20 until that exact Head is source-green.
