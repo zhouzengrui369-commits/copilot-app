@@ -1,0 +1,20 @@
+SOURCE_CHANGES_BY_CHATGPT_PARENT_PM = YES
+
+R58 tracked changes are limited to:
+- scripts/candidate-r30/registry-prefetch.mjs
+- scripts/candidate-r30/registry-prefetch.test.mjs
+- PROJECT_STATE.yaml
+- docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+- docs/development/R58_BOOTSTRAP_REPOSITORY_AUTHORITY_2026-08-09.md
+- tasks/chatgpt/2026-08-09-r58-bootstrap-repository-authority/*
+
+Explicitly unchanged by R58:
+- package.json / package-lock.json
+- product UI/runtime feature code
+- workflow files
+- reviewed host allowlist
+- retry/resume policy
+- Candidate network authority
+- signing/notarization
+- cloud/global configuration
+- main branch

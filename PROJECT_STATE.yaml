@@ -31,7 +31,7 @@ source:
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
   r54_merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
   r56_merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after the R57 authority-alignment commit and complete source-gate PASS"
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after R58 bootstrap-repository-authority integration and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == supplied SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
   final_source_gate_binding: "Parent PM external handoff must bind the supplied exact PR #20 head to one completed 17/17 source-gate run/job; any later tracked change invalidates it"
 workflow:
@@ -40,7 +40,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA clean-worktree hydration/build/package/Candidate technical evidence producer
-    current_state: AUTHORIZED_ONLY_BY_EXTERNAL_EXACT_SHA_HANDOFF_AFTER_SOURCE_GATE_PASS
+    current_state: STOPPED_UNTIL_R58_FINAL_PR20_SOURCE_GREEN
     source_modification_during_candidate: FORBIDDEN
   codex:
     role: independent real-computer packaged Electron product-experience acceptance owner
@@ -74,71 +74,21 @@ r50_metadata_complete_registry_prefetch:
   partial_cache_reuse: false
   candidate_network_authority: deny-network
   integration_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-r53_pre_hydration_dispatch_attempt:
-  source_commit: 0e097811650e2ca79a79a1ab095fdbad1f933ce3
-  hydration_execution_count: 0
-  candidate_execution_count: 0
-  source_changes_by_minimax: NONE
-  source_consumed_by_hydration: false
-  candidate_established: false
-  terminal_blockers:
-    - BLOCKED_OUTER_DRIVER_TIMEOUT
-    - BLOCKED_NEW_PATH_ALREADY_EXISTS
-  assets: FORBIDDEN_REFERENCE_ONLY
 r54_pre_hydration_redispatch_policy:
   role: GOVERNANCE_ONLY_PRE_HYDRATION_REDISPATCH_AND_DURABLE_BACKGROUND_PROTOCOL
-  branch: chatgpt/r54-prehydration-redispatch-policy
-  pr: 27
-  product_code_changed: false
-  r50_hydrator_changed: false
-  package_or_lockfile_changed: false
-  host_allowlist_expanded: false
-  automatic_retry: false
-  partial_cache_reuse: false
-  candidate_network_authority: deny-network
-  tier_a_same_source_allowed_when:
-    hydration_executions: 0
-    candidate_executions: 0
-    source_changes: NONE
-    native_cache_dir: ABSENT
-    native_cache_receipt: ABSENT
-    candidate_worktree: ABSENT
-    source_gate: PASS
-    pr_head_unchanged: true
-  tier_a_requires:
-    parent_pm_explicit_reauthorization: true
-    new_run_stamp: true
-    all_new_six_paths: true
-    predecessor_paths_frozen: true
-  tier_b_new_source_required_when:
-    - hydration_execution_count_gte_1
-    - native_cache_dir_exists_or_has_hydrator_output
-    - native_cache_receipt_exists
-    - candidate_execution_count_gte_1
-    - real_candidate_worktree_created
-    - source_changed
+  tier_a_same_source_allowed_only_before_hydration: true
+  tier_b_new_source_required_after_hydration_or_candidate: true
   persistent_hydrator:
     preferred_execution: run_in_background=true
     shell_fallback: nohup_single_pid_with_polling
     outer_driver_timeout_seconds_minimum: 3600
     second_invocation_forbidden: true
     process_loss_retry_forbidden: true
-  final_stacked_source_gate:
-    head: 05c5bee2e4fdd3ccc96b6ad29595386733381888
-    run: 31291896148
-    job: 93190404254
-    steps: 17/17_PASS
   integration_into_pr20:
     merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
 r55_registry_cache_closure_attempt:
   source_commit: 69a0e651f599403bf2427fd321d9491bd31f13b0
   run_stamp: 20260809T032400Z
-  source_gate_before_local:
-    run: 31292107639
-    job: 93190952296
-    steps: 17/17_PASS
-  authority_bootstrap: PASS
-  exact_source_contracts: 96/96_PASS
   hydration_execution_count: 1
   candidate_execution_count: 0
   retry_attempted: false
@@ -169,40 +119,67 @@ r56_registry_prefetch_identity_closure:
     - unresolved_root_exact_spec_supplemented_from_nested_lock
     - unrelated_nested_package_excluded
     - current_repository_manifest_contains_canonical_typescript_6_0_3
-  code_green_head: 0b405ef6e9758e04320f60be6ff38682bfee6ca0
-  code_green_source_gate:
-    run: 31293949510
-    job: 93195844225
-    steps: 17/17_PASS
-  final_evidence_head: ecf2c65b1ef1d423fb864fc1d4f8ee3b52a66998
-  final_evidence_source_gate:
-    run: 31294196655
-    final_job: 93197668562
-    steps: 17/17_PASS
-    preceding_same_sha_ci_transients:
-      - DESKTOP_PHASE1_RELEASE_SOURCE_SUITE
-      - DESKTOP_GLOBAL_CRITICAL_COVERAGE
-    tracked_change_between_attempts: false
-    threshold_change_between_attempts: false
   integration_into_pr20:
     merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
 r57_authority_alignment:
   role: GOVERNANCE_TRUTH_ALIGNMENT_BEFORE_LOCAL_SUCCESSOR
   implementation_change: false
-  package_or_lockfile_change: false
-  product_change: false
   files:
     - docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
     - PROJECT_STATE.yaml
-  purpose:
-    - record R55 as consumed evidence-only
-    - record R56 exact nested-lock registry identity closure
-    - remove stale R54 pending/next-action truth
-    - require external exact SHA plus completed source-gate binding before MiniMax execution
+  source_commit: 2927d0e3cd81e3997bb229ce544b95a1e3cbce8b
+  source_gate:
+    run: 31295189857
+    job: 93199062178
+    steps: 17/17_PASS
+r57_bootstrap_runtime_attempt:
+  source_commit: 2927d0e3cd81e3997bb229ce544b95a1e3cbce8b
+  run_stamp: 20260809T044928Z
+  exact_source_contracts: 98/98_PASS
+  authority_bootstrap: PASS
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  failed_phase: registry_prefetch_manifest_enumeration
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST
+  blocker_detail: "R56 derived repository root from extracted module import.meta.url, so git ls-files executed against /private/tmp instead of the exact hydration worktree"
+  r55_blocker_regression: UNVERIFIED_BEFORE_CLOSURE
+  source_consumed: true
+  candidate_established: false
+  artifact_sha256: null
+  runtime_id: null
+  assets: FORBIDDEN_REFERENCE_ONLY
+r58_bootstrap_repository_authority:
+  role: BOOTSTRAP_SAFE_EXACT_REPOSITORY_AUTHORITY_REPAIR
+  branch: chatgpt/r58-bootstrap-repository-root-injection
+  pr: 31
+  root_authority: HYDRATION_CLI_REPOSITORY_ARGUMENT_OR_EXPLICIT_LIBRARY_OPTION
+  module_location_inference: FORBIDDEN
+  repository_argument_cardinality: EXACTLY_ONE
+  repository_argument_path: ABSOLUTE_REQUIRED
+  root_lock_remains_closure_authority: true
+  nested_lock_role: EXACT_IDENTITY_SUPPLEMENT_ONLY
+  package_or_lockfile_changed: false
+  product_ui_or_runtime_changed: false
+  workflow_changed: false
+  host_allowlist_expanded: false
+  retry_policy_changed: false
+  candidate_network_authority: deny-network
+  regression_proofs:
+    - extracted_private_tmp_bootstrap_uses_real_repository_argument
+    - current_repository_manifest_contains_typescript_6_0_3
+    - missing_or_relative_repository_authority_fails_closed
+    - source_contract_forbids_import_meta_repository_root_inference
+  code_green_head: 277e103ae26d56c6b1700456b9786cb0ee2b678b
+  code_green_source_gate:
+    run: 31296301736
+    job: 93201820414
+    steps: 17/17_PASS
   local_execution: NOT_RUN
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-  gate_2: "exact native-cache receipt; R56-complete registry identity manifest; strict registry-cache closure; full lifecycle npm ci under deny-network; no automatic network fallback"
+  gate_2: "exact native-cache receipt; R58 bootstrap-safe repository authority; R56-complete registry identity manifest; strict registry-cache closure; full lifecycle npm ci under deny-network; no automatic network fallback"
   gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
   gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
@@ -234,5 +211,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "After Parent PM supplies the exact current PR #20 40-hex head bound to a completed 17/17 source-gate run/job, execute one fresh R57 MiniMax local run with a new run stamp, six all-new paths, one durable background hydrator, R56 typescript@6.0.3 manifest proof, strict registry-cache closure, then Candidate Gates 1-12 if hydration passes."
+next_single_action: "Pass the complete source gate on the final evidence-containing R58 PR #31 head, squash it only into Draft PR #20, pass the complete source gate again on the resulting exact PR #20 head, then issue MiniMax a fresh R58 run stamp and six all-new paths with one durable background hydrator."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
