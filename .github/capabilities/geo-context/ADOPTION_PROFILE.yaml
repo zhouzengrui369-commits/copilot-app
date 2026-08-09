@@ -1,0 +1,22 @@
+capability_id: geo-context
+adoption_mode: PLAN_ONLY
+current_release_scope: OUT_OF_CURRENT_PHASE1_MVP
+runtime_implementation: false
+planned_goal: COPILOT-SPATIAL-KNOWLEDGE-R1
+central_candidate:
+  commit: 6edb5401084de24491038ac55525f584e9943bd7
+  schema_sha256: 8695f3d9d376bf5591138d78b1460c17758845312aeca52a4a0597ee873032df
+future_intent:
+  - local-first spatial knowledge view
+  - location-linked notes and knowledge graph nodes
+renderer_strategy:
+  first: 2d_local_first
+  three_d: explicitly_post_mvp_and_optional
+constraints:
+  - current README explicitly excludes 3D knowledge graph from Phase 1
+  - do not compete with current macOS final-candidate quality/signing/notarization gates
+  - local knowledge remains authoritative
+  - no direct upstream GPL source/templates/assets
+activation_requires:
+  - current Phase 1 MVP gates closed
+  - separate Owner-approved project Goal
