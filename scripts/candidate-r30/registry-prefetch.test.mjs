@@ -46,8 +46,8 @@ function lockfileFixture() {
 }
 
 test('registry prefetch manifest is deterministic, metadata-complete, canonical and deduplicated', () => {
-  const first = buildRegistryPrefetchManifest(lockfileFixture());
-  const second = buildRegistryPrefetchManifest(lockfileFixture());
+  const first = buildRegistryPrefetchManifest(lockfileFixture(), []);
+  const second = buildRegistryPrefetchManifest(lockfileFixture(), []);
   assert.equal(first.strategy, NATIVE_REGISTRY_PREFETCH_STRATEGY);
   assert.equal(first.metadataMode, 'name-version-packument-and-tarball');
   assert.equal(first.entryCount, 2);
@@ -114,13 +114,10 @@ test('registry prefetch supplements only exact unresolved root specs from tracke
   assert.equal(manifest.entries.some((entry) => entry.spec === 'unrelated@9.9.9'), false);
 });
 
-test('current repository root closure manifest includes mobile typescript 6.0.3 exact registry identity', async () => {
+test('current repository auto-discovers tracked nested lock identity for mobile typescript 6.0.3', async () => {
   const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-  const [rootLock, mobileLock] = await Promise.all([
-    readFile(path.join(root, 'package-lock.json'), 'utf8').then(JSON.parse),
-    readFile(path.join(root, 'apps/mobile/package-lock.json'), 'utf8').then(JSON.parse),
-  ]);
-  const manifest = buildRegistryPrefetchManifest(rootLock, [mobileLock]);
+  const rootLock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
+  const manifest = buildRegistryPrefetchManifest(rootLock);
   const typescript = manifest.entries.find((entry) => entry.spec === 'typescript@6.0.3');
   assert.ok(typescript, 'typescript@6.0.3 must be prefetched for root npm ci closure');
   assert.equal(
@@ -128,6 +125,7 @@ test('current repository root closure manifest includes mobile typescript 6.0.3 
     'https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz',
   );
   assert.match(typescript.integrity, /^sha512-/u);
+  assert.ok(manifest.supplementalLockfileCount >= 1);
   assert.ok(manifest.supplementalIdentityCount >= 1);
 });
 
@@ -139,7 +137,7 @@ test('registry prefetch rejects unreviewed origins, missing integrity and non-ex
     integrity: 'sha512-Q0NDQw==',
   };
   assert.throws(
-    () => buildRegistryPrefetchManifest(badOrigin),
+    () => buildRegistryPrefetchManifest(badOrigin, []),
     (error) => error instanceof NativeCacheHydrationBlocked
       && error.code === 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_ORIGIN',
   );
@@ -150,7 +148,7 @@ test('registry prefetch rejects unreviewed origins, missing integrity and non-ex
     resolved: 'https://registry.npmjs.org/c/-/c-1.0.0.tgz',
   };
   assert.throws(
-    () => buildRegistryPrefetchManifest(noIntegrity),
+    () => buildRegistryPrefetchManifest(noIntegrity, []),
     (error) => error instanceof NativeCacheHydrationBlocked
       && error.code === 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_INTEGRITY',
   );
@@ -161,7 +159,7 @@ test('registry prefetch rejects unreviewed origins, missing integrity and non-ex
     integrity: 'sha512-Q0NDQw==',
   };
   assert.throws(
-    () => buildRegistryPrefetchManifest(noVersion),
+    () => buildRegistryPrefetchManifest(noVersion, []),
     (error) => error instanceof NativeCacheHydrationBlocked
       && error.code === 'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
   );
@@ -229,31 +227,31 @@ test('registry cache closure proof is strict deny-network npm ci with scripts di
 
 test('hydrator integration proves registry closure before lifecycle assets and forbids later registry access', async () => {
   const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-  const source = await readFile(
-    path.join(root, 'scripts/candidate-r30/npm-native-cache-hydrate.mjs'),
-    'utf8',
-  );
-  assert.match(source, /buildRegistryPrefetchManifest/u);
-  assert.match(source, /supplementalPackageLockDocuments/u);
-  assert.match(source, /:\(glob\)\*\*\/package-lock\.json/u);
-  assert.match(source, /registryPrefetchBatches/u);
-  assert.match(source, /registryPrefetchBatchArgs/u);
-  assert.match(source, /registryCacheClosureArgs/u);
-  assert.match(source, /bounded-registry-prefetch-/u);
-  assert.match(source, /deny-network-registry-cache-closure-proof/u);
-  assert.match(source, /BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE/u);
-  assert.match(source, /BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH/u);
+  const [hydratorSource, prefetchSource] = await Promise.all([
+    readFile(path.join(root, 'scripts/candidate-r30/npm-native-cache-hydrate.mjs'), 'utf8'),
+    readFile(path.join(root, 'scripts/candidate-r30/registry-prefetch.mjs'), 'utf8'),
+  ]);
+  assert.match(hydratorSource, /buildRegistryPrefetchManifest/u);
+  assert.match(prefetchSource, /:\(glob\)\*\*\/package-lock\.json/u);
+  assert.match(prefetchSource, /git[^\n]*ls-files/u);
+  assert.match(hydratorSource, /registryPrefetchBatches/u);
+  assert.match(hydratorSource, /registryPrefetchBatchArgs/u);
+  assert.match(hydratorSource, /registryCacheClosureArgs/u);
+  assert.match(hydratorSource, /bounded-registry-prefetch-/u);
+  assert.match(hydratorSource, /deny-network-registry-cache-closure-proof/u);
+  assert.match(hydratorSource, /BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE/u);
+  assert.match(hydratorSource, /BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH/u);
   assert.match(
-    source,
+    hydratorSource,
     /registryMode:\s*'lockfile-name-version-prefetch-closure-then-offline-ci'/u,
   );
-  assert.match(source, /registryRequestCountAfterClosure/u);
+  assert.match(hydratorSource, /registryRequestCountAfterClosure/u);
   assert.match(
-    source,
+    hydratorSource,
     /fullInstallArgs\(\{ npmExecutable, npmCacheDir: layout\.npm, online: false \}\)/u,
   );
   assert.doesNotMatch(
-    source,
+    hydratorSource,
     /fullInstallArgs\(\{ npmExecutable, npmCacheDir: layout\.npm, online: true \}\)/u,
   );
 });
