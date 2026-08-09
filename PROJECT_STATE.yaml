@@ -31,8 +31,8 @@ source:
   r48_merge_commit: 1f9beaaf60f08b607204be8b99f93cca5d48c408
   r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
   r52_merge_commit: ec411e5974938e367bb5c6395756f43e76a75420
-  r54_redispatch_policy_branch: chatgpt/r54-prehydration-redispatch-policy
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after R54 governance merge and complete source-gate PASS"
+  r54_merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after this R54 integration alignment and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -40,7 +40,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA clean-worktree build/package/Candidate technical evidence producer
-    current_state: STOPPED_UNTIL_R54_SOURCE_GREEN
+    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
     source_modification_during_candidate: FORBIDDEN
   codex:
     role: independent real-computer packaged Electron product-experience acceptance owner
@@ -134,6 +134,7 @@ r53_pre_hydration_dispatch_attempt:
 r54_pre_hydration_redispatch_policy:
   role: GOVERNANCE_ONLY_PRE_HYDRATION_REDISPATCH_AND_DURABLE_BACKGROUND_PROTOCOL
   branch: chatgpt/r54-prehydration-redispatch-policy
+  pr: 27
   product_code_changed: false
   r50_hydrator_changed: false
   package_or_lockfile_changed: false
@@ -169,7 +170,22 @@ r54_pre_hydration_redispatch_policy:
     outer_driver_timeout_seconds_minimum: 3600
     second_invocation_forbidden: true
     process_loss_retry_forbidden: true
-  source_gate: PENDING
+  implementation_head: 7f9811bc4ff07c5c22982975a083d83bf06bff72
+  initial_source_gate:
+    run: 31291356014
+    initial_job: 93188972469
+    initial_terminal: DESKTOP_COVERAGE_ONLY_FAILURE
+    input_diff_to_source_green_base: GOVERNANCE_ONLY
+    failed_job_rerun: 93189899802
+    rerun_result: 17/17_PASS
+  final_stacked_source_gate:
+    head: 05c5bee2e4fdd3ccc96b6ad29595386733381888
+    run: 31291896148
+    job: 93190404254
+    steps: 17/17_PASS
+  integration_into_pr20:
+    merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
+  final_pr20_source_gate: PENDING_AFTER_THIS_ALIGNMENT
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
   gate_2: "exact native-cache receipt; full lifecycle npm ci under deny-network; no automatic network fallback"
@@ -204,5 +220,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on R54, merge only into Draft PR #20, pass the complete source gate on the resulting exact PR #20 head, then issue a fresh local run using a new run stamp/all-new paths and a persistent single hydrator invocation."
+next_single_action: "Pass the complete source gate on the exact PR #20 head created by this final R54 integration alignment, freeze that SHA with no later tracked change, then issue MiniMax a fresh run stamp/all-new paths and persistent single hydrator invocation."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
