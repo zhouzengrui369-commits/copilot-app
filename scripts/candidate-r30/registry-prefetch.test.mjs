@@ -51,6 +51,8 @@ test('registry prefetch manifest is deterministic, metadata-complete, canonical 
   assert.equal(first.strategy, NATIVE_REGISTRY_PREFETCH_STRATEGY);
   assert.equal(first.metadataMode, 'name-version-packument-and-tarball');
   assert.equal(first.entryCount, 2);
+  assert.equal(first.supplementalLockfileCount, 0);
+  assert.equal(first.supplementalIdentityCount, 0);
   assert.equal(first.manifestSha256, second.manifestSha256);
   assert.match(first.manifestSha256, /^[0-9a-f]{64}$/u);
   assert.deepEqual(first.entries.map((entry) => ({
@@ -66,6 +68,67 @@ test('registry prefetch manifest is deterministic, metadata-complete, canonical 
       resolved: 'https://registry.npmjs.org/b/-/b-2.0.0.tgz',
     },
   ]);
+});
+
+test('registry prefetch supplements only exact unresolved root specs from tracked nested lock identities', () => {
+  const root = lockfileFixture();
+  root.packages['apps/mobile/node_modules/typescript'] = {
+    version: '6.0.3',
+    dev: true,
+    license: 'Apache-2.0',
+  };
+  const nested = {
+    name: '@fixture/mobile',
+    version: '1.0.0',
+    lockfileVersion: 3,
+    packages: {
+      '': { name: '@fixture/mobile', version: '1.0.0' },
+      'node_modules/typescript': {
+        version: '6.0.3',
+        resolved: 'https://registry.npmmirror.com/typescript/-/typescript-6.0.3.tgz',
+        integrity: 'sha512-VFlQRVNUUkNJUFRZUEU=',
+        dev: true,
+      },
+      'node_modules/unrelated': {
+        version: '9.9.9',
+        resolved: 'https://registry.npmjs.org/unrelated/-/unrelated-9.9.9.tgz',
+        integrity: 'sha512-VU5SRUxBVEVE',
+      },
+    },
+  };
+
+  const manifest = buildRegistryPrefetchManifest(root, [nested]);
+  assert.equal(manifest.supplementalLockfileCount, 1);
+  assert.equal(manifest.supplementalIdentityCount, 1);
+  assert.equal(manifest.entryCount, 3);
+  assert.deepEqual(
+    manifest.entries.filter((entry) => entry.spec.startsWith('typescript@')),
+    [{
+      name: 'typescript',
+      version: '6.0.3',
+      spec: 'typescript@6.0.3',
+      resolved: 'https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz',
+      integrity: 'sha512-VFlQRVNUUkNJUFRZUEU=',
+    }],
+  );
+  assert.equal(manifest.entries.some((entry) => entry.spec === 'unrelated@9.9.9'), false);
+});
+
+test('current repository root closure manifest includes mobile typescript 6.0.3 exact registry identity', async () => {
+  const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+  const [rootLock, mobileLock] = await Promise.all([
+    readFile(path.join(root, 'package-lock.json'), 'utf8').then(JSON.parse),
+    readFile(path.join(root, 'apps/mobile/package-lock.json'), 'utf8').then(JSON.parse),
+  ]);
+  const manifest = buildRegistryPrefetchManifest(rootLock, [mobileLock]);
+  const typescript = manifest.entries.find((entry) => entry.spec === 'typescript@6.0.3');
+  assert.ok(typescript, 'typescript@6.0.3 must be prefetched for root npm ci closure');
+  assert.equal(
+    typescript.resolved,
+    'https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz',
+  );
+  assert.match(typescript.integrity, /^sha512-/u);
+  assert.ok(manifest.supplementalIdentityCount >= 1);
 });
 
 test('registry prefetch rejects unreviewed origins, missing integrity and non-exact specs', () => {
@@ -171,6 +234,8 @@ test('hydrator integration proves registry closure before lifecycle assets and f
     'utf8',
   );
   assert.match(source, /buildRegistryPrefetchManifest/u);
+  assert.match(source, /supplementalPackageLockDocuments/u);
+  assert.match(source, /:\(glob\)\*\*\/package-lock\.json/u);
   assert.match(source, /registryPrefetchBatches/u);
   assert.match(source, /registryPrefetchBatchArgs/u);
   assert.match(source, /registryCacheClosureArgs/u);
