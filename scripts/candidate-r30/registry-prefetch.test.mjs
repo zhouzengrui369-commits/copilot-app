@@ -233,7 +233,7 @@ test('hydrator integration proves registry closure before lifecycle assets and f
   ]);
   assert.match(hydratorSource, /buildRegistryPrefetchManifest/u);
   assert.match(prefetchSource, /:\(glob\)\*\*\/package-lock\.json/u);
-  assert.match(prefetchSource, /git[^\n]*ls-files/u);
+  assert.match(prefetchSource, /'ls-files'/u);
   assert.match(hydratorSource, /registryPrefetchBatches/u);
   assert.match(hydratorSource, /registryPrefetchBatchArgs/u);
   assert.match(hydratorSource, /registryCacheClosureArgs/u);
