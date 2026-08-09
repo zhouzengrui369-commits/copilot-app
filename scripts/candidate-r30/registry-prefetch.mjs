@@ -2,7 +2,6 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
 import { NPM_REGISTRY, blockNativeCache } from './native-cache-policy.mjs';
 
@@ -19,10 +18,6 @@ const REVIEWED_REGISTRY_HOSTS = new Set([
 ]);
 const CANONICAL_REGISTRY = new URL(NPM_REGISTRY);
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/u;
-const SOURCE_REPOSITORY_ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../..',
-);
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -109,12 +104,53 @@ function requireLockfileV3(lockfileDocument, label = 'package-lock') {
   }
 }
 
-function trackedSupplementalLockfileDocuments() {
+function requireAbsoluteRepositoryRoot(repositoryRoot, source) {
+  if (
+    typeof repositoryRoot !== 'string'
+    || repositoryRoot.length === 0
+    || !path.isAbsolute(repositoryRoot)
+  ) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      `registry prefetch requires one absolute repository root from ${source}`,
+      { repositoryRoot: repositoryRoot ?? null, source },
+    );
+  }
+  return path.resolve(repositoryRoot);
+}
+
+export function repositoryRootFromHydrationArgv(argv = process.argv) {
+  const values = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (value === '--repository') {
+      values.push(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+    if (typeof value === 'string' && value.startsWith('--repository=')) {
+      values.push(value.slice('--repository='.length));
+    }
+  }
+  if (values.length !== 1) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'registry prefetch requires exactly one --repository hydration argument',
+      { repositoryArgumentCount: values.length },
+    );
+  }
+  return requireAbsoluteRepositoryRoot(values[0], 'hydrator --repository');
+}
+
+function trackedSupplementalLockfileDocuments(repositoryRoot) {
+  const sourceRepositoryRoot = repositoryRoot === undefined
+    ? repositoryRootFromHydrationArgv()
+    : requireAbsoluteRepositoryRoot(repositoryRoot, 'explicit repositoryRoot');
   const result = spawnSync(
     'git',
-    ['-C', SOURCE_REPOSITORY_ROOT, 'ls-files', '--', ':(glob)**/package-lock.json'],
+    ['-C', sourceRepositoryRoot, 'ls-files', '--', ':(glob)**/package-lock.json'],
     {
-      cwd: SOURCE_REPOSITORY_ROOT,
+      cwd: sourceRepositoryRoot,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       maxBuffer: 16 * 1024 * 1024,
@@ -124,7 +160,10 @@ function trackedSupplementalLockfileDocuments() {
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
       'unable to enumerate tracked supplemental package-lock files',
-      { stderr: (result.stderr ?? result.error?.message ?? '').trim() },
+      {
+        repositoryRoot: sourceRepositoryRoot,
+        stderr: (result.stderr ?? result.error?.message ?? '').trim(),
+      },
     );
   }
   const lockfiles = (result.stdout ?? '')
@@ -134,12 +173,16 @@ function trackedSupplementalLockfileDocuments() {
     .sort();
   return lockfiles.map((relativePath) => {
     try {
-      return JSON.parse(readFileSync(path.join(SOURCE_REPOSITORY_ROOT, relativePath), 'utf8'));
+      return JSON.parse(readFileSync(path.join(sourceRepositoryRoot, relativePath), 'utf8'));
     } catch (error) {
       blockNativeCache(
         'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
         'tracked supplemental package-lock must be readable JSON',
-        { relativePath, error: error instanceof Error ? error.message : String(error) },
+        {
+          repositoryRoot: sourceRepositoryRoot,
+          relativePath,
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
     }
   });
@@ -230,10 +273,17 @@ function supplementalRegistryIdentityIndex(supplementalLockfileDocuments) {
 export function buildRegistryPrefetchManifest(
   lockfileDocument,
   supplementalLockfileDocuments,
+  options = {},
 ) {
   requireLockfileV3(lockfileDocument);
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'registry prefetch options must be an object',
+    );
+  }
   const supplements = supplementalLockfileDocuments === undefined
-    ? trackedSupplementalLockfileDocuments()
+    ? trackedSupplementalLockfileDocuments(options.repositoryRoot)
     : supplementalLockfileDocuments;
   const supplementalBySpec = supplementalRegistryIdentityIndex(supplements);
   const bySpec = new Map();
