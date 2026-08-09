@@ -1,14 +1,15 @@
 # MiniMax Code Local Handoff — Copilot App macOS MVP
 
-R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 remains the current registry metadata-cache closure implementation. R54 refines only the local dispatch/reauthorization contract after R53 failed before the hydrator ever started.
+R31 remains the executable twelve-gate Candidate authority. R47 Knowledge Studio remains product source. R50 remains the metadata-complete npm registry closure architecture. R54 defines the pre-hydration redispatch / durable-process contract. R56 repairs the exact registry-identity gap exposed by the consumed R55 hydration.
 
 ## Fixed truth
 
 ```text
 R50_METADATA_COMPLETE_REGISTRY_PREFETCH_IN_SOURCE
-R51_FROZEN_EVIDENCE_ONLY
 R53_FROZEN_PRE_HYDRATION_DISPATCH_EVIDENCE_ONLY
 R54_PRE_HYDRATION_REDISPATCH_POLICY_IN_SOURCE
+R55_FROZEN_CONSUMED_HYDRATION_EVIDENCE_ONLY
+R56_EXACT_NESTED_LOCK_REGISTRY_IDENTITY_CLOSURE_IN_SOURCE
 LOCAL_SUCCESSOR_NOT_RUN
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
@@ -26,25 +27,53 @@ scripts/candidate-r30/npm-native-cache-hydrate.mjs
 scripts/candidate-r30/run-candidate.mjs
 ```
 
-## R53 terminal state
+## R55 consumed terminal state
 
-R53 used exact source `0e097811650e2ca79a79a1ab095fdbad1f933ce3`. The first dispatch created a task root, detached clean hydration worktree and evidence directory, passed exact-source setup, then the caller/tool execution envelope terminated before `npm-native-cache-hydrate.mjs` was invoked. No native cache directory, PASS receipt, Candidate worktree, artifact or runtime ID existed. Reported counts were:
+R55 used exact source `69a0e651f599403bf2427fd321d9491bd31f13b0` and RUN_STAMP `20260809T032400Z`. Exact-head/fresh-path/authority checks and the detached hydration worktree passed. One durable background hydrator invocation completed all 15 bounded registry-prefetch batches, then strict deny-network `npm ci --offline --ignore-scripts` registry-cache closure failed because the cache did not contain `typescript@6.0.3`.
 
 ```text
-HYDRATION_EXECUTIONS=0
+BLOCKER=BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE
+HYDRATION_EXECUTIONS=1
 CANDIDATE_EXECUTIONS=0
+SOURCE_CONSUMED=true
 SOURCE_CHANGES_BY_MINIMAX=NONE
+CANDIDATE_ESTABLISHED=false
 ```
 
-A later same-run dispatch correctly stopped at `BLOCKED_NEW_PATH_ALREADY_EXISTS`. Both R53 dispatch evidence sets and all R53 paths are immutable `FORBIDDEN_REFERENCE_ONLY`.
+R55 source/run/worktree/cache/receipt/evidence identities are immutable `FORBIDDEN_REFERENCE_ONLY`. No R55 partial cache may be resumed, promoted or reused.
 
-This is a **pre-hydration dispatcher failure**, not a hydration attempt and not a Candidate attempt.
+## R56 exact registry-identity closure repair
+
+The exact source proved that root `package-lock.json` contained `apps/mobile/node_modules/typescript@6.0.3` as a closure-required exact version without `resolved` / `integrity`, while the Git-tracked `apps/mobile/package-lock.json` contained the same exact `typescript@6.0.3` with canonical registry tarball and integrity. R50 had skipped root entries lacking registry identity, creating a manifest-to-closure gap.
+
+R56 preserves the root lock as dependency-closure authority and changes only registry identity completion:
+
+```text
+root package-lock v3 exact node_modules specs
+→ existing root resolved+integrity identities unchanged
+→ for an unresolved root exact name@version only:
+   enumerate Git-tracked nested **/package-lock.json files from the exact worktree
+   build exact name@version -> canonical resolved + integrity identity index
+   supplement only the matching root exact spec
+→ do not union unrelated nested dependency graphs into the prefetch manifest
+→ preserve reviewed registry origins and integrity-conflict fail-closed checks
+→ bounded npm pack name@version batches
+→ strict deny-network npm ci --offline --ignore-scripts closure proof
+```
+
+R56 regression coverage explicitly proves:
+
+1. current repository manifest contains canonical `typescript@6.0.3` with integrity;
+2. an unresolved root exact spec can be supplemented from a nested tracked lock;
+3. unrelated nested packages are excluded from the root prefetch graph.
+
+No package/lockfile, product UI/runtime, workflow, host allowlist, retry policy or Candidate network authority was changed by R56.
 
 ## Two-tier successor identity policy
 
-### Tier A — pre-hydration dispatch failure
+### Tier A — pure pre-hydration dispatch failure
 
-Parent PM may explicitly reauthorize the **same exact source SHA** with a **new unique RUN_STAMP** only when every condition below is proven:
+Parent PM may explicitly reauthorize the same exact source SHA with a new unique RUN_STAMP only when all are proven:
 
 ```text
 HYDRATION_EXECUTIONS=0
@@ -57,77 +86,100 @@ PR_HEAD_UNCHANGED=true
 SOURCE_GATE_STILL_PASS=true
 ```
 
-The re-dispatch must create all-new paths for task root, hydration worktree, native cache, receipt, Candidate worktree and evidence. Previous task/worktree/evidence paths remain frozen and may not be deleted, moved, resumed or reused.
-
-Tier A does **not** authorize reuse of a predecessor hydration worktree even if it is clean. The new run uses a new run stamp and a new detached hydration worktree from the same exact Git object.
+The redispatch must use six all-new paths. Every predecessor task/worktree/evidence path remains frozen. A predecessor hydration worktree is never reused even if clean.
 
 ### Tier B — hydration or Candidate consumed
 
-A **new source SHA is mandatory** if any of the following is true:
+A new source SHA is mandatory if any is true:
 
 ```text
 HYDRATION_EXECUTIONS>=1
 NATIVE_CACHE_DIR exists or contains hydrator output
 NATIVE_CACHE_RECEIPT exists
 CANDIDATE_EXECUTIONS>=1
-CANDIDATE_WORKTREE exists because a real Candidate attempt began
+real CANDIDATE_WORKTREE was created
 source changed
 ```
 
-A partial/failed native cache remains non-reusable. No retry, resume or promotion is permitted. Parent PM must create/freeze a new exact source identity before another local attempt.
-
-This distinction prevents pure dispatcher/tool failures from causing needless source churn while preserving the stronger source-rotation rule once hydration or Candidate state has actually been consumed.
+Partial/failed native cache is non-reusable. No retry, resume or promotion is permitted.
 
 ## Resume trigger
 
 A local run starts only from an explicit Parent PM handoff containing:
 
 ```text
-SOURCE_COMMIT=<exact 40-character PR #20 head>
+SOURCE_COMMIT=<exact 40-character current PR #20 head>
 PR=20
 SOURCE_GATE=PASS
+SOURCE_GATE_RUN=<exact completed run>
+SOURCE_GATE_JOB=<exact completed job>
+SOURCE_GATE_RESULT=17/17_SUCCESS
 RUN_STAMP=<new unique value>
 OUTER_DRIVER_TIMEOUT_SECONDS>=3600
 OWNER_AUTHORITY=OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-Any missing field means `STOPPED`.
+Any missing or mismatched field means `STOPPED`.
 
-If Tier A applies, `SOURCE_COMMIT` may equal the immediately preceding pre-hydration-dispatch source, but `RUN_STAMP` and all six local paths must be new. If Tier B applies, both source SHA and run stamp must be new.
+MiniMax must fetch `refs/pull/20/head` and prove:
 
-## Persistent hydrator invocation protocol
+```text
+FETCH_HEAD = supplied SOURCE_COMMIT
+```
 
-The hydrator must not be coupled to a foreground tool/shell hard cap shorter than the approved outer window.
+No branch-tip assumption may replace the exact object.
 
-Preferred MiniMax execution method:
+## New paths only
+
+Every authorized run creates a new:
+
+```text
+TASK_ROOT
+HYDRATION_WORKTREE
+NATIVE_CACHE_DIR
+NATIVE_CACHE_RECEIPT
+CANDIDATE_WORKTREE
+EVIDENCE_DIR
+```
+
+All six must be absent before creation. If any exists, stop with `BLOCKED_NEW_PATH_ALREADY_EXISTS`; do not delete or move it and continue.
+
+MiniMax must ultimately prove:
+
+```text
+FETCH_HEAD = SOURCE_COMMIT = detached hydration HEAD = detached candidate HEAD
+```
+
+## Persistent single hydrator protocol
+
+The hydrator must not be coupled to a foreground caller/tool hard cap shorter than the approved outer window.
+
+Preferred execution:
 
 ```text
 run_in_background=true
 ```
 
-The background invocation must still be **one and only one** hydrator process. Record its PID/process identity, start time, stdout path and stderr path, then poll that same process until it exits. Do not launch a replacement if the caller disconnects or a poll fails.
-
-A shell-only fallback may use one durable background process such as `nohup` with stdout/stderr redirected to evidence paths, record `$!`, and poll that exact PID. The fallback must not create a second hydrator invocation.
-
-Required outer allowance:
+Record one background process identity/PID, start time, stdout and stderr, then poll that same process until terminal exit. A shell-only fallback may use one recorded `nohup` PID with redirected logs. No replacement process is permitted.
 
 ```text
 OUTER_DRIVER_TIMEOUT_SECONDS>=3600
 ```
 
-Do not wrap the hydrator with a 120-second timeout. If the background process disappears without a terminal hydrator receipt/error, stop with a dispatcher/process-loss blocker and preserve evidence; do not retry.
+This is only a caller wall-clock allowance. It is not retry budget. If the process disappears without a terminal hydrator result, stop and preserve evidence; do not launch another hydrator.
 
-## R50 metadata-complete hydration remains unchanged
+## R50 + R56 hydration contract
 
 The single Owner-authorized hydration executes:
 
 ```text
-exact package-lock v3
+exact root package-lock v3
+→ R56 exact unresolved-root registry identity supplementation from Git-tracked nested locks
 → deterministic exact name@version + canonical tarball + integrity manifest
 → metadataMode=name-version-packument-and-tarball
 → bounded 24-item npm pack --ignore-scripts name@version batches
 → isolated npm packument/metadata + tarball cache
-→ strict (deny network*) npm ci --offline --ignore-scripts registry-cache closure proof
+→ strict deny-network npm ci --offline --ignore-scripts registry-cache closure proof
 → remove closure-proof node_modules
 → full lifecycle npm ci --offline with bounded reviewed lifecycle/native asset proxy
 → require zero registry.npmjs.org requests after closure
@@ -135,7 +187,7 @@ exact package-lock v3
 → remove node_modules
 → full npm ci --offline under deny-network
 → Electron arm64 native rebuild under deny-network
-→ cache ledger + PASS receipt
+→ immutable cache ledger + PASS receipt
 ```
 
 Exact strategy values remain:
@@ -150,17 +202,25 @@ onlineHydration.registryMode=lockfile-name-version-prefetch-closure-then-offline
 onlineHydration.registryRequestCountAfterClosure=0
 ```
 
-A registry-cache closure failure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE`. Any registry request after closure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH`. No PASS receipt may coexist with either condition.
+Before accepting registry-cache closure PASS, R57 must prove the prefetch manifest includes:
+
+```text
+typescript@6.0.3
+resolved=https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz
+integrity=<exact nested-lock integrity>
+```
+
+A closure failure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE`. Any registry request after closure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH`. No PASS receipt may coexist with either condition.
 
 ## Security and retry boundary
 
-The exact Owner token remains:
+Exact Owner token:
 
 ```text
 OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION
 ```
 
-It authorizes one hydration invocation for the supplied exact source and run identity. It does not authorize retry or resume. Preserve:
+It authorizes one hydration invocation for the supplied exact source/run identity. Preserve:
 
 - `automaticRetry=false`;
 - no retry/backoff/online resume;
@@ -170,33 +230,24 @@ It authorizes one hydration invocation for the supplied exact source and run ide
 - no package/lockfile/source repair during local execution;
 - Candidate Gate 1–12 `(deny network*)`.
 
-If the single hydrator invocation returns a stable blocker, stop immediately and preserve evidence.
-
-## New paths only
-
-Every authorized run creates a new detached hydration worktree, native cache root, exclusive receipt, detached Candidate worktree, evidence directory and task root derived from its run stamp. Predecessor paths are evidence only.
-
-MiniMax must prove:
-
-```text
-FETCH_HEAD = supplied SOURCE_COMMIT = detached hydration HEAD = detached candidate HEAD
-```
+If the single hydrator invocation returns a stable blocker, stop immediately and preserve evidence. Because hydration then counts as consumed, Parent PM must issue a new source SHA before another local attempt.
 
 ## Candidate execution after hydration PASS
 
-Only after a PASS native-cache receipt:
+Only after one PASS native-cache receipt:
 
 1. create a fresh detached Candidate worktree;
-2. run exact-source Candidate contracts;
-3. run `scripts/candidate-r30/run-candidate.mjs --dry-run` and require `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`;
-4. execute one real Candidate exactly once;
-5. stop on the first fail-closed blocker with no source repair or online retry.
+2. prove exact source identity again;
+3. run exact-source Candidate contracts;
+4. run `scripts/candidate-r30/run-candidate.mjs --dry-run` and require `PLAN_ONLY_NOT_A_CANDIDATE / MVP_NOT_COMPLETE`;
+5. execute one real Candidate exactly once;
+6. stop on the first fail-closed blocker with no source repair or online retry.
 
 The twelve Candidate gates remain the R31 contract, including exact `113 tests in 9 files`, packaged Electron `113/113` with zero skipped/unexpected/flaky, three distinct Candidate-bound performance runs, identities/manifests/screenshots, clean process termination and final receipt.
 
 ## Product journey
 
-The same packaged Candidate must prove the preserved critical loop plus R47 Knowledge Studio:
+The same packaged Candidate must prove:
 
 ```text
 local material
@@ -209,10 +260,11 @@ local material
 → edit with source preservation
 → due-date / schedule association
 → complete Electron quit
+→ process absent
 → same-artifact relaunch and persistence readback
 ```
 
-Also exercise packaged `知识台 / Wiki Studio`: Sources, Wiki/provenance, Review Queue, Activity, Graph, 4-Signal Connections and explicit `重新整理`, with Review metadata remaining separate from canonical local truth. Packaged offline local ASR must be verified independently of mocks/fixtures.
+Also exercise packaged `知识台 / Wiki Studio`: Sources, Wiki/provenance, Review Queue, Activity, Graph, 4-Signal Connections and explicit `重新整理`. Review metadata stays separate from canonical local truth. Packaged offline local ASR must be proven independently of browser fixtures/mocks.
 
 ## Required evidence
 
@@ -226,11 +278,11 @@ CANDIDATE-MANIFEST.json
 R30-COMPLETE.json
 ```
 
-Bind source snapshot, R50 native-cache receipt and aggregate hash, registry manifest and closure proof, artifact/ZIP/DMG/app/executable/`app.asar`, runtime ID, ecosystem baseline, deterministic test-data manifest, commands/exit codes, `113/113`, performance receipts, Wiki Studio/critical-loop screenshots, local ASR proof and terminal state. `changed-files.txt` must state `SOURCE_CHANGES_BY_MINIMAX = NONE`.
+Bind source snapshot, R56/R50 native-cache receipt and aggregate hash, registry manifest and closure proof, artifact/ZIP/DMG/app/executable/`app.asar`, runtime ID, ecosystem baseline, deterministic test-data manifest, commands/exit codes, `113/113`, performance receipts, Wiki Studio/critical-loop screenshots, local ASR proof and terminal state. `changed-files.txt` must state `SOURCE_CHANGES_BY_MINIMAX = NONE`.
 
 ## Codex boundary
 
-MiniMax technical evidence is not independent product acceptance. Codex starts only after a complete internally consistent same-source/artifact/runtime/test-data package exists and must operate that exact packaged Candidate on the real Mac.
+MiniMax technical evidence is not independent product acceptance. Codex starts only after a complete internally consistent same-source/artifact/runtime/test-data package exists and must independently operate that exact packaged Candidate on the real Mac.
 
 Even a fully successful unsigned MiniMax Candidate remains:
 
@@ -243,4 +295,4 @@ NOT_EXPERIENCE_READY
 BLOCKED_UNSIGNED_NOT_NOTARIZED
 ```
 
-MiniMax must not merge PR #20, change `main`, sign, notarize, modify credentials/global configuration, expand deferred platforms/scope, or declare `MVP_READY`, `RELEASE_READY`, `EXPERIENCE_READY` or `HUMAN_OWNER_GATE_PASS`.
+MiniMax must not merge PR #20, change `main`, sign, notarize, modify credentials/global configuration, expand deferred scope, or declare `MVP_READY`, `RELEASE_READY`, `EXPERIENCE_READY` or `HUMAN_OWNER_GATE_PASS`.
