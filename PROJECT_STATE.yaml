@@ -33,7 +33,7 @@ source:
   r56_merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
   r58_merge_commit: d29da3e6dcc9c89d680f56c23e66262e9ee967c1
   r60_merge_commit: 6e59fabee878df681bca6d70c94eb5808b3e4a3c
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after this R60 authority alignment and complete 17/17 source-gate PASS"
+  exact_final_commit: "externally supplied final 40-hex PR #20 head after R62 exact-source launcher integration, authority alignment, and complete source-gate PASS"
   final_commit_binding: "FETCH_HEAD == supplied SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
   final_source_gate_binding: "Parent PM external handoff must bind the supplied exact PR #20 head to one completed 17/17 source-gate run/job; any later tracked change invalidates it"
 workflow:
@@ -42,7 +42,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA clean-worktree hydration/build/package/Candidate technical evidence producer
-    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
+    current_state: STOPPED_UNTIL_R62_FINAL_PR20_SOURCE_GREEN
     source_modification_during_candidate: FORBIDDEN
   codex:
     role: independent real-computer packaged Electron product-experience acceptance owner
@@ -80,8 +80,7 @@ r54_execution_policy:
   tier_a_same_source_allowed_only_before_hydration: true
   tier_b_new_source_required_after_hydration_or_candidate: true
   persistent_hydrator:
-    preferred_execution: run_in_background=true
-    shell_fallback: nohup_single_pid_with_polling
+    preferred_execution: exact_source_launcher
     outer_driver_timeout_seconds_minimum: 3600
     second_invocation_forbidden: true
     process_loss_retry_forbidden: true
@@ -134,8 +133,6 @@ r58_registry_prefetch_runtime_attempt:
   assets: FORBIDDEN_REFERENCE_ONLY
 r60_registry_prefetch_throughput:
   role: BOUNDED_REGISTRY_PREFETCH_EXPOSURE_REDUCTION
-  branch: chatgpt/r60-registry-prefetch-throughput
-  pr: 32
   registry_batch_size: 24
   registry_prefetch_max_sockets: 12
   later_lifecycle_native_transport_policy_changed: false
@@ -143,31 +140,93 @@ r60_registry_prefetch_throughput:
   mirror_changed: false
   host_allowlist_expanded: false
   candidate_network_authority: deny-network
-  focused_successor_requirements:
-    - materialize_exact_source_registry_manifest_before_network
-    - prove_manifest_contains_canonical_typescript_6_0_3_with_integrity
-    - keep_r55_regression_unverified_until_strict_closure_actually_passes
-  code_green_head: 5fffa0aef0813af50602f73b2d7425188958de6e
+  integration_commit: 6e59fabee878df681bca6d70c94eb5808b3e4a3c
+r61_pre_network_manifest_and_launch_attempt:
+  source_commit: d805c6570366bc181612f712073ef7dd0e2912a8
+  run_stamp: 20260809T082410Z
+  source_gate_before_local:
+    run: 31303232329
+    job: 93219353669
+    steps: 17/17_PASS
+  exact_source_contracts: 101/101_PASS
+  runtime_registry_manifest:
+    status: PASS
+    source_commit: d805c6570366bc181612f712073ef7dd0e2912a8
+    strategy: lockfile-batched-name-version-npm-pack-v2
+    batch_size: 24
+    npm_pack_max_sockets: 12
+    entry_count: 834
+    supplemental_lockfile_count: 4
+    supplemental_identity_count: 501
+    manifest_sha256: 95100e2918a013170591656ac2d8d5e902133b34c11621f78bef7c1ce4551061
+    typescript_6_0_3:
+      status: PASS
+      resolved: https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz
+      integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==
+  first_wrapper_attempt:
+    hydrator_started: false
+    blocker: MACOS_SETSID_UNAVAILABLE
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  failed_phase: bounded-native-toolchain-hydration-preflight
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS
+  blocker_cause: "ad-hoc local launch wrapper created NATIVE_CACHE_DIR before the exact-source hydrator; requireNewExternalPath correctly rejected even an empty existing target"
+  native_cache_files_after_blocker: 0
+  native_cache_receipt_created: false
+  candidate_established: false
+  source_consumed: true
+  artifact_sha256: null
+  runtime_id: null
+  evidence_incident:
+    predecessor_file_touched: R58_RESULT_MD_ONLY
+    action: "MiniMax accidentally overwrote R58 RESULT.md and immediately reconstructed that single file from surviving sibling evidence; no GitHub source bytes changed"
+    predecessor_other_files_touched: false
+  assets: FORBIDDEN_REFERENCE_ONLY
+r62_exact_source_hydrator_launcher:
+  role: SOURCE_DEFINED_MACOS_SAFE_SINGLE_HYDRATOR_LAUNCH
+  branch: chatgpt/r62-exact-source-hydrator-launcher
+  pr: 33
+  launcher_path: scripts/candidate-r30/native-cache-background-launch.mjs
+  shell_wrapper_allowed: false
+  setsid_required: false
+  detached_node_spawn: true
+  shell: false
+  repository_authority: EXPLICIT_ABSOLUTE_REPOSITORY
+  hydrator_path: EXACT_REPOSITORY_SCRIPT
+  launcher_may_create:
+    - STDOUT_PARENT_AND_EXCLUSIVE_FILE
+    - STDERR_PARENT_AND_EXCLUSIVE_FILE
+    - LAUNCH_RECEIPT_PARENT_AND_EXCLUSIVE_FILE
+  launcher_must_not_create:
+    - NATIVE_CACHE_DIR
+    - NATIVE_CACHE_RECEIPT
+    - CANDIDATE_WORKTREE
+  evidence_inside_cache_target: FORBIDDEN
+  existing_cache_target_behavior: FAIL_CLOSED_WITHOUT_DELETE
+  automatic_retry: false
+  replacement_process_allowed: false
+  product_ui_or_runtime_changed: false
+  package_or_lockfile_changed: false
+  workflow_changed: false
+  registry_strategy_changed: false
+  host_allowlist_expanded: false
+  candidate_network_authority: deny-network
+  code_green_head: 4eefd70786c8e8a4c5c5a5b7aeda1205e8918735
   code_source_gate:
-    run: 31302092459
-    initial_job: 93216409717
-    initial_terminal: DESKTOP_COVERAGE_ONLY_FAILURE
-    final_job: 93216854694
-    final_steps: 17/17_PASS
-  final_evidence_head: 3481596fc1067386cce86c04ac5c775129e001b9
-  final_evidence_source_gate:
-    run: 31302623273
-    initial_job: 93217952392
-    initial_terminal: DESKTOP_COVERAGE_ONLY_FAILURE
-    exact_diff_from_code_green: GOVERNANCE_EVIDENCE_ONLY
+    run: 31311068596
+    initial_job: 93238866921
+    initial_terminal: DESKTOP_PHASE1_ONLY_FAILURE
+    exact_diff_from_source_green_base: CANDIDATE_R30_LAUNCHER_AND_TEST_ONLY
     tracked_or_threshold_change_before_rerun: false
-    final_job: 93218396820
+    final_job: 93239595966
     final_steps: 17/17_PASS
-  integration_into_pr20:
-    merge_commit: 6e59fabee878df681bca6d70c94eb5808b3e4a3c
+  final_evidence_head: PENDING
+  integration_into_pr20: PENDING
 gates:
   gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-  gate_2: "exact native-cache receipt; bootstrap-safe repository authority; R56 registry identity manifest; R60 bounded registry-prefetch throughput; strict registry-cache closure; lifecycle/native deny-network proofs"
+  gate_2: "exact-source R62 launcher; native-cache receipt; bootstrap-safe repository authority; R56 registry identity manifest; R60 bounded registry-prefetch throughput; strict registry-cache closure; lifecycle/native deny-network proofs"
   gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
   gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
@@ -199,5 +258,5 @@ release_gates:
   candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
   embedded_local_asr_runtime: BLOCKED
   human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the exact PR #20 head produced by this final R60 authority alignment. If 17/17 PASS, freeze that SHA with no later tracked changes and issue MiniMax R61 with a new RUN_STAMP, six all-new paths, pre-network runtime registry-manifest proof, one durable hydrator, and no retry/resume."
+next_single_action: "Pass the complete source gate on the final evidence-containing R62 PR #33 head, squash it only into Draft PR #20, align PR #20 authority, pass the complete source gate on the resulting exact PR #20 head, then issue MiniMax R63 with a new SOURCE_COMMIT, new RUN_STAMP, six all-new paths, pre-network registry manifest proof, and only scripts/candidate-r30/native-cache-background-launch.mjs for the single hydrator launch."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
