@@ -1,0 +1,13 @@
+# R60 Parent PM command/receipt log
+
+- Read Draft PR #20 at exact head d29da3e6dcc9c89d680f56c23e66262e9ee967c1.
+- Adjudicated prior local R58 as Tier-B source-consumed because a hydrator actually ran and native-cache output existed.
+- Adjudicated R55 closure regression as UNVERIFIED because prior R58 stopped at registry-prefetch batch 21/35 before closure.
+- Created branch chatgpt/r60-registry-prefetch-throughput from exact d29da3e6dcc9c89d680f56c23e66262e9ee967c1.
+- Updated registry-prefetch.mjs with explicit bounded NATIVE_REGISTRY_PREFETCH_MAX_SOCKETS=12 and --maxsockets=12 for npm pack only.
+- Added registry-prefetch-throughput.test.mjs; no retry flags permitted.
+- Opened Draft PR #32 against chatgpt/mvp-source-finalization.
+- Source gate run 31302092459 initial job 93216409717: Steps 1-13 PASS, Step 14 Desktop coverage FAIL.
+- Compared exact base/head: only candidate-r30 prefetch source/test changed; no Desktop/product/package/lock/workflow diff.
+- Re-ran that failed GitHub job without source/threshold changes: job 93216854694 => 17/17 SUCCESS.
+- Began final evidence freeze. No local Candidate execution. No main merge.
