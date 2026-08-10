@@ -32,7 +32,7 @@ import {
   parseNativeHydrationArgs,
   validateNativeHydrationReceipt,
 } from './npm-native-cache-hydrate.mjs';
-import { onlineNativeEnvironment } from './native-cache-runtime.mjs';
+import { offlineNativeEnvironment, onlineNativeEnvironment } from './native-cache-runtime.mjs';
 import {
   computeCacheIdentity,
   ensureIsolatedNpmConfigFiles,
@@ -117,34 +117,48 @@ test('native hydration strips inherited authority and applies explicit no-retry 
     });
     const previous = {
       ELECTRON_MIRROR: process.env.ELECTRON_MIRROR,
+      ELECTRON_GET_USE_PROXY: process.env.ELECTRON_GET_USE_PROXY,
       GITHUB_TOKEN: process.env.GITHUB_TOKEN,
       npm_config_disturl: process.env.npm_config_disturl,
     };
     try {
       process.env.ELECTRON_MIRROR = 'https://attacker.invalid/';
+      process.env.ELECTRON_GET_USE_PROXY = 'attacker-controlled';
       process.env.GITHUB_TOKEN = 'secret';
       process.env.npm_config_disturl = 'https://attacker.invalid/headers';
+      const layout = {
+        root,
+        npm: path.join(root, 'npm'),
+        electron: path.join(root, 'electron'),
+        electronBuilder: path.join(root, 'electron-builder'),
+        nodeGyp: path.join(root, 'node-gyp'),
+        prebuild: path.join(root, 'prebuild'),
+      };
       const env = onlineNativeEnvironment({
-        layout: {
-          root,
-          npm: path.join(root, 'npm'),
-          electron: path.join(root, 'electron'),
-          electronBuilder: path.join(root, 'electron-builder'),
-          nodeGyp: path.join(root, 'node-gyp'),
-          prebuild: path.join(root, 'prebuild'),
-        },
+        layout,
         proxyUrl: 'http://127.0.0.1:43123',
       });
       assert.equal(env.ELECTRON_MIRROR, undefined);
+      assert.equal(env.ELECTRON_GET_USE_PROXY, 'true');
       assert.equal(env.GITHUB_TOKEN, undefined);
       assert.equal(env.npm_config_disturl, undefined);
+      assert.equal(env.NO_PROXY, undefined);
+      assert.equal(env.no_proxy, undefined);
       assert.equal(env.npm_config_build_from_source, 'true');
+      assert.equal(env.HTTP_PROXY, 'http://127.0.0.1:43123');
       assert.equal(env.HTTPS_PROXY, 'http://127.0.0.1:43123');
       assert.equal(env.npm_config_fetch_retries, String(NATIVE_NPM_FETCH_RETRIES));
       assert.equal(env.npm_config_fetch_timeout, String(NATIVE_NPM_FETCH_TIMEOUT_MS));
       assert.equal(env.npm_config_maxsockets, String(NATIVE_NPM_MAX_SOCKETS));
       assert.equal(env.npm_config_fetch_retry_factor, '0');
       assert.equal(env.npm_config_progress, 'false');
+
+      const offlineEnv = offlineNativeEnvironment(layout);
+      assert.equal(offlineEnv.ELECTRON_GET_USE_PROXY, undefined);
+      assert.equal(offlineEnv.HTTP_PROXY, undefined);
+      assert.equal(offlineEnv.HTTPS_PROXY, undefined);
+      assert.equal(offlineEnv.NO_PROXY, undefined);
+      assert.equal(offlineEnv.no_proxy, undefined);
     } finally {
       for (const [key, value] of Object.entries(previous)) {
         if (value === undefined) delete process.env[key];
@@ -224,6 +238,7 @@ test('candidate environment is receipt-bound and separates host and Electron hea
   assert.equal(install.ELECTRON_CACHE, '/tmp/native-cache/electron');
   assert.equal(install.ELECTRON_BUILDER_CACHE, '/tmp/native-cache/electron-builder');
   assert.equal(install.PREBUILD_INSTALL_CACHE, '/tmp/native-cache/prebuild');
+  assert.equal(install.ELECTRON_GET_USE_PROXY, undefined);
   assert.equal(install.npm_config_offline, 'true');
   assert.equal(install.npm_config_fetch_retries, '0');
   assert.equal(install.npm_config_build_from_source, 'true');

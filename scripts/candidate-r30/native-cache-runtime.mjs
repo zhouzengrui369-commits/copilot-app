@@ -516,6 +516,7 @@ export function onlineNativeEnvironment({ layout, proxyUrl }) {
     HTTPS_PROXY: proxyUrl,
     http_proxy: proxyUrl,
     https_proxy: proxyUrl,
+    ELECTRON_GET_USE_PROXY: 'true',
     npm_config_proxy: proxyUrl,
     npm_config_https_proxy: proxyUrl,
     npm_config_cache: layout.npm,
