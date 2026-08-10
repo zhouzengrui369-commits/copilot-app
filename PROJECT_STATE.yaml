@@ -1,52 +1,28 @@
-schema_version: 7
+schema_version: 8
 project: copilot-app
-updated_at: "2026-08-09"
-authority:
-  baseline:
-    - AGENTS.md
-    - goal.md
-    - plan.md
-    - rules.md
-    - delivery.md
-  current_truth:
-    - PROJECT_STATE.yaml
-    - PROJECT_STATUS.md
-    - TODO.md
-    - DECISIONS.md
-    - CHANGELOG.md
+updated_at: "2026-08-10"
 status:
   verdict: BLOCKED
   mvp: MVP_NOT_COMPLETE
   release: RELEASE_NOT_READY
   experience: EXPERIENCE_NOT_READY
   github_source: SOURCE_COMPLETE
-  local_candidate: NOT_RUN
   runtime_proof: NOT_RUNTIME_PROOF
 source:
   repository: zhouzengrui369-commits/copilot-app
-  main_observed_at_takeover: e91cafaa22ea100428b404b371aa35dce535c5bf
-  product_source_branch: chatgpt/mvp-source-finalization
   product_source_pr: 20
-  r47_merge_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
-  r50_merge_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-  r54_merge_commit: 526f3c199b697adb57a2aae57e699e57369e7445
-  r56_merge_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
-  r58_merge_commit: d29da3e6dcc9c89d680f56c23e66262e9ee967c1
-  r60_merge_commit: 6e59fabee878df681bca6d70c94eb5808b3e4a3c
-  r62_merge_commit: de55a0be0c39403aeaf1bdd12708afe114a62c1e
-  exact_final_commit: "externally supplied final 40-hex PR #20 head after this R62 authority-alignment commit and complete 17/17 source-gate PASS"
-  final_commit_binding: "FETCH_HEAD == supplied SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
-  final_source_gate_binding: "Parent PM external handoff must bind the supplied exact PR #20 head to one completed 17/17 source-gate run/job; any later tracked change invalidates it"
+  product_source_branch: chatgpt/mvp-source-finalization
+  exact_final_commit: "pending final PR #20 exact head after R65 integration and authority alignment"
+  final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
-    role: Parent PM, GitHub remote source developer, PR reviewer, and local handoff contract author
+    role: Parent PM and GitHub remote source developer
     local_candidate_execution: FORBIDDEN
   minimax_code:
-    role: exact-SHA clean-worktree hydration/build/package/Candidate technical evidence producer
-    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
-    source_modification_during_candidate: FORBIDDEN
+    role: exact-SHA local hydration/package/Candidate evidence producer
+    current_state: STOPPED_UNTIL_R65_FINAL_PR20_SOURCE_GREEN
   codex:
-    role: independent real-computer packaged Electron product-experience acceptance owner
+    role: independent packaged Electron product acceptance
     current_state: WAITING_FOR_CANDIDATE_IDENTITY
 r30:
   role: GITHUB_BOUND_CANDIDATE_RUNNER
@@ -59,189 +35,66 @@ r31:
   local_execution: NOT_RUN
   deployment_authority_bootstrap: "scripts/candidate-r30/minimax-authority.mjs reads docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object"
   electron_discovery: 113_tests_in_9_files
-r47_llm_wiki_demo_ui_mvp:
-  role: CLEAN_ROOM_KNOWLEDGE_STUDIO_MVP
-  integration_commit: 292e2a6160cf009a13492c93af96f5ff3c320899
-  upstream_reference: nashsu/llm_wiki@ad215b51252ffc1c6721d5b057f0449a2fb51530
-  upstream_license: GPL-3.0
-  implementation_bytes_copied: false
-  local_execution: NOT_RUN
-r50_metadata_complete_registry_prefetch:
-  role: NPM_REGISTRY_METADATA_CACHE_CLOSURE
-  strategy: lockfile-batched-name-version-npm-pack-v2
-  metadata_mode: name-version-packument-and-tarball
-  batch_size: 24
-  registry_cache_closure: deny-network-offline-ci-ignore-scripts-v1
-  post_closure_registry_requests_required: 0
-  automatic_retry: false
-  partial_cache_reuse: false
-  candidate_network_authority: deny-network
-  integration_commit: 42357ea7d48e691624c43c1c182c0d1c0ec9752d
-r54_execution_policy:
-  tier_a_same_source_allowed_only_before_hydration: true
-  tier_b_new_source_required_after_hydration_or_candidate: true
-  persistent_hydrator:
-    preferred_execution: exact_source_launcher
-    outer_driver_timeout_seconds_minimum: 3600
-    second_invocation_forbidden: true
-    process_loss_retry_forbidden: true
-r55_registry_cache_closure_attempt:
-  source_commit: 69a0e651f599403bf2427fd321d9491bd31f13b0
+r64_local_attempt:
+  source_commit: 5924aa96df9a15399fde281c9a4935392c8123b8
+  run_stamp: 20260809T134000Z
+  source_tests: 105/105_PASS
+  authority_bootstrap: PASS
+  runtime_registry_manifest: PASS
+  runtime_registry_manifest_typescript_6_0_3: PASS
+  exact_source_launcher: PASS
   hydration_execution_count: 1
   candidate_execution_count: 0
+  registry_prefetch_batches: 35/35_PASS
+  approximate_hydration_wall_clock: 21_minutes
+  registry_cache_closure: FAIL
   blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE
-  missing_registry_identity: typescript@6.0.3
+  blocker_sample: zustand@4.5.7_ENOTCACHED
   source_consumed: true
+  retry_attempted: false
   source_changes_by_minimax: NONE
   assets: FORBIDDEN_REFERENCE_ONLY
-r56_registry_identity_closure:
-  root_lock_remains_closure_authority: true
-  supplemental_identity_source: GIT_TRACKED_NESTED_PACKAGE_LOCK_V3_ONLY
-  supplemental_match: EXACT_NAME_AND_VERSION_ONLY
-  unrelated_nested_graph_import: false
-  integration_commit: 859a745b81f4da44c81583c9cc3343fc968010fc
-r57_bootstrap_runtime_attempt:
-  source_commit: 2927d0e3cd81e3997bb229ce544b95a1e3cbce8b
-  run_stamp: 20260809T044928Z
-  exact_source_contracts: 98/98_PASS
-  hydration_execution_count: 1
-  candidate_execution_count: 0
-  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST
-  source_consumed: true
-  source_changes_by_minimax: NONE
-  assets: FORBIDDEN_REFERENCE_ONLY
-r58_bootstrap_repository_authority:
-  root_authority: HYDRATION_CLI_REPOSITORY_ARGUMENT_OR_EXPLICIT_LIBRARY_OPTION
-  module_location_inference: FORBIDDEN
-  repository_argument_cardinality: EXACTLY_ONE
-  repository_argument_path: ABSOLUTE_REQUIRED
-  final_stacked_head: 3d83ba2e5ef4109d0417200eee3d714653e7a624
-  integration_commit: d29da3e6dcc9c89d680f56c23e66262e9ee967c1
-r58_registry_prefetch_runtime_attempt:
-  source_commit: d29da3e6dcc9c89d680f56c23e66262e9ee967c1
-  run_stamp: 20260809T053600Z
-  bootstrap_repository_authority: PASS
-  hydration_execution_count: 1
-  candidate_execution_count: 0
-  prefetch_batch_count_total: 35
-  prefetch_batches_completed_before_blocker: 21
-  approximate_wall_clock_before_blocker: 71_minutes
-  blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
-  registry_cache_closure: NOT_REACHED
-  r55_blocker_regression: UNVERIFIED_BEFORE_CLOSURE
-  source_consumed: true
-  source_changes_by_minimax: NONE
-  assets: FORBIDDEN_REFERENCE_ONLY
-r60_registry_prefetch_throughput:
-  role: BOUNDED_REGISTRY_PREFETCH_EXPOSURE_REDUCTION
-  registry_batch_size: 24
-  registry_prefetch_max_sockets: 12
-  later_lifecycle_native_transport_policy_changed: false
-  automatic_retry: false
+r65_registry_closure_completeness:
+  role: ROOT_LOCK_UNIQUE_EXACT_SPEC_COVERAGE
+  branch: chatgpt/r65-registry-closure-completeness
+  pr: 35
+  strategy: lockfile-batched-name-version-npm-pack-v2
+  completeness_mode: root-unique-exact-specs-covered-v1
+  root_lock_path_count_is_not_completeness_metric: true
+  completeness_metric: UNIQUE_EXACT_NAME_VERSION_SPECS
+  identity_classes:
+    resolved_lock_identity: lockfile-resolved-integrity
+    supplemental_identity: tracked-supplemental-lock
+    exact_version_only_identity: root-lock-exact-version-only
+  integrity_invention_for_exact_version_only: false
+  focused_regressions:
+    typescript_6_0_3_supplemental_identity: REQUIRED
+    zustand_4_5_7_exact_version_only_presence: REQUIRED
+    covered_root_closure_spec_count_equals_root_closure_spec_count: REQUIRED
+    entry_count_equals_root_closure_spec_count: REQUIRED
+  package_or_lockfile_changed: false
+  retry_policy_changed: false
   mirror_changed: false
   host_allowlist_expanded: false
   candidate_network_authority: deny-network
-  integration_commit: 6e59fabee878df681bca6d70c94eb5808b3e4a3c
-r61_pre_network_manifest_and_launch_attempt:
-  source_commit: d805c6570366bc181612f712073ef7dd0e2912a8
-  run_stamp: 20260809T082410Z
-  source_gate_before_local:
-    run: 31303232329
-    job: 93219353669
-    steps: 17/17_PASS
-  exact_source_contracts: 101/101_PASS
-  runtime_registry_manifest:
-    status: PASS
-    strategy: lockfile-batched-name-version-npm-pack-v2
-    batch_size: 24
-    npm_pack_max_sockets: 12
-    entry_count: 834
-    supplemental_lockfile_count: 4
-    supplemental_identity_count: 501
-    manifest_sha256: 95100e2918a013170591656ac2d8d5e902133b34c11621f78bef7c1ce4551061
-    typescript_6_0_3:
-      status: PASS
-      resolved: https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz
-      integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==
-  first_wrapper_attempt:
-    hydrator_started: false
-    blocker: MACOS_SETSID_UNAVAILABLE
-  hydration_execution_count: 1
-  candidate_execution_count: 0
-  retry_attempted: false
-  source_changes_by_minimax: NONE
-  failed_phase: bounded-native-toolchain-hydration-preflight
-  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_OUTPUT_EXISTS
-  blocker_cause: "ad-hoc local launch wrapper created NATIVE_CACHE_DIR before exact-source hydrator; requireNewExternalPath correctly rejected the empty existing target"
-  native_cache_files_after_blocker: 0
-  native_cache_receipt_created: false
-  candidate_established: false
-  source_consumed: true
-  artifact_sha256: null
-  runtime_id: null
-  evidence_incident:
-    predecessor_file_touched: R58_RESULT_MD_ONLY
-    action: "MiniMax accidentally overwrote R58 RESULT.md and immediately reconstructed that single file from surviving sibling evidence; no GitHub source bytes changed"
-    predecessor_other_files_touched: false
-  assets: FORBIDDEN_REFERENCE_ONLY
-r62_exact_source_hydrator_launcher:
-  role: SOURCE_DEFINED_MACOS_SAFE_SINGLE_HYDRATOR_LAUNCH
-  branch: chatgpt/r62-exact-source-hydrator-launcher
-  pr: 33
-  launcher_path: scripts/candidate-r30/native-cache-background-launch.mjs
-  shell_wrapper_allowed: false
-  setsid_required: false
-  detached_node_spawn: true
-  shell: false
-  repository_authority: EXPLICIT_ABSOLUTE_REPOSITORY
-  hydrator_path: EXACT_REPOSITORY_SCRIPT
-  launcher_must_not_create:
-    - NATIVE_CACHE_DIR
-    - NATIVE_CACHE_RECEIPT
-    - CANDIDATE_WORKTREE
-  evidence_inside_cache_target: FORBIDDEN
-  existing_cache_target_behavior: FAIL_CLOSED_WITHOUT_DELETE
-  automatic_retry: false
-  replacement_process_allowed: false
-  product_ui_or_runtime_changed: false
-  package_or_lockfile_changed: false
-  workflow_changed: false
-  registry_strategy_changed: false
-  host_allowlist_expanded: false
-  candidate_network_authority: deny-network
-  code_green_head: 4eefd70786c8e8a4c5c5a5b7aeda1205e8918735
+  code_green_head: cb7cbd5051da759c388564ee87d6dc21f55d2e83
   code_source_gate:
-    run: 31311068596
-    initial_job: 93238866921
-    initial_terminal: DESKTOP_PHASE1_ONLY_FAILURE
-    exact_diff_from_source_green_base: CANDIDATE_R30_LAUNCHER_AND_TEST_ONLY
-    tracked_or_threshold_change_before_rerun: false
-    final_job: 93239595966
-    final_steps: 17/17_PASS
-  final_evidence_head: df4452064bea506f74ed1fcee44e8683fa8615b2
-  final_evidence_source_gate:
-    run: 31311751372
-    initial_job: 93240530527
-    initial_terminal: DESKTOP_COVERAGE_ONLY_FAILURE
-    exact_diff_from_code_green: GOVERNANCE_EVIDENCE_ONLY
-    tracked_or_threshold_change_before_rerun: false
-    final_job: 93240892482
-    final_steps: 17/17_PASS
-  integration_into_pr20:
-    merge_commit: de55a0be0c39403aeaf1bdd12708afe114a62c1e
+    run: 31348549679
+    job: 93334962219
+    steps: 17/17_PASS
 gates:
-  gate_1: "exact full commit; clean tracked/untracked source; stale generated inputs absent"
-  gate_2: "exact-source R62 launcher; native-cache receipt; bootstrap-safe repository authority; R56 registry identity manifest; R60 bounded registry-prefetch throughput; strict registry-cache closure; lifecycle/native deny-network proofs"
-  gate_3: "all git-tracked regular files; per-file SHA256; aggregate SHA256"
+  gate_1: "exact source and clean preimage"
+  gate_2: "exact-source launcher; root-closure-complete registry manifest; native-cache receipt; strict registry closure; deny-network proofs"
+  gate_3: "all tracked regular files SHA256 ledger"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
-  gate_5: "checks, unit, integration, global/critical coverage, desktop build, Phase 1 suite, CycloneDX SBOM"
-  gate_6: "canonical unsigned macOS arm64 ZIP/DMG authority"
-  gate_7: "source snapshot and ZIP/DMG/app/executable/app.asar identities"
-  gate_8: "focused packaged Electron journeys including Knowledge Studio"
-  gate_9: "exact discovery 113 tests in 9 files and deterministic test-data manifest"
-  gate_10: "packaged Electron 113/113; zero skipped/unexpected/flaky; clean process exit"
-  gate_11: "three distinct candidate-bound performance runs and aggregate"
-  gate_12: "final manifest, SBOM, screenshots, commands, test data, identities, runtime and terminal state"
+  gate_5: "checks, tests, coverage, desktop build, Phase 1, CycloneDX SBOM"
+  gate_6: "canonical unsigned macOS arm64 package"
+  gate_7: "source and artifact identities"
+  gate_8: "focused packaged Electron journeys"
+  gate_9: "exact discovery 113 tests in 9 files"
+  gate_10: "packaged Electron 113/113 with zero skipped/unexpected/flaky"
+  gate_11: "three candidate-bound performance runs"
+  gate_12: "final evidence, hashes, screenshots, runtime and terminal state"
 candidate:
   established: false
   candidate_id: null
@@ -251,17 +104,8 @@ candidate:
   runtime_id: null
   test_data_manifest: null
   performance_receipt: null
-  screenshots: null
-  process_terminal_state: null
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-release_gates:
-  developer_id_signing: BLOCKED
-  apple_notarization: BLOCKED
-  staple_and_validate: BLOCKED
-  candidate_bound_performance: BLOCKED_UNTIL_LOCAL_RUN
-  embedded_local_asr_runtime: BLOCKED
-  human_owner_gate: BLOCKED
-next_single_action: "Pass the complete source gate on the exact PR #20 head produced by this final R62 authority alignment. If 17/17 PASS, freeze that SHA with no later tracked changes and issue MiniMax R63 with a new RUN_STAMP, six all-new paths, pre-network runtime registry-manifest proof, and only scripts/candidate-r30/native-cache-background-launch.mjs for the single hydrator launch."
+next_single_action: "Pass the complete source gate on the final evidence-containing R65 PR #35 head, squash it only into Draft PR #20, align PR #20 authority, pass the complete source gate on the resulting exact PR #20 head, then issue MiniMax R66 with a new SOURCE_COMMIT and RUN_STAMP."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

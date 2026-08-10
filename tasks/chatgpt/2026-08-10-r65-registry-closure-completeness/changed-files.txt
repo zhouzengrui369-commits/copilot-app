@@ -1,0 +1,25 @@
+SOURCE_CHANGES_BY_MINIMAX = NONE
+
+Parent PM R65 tracked changes:
+- scripts/candidate-r30/registry-prefetch.mjs
+- scripts/candidate-r30/registry-prefetch.test.mjs
+- PROJECT_STATE.yaml
+- docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+- docs/development/R65_REGISTRY_CLOSURE_COMPLETENESS_2026-08-10.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/GOAL.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/TASK.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/PLAN.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/RESULT.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/EVIDENCE.md
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/commands.log
+- tasks/chatgpt/2026-08-10-r65-registry-closure-completeness/changed-files.txt
+
+Explicitly unchanged:
+- package.json / package-lock.json
+- apps/** product bytes
+- workflow files
+- registry mirror / host allowlist
+- retry/resume policy
+- Candidate network authority
+- credentials/global config
+- main

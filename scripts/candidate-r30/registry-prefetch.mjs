@@ -11,6 +11,8 @@ export const NATIVE_REGISTRY_PREFETCH_BATCH_SIZE = 24;
 export const NATIVE_REGISTRY_PREFETCH_MAX_SOCKETS = 12;
 export const NATIVE_REGISTRY_CLOSURE_STRATEGY =
   'deny-network-offline-ci-ignore-scripts-v1';
+export const NATIVE_REGISTRY_CLOSURE_COMPLETENESS =
+  'root-unique-exact-specs-covered-v1';
 
 const REVIEWED_REGISTRY_HOSTS = new Set([
   'registry.npmjs.org',
@@ -19,6 +21,9 @@ const REVIEWED_REGISTRY_HOSTS = new Set([
 ]);
 const CANONICAL_REGISTRY = new URL(NPM_REGISTRY);
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/u;
+const LOCKED_IDENTITY = 'lockfile-resolved-integrity';
+const SUPPLEMENTAL_IDENTITY = 'tracked-supplemental-lock';
+const EXACT_VERSION_ONLY_IDENTITY = 'root-lock-exact-version-only';
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -230,13 +235,47 @@ function registryIdentityFromEntry(packagePath, entry) {
     spec: `${name}@${version}`,
     resolved,
     integrity,
+    identitySource: LOCKED_IDENTITY,
   };
+}
+
+function exactVersionOnlyIdentity(packagePath, entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry) || entry.link === true) return null;
+  const name = packageNameFromLockfilePath(packagePath);
+  const version = typeof entry.version === 'string' ? entry.version : '';
+  if (!name || !EXACT_VERSION.test(version)) return null;
+  return {
+    name,
+    version,
+    spec: `${name}@${version}`,
+    resolved: null,
+    integrity: null,
+    identitySource: EXACT_VERSION_ONLY_IDENTITY,
+  };
+}
+
+function hasLockedRegistryIdentity(identity) {
+  return Boolean(
+    identity
+    && typeof identity.resolved === 'string'
+    && identity.resolved.length > 0
+    && typeof identity.integrity === 'string'
+    && identity.integrity.length > 0
+  );
 }
 
 function addRegistryIdentity(bySpec, identity) {
   const existing = bySpec.get(identity.spec);
+  if (!existing) {
+    bySpec.set(identity.spec, identity);
+    return;
+  }
+
+  const existingLocked = hasLockedRegistryIdentity(existing);
+  const incomingLocked = hasLockedRegistryIdentity(identity);
   if (
-    existing
+    existingLocked
+    && incomingLocked
     && (existing.integrity !== identity.integrity || existing.resolved !== identity.resolved)
   ) {
     blockNativeCache(
@@ -249,7 +288,7 @@ function addRegistryIdentity(bySpec, identity) {
       },
     );
   }
-  if (!existing) bySpec.set(identity.spec, identity);
+  if (!existingLocked && incomingLocked) bySpec.set(identity.spec, identity);
 }
 
 function supplementalRegistryIdentityIndex(supplementalLockfileDocuments) {
@@ -288,25 +327,51 @@ export function buildRegistryPrefetchManifest(
     : supplementalLockfileDocuments;
   const supplementalBySpec = supplementalRegistryIdentityIndex(supplements);
   const bySpec = new Map();
+  const rootClosureSpecs = new Set();
   let supplementalIdentityCount = 0;
+  let exactVersionOnlyIdentityCount = 0;
 
   for (const [packagePath, entry] of Object.entries(lockfileDocument.packages)) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || entry.link === true) continue;
+
+    const exactOnly = exactVersionOnlyIdentity(packagePath, entry);
+    if (exactOnly) rootClosureSpecs.add(exactOnly.spec);
+
     const identity = registryIdentityFromEntry(packagePath, entry);
     if (identity) {
       addRegistryIdentity(bySpec, identity);
       continue;
     }
 
-    if (entry.link === true) continue;
-    const version = typeof entry.version === 'string' ? entry.version : '';
-    const name = packageNameFromLockfilePath(packagePath);
-    if (!name || !EXACT_VERSION.test(version)) continue;
-    const spec = `${name}@${version}`;
-    const supplemental = supplementalBySpec.get(spec);
-    if (!supplemental || bySpec.has(spec)) continue;
-    addRegistryIdentity(bySpec, supplemental);
-    supplementalIdentityCount += 1;
+    if (!exactOnly) continue;
+    const supplemental = supplementalBySpec.get(exactOnly.spec);
+    if (supplemental) {
+      addRegistryIdentity(bySpec, {
+        ...supplemental,
+        identitySource: SUPPLEMENTAL_IDENTITY,
+      });
+      supplementalIdentityCount += 1;
+      continue;
+    }
+
+    addRegistryIdentity(bySpec, exactOnly);
+    exactVersionOnlyIdentityCount += 1;
+  }
+
+  const missingRootSpecs = [...rootClosureSpecs]
+    .filter((spec) => !bySpec.has(spec))
+    .sort();
+  if (missingRootSpecs.length > 0) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'registry prefetch manifest does not cover every root lock exact closure spec',
+      {
+        completenessMode: NATIVE_REGISTRY_CLOSURE_COMPLETENESS,
+        rootClosureSpecCount: rootClosureSpecs.size,
+        coveredSpecCount: bySpec.size,
+        missingRootSpecs,
+      },
+    );
   }
 
   const entries = [...bySpec.values()]
@@ -317,15 +382,36 @@ export function buildRegistryPrefetchManifest(
       'package-lock contains no registry packages to prefetch',
     );
   }
+  if (entries.length !== rootClosureSpecs.size) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'registry prefetch manifest cardinality differs from root exact closure spec cardinality',
+      {
+        completenessMode: NATIVE_REGISTRY_CLOSURE_COMPLETENESS,
+        rootClosureSpecCount: rootClosureSpecs.size,
+        entryCount: entries.length,
+      },
+    );
+  }
+
   const canonical = `${entries
-    .map((entry) => `${entry.spec}\0${entry.resolved}\0${entry.integrity}`)
+    .map((entry) => [
+      entry.spec,
+      entry.identitySource,
+      entry.resolved ?? '<registry-resolution-by-exact-spec>',
+      entry.integrity ?? '<integrity-not-present-in-lockfile>',
+    ].join('\0'))
     .join('\n')}\n`;
   return {
     strategy: NATIVE_REGISTRY_PREFETCH_STRATEGY,
     metadataMode: 'name-version-packument-and-tarball',
+    completenessMode: NATIVE_REGISTRY_CLOSURE_COMPLETENESS,
+    rootClosureSpecCount: rootClosureSpecs.size,
+    coveredRootClosureSpecCount: entries.length,
     entryCount: entries.length,
     supplementalLockfileCount: supplements.length,
     supplementalIdentityCount,
+    exactVersionOnlyIdentityCount,
     manifestSha256: sha256(canonical),
     entries,
   };
@@ -347,6 +433,19 @@ export function registryPrefetchBatches(
     blockNativeCache(
       'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
       'registry prefetch manifest entry count is inconsistent',
+    );
+  }
+  if (
+    manifest?.completenessMode === NATIVE_REGISTRY_CLOSURE_COMPLETENESS
+    && manifest?.rootClosureSpecCount !== entries.length
+  ) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST',
+      'registry prefetch batches require complete root exact-spec coverage',
+      {
+        rootClosureSpecCount: manifest?.rootClosureSpecCount ?? null,
+        entryCount: entries.length,
+      },
     );
   }
   const batches = [];
@@ -375,12 +474,31 @@ export function registryPrefetchBatchArgs({
       || typeof entry.name !== 'string'
       || typeof entry.version !== 'string'
       || entry.spec !== `${entry.name}@${entry.version}`
-      || typeof entry.resolved !== 'string'
-      || typeof entry.integrity !== 'string'
+      || !EXACT_VERSION.test(entry.version)
     ) {
       blockNativeCache(
         'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
         'prefetch batch contains an incomplete name@version registry identity',
+        { entry },
+      );
+    }
+
+    const exactVersionOnly = entry.identitySource === EXACT_VERSION_ONLY_IDENTITY;
+    if (exactVersionOnly) {
+      if (entry.resolved !== null || entry.integrity !== null) {
+        blockNativeCache(
+          'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
+          'exact-version-only prefetch identity must not invent resolved or integrity',
+          { entry },
+        );
+      }
+      return entry.spec;
+    }
+
+    if (typeof entry.resolved !== 'string' || typeof entry.integrity !== 'string') {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
+        'locked prefetch identity requires resolved and integrity',
         { entry },
       );
     }
@@ -390,6 +508,13 @@ export function registryPrefetchBatchArgs({
         'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_ORIGIN',
         'prefetch batch contains a noncanonical registry tarball',
         { spec: entry.spec, resolved: entry.resolved },
+      );
+    }
+    if (!/^sha(?:256|384|512)-[A-Za-z0-9+/=_-]+$/u.test(entry.integrity)) {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_INTEGRITY',
+        'locked prefetch identity requires a valid integrity',
+        { spec: entry.spec, integrity: entry.integrity },
       );
     }
     return entry.spec;
