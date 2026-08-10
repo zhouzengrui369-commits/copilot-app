@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  NATIVE_REGISTRY_CLOSURE_COMPLETENESS,
   NATIVE_REGISTRY_CLOSURE_STRATEGY,
   NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
   NATIVE_REGISTRY_PREFETCH_STRATEGY,
@@ -28,7 +29,7 @@ function lockfileFixture() {
         resolved: 'https://registry.npmjs.org/a/-/a-1.0.0.tgz',
         integrity: 'sha512-QUJDRA==',
       },
-      'node_modules/a-duplicate': {
+      'node_modules/c/node_modules/a': {
         version: '1.0.0',
         resolved: 'https://registry.yarnpkg.com/a/-/a-1.0.0.tgz',
         integrity: 'sha512-QUJDRA==',
@@ -51,9 +52,13 @@ test('registry prefetch manifest is deterministic, metadata-complete, canonical 
   const second = buildRegistryPrefetchManifest(lockfileFixture(), []);
   assert.equal(first.strategy, NATIVE_REGISTRY_PREFETCH_STRATEGY);
   assert.equal(first.metadataMode, 'name-version-packument-and-tarball');
+  assert.equal(first.completenessMode, NATIVE_REGISTRY_CLOSURE_COMPLETENESS);
+  assert.equal(first.rootClosureSpecCount, 2);
+  assert.equal(first.coveredRootClosureSpecCount, 2);
   assert.equal(first.entryCount, 2);
   assert.equal(first.supplementalLockfileCount, 0);
   assert.equal(first.supplementalIdentityCount, 0);
+  assert.equal(first.exactVersionOnlyIdentityCount, 0);
   assert.equal(first.manifestSha256, second.manifestSha256);
   assert.match(first.manifestSha256, /^[0-9a-f]{64}$/u);
   assert.deepEqual(first.entries.map((entry) => ({
@@ -101,6 +106,8 @@ test('registry prefetch supplements only exact unresolved root specs from tracke
   const manifest = buildRegistryPrefetchManifest(root, [nested]);
   assert.equal(manifest.supplementalLockfileCount, 1);
   assert.equal(manifest.supplementalIdentityCount, 1);
+  assert.equal(manifest.exactVersionOnlyIdentityCount, 0);
+  assert.equal(manifest.rootClosureSpecCount, 3);
   assert.equal(manifest.entryCount, 3);
   assert.deepEqual(
     manifest.entries.filter((entry) => entry.spec.startsWith('typescript@')),
@@ -110,22 +117,72 @@ test('registry prefetch supplements only exact unresolved root specs from tracke
       spec: 'typescript@6.0.3',
       resolved: 'https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz',
       integrity: 'sha512-VFlQRVNUUkNJUFRZUEU=',
+      identitySource: 'tracked-supplemental-lock',
     }],
   );
   assert.equal(manifest.entries.some((entry) => entry.spec === 'unrelated@9.9.9'), false);
 });
 
-test('current repository explicit root discovers tracked nested lock identity for mobile typescript 6.0.3', async () => {
+test('unresolved exact root specs stay in the manifest without invented tarball integrity', () => {
+  const root = lockfileFixture();
+  root.packages['node_modules/zustand'] = {
+    version: '4.5.7',
+    license: 'MIT',
+    dependencies: {
+      'use-sync-external-store': '^1.2.2',
+    },
+  };
+
+  const manifest = buildRegistryPrefetchManifest(root, []);
+  assert.equal(manifest.rootClosureSpecCount, 3);
+  assert.equal(manifest.coveredRootClosureSpecCount, 3);
+  assert.equal(manifest.entryCount, 3);
+  assert.equal(manifest.exactVersionOnlyIdentityCount, 1);
+  assert.deepEqual(
+    manifest.entries.find((entry) => entry.spec === 'zustand@4.5.7'),
+    {
+      name: 'zustand',
+      version: '4.5.7',
+      spec: 'zustand@4.5.7',
+      resolved: null,
+      integrity: null,
+      identitySource: 'root-lock-exact-version-only',
+    },
+  );
+
+  const args = registryPrefetchBatchArgs({
+    npmExecutable: '/usr/local/bin/npm',
+    npmCacheDir: '/tmp/native-cache/npm',
+    packDestination: '/tmp/native-cache/prefetch/batch-0001',
+    entries: [manifest.entries.find((entry) => entry.spec === 'zustand@4.5.7')],
+  });
+  assert.ok(args.includes('zustand@4.5.7'));
+});
+
+test('current repository root closure is complete and includes exact-only zustand 4.5.7', async () => {
   const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
   const rootLock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
   const manifest = buildRegistryPrefetchManifest(rootLock, undefined, { repositoryRoot: root });
   const typescript = manifest.entries.find((entry) => entry.spec === 'typescript@6.0.3');
+  const zustand = manifest.entries.find((entry) => entry.spec === 'zustand@4.5.7');
+
   assert.ok(typescript, 'typescript@6.0.3 must be prefetched for root npm ci closure');
   assert.equal(
     typescript.resolved,
     'https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz',
   );
   assert.match(typescript.integrity, /^sha512-/u);
+  assert.equal(typescript.identitySource, 'tracked-supplemental-lock');
+
+  assert.ok(zustand, 'zustand@4.5.7 must not be silently dropped from root npm ci closure');
+  assert.equal(zustand.identitySource, 'root-lock-exact-version-only');
+  assert.equal(zustand.resolved, null);
+  assert.equal(zustand.integrity, null);
+
+  assert.equal(manifest.completenessMode, NATIVE_REGISTRY_CLOSURE_COMPLETENESS);
+  assert.equal(manifest.coveredRootClosureSpecCount, manifest.rootClosureSpecCount);
+  assert.equal(manifest.entryCount, manifest.rootClosureSpecCount);
+  assert.ok(manifest.exactVersionOnlyIdentityCount >= 1);
   assert.ok(manifest.supplementalLockfileCount >= 1);
   assert.ok(manifest.supplementalIdentityCount >= 1);
 });
@@ -146,6 +203,8 @@ test('bootstrap-extracted hydrator resolves supplemental locks from exact --repo
     assert.equal(repositoryRootFromHydrationArgv(), root);
     const manifest = buildRegistryPrefetchManifest(rootLock);
     assert.ok(manifest.entries.some((entry) => entry.spec === 'typescript@6.0.3'));
+    assert.ok(manifest.entries.some((entry) => entry.spec === 'zustand@4.5.7'));
+    assert.equal(manifest.entryCount, manifest.rootClosureSpecCount);
     assert.ok(manifest.supplementalLockfileCount >= 1);
   } finally {
     process.argv = originalArgv;
@@ -274,7 +333,7 @@ test('registry cache closure proof is strict deny-network npm ci with scripts di
   assert.equal(NATIVE_REGISTRY_CLOSURE_STRATEGY, 'deny-network-offline-ci-ignore-scripts-v1');
 });
 
-test('hydrator integration proves bootstrap-safe repository authority, registry closure and no later registry access', async () => {
+test('hydrator integration proves bootstrap-safe repository authority, registry completeness, closure and no later registry access', async () => {
   const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
   const [hydratorSource, prefetchSource] = await Promise.all([
     readFile(path.join(root, 'scripts/candidate-r30/npm-native-cache-hydrate.mjs'), 'utf8'),
@@ -285,6 +344,8 @@ test('hydrator integration proves bootstrap-safe repository authority, registry 
   assert.match(prefetchSource, /'ls-files'/u);
   assert.match(prefetchSource, /repositoryRootFromHydrationArgv/u);
   assert.match(prefetchSource, /--repository/u);
+  assert.match(prefetchSource, /rootClosureSpecCount/u);
+  assert.match(prefetchSource, /root-lock-exact-version-only/u);
   assert.doesNotMatch(prefetchSource, /SOURCE_REPOSITORY_ROOT/u);
   assert.doesNotMatch(prefetchSource, /fileURLToPath\(import\.meta\.url\)/u);
   assert.match(hydratorSource, /registryPrefetchBatches/u);
