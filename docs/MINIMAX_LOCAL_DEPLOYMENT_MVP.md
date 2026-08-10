@@ -1,6 +1,56 @@
 # MiniMax Code Local Handoff — Copilot App macOS MVP
 
-R31 remains the executable twelve-gate Candidate authority. R62 remains the only authorized exact-source hydrator launcher. R65 repairs the registry-prefetch closure manifest exposed by R64.
+R31 remains the executable twelve-gate Candidate authority. R62 remains the only authorized exact-source hydrator launcher. R65 repairs root exact-spec completeness. R67 repairs npm alias/install-path identity exposed by R66.
+
+## Current authority override — R67 / next R68
+
+```text
+R66_SOURCE_CONSUMED
+R66_BLOCKER=BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH
+R66_BLOCKER_SAMPLE=string-width-cjs@4.2.3_ETARGET
+R67_LOCKFILE_ALIAS_REGISTRY_IDENTITY_REPAIR_IN_SOURCE
+R68_LOCAL_SUCCESSOR_NOT_RUN
+NOT_RUNTIME_PROOF
+MVP_NOT_COMPLETE
+NOT_RELEASE_READY
+NOT_EXPERIENCE_READY
+```
+
+The R66 blocker was not evidence that the entire root lockfile must be regenerated. Exact lockfile inspection proves npm alias semantics:
+
+```text
+node_modules/string-width-cjs
+  name=string-width
+  version=4.2.3
+
+node_modules/strip-ansi-cjs
+  name=strip-ansi
+  version=6.0.1
+
+node_modules/wrap-ansi-cjs
+  name=wrap-ansi
+  version=7.0.0
+```
+
+For exact-version-only `node_modules/...` entries, registry-prefetch MUST prefer a valid lock entry `name` when present; only entries without a lock entry name may fall back to the package name encoded by the install path. Entries outside `node_modules` remain excluded. The install path is filesystem placement metadata, not automatically an npm registry package name.
+
+R67 source contracts require real registry specs:
+
+```text
+string-width@4.2.3
+strip-ansi@6.0.1
+wrap-ansi@7.0.0
+```
+
+and forbid fake registry specs:
+
+```text
+string-width-cjs@4.2.3
+strip-ansi-cjs@6.0.1
+wrap-ansi-cjs@7.0.0
+```
+
+R66 cache/worktree/task/evidence identities remain immutable `FORBIDDEN_REFERENCE_ONLY`. No predecessor cache, receipt, manifest, task root, evidence or runtime identity is an input to R68.
 
 ## Fixed truth
 
@@ -14,6 +64,8 @@ R60_BOUNDED_REGISTRY_PREFETCH_MAXSOCKETS_12_IN_SOURCE
 R62_EXACT_SOURCE_BACKGROUND_HYDRATOR_LAUNCHER_IN_SOURCE
 R64_FROZEN_CONSUMED_REGISTRY_CLOSURE_EVIDENCE_ONLY
 R65_ROOT_CLOSURE_SPEC_COMPLETENESS_IN_SOURCE
+R66_FROZEN_CONSUMED_REGISTRY_PREFETCH_EVIDENCE_ONLY
+R67_LOCKFILE_ALIAS_REGISTRY_IDENTITY_REPAIR_IN_SOURCE
 LOCAL_SUCCESSOR_NOT_RUN
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
@@ -96,8 +148,9 @@ Rules:
 4. Exact-version-only entries are prefetched only as the exact `name@version` through the reviewed npm registry. The implementation MUST NOT invent a tarball URL or integrity absent from the lock authority.
 5. Unrelated nested-lock dependency graphs are not imported.
 6. Missing root exact specs fail before batching with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_MANIFEST`.
+7. R67 clarification: when a non-link `node_modules/...` entry provides its own valid `name`, that locked name is authoritative for the exact registry spec; the install-path tail is only the fallback when `name` is absent.
 
-Current repository source contracts require both:
+Current repository source contracts require:
 
 ```text
 typescript@6.0.3
@@ -108,6 +161,11 @@ zustand@4.5.7
   identitySource=root-lock-exact-version-only
   resolved=null
   integrity=null
+
+string-width@4.2.3
+strip-ansi@6.0.1
+wrap-ansi@7.0.0
+  alias install paths MUST NOT become fake *-cjs registry specs
 ```
 
 They also require:
@@ -118,6 +176,36 @@ entryCount == rootClosureSpecCount
 ```
 
 R65 code Head `cb7cbd5051da759c388564ee87d6dc21f55d2e83` passed complete source gate run `31348549679`, job `93334962219`, `17/17 SUCCESS`.
+
+## R66 consumed terminal truth
+
+R66 used exact source `beb951b95695233911da0a17543ef342acc6df93`, RUN_STAMP `20260810T015500Z`.
+
+Verified before the blocker:
+
+```text
+SOURCE_TESTS=106/106_PASS
+ROOT_CLOSURE_COMPLETENESS=PASS
+rootClosureSpecCount=1361
+coveredRootClosureSpecCount=1361
+RUNTIME_REGISTRY_MANIFEST_TYPESCRIPT_6_0_3=PASS
+RUNTIME_REGISTRY_MANIFEST_ZUSTAND_4_5_7=PASS
+EXACT_SOURCE_LAUNCHER=PASS
+HYDRATION_EXECUTIONS=1
+CANDIDATE_EXECUTIONS=0
+```
+
+Registry prefetch completed 50 batches and stopped at batch 51 on an invalid registry spec derived from an npm alias install path:
+
+```text
+BLOCKER=BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH
+BLOCKER_SAMPLE=string-width-cjs@4.2.3_ETARGET
+SOURCE_CONSUMED=true
+RETRY_ATTEMPTED=NO
+SOURCE_CHANGES_BY_MINIMAX=NONE
+```
+
+The registry transport itself returned normally; the package path/name interpretation was wrong. R66 is Tier B consumed and all R66 local identities are immutable predecessor evidence.
 
 ## Source identity policy
 
@@ -142,15 +230,15 @@ A new RUN_STAMP and six new paths are mandatory.
 
 A new source SHA is mandatory once a real hydrator starts, native-cache output/receipt exists, Candidate starts, or source changes. No retry, resume, promotion, predecessor cache reuse, mirror switch, host expansion, or local source/test/runner/package/lockfile repair is permitted.
 
-R64 is Tier B consumed, so the next local run MUST use a new SOURCE_COMMIT.
+R66 is Tier B consumed, so R68 MUST use a new SOURCE_COMMIT.
 
-## Resume trigger for the next local successor
+## Resume trigger for R68
 
-The next local run is **R66**. It starts only from an external Parent PM handoff containing:
+R68 starts only from an external Parent PM handoff containing:
 
 ```text
 PR=20
-SOURCE_COMMIT=<exact final PR #20 head after R65 integration + authority alignment>
+SOURCE_COMMIT=<exact final PR #20 head after R67 integration + authority alignment>
 SOURCE_GATE=PASS
 SOURCE_GATE_RUN=<completed exact run>
 SOURCE_GATE_JOB=<completed exact job>
@@ -164,7 +252,7 @@ MiniMax must fetch `refs/pull/20/head` and prove `FETCH_HEAD = supplied SOURCE_C
 
 ## Six all-new local paths
 
-R66 must start with six absent paths:
+R68 must start with six absent paths:
 
 ```text
 TASK_ROOT
@@ -179,7 +267,7 @@ Old identities are `FORBIDDEN_REFERENCE_ONLY`.
 
 ## Pre-network runtime manifest proof
 
-Before launching the hydrator, R66 must use the exact worktree implementation of `buildRegistryPrefetchManifest` and materialize task evidence outside Candidate `EVIDENCE_DIR`.
+Before launching the hydrator, R68 must use the exact worktree implementation of `buildRegistryPrefetchManifest` and materialize task evidence outside Candidate `EVIDENCE_DIR`.
 
 Required proof:
 
@@ -193,9 +281,15 @@ batchSize=24
 npmPackMaxSockets=12
 typescript@6.0.3 present with tracked supplemental identity
 zustand@4.5.7 present with root-lock-exact-version-only identity
+string-width@4.2.3 present
+strip-ansi@6.0.1 present
+wrap-ansi@7.0.0 present
+string-width-cjs@4.2.3 absent
+strip-ansi-cjs@6.0.1 absent
+wrap-ansi-cjs@7.0.0 absent
 ```
 
-This proof must happen before network/hydration. If completeness fails, return control to Parent PM with `HYDRATION_EXECUTIONS=0`.
+This proof must happen before network/hydration. If identity/completeness fails, return control to Parent PM with `HYDRATION_EXECUTIONS=0`.
 
 ## Exact-source launcher
 
@@ -224,7 +318,7 @@ The one hydrator must execute:
 
 ```text
 exact detached repository
-→ R65 root-closure-complete registry manifest
+→ R67 alias-aware root-closure-complete registry manifest
 → bounded 24-item npm pack batches with --maxsockets=12
 → strict deny-network npm ci --offline --ignore-scripts closure proof
 → lifecycle npm ci --offline with reviewed lifecycle/native asset proxy
@@ -236,13 +330,13 @@ exact detached repository
 → immutable cache ledger + PASS receipt
 ```
 
-The focused successor conditions are:
+Focused successor conditions:
 
 ```text
 EXACT_SOURCE_LAUNCHER=PASS
 RUNTIME_REGISTRY_MANIFEST=PASS
 ROOT_CLOSURE_COMPLETENESS=PASS
-ZUSTAND_4_5_7_PREFETCH_IDENTITY=PASS
+LOCKFILE_ALIAS_IDENTITY=PASS
 R55_BLOCKER_REGRESSION=PASS
 REGISTRY_CACHE_CLOSURE=PASS
 POST_CLOSURE_REGISTRY_REQUESTS=0

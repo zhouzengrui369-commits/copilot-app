@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-08-10 — R67 npm alias registry identity repair
+
+Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.
+
+### R66 local blocker
+
+- Exact PR #20 source `beb951b95695233911da0a17543ef342acc6df93` was source-green and MiniMax source contracts `106/106 PASS`.
+- R65 root exact-spec completeness passed (`1361/1361`), exact-source launcher passed, one real hydrator started, Candidate execution count remained zero.
+- Registry prefetch completed 50 batches and stopped fail-closed on batch 51 with `npm pack string-width-cjs@4.2.3` → `ETARGET`.
+- R66 source is Tier-B consumed; no retry/resume/reuse is permitted and all local cache/evidence identities are immutable predecessor references.
+
+### Root cause
+
+The failing `*-cjs` entries are npm alias/install-path lock entries, not proof that the entire lockfile is stale. The root lock explicitly records:
+
+```text
+node_modules/string-width-cjs  -> name=string-width, version=4.2.3
+node_modules/strip-ansi-cjs    -> name=strip-ansi, version=6.0.1
+node_modules/wrap-ansi-cjs     -> name=wrap-ansi, version=7.0.0
+```
+
+R65 exact-version-only fallback ignored `entry.name` and incorrectly converted the install path into a registry package spec, producing fake names such as `string-width-cjs@4.2.3`.
+
+### R67 source repair
+
+- Added lock-entry-aware exact-version-only identity: a valid `name` on a non-link `node_modules/...` entry is authoritative for registry prefetch.
+- Install-path package name is only a fallback when `entry.name` is absent.
+- Root/workspace entries outside `node_modules` remain excluded.
+- Added synthetic alias and exact-repository regressions requiring `string-width@4.2.3`, `strip-ansi@6.0.1`, `wrap-ansi@7.0.0` and forbidding corresponding fake `*-cjs@...` specs.
+- No package/lockfile regeneration, dependency version change, mirror/allowlist expansion, retry/resume change, Candidate network change, product runtime change or `main` change.
+- R67 implementation head `20003b07b8137a369263e0fadb3b4f4171d7d392` passed source gate run `31354821614`, job `93352458882`, `17/17 PASS`.
+- Final evidence-containing PR #36 head still requires its own complete source gate before integration into Draft PR #20.
+
 ## 2026-08-07 — R50 Metadata-Complete Registry Prefetch
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.

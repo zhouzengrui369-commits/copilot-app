@@ -29,6 +29,20 @@ function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
+function validPackageName(name) {
+  return Boolean(
+    typeof name === 'string'
+    && name.length > 0
+    && !name.includes('\\')
+    && !name.includes('..')
+    && !/\s/u.test(name)
+    && (
+      (!name.startsWith('@') && !name.includes('/'))
+      || (name.startsWith('@') && /^@[^/]+\/[^/]+$/u.test(name))
+    )
+  );
+}
+
 function canonicalRegistryTarball(resolved) {
   let url;
   try {
@@ -66,17 +80,7 @@ function packageNameFromRegistryTarball(resolved) {
   } catch {
     return null;
   }
-  if (
-    name.length === 0
-    || name.includes('\\')
-    || name.includes('..')
-    || /\s/u.test(name)
-    || (!name.startsWith('@') && name.includes('/'))
-    || (name.startsWith('@') && !/^@[^/]+\/[^/]+$/u.test(name))
-  ) {
-    return null;
-  }
-  return name;
+  return validPackageName(name) ? name : null;
 }
 
 function packageNameFromLockfilePath(packagePath) {
@@ -92,6 +96,23 @@ function packageNameFromLockfilePath(packagePath) {
     return `${parts[0]}/${parts[1]}`;
   }
   return parts[0] || null;
+}
+
+function packageNameFromLockfileEntry(packagePath, entry) {
+  const pathName = packageNameFromLockfilePath(packagePath);
+  if (!pathName) return null;
+  const lockedName = typeof entry?.name === 'string' ? entry.name : '';
+  if (lockedName) {
+    if (!validPackageName(lockedName)) {
+      blockNativeCache(
+        'BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH_SPEC',
+        'lockfile package name is invalid',
+        { packagePath, name: lockedName },
+      );
+    }
+    return lockedName;
+  }
+  return pathName;
 }
 
 function requireLockfileV3(lockfileDocument, label = 'package-lock') {
@@ -241,7 +262,7 @@ function registryIdentityFromEntry(packagePath, entry) {
 
 function exactVersionOnlyIdentity(packagePath, entry) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry) || entry.link === true) return null;
-  const name = packageNameFromLockfilePath(packagePath);
+  const name = packageNameFromLockfileEntry(packagePath, entry);
   const version = typeof entry.version === 'string' ? entry.version : '';
   if (!name || !EXACT_VERSION.test(version)) return null;
   return {
