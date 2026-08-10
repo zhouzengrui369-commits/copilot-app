@@ -12,7 +12,7 @@ source:
   repository: zhouzengrui369-commits/copilot-app
   product_source_pr: 20
   product_source_branch: chatgpt/mvp-source-finalization
-  exact_final_commit: "pending final PR #20 exact head after R65 integration and authority alignment"
+  exact_final_commit: "pending final PR #20 exact head after R67 integration and authority alignment"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -20,7 +20,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA local hydration/package/Candidate evidence producer
-    current_state: STOPPED_UNTIL_R65_FINAL_PR20_SOURCE_GREEN
+    current_state: STOPPED_UNTIL_R67_FINAL_PR20_SOURCE_GREEN
   codex:
     role: independent packaged Electron product acceptance
     current_state: WAITING_FOR_CANDIDATE_IDENTITY
@@ -82,9 +82,52 @@ r65_registry_closure_completeness:
     run: 31348549679
     job: 93334962219
     steps: 17/17_PASS
+r66_local_attempt:
+  source_commit: beb951b95695233911da0a17543ef342acc6df93
+  run_stamp: 20260810T015500Z
+  source_tests: 106/106_PASS
+  root_closure_completeness: PASS
+  root_closure_spec_count: 1361
+  covered_root_closure_spec_count: 1361
+  runtime_manifest_typescript_6_0_3: PASS
+  runtime_manifest_zustand_4_5_7: PASS
+  exact_source_launcher: PASS
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  registry_prefetch_progress: 50_batches_PASS_then_batch_51_FAIL
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH
+  blocker_sample: string-width-cjs@4.2.3_ETARGET
+  blocker_classification: LOCKFILE_ALIAS_REGISTRY_IDENTITY_MISINTERPRETATION
+  source_consumed: true
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  assets: FORBIDDEN_REFERENCE_ONLY
+r67_lockfile_alias_identity:
+  role: NPM_ALIAS_REGISTRY_IDENTITY_REPAIR
+  branch: chatgpt/r67-lockfile-alias-identity
+  pr: 36
+  rule: "for exact-version-only node_modules entries, prefer valid lock entry name; otherwise fall back to install-path package name"
+  non_node_modules_entries_excluded: true
+  package_or_lockfile_changed: false
+  dependency_versions_changed: false
+  mirror_changed: false
+  host_allowlist_expanded: false
+  retry_policy_changed: false
+  candidate_network_authority: deny-network
+  focused_regressions:
+    string_width_cjs_path_maps_to_string_width_4_2_3: REQUIRED
+    strip_ansi_cjs_path_maps_to_strip_ansi_6_0_1: REQUIRED
+    wrap_ansi_cjs_path_maps_to_wrap_ansi_7_0_0: REQUIRED
+    fake_cjs_registry_specs_absent: REQUIRED
+    root_workspace_entry_excluded: REQUIRED
+  code_green_head: 20003b07b8137a369263e0fadb3b4f4171d7d392
+  code_source_gate:
+    run: 31354821614
+    job: 93352458882
+    steps: 17/17_PASS
 gates:
   gate_1: "exact source and clean preimage"
-  gate_2: "exact-source launcher; root-closure-complete registry manifest; native-cache receipt; strict registry closure; deny-network proofs"
+  gate_2: "exact-source launcher; root-closure-complete alias-aware registry manifest; native-cache receipt; strict registry closure; deny-network proofs"
   gate_3: "all tracked regular files SHA256 ledger"
   gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
   gate_5: "checks, tests, coverage, desktop build, Phase 1, CycloneDX SBOM"
@@ -107,5 +150,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Pass the complete source gate on the final evidence-containing R65 PR #35 head, squash it only into Draft PR #20, align PR #20 authority, pass the complete source gate on the resulting exact PR #20 head, then issue MiniMax R66 with a new SOURCE_COMMIT and RUN_STAMP."
+next_single_action: "Pass the complete source gate on the final evidence-containing R67 PR #36 head, squash it only into Draft PR #20, align PR #20 authority, pass the complete source gate on the resulting exact PR #20 head, then issue MiniMax R68 with a new SOURCE_COMMIT and RUN_STAMP."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
