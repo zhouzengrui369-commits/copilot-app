@@ -4,7 +4,7 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
-R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. The R49 MiniMax attempt on exact source `32ff3ebc0b1dc217bf0954974127b0aa68de61f2` passed exact-object authority and `95/95` Candidate source contracts, then stopped before Candidate creation because R48 tarball-only prefetch did not prove npm registry metadata cache closure: strict `npm ci --offline` reported `ENOTCACHED` for `typescript`. R50 fixes that deterministic source defect with exact `name@version` metadata+tarball prefetch, a strict deny-network registry-cache closure proof, and a zero-registry-request-after-closure invariant. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing, notarization, Release, Experience readiness, or Human Owner Gate exists.
+R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
 
 ## Current source chain
 
@@ -12,36 +12,56 @@ R31 remains the authoritative Phase 1 source-completion baseline, including the 
 - Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
 - Consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
 - R31 pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`; source gate run `30819543111`, `17/17 PASS`; Desktop Phase 1 `1107/1107 PASS`
-- R47 final stacked head: `8f0d1604217c966e696e7caf8763496c6be681c9`; run `31150946435`, job `92780309284`, `17/17 PASS`; merged into PR #20 as `292e2a6160cf009a13492c93af96f5ff3c320899`
-- R48 final stacked head: `8297cd4f7ebea0bcd7b6477f36f1b91b148c31cb`; run `31156362975`, job `92796663770`, `17/17 PASS`; merged as `1f9beaaf60f08b607204be8b99f93cca5d48c408`
-- R49 attempted source: `32ff3ebc0b1dc217bf0954974127b0aa68de61f2`; source gate run `31157162004`, job `92799120113`, `17/17 PASS`; local source contracts `95/95 PASS`; hydration only, no Candidate
-- R49 deterministic blocker: `npm ci --offline` → `ENOTCACHED https://registry.npmjs.org/typescript`; predecessor cache/evidence remains non-reusable reference-only
-- R50 repair PR #25 final head: `4707148f9402cddf5959067fee46f6686e0af6ad`; source gate run `31161050220`, job `92811240325`, `17/17 PASS`
-- R50 merged only into PR #20 as `42357ea7d48e691624c43c1c182c0d1c0ec9752d`
-- Final PR #20 source gate: pending on the exact tracked head created by this final R50 governance freeze
-- Electron list-only Candidate discovery remains exact `113 tests in 9 files`
+- R47 Knowledge Studio integration remains part of Draft PR #20.
+- R65 root-closure completeness source is integrated and source-green.
+- R66 consumed source: `beb951b95695233911da0a17543ef342acc6df93`; MiniMax source tests `106/106 PASS`; root exact-spec completeness `1361/1361 PASS`; one hydrator; zero Candidate executions.
+- R66 terminal blocker: `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH` at prefetch batch 51 on `string-width-cjs@4.2.3` `ETARGET`; predecessor cache/evidence is immutable reference-only.
+- R67 repair branch: `chatgpt/r67-lockfile-alias-identity`, Draft PR #36.
+- R67 code-green head: `20003b07b8137a369263e0fadb3b4f4171d7d392`; source gate run `31354821614`, job `93352458882`, `17/17 PASS`.
+- R67 final evidence-containing head: pending final source gate.
+- Electron list-only Candidate discovery remains exact `113 tests in 9 files`.
 
 The **exact Git commit object**, not a branch name, stale worktree, browser fixture, CI summary, package output, or chat transcript, is the only deployment authority.
 
-## R50 registry metadata closure
+## R66 root cause / R67 repair
 
-R48 used exact tarball URLs with `npm pack`, which warmed tarball content but did not guarantee every npm packument/metadata cache key needed by offline reify. R50 changes the source contract to:
+R66 did **not** prove that the root `package-lock.json` needs wholesale regeneration. The failed lock entry is an npm alias/install-path entry:
 
 ```text
-exact package-lock v3
-→ deterministic exact name@version + canonical tarball + integrity manifest
-→ bounded 24-item npm pack --ignore-scripts name@version batches
-→ npm metadata/packument + tarball cache
-→ strict (deny network*) npm ci --offline --ignore-scripts registry-cache closure proof
-→ remove closure-proof node_modules
-→ full lifecycle npm ci --offline with the existing bounded lifecycle-asset proxy
-→ require zero registry.npmjs.org requests after closure
-→ Electron arm64 native hydration
-→ full deny-network install/native proofs
-→ immutable cache ledger + PASS receipt
+node_modules/string-width-cjs
+  name=string-width
+  version=4.2.3
+
+node_modules/strip-ansi-cjs
+  name=strip-ansi
+  version=6.0.1
+
+node_modules/wrap-ansi-cjs
+  name=wrap-ansi
+  version=7.0.0
 ```
 
-A registry-cache closure failure now stops deterministically before lifecycle assets with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE`. Any registry request after closure stops with `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_LEAK_AFTER_PREFETCH`. `automaticRetry=false`, no retry/backoff/resume, no predecessor cache reuse, no host allowlist expansion, and Candidate Gate 1–12 deny-network remain invariant.
+R65 exact-version-only fallback incorrectly treated the `node_modules/...` install-path tail as the npm registry package name. R67 repairs only that interpretation:
+
+1. The entry must first be a real non-link `node_modules/...` path.
+2. If that lock entry provides a valid `name`, the locked `name` is authoritative for registry prefetch.
+3. Only entries without `name` fall back to the install-path package name.
+4. Root/workspace entries outside `node_modules` remain excluded.
+5. No package/lockfile regeneration, dependency version change, registry mirror/allowlist expansion, retry/resume change, or Candidate network change is used.
+
+R67 focused source contracts require:
+
+```text
+string-width@4.2.3        present
+strip-ansi@6.0.1          present
+wrap-ansi@7.0.0           present
+
+string-width-cjs@4.2.3    absent
+strip-ansi-cjs@6.0.1      absent
+wrap-ansi-cjs@7.0.0       absent
+```
+
+Root exact-spec completeness remains fail-closed.
 
 ## Integrated product source
 
@@ -71,12 +91,14 @@ local material
 
 ## Remaining gates
 
-- Pass `copilot-source-gate` on the exact PR #20 head after this final tracked R50 governance freeze.
+- Pass `copilot-source-gate` on the final evidence-containing R67 PR #36 head.
+- Squash PR #36 only into Draft PR #20 with expected-head binding; do not merge `main`.
+- Align PR #20 authority and pass `copilot-source-gate` on the resulting exact PR #20 head.
 - Freeze that 40-character `EXACT_FINAL_HEAD` and make no later tracked source change.
-- Issue a fresh exact-SHA MiniMax contract with a new run stamp and entirely new paths; R49 and all predecessor caches/evidence remain reference-only.
+- Issue MiniMax R68 with a new SOURCE_COMMIT, RUN_STAMP and six fresh local paths; R66 and all predecessor caches/evidence remain reference-only.
 - Pass Candidate Gates 1–12, packaged Electron `113/113`, three performance runs, Wiki Studio, full Ask/source/Todo/schedule/quit-relaunch loop, local ASR, screenshots, identities/manifests, and clean termination.
 - Let Codex independently operate that same packaged Candidate and report P0/P1/P2.
 
 ## Next single action
 
-Run the complete source gate on the final exact PR #20 head produced after this R50 governance freeze, freeze that SHA, then hand only that exact Git object to MiniMax Code for one fresh macOS Candidate attempt. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
+Pass the complete source gate on the final evidence-containing R67 PR #36 head, integrate only into Draft PR #20, then freeze a source-green exact PR #20 successor for MiniMax R68. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
