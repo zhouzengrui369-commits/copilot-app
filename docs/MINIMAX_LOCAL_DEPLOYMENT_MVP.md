@@ -2,13 +2,16 @@
 
 R31 remains the executable twelve-gate Candidate authority. R62 remains the only authorized exact-source hydrator launcher. R65 repairs root exact-spec completeness. R67 repairs npm alias/install-path identity exposed by R66.
 
-## Current authority override — R67 / next R68
+## Current authority override — R67 integrated / R68 pending final PR20 source gate
 
 ```text
 R66_SOURCE_CONSUMED
 R66_BLOCKER=BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH
 R66_BLOCKER_SAMPLE=string-width-cjs@4.2.3_ETARGET
 R67_LOCKFILE_ALIAS_REGISTRY_IDENTITY_REPAIR_IN_SOURCE
+R67_PR36_FINAL_HEAD=05185bf6d8239da22b80e89cf1c27edf1bb3d4c6
+R67_PR36_FINAL_SOURCE_GATE=17/17_SUCCESS
+R67_PR36_INTEGRATED_INTO_PR20=68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5
 R68_LOCAL_SUCCESSOR_NOT_RUN
 NOT_RUNTIME_PROOF
 MVP_NOT_COMPLETE
@@ -119,7 +122,7 @@ R64 cache/worktree/task/evidence identities are immutable `FORBIDDEN_REFERENCE_O
 
 ## R65 root closure completeness repair
 
-The R64 report compared root lock `packages` path count with manifest entry count. That comparison is not authoritative because the manifest deduplicates by exact `name@version` while lockfile `packages` is path-based.
+The R64 report compared root lock `packages` path count with manifest entry count. That comparison is not authoritative because registry-prefetch deduplicates by exact `name@version` while lockfile `packages` is path-based.
 
 The actual bug was concrete: root `package-lock.json` contains a closure-required `node_modules/zustand` entry at exact version `4.5.7` with no `resolved` or `integrity`. No tracked supplemental lock provided that exact tarball identity. The previous manifest silently omitted this exact spec even though `npm ci` requires it.
 
@@ -207,6 +210,14 @@ SOURCE_CHANGES_BY_MINIMAX=NONE
 
 The registry transport itself returned normally; the package path/name interpretation was wrong. R66 is Tier B consumed and all R66 local identities are immutable predecessor evidence.
 
+## R67 integrated source truth
+
+R67 implementation Head `20003b07b8137a369263e0fadb3b4f4171d7d392` passed complete source gate run `31354821614`, job `93352458882`, `17/17 SUCCESS`.
+
+R67 final evidence Head `05185bf6d8239da22b80e89cf1c27edf1bb3d4c6` passed complete source gate run `31355390496` after one same-SHA failed-job rerun. The initial failure was Step 12 Desktop Phase 1 only; exact diff from the implementation-green Head contained governance/evidence files only, with no Desktop/product/test/package/lockfile/workflow/R67 implementation change. Final rerun job `93354715454` completed `17/17 SUCCESS`, so the initial failure is adjudicated as CI transient.
+
+PR #36 then squash-merged only into Draft PR #20 as `68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5`. `main` remains untouched.
+
 ## Source identity policy
 
 ### Tier A — pure pre-hydration dispatch failure
@@ -230,7 +241,7 @@ A new RUN_STAMP and six new paths are mandatory.
 
 A new source SHA is mandatory once a real hydrator starts, native-cache output/receipt exists, Candidate starts, or source changes. No retry, resume, promotion, predecessor cache reuse, mirror switch, host expansion, or local source/test/runner/package/lockfile repair is permitted.
 
-R66 is Tier B consumed, so R68 MUST use a new SOURCE_COMMIT.
+R66 is Tier B consumed, so R68 MUST use the new final PR #20 SOURCE_COMMIT after this authority alignment and final source gate.
 
 ## Resume trigger for R68
 
@@ -238,7 +249,7 @@ R68 starts only from an external Parent PM handoff containing:
 
 ```text
 PR=20
-SOURCE_COMMIT=<exact final PR #20 head after R67 integration + authority alignment>
+SOURCE_COMMIT=<exact final PR #20 head after this authority alignment>
 SOURCE_GATE=PASS
 SOURCE_GATE_RUN=<completed exact run>
 SOURCE_GATE_JOB=<completed exact job>
