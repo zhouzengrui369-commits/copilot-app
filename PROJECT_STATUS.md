@@ -12,20 +12,21 @@ R31 remains the authoritative Phase 1 source-completion baseline, including the 
 - Main observed at takeover: `e91cafaa22ea100428b404b371aa35dce535c5bf`
 - Consolidated MVP Draft PR: `#20`, branch `chatgpt/mvp-source-finalization`
 - R31 pre-Studio source: `0131db4fb70ec4bb31ca10dc5ec11fafbf7eaf29`; source gate run `30819543111`, `17/17 PASS`; Desktop Phase 1 `1107/1107 PASS`
-- R47 Knowledge Studio integration remains part of Draft PR #20.
-- R65 root-closure completeness source is integrated and source-green.
-- R66 consumed source: `beb951b95695233911da0a17543ef342acc6df93`; MiniMax source tests `106/106 PASS`; root exact-spec completeness `1361/1361 PASS`; one hydrator; zero Candidate executions.
-- R66 terminal blocker: `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH` at prefetch batch 51 on `string-width-cjs@4.2.3` `ETARGET`; predecessor cache/evidence is immutable reference-only.
-- R67 repair branch: `chatgpt/r67-lockfile-alias-identity`, Draft PR #36.
-- R67 code-green head: `20003b07b8137a369263e0fadb3b4f4171d7d392`; source gate run `31354821614`, job `93352458882`, `17/17 PASS`.
-- R67 final evidence-containing head: pending final source gate.
+- R47 Knowledge Studio remains integrated in Draft PR #20.
+- R65 root-closure completeness remains integrated and source-green.
+- R66 consumed source: `beb951b95695233911da0a17543ef342acc6df93`; `106/106` source tests; root exact-spec completeness `1361/1361`; one hydrator; zero Candidate executions.
+- R66 terminal blocker: `BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH` at batch 51 on invalid spec `string-width-cjs@4.2.3` `ETARGET`; all R66 local identities are immutable reference-only.
+- R67 PR #36 final evidence head: `05185bf6d8239da22b80e89cf1c27edf1bb3d4c6`.
+- R67 final source gate: run `31355390496`, final rerun job `93354715454`, `17/17 PASS`; initial Step 12 failure adjudicated CI transient by exact-diff proof and same-SHA rerun.
+- R67 squash integration into Draft PR #20: `68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5`.
+- PR #20 exact head after the final authority-alignment commits must still complete the full source gate before MiniMax R68 is authorized.
 - Electron list-only Candidate discovery remains exact `113 tests in 9 files`.
 
 The **exact Git commit object**, not a branch name, stale worktree, browser fixture, CI summary, package output, or chat transcript, is the only deployment authority.
 
 ## R66 root cause / R67 repair
 
-R66 did **not** prove that the root `package-lock.json` needs wholesale regeneration. The failed lock entry is an npm alias/install-path entry:
+R66 did **not** prove that root `package-lock.json` requires wholesale regeneration. The failed entries are npm alias/install-path lock entries:
 
 ```text
 node_modules/string-width-cjs
@@ -41,13 +42,13 @@ node_modules/wrap-ansi-cjs
   version=7.0.0
 ```
 
-R65 exact-version-only fallback incorrectly treated the `node_modules/...` install-path tail as the npm registry package name. R67 repairs only that interpretation:
+R65 exact-version-only fallback incorrectly treated the `node_modules/...` install-path tail as the registry package name. R67 repairs only that interpretation:
 
 1. The entry must first be a real non-link `node_modules/...` path.
 2. If that lock entry provides a valid `name`, the locked `name` is authoritative for registry prefetch.
 3. Only entries without `name` fall back to the install-path package name.
 4. Root/workspace entries outside `node_modules` remain excluded.
-5. No package/lockfile regeneration, dependency version change, registry mirror/allowlist expansion, retry/resume change, or Candidate network change is used.
+5. No package/lockfile regeneration, dependency version change, mirror/allowlist expansion, retry/resume change, Candidate network change, product runtime change, signing/notarization or `main` change is used.
 
 R67 focused source contracts require:
 
@@ -91,14 +92,14 @@ local material
 
 ## Remaining gates
 
-- Pass `copilot-source-gate` on the final evidence-containing R67 PR #36 head.
-- Squash PR #36 only into Draft PR #20 with expected-head binding; do not merge `main`.
-- Align PR #20 authority and pass `copilot-source-gate` on the resulting exact PR #20 head.
+- Pass `copilot-source-gate` on the resulting exact PR #20 head after the R67 authority alignment.
 - Freeze that 40-character `EXACT_FINAL_HEAD` and make no later tracked source change.
-- Issue MiniMax R68 with a new SOURCE_COMMIT, RUN_STAMP and six fresh local paths; R66 and all predecessor caches/evidence remain reference-only.
+- Issue MiniMax R68 with that new SOURCE_COMMIT, a new RUN_STAMP and six fresh local paths; R66 and all predecessor caches/evidence remain reference-only.
+- Pre-network manifest must prove root completeness, `typescript@6.0.3`, `zustand@4.5.7`, real alias registry specs present and fake `*-cjs` registry specs absent.
+- Pass bounded registry prefetch, strict registry-cache closure, zero post-closure registry requests and native hydration PASS receipt.
 - Pass Candidate Gates 1–12, packaged Electron `113/113`, three performance runs, Wiki Studio, full Ask/source/Todo/schedule/quit-relaunch loop, local ASR, screenshots, identities/manifests, and clean termination.
 - Let Codex independently operate that same packaged Candidate and report P0/P1/P2.
 
 ## Next single action
 
-Pass the complete source gate on the final evidence-containing R67 PR #36 head, integrate only into Draft PR #20, then freeze a source-green exact PR #20 successor for MiniMax R68. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
+Run the complete source gate on the exact PR #20 head after this authority alignment. If `17/17 PASS`, freeze that SHA without further tracked changes and issue the MiniMax R68 local successor. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
