@@ -12,7 +12,7 @@ source:
   repository: zhouzengrui369-commits/copilot-app
   product_source_pr: 20
   product_source_branch: chatgpt/mvp-source-finalization
-  exact_final_commit: "pending final PR #20 exact head after R67 integration and authority alignment"
+  exact_final_commit: "resolve from final PR #20 head after this R67 authority-alignment commit and complete source gate"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
 workflow:
   chatgpt:
@@ -20,7 +20,7 @@ workflow:
     local_candidate_execution: FORBIDDEN
   minimax_code:
     role: exact-SHA local hydration/package/Candidate evidence producer
-    current_state: STOPPED_UNTIL_R67_FINAL_PR20_SOURCE_GREEN
+    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
   codex:
     role: independent packaged Electron product acceptance
     current_state: WAITING_FOR_CANDIDATE_IDENTITY
@@ -125,6 +125,13 @@ r67_lockfile_alias_identity:
     run: 31354821614
     job: 93352458882
     steps: 17/17_PASS
+  final_evidence_head: 05185bf6d8239da22b80e89cf1c27edf1bb3d4c6
+  final_evidence_source_gate:
+    run: 31355390496
+    final_job: 93354715454
+    steps: 17/17_PASS
+    initial_step_12_failure: CI_TRANSIENT_ADJUDICATED
+  integrated_into_pr20_as: 68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5
 gates:
   gate_1: "exact source and clean preimage"
   gate_2: "exact-source launcher; root-closure-complete alias-aware registry manifest; native-cache receipt; strict registry closure; deny-network proofs"
@@ -150,5 +157,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Pass the complete source gate on the final evidence-containing R67 PR #36 head, squash it only into Draft PR #20, align PR #20 authority, pass the complete source gate on the resulting exact PR #20 head, then issue MiniMax R68 with a new SOURCE_COMMIT and RUN_STAMP."
+next_single_action: "Pass the complete source gate on the resulting exact PR #20 head after this authority alignment, freeze that 40-character SHA with no later tracked source change, then issue MiniMax R68 with a new RUN_STAMP and six fresh local paths."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
