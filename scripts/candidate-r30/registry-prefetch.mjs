@@ -99,6 +99,8 @@ function packageNameFromLockfilePath(packagePath) {
 }
 
 function packageNameFromLockfileEntry(packagePath, entry) {
+  const pathName = packageNameFromLockfilePath(packagePath);
+  if (!pathName) return null;
   const lockedName = typeof entry?.name === 'string' ? entry.name : '';
   if (lockedName) {
     if (!validPackageName(lockedName)) {
@@ -110,7 +112,7 @@ function packageNameFromLockfileEntry(packagePath, entry) {
     }
     return lockedName;
   }
-  return packageNameFromLockfilePath(packagePath);
+  return pathName;
 }
 
 function requireLockfileV3(lockfileDocument, label = 'package-lock') {
