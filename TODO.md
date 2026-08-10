@@ -27,9 +27,10 @@ R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is
 - [x] Require real specs `string-width@4.2.3`, `strip-ansi@6.0.1`, `wrap-ansi@7.0.0`.
 - [x] Forbid fake specs `string-width-cjs@4.2.3`, `strip-ansi-cjs@6.0.1`, `wrap-ansi-cjs@7.0.0`.
 - [x] Pass R67 implementation source gate at `20003b07b8137a369263e0fadb3b4f4171d7d392`: run `31354821614`, job `93352458882`, `17/17 PASS`.
-- [ ] Pass complete source gate on the final evidence-containing R67 PR #36 head.
-- [ ] Squash PR #36 only into Draft PR #20 with expected-head binding.
-- [ ] Align PR #20 exact-object authority and pass the complete source gate on the resulting exact PR #20 head.
+- [x] Pass complete source gate on final evidence-containing R67 PR #36 head `05185bf6d8239da22b80e89cf1c27edf1bb3d4c6`; final rerun job `93354715454`, `17/17 PASS`.
+- [x] Squash PR #36 only into Draft PR #20 with expected-head binding as `68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5`.
+- [x] Align PR #20 exact-object authority to the integrated R67 truth.
+- [ ] Pass the complete source gate on the resulting exact PR #20 head after this authority alignment.
 - [ ] Freeze the new 40-character `EXACT_FINAL_HEAD` with no subsequent tracked source change.
 
 ## P0 — MiniMax Code R68 fresh macOS Candidate
@@ -40,7 +41,7 @@ MiniMax remains stopped until ChatGPT supplies `SOURCE_COMMIT`, `PR=20`, `SOURCE
 - [ ] Read exact-object deployment authority and Candidate scripts.
 - [ ] Use no R66/predecessor cache, worktree, evidence, manifest, artifact or runtime identity.
 - [ ] Pre-network manifest must prove root exact-spec completeness and alias-aware registry identity.
-- [ ] Require `string-width@4.2.3`, `strip-ansi@6.0.1`, `wrap-ansi@7.0.0` present and corresponding fake `*-cjs` registry specs absent.
+- [ ] Require real specs `string-width@4.2.3`, `strip-ansi@6.0.1`, `wrap-ansi@7.0.0` present and corresponding fake `*-cjs` registry specs absent.
 - [ ] Use only the exact-source background hydrator launcher; one launcher, one hydrator, no retry/resume/replacement.
 - [ ] Pass bounded registry prefetch, strict deny-network registry-cache closure and zero post-closure registry requests.
 - [ ] Pass Electron/native hydration and obtain one immutable native-cache PASS receipt.
