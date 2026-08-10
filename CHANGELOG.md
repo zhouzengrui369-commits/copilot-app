@@ -31,7 +31,9 @@ R65 exact-version-only fallback ignored `entry.name` and incorrectly converted t
 - Added synthetic alias and exact-repository regressions requiring `string-width@4.2.3`, `strip-ansi@6.0.1`, `wrap-ansi@7.0.0` and forbidding corresponding fake `*-cjs@...` specs.
 - No package/lockfile regeneration, dependency version change, mirror/allowlist expansion, retry/resume change, Candidate network change, product runtime change or `main` change.
 - R67 implementation head `20003b07b8137a369263e0fadb3b4f4171d7d392` passed source gate run `31354821614`, job `93352458882`, `17/17 PASS`.
-- Final evidence-containing PR #36 head still requires its own complete source gate before integration into Draft PR #20.
+- Final evidence-containing PR #36 head `05185bf6d8239da22b80e89cf1c27edf1bb3d4c6` passed source gate run `31355390496`; initial Step 12 failure was adjudicated CI transient after exact-diff proof and one same-SHA failed-job rerun, final job `93354715454` `17/17 PASS`.
+- PR #36 squash-merged only into Draft PR #20 source branch as `68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5`; `main` remains untouched.
+- Final PR #20 exact head after the authority-alignment commits must pass the complete source gate before MiniMax R68 receives deployment authority.
 
 ## 2026-08-07 — R50 Metadata-Complete Registry Prefetch
 
