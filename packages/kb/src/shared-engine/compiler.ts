@@ -60,6 +60,14 @@ function requireText(value: string, field: string): string {
   return trimmed;
 }
 
+function requireCode(value: string, field: string): string {
+  const trimmed = requireText(value, field);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$/.test(trimmed)) {
+    throw new CompilationContractError(`${field} must be a bounded machine code`);
+  }
+  return trimmed;
+}
+
 function validateRecipe(recipe: CompilationRecipe): CompilationRecipe {
   const recipeId = requireText(recipe.recipe_id, 'recipe_id');
   const recipeVersion = requireText(recipe.recipe_version, 'recipe_version');
@@ -112,10 +120,8 @@ export function recordCompilation(input: CompilationInput): CompilationResult {
   if (input.outcome === 'SUCCESS' && input.failure) {
     throw new CompilationContractError('successful compilation cannot carry failure metadata');
   }
-  if (input.failure) {
-    requireText(input.failure.code, 'failure.code');
-    requireText(input.failure.stage, 'failure.stage');
-  }
+  const errorCode = input.failure ? requireCode(input.failure.code, 'failure.code') : null;
+  const errorStage = input.failure ? requireCode(input.failure.stage, 'failure.stage') : null;
   if (input.outcome === 'FAILED' && input.proposed_outputs.length > 0) {
     throw new CompilationContractError('failed compilation cannot emit proposed outputs');
   }
@@ -141,8 +147,8 @@ export function recordCompilation(input: CompilationInput): CompilationResult {
       outcome: input.outcome,
       output_object_ids: sortedOutputs.map((object) => object.object_id),
       output_content_hashes: sortedOutputs.map((object) => object.content_hash),
-      error_code: input.failure?.code ?? null,
-      error_stage: input.failure?.stage ?? null,
+      error_code: errorCode,
+      error_stage: errorStage,
       completed_at: completedAt,
     }),
     compilation_id: compilationId,
@@ -156,8 +162,8 @@ export function recordCompilation(input: CompilationInput): CompilationResult {
     output_object_ids: sortedOutputs.map((object) => object.object_id),
     output_content_hashes: sortedOutputs.map((object) => object.content_hash),
     accepted_canonical_write: false,
-    error_code: input.failure?.code ?? null,
-    error_stage: input.failure?.stage ?? null,
+    error_code: errorCode,
+    error_stage: errorStage,
     completed_at: completedAt,
   };
 
