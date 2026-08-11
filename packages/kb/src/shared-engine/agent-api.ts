@@ -103,11 +103,23 @@ export class AgentApiContractError extends Error {
 }
 
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}$/;
+const MACHINE_CODE_PATTERN = /^[A-Z][A-Z0-9_:-]{0,79}$/;
 
 function requireGrant(value: string, field: string): string {
   const trimmed = value.trim();
   if (!ID_PATTERN.test(trimmed)) {
     throw new AgentApiContractError('INVALID_AGENT_REQUEST', `${field} is invalid`);
+  }
+  return trimmed;
+}
+
+function requireMachineCode(value: string, field: string): string {
+  const trimmed = value.trim();
+  if (!MACHINE_CODE_PATTERN.test(trimmed)) {
+    throw new AgentApiContractError(
+      'INVALID_AGENT_REQUEST',
+      `${field} must be a bounded machine code`,
+    );
   }
   return trimmed;
 }
@@ -299,7 +311,16 @@ export function submitAgentWriteProposal<TPayload>(
   if (!input.session.manifest.allowed_read_types.includes(input.object.object_type)) {
     throw new AgentApiContractError('OBJECT_TYPE_NOT_GRANTED', 'proposed object type is not granted');
   }
-  const reasonCode = requireGrant(input.reason_code, 'reason_code');
+
+  const policyDecision = authorizeCanonicalRead(input.object, scope.readRequest, proposedAt);
+  if (!policyDecision.allowed) {
+    throw new AgentApiContractError(
+      'WRITE_NOT_GRANTED',
+      'proposed object is outside granted capability scope',
+    );
+  }
+
+  const reasonCode = requireMachineCode(input.reason_code, 'reason_code');
   const proposalInput: CreateWriteProposalInput<TPayload> = {
     capabilityId: input.session.manifest.capability_id,
     object: input.object,
