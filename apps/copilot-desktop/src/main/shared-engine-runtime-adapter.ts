@@ -112,6 +112,10 @@ const EVIDENCE_PROJECTION: Record<RagRetrievalEvidence, ProjectionKind> = {
   'kg-neighbor': 'GRAPH',
 };
 
+function capabilityIdForConsumer(consumerId: string): string {
+  return `desktop:${consumerId}`;
+}
+
 function sharedContext(context: DesktopSharedEngineContext): C1AdapterContext {
   const namespace = context.namespace.trim();
   const actorId = context.actorId.trim();
@@ -124,7 +128,7 @@ function sharedContext(context: DesktopSharedEngineContext): C1AdapterContext {
     namespace,
     actorId,
     purposes: [purpose],
-    allowedConsumers: [consumerId],
+    allowedConsumers: [capabilityIdForConsumer(consumerId)],
     privacyClass: context.privacyClass ?? 'D1',
     cloudEgress: 'DENY',
   };
@@ -273,10 +277,12 @@ export function readRequestForDesktopContext(
   objectTypes: readonly CanonicalObject['object_type'][] = ['Knowledge'],
 ): ReadCapabilityRequest {
   const resolved = sharedContext(context);
+  const capabilityId = resolved.allowedConsumers[0];
+  if (!capabilityId) throw new DesktopSharedEngineAdapterError('desktop capability identity is unavailable');
   return {
-    capability_id: `desktop:${context.consumerId}`,
+    capability_id: capabilityId,
     namespace: resolved.namespace,
-    purpose: context.purpose,
+    purpose: context.purpose.trim(),
     privacy_ceiling: context.privacyClass ?? 'D1',
     allowed_object_types: [...new Set(objectTypes)],
   };
@@ -307,11 +313,13 @@ export function createDesktopAgentSession(
   input: { expiresAt?: string | null; negotiatedAt?: number | string | Date } = {},
 ): CapabilitySession {
   const resolved = sharedContext(context);
+  const capabilityId = resolved.allowedConsumers[0];
+  if (!capabilityId) throw new DesktopSharedEngineAdapterError('desktop capability identity is unavailable');
   const manifest = createCapabilityManifest({
-    capability_id: `desktop:${context.consumerId}`,
-    consumer_id: context.consumerId,
+    capability_id: capabilityId,
+    consumer_id: context.consumerId.trim(),
     namespaces: [resolved.namespace],
-    purposes: [context.purpose],
+    purposes: [context.purpose.trim()],
     privacy_ceiling: context.privacyClass ?? 'D1',
     allowed_read_types: ['Source', 'Knowledge', 'Entity', 'Relation'],
     write_mode: context.writeMode ?? 'NONE',
@@ -333,8 +341,8 @@ export function runDesktopAgentRead(
       mapping.mapping.knowledge.object,
     ]),
     object_ids: mappings.map((mapping) => mapping.mapping.knowledge.object.object_id),
-    namespace: context.namespace,
-    purpose: context.purpose,
+    namespace: context.namespace.trim(),
+    purpose: context.purpose.trim(),
     completed_at: at,
   });
 }
@@ -350,8 +358,8 @@ export function runDesktopAgentRetrieval(
     session,
     canonical_objects: mappings.map((mapping) => mapping.mapping.knowledge.object),
     hits: mapDesktopRagSourceDetails(details, mappings),
-    namespace: context.namespace,
-    purpose: context.purpose,
+    namespace: context.namespace.trim(),
+    purpose: context.purpose.trim(),
     completed_at: at,
   });
 }
@@ -366,8 +374,8 @@ export function runDesktopAgentWriteProposal(
   return submitAgentWriteProposal({
     session,
     object,
-    namespace: context.namespace,
-    purpose: context.purpose,
+    namespace: context.namespace.trim(),
+    purpose: context.purpose.trim(),
     reason_code: reasonCode,
     proposed_at: at,
   });
@@ -395,7 +403,7 @@ export function createDesktopPortableRoundtripPlan(
     };
   });
   const bundle = createPortableBundle({
-    namespace: context.namespace,
+    namespace: context.namespace.trim(),
     objects,
     source_bytes: sourceBytes,
     exported_at: at,
