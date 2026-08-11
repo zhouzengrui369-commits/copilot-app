@@ -105,6 +105,7 @@ test('online child sees only one localhost proxy while host policy remains exact
     'objects.githubusercontent.com',
     'registry.npmjs.org',
     'release-assets.githubusercontent.com',
+    'www.electronjs.org',
   ]);
 });
 
