@@ -210,13 +210,15 @@ export function mapLegacyNote(
     payload: sourcePayload,
   };
 
-  const relatedSourceKeys = [...new Set(note.related)].sort();
+  const relatedObjectIds = [...new Set(note.related)]
+    .sort()
+    .map((path) => knowledgeObjectIdForNote(context.namespace, path));
   const knowledgePayload: KnowledgePayload = {
     title: note.title,
     kind: note.type,
     state: note.status,
     tags: [...new Set(note.tags)].sort(),
-    related_source_keys: relatedSourceKeys,
+    related_object_ids: relatedObjectIds,
     content_ref: contentRef,
   };
   const knowledgeContentHash = contentHash({
@@ -225,7 +227,7 @@ export function mapLegacyNote(
     type: note.type,
     status: note.status,
     tags: knowledgePayload.tags,
-    related: relatedSourceKeys,
+    related_object_ids: relatedObjectIds,
     legacy_source_hash: note.sourceHash,
   });
   const knowledgeRevision = mappingReceipt(knowledgeId, knowledgeContentHash, observedAt, previous.knowledge);
@@ -347,7 +349,7 @@ export function mapLegacyRelation(
       valid_from: mappedAt,
       valid_to: null,
       assertion_type: options.assertionType ?? 'SYSTEM_INFERENCE',
-      confidence: relation.weight === null ? null : ensureConfidence(relation.weight),
+      confidence: null,
       review_state: options.reviewState ?? 'PROPOSED',
       privacy_class: context.privacyClass ?? 'D1',
       permission_scope: permissionScope(context),
