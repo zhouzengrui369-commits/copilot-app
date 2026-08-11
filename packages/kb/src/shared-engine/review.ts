@@ -90,6 +90,14 @@ function requireText(value: string, field: string): string {
   return trimmed;
 }
 
+function requireCode(value: string, field: string): string {
+  const trimmed = requireText(value, field);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$/.test(trimmed)) {
+    throw new ReviewContractError(`${field} must be a bounded machine code`);
+  }
+  return trimmed;
+}
+
 export function createReviewQueueItem<TPayload>(
   object: CanonicalObject<TPayload>,
   queuedAt: number | string | Date = new Date(),
@@ -141,7 +149,7 @@ export function decideReview<TPayload>(input: ReviewDecisionInput<TPayload>): Re
   }
 
   const reviewerId = requireText(input.authority.actor_id, 'authority.actor_id');
-  const reason = requireText(input.reason, 'reason');
+  const reason = requireCode(input.reason, 'reason');
   const decidedAt = toIsoTime(input.decided_at ?? new Date());
   const reviewState = nextReviewState(input.decision);
   const object: CanonicalObject<TPayload> = {
@@ -190,16 +198,16 @@ export function decideReview<TPayload>(input: ReviewDecisionInput<TPayload>): Re
 export function createUserCorrection<TPayload>(input: UserCorrectionInput<TPayload>): UserCorrectionResult<TPayload> {
   validateCanonicalObject(input.previous);
   const actorId = requireText(input.actor_id, 'actor_id');
-  const reason = requireText(input.reason, 'reason');
+  const reason = requireCode(input.reason, 'reason');
   const observedAt = toIsoTime(input.observed_at ?? new Date());
+  if (contentHash(input.corrected_payload) === contentHash(input.previous.payload)) {
+    throw new ReviewContractError('correction must change the canonical payload');
+  }
   const nextHash = contentHash({
     payload: input.corrected_payload,
     source_refs: [...input.previous.source_refs].sort(),
     assertion_type: 'USER_DECLARED_FACT',
   });
-  if (nextHash === input.previous.content_hash) {
-    throw new ReviewContractError('correction must change the canonical content hash');
-  }
 
   const proposal: CanonicalObject<TPayload> = {
     ...input.previous,
