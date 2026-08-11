@@ -190,3 +190,54 @@ export {
   buildAgentConformanceFixture,
 } from './agent-conformance.js';
 export type { AgentConformanceFixture } from './agent-conformance.js';
+
+export {
+  PORTABILITY_CONTRACT_VERSION,
+  PortabilityContractError,
+  createPortableBundle,
+  planPortableImport,
+  validatePortableBundle,
+} from './portability.js';
+export type {
+  CreatePortableBundleInput,
+  ImportOperation,
+  ImportOperationKind,
+  ImportPlan,
+  PortableBundle,
+  PortableCanonicalEntry,
+  PortableSourceBytesEntry,
+} from './portability.js';
+
+export {
+  DELETION_CONTRACT_VERSION,
+  DELETION_TARGETS,
+  DeletionContractError,
+  createDeletionPlan,
+  evaluateDeletion,
+  recordDeletionTarget,
+} from './deletion.js';
+export type {
+  DeletionAuthority,
+  DeletionAuthorityKind,
+  DeletionOverallState,
+  DeletionPlan,
+  DeletionResult,
+  DeletionTarget,
+  DeletionTargetReceipt,
+  DeletionTargetState,
+  DeletionTombstone,
+} from './deletion.js';
+
+export {
+  SYNC_CONTRACT_VERSION,
+  SyncContractError,
+  classifySync,
+  createSyncEnvelope,
+  validateSyncEnvelope,
+} from './sync.js';
+export type {
+  SyncConflictReason,
+  SyncDecision,
+  SyncDecisionKind,
+  SyncEnvelope,
+} from './sync.js';
