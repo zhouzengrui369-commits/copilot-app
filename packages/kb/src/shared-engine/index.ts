@@ -114,3 +114,36 @@ export type {
   ResolveConflictResult,
   SupersessionReceipt,
 } from './conflict.js';
+
+export {
+  ProjectionContractError,
+  checkProjectionFreshness,
+  createProjection,
+  permissionFingerprint,
+  validateProjectionRecord,
+} from './projection.js';
+export type {
+  ProjectionFreshness,
+  ProjectionKind,
+  ProjectionRecipe,
+  ProjectionRecord,
+  ProjectionStaleReason,
+} from './projection.js';
+
+export {
+  RetrievalContractError,
+  buildGroundedContext,
+  rankAuthorizedProjectionHits,
+} from './retrieval.js';
+export type {
+  AuthorizedProjectionEvidence,
+  DeniedRetrievalAudit,
+  GroundedContext,
+  GroundedContextItem,
+  RankedCanonicalResult,
+  RetrievalHit,
+  RetrievalKind,
+  RetrievalReceipt,
+  StaleRetrievalAudit,
+  UnifiedRetrievalResult,
+} from './retrieval.js';

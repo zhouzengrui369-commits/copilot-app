@@ -1,0 +1,45 @@
+2026-08-11 C3 base planning SHA = 266af98cde6c947df8ceb092d67f0197bd69ced0
+CREATE branch chatgpt/v03-c3-unified-projection-retrieval-r1
+WRITE C3 GOAL.md
+WRITE C3 TASK.md
+WRITE C3 PLAN.md
+CREATE packages/kb/src/shared-engine/projection.ts
+UPDATE projection.ts -> validate projection records + freshness for identity/provenance/policy drift
+CREATE packages/kb/src/shared-engine/retrieval.ts
+UPDATE packages/kb/src/shared-engine/index.ts -> export C3 projection/retrieval surface
+UPDATE packages/kb/vitest.shared-engine-coverage.config.ts -> strict per-file coverage includes 11 Shared Engine source files
+CREATE packages/kb/tests/shared-engine-projection.test.ts
+CREATE packages/kb/tests/shared-engine-retrieval.test.ts
+CREATE PR #46 Draft stacked on v0.3 planning branch
+SOURCE_GATE_SHA=0a0ee4d285588224ed518296dbcb7552596e1f47
+RUN 31478139200 job 93736615923 -> PASS
+  exact identity PASS
+  package/lock authority unchanged PASS
+  legacy critical inputs byte-identical PASS
+  npm ci PASS (1454 packages)
+  KB build PASS
+  KB check PASS
+  explicit C1 conformance 28/28 PASS
+  complete KB regression 220/220 PASS across 19 files
+  whole KB global coverage PASS: 94.03 statements / 82.22 branches / 98.09 functions / 94.03 lines
+  Shared Engine strict tests 86/86 PASS across 6 files
+  Shared Engine strict per-file coverage PASS
+  Shared Engine total 99.85 statements / 97.69 branches / 100 functions / 99.85 lines
+  projection.ts 100 / 100 / 100 / 100
+  retrieval.ts 98.60 / 90.47 / 100 / 98.60
+  storage-neutral boundary PASS
+  source-clean PASS
+WRITE RESULT.md
+WRITE EVIDENCE.md
+WRITE commands.log
+
+PROTECTED_MVP_PR20_MUTATION_BY_C3=NONE
+MAIN_MUTATION_BY_C3=NONE
+PHYSICAL_SCHEMA_CHANGE=NONE
+PACKAGE_LOCK_CHANGE=NONE
+PREDECESSOR_EVIDENCE_CHANGE=NONE
+RUNTIME_EXECUTION=NONE
+MINIMAX_DISPATCH=NONE
+CODEX_DISPATCH=NONE
+D3_ENABLEMENT=NONE
+SIGN_NOTARIZE_RELEASE=NONE
