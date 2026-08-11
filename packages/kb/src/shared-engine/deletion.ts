@@ -91,6 +91,7 @@ export class DeletionContractError extends Error {
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}$/;
 const MACHINE_CODE_PATTERN = /^[A-Z][A-Z0-9_:-]{0,79}$/;
 const TARGET_SET = new Set<DeletionTarget>(DELETION_TARGETS);
+const STATE_SET = new Set<DeletionTargetState>(['DELETED', 'TOMBSTONED', 'PENDING', 'BLOCKED', 'FAILED']);
 const TERMINAL_SUCCESS = new Set<DeletionTargetState>(['DELETED', 'TOMBSTONED']);
 
 function requireId(value: string, field: string): string {
@@ -123,6 +124,23 @@ function normalizeAuthority(authority: DeletionAuthority): DeletionAuthority {
   };
 }
 
+function planIdentity(input: {
+  object_id: string;
+  content_hash: string;
+  revision: number;
+  namespace: string;
+  authority: DeletionAuthority;
+}) {
+  return {
+    object_id: input.object_id,
+    content_hash: input.content_hash,
+    revision: input.revision,
+    namespace: input.namespace,
+    authority: input.authority,
+    required_targets: DELETION_TARGETS,
+  };
+}
+
 export function createDeletionPlan(
   object: CanonicalObject,
   authority: DeletionAuthority,
@@ -133,14 +151,13 @@ export function createDeletionPlan(
     throw new DeletionContractError('INVALID_DELETION_REQUEST', 'object is already tombstoned');
   }
   const normalizedAuthority = normalizeAuthority(authority);
-  const identity = {
+  const identity = planIdentity({
     object_id: object.object_id,
     content_hash: object.content_hash,
     revision: object.revision,
     namespace: object.namespace,
     authority: normalizedAuthority,
-    required_targets: DELETION_TARGETS,
-  };
+  });
   return {
     contract_version: DELETION_CONTRACT_VERSION,
     plan_id: receiptId('deletion-plan', identity),
@@ -164,38 +181,39 @@ function validatePlan(plan: DeletionPlan): void {
     plan.revision < 1 ||
     typeof plan.namespace !== 'string' ||
     plan.namespace.length === 0 ||
+    !Array.isArray(plan.required_targets) ||
     plan.required_targets.length !== DELETION_TARGETS.length ||
     plan.required_targets.some((target, index) => target !== DELETION_TARGETS[index])
   ) {
     throw new DeletionContractError('INVALID_DELETION_REQUEST', 'deletion plan is malformed');
   }
-  const expected = createDeletionPlan(
-    {
+  let normalizedTime: string;
+  try {
+    normalizedTime = toIsoTime(plan.requested_at);
+  } catch {
+    throw new DeletionContractError('INVALID_DELETION_REQUEST', 'deletion plan timestamp is invalid');
+  }
+  if (normalizedTime !== plan.requested_at) {
+    throw new DeletionContractError('INVALID_DELETION_REQUEST', 'deletion plan timestamp is not canonical');
+  }
+  const authority = normalizeAuthority(plan.authority);
+  if (
+    authority.authority_id !== plan.authority.authority_id ||
+    authority.reason_code !== plan.authority.reason_code
+  ) {
+    throw new DeletionContractError('INVALID_DELETION_REQUEST', 'deletion authority is not canonical');
+  }
+  const expectedId = receiptId(
+    'deletion-plan',
+    planIdentity({
       object_id: plan.object_id,
-      object_type: 'Knowledge',
-      namespace: plan.namespace,
-      schema_version: '0.3.0-draft',
-      source_refs: [],
       content_hash: plan.content_hash,
-      observed_at: plan.requested_at,
-      valid_from: null,
-      valid_to: null,
-      assertion_type: 'SOURCE_FACT',
-      confidence: null,
-      review_state: 'PROPOSED',
-      privacy_class: 'D0',
-      permission_scope: { purposes: [], allowed_consumers: [], cloud_egress: 'DENY' },
-      supersedes: null,
-      tombstone_state: 'ACTIVE',
-      created_by: 'deletion-plan-validator',
-      updated_by: 'deletion-plan-validator',
       revision: plan.revision,
-      payload: null,
-    },
-    plan.authority,
-    plan.requested_at,
+      namespace: plan.namespace,
+      authority,
+    }),
   );
-  if (expected.plan_id !== plan.plan_id) {
+  if (expectedId !== plan.plan_id) {
     throw new DeletionContractError('INVALID_DELETION_REQUEST', 'deletion plan identity mismatch');
   }
 }
@@ -213,6 +231,9 @@ export function recordDeletionTarget(
   validatePlan(plan);
   if (!TARGET_SET.has(input.target)) {
     throw new DeletionContractError('INVALID_TARGET_RECEIPT', 'unknown deletion target');
+  }
+  if (!STATE_SET.has(input.state)) {
+    throw new DeletionContractError('INVALID_TARGET_RECEIPT', 'unknown deletion target state');
   }
   const success = TERMINAL_SUCCESS.has(input.state);
   const pending = input.state === 'PENDING';
