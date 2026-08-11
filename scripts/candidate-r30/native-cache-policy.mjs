@@ -26,6 +26,7 @@ export const NATIVE_HYDRATION_HOSTS = Object.freeze([
   'objects.githubusercontent.com',
   'registry.npmjs.org',
   'release-assets.githubusercontent.com',
+  'www.electronjs.org',
 ]);
 export const EXPECTED_LIFECYCLE_PACKAGES = Object.freeze([
   ['apps/copilot-desktop/node_modules/electron', '38.8.6'],
