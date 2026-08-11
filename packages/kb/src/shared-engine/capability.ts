@@ -1,7 +1,4 @@
-import {
-  type PrivacyClass,
-  type SharedObjectType,
-} from './contract.js';
+import type { PrivacyClass, SharedObjectType } from './contract.js';
 import { receiptId, stableSerialize, toIsoTime } from './identity.js';
 
 export const AGENT_API_CONTRACT_VERSION = '0.3.0-draft' as const;
@@ -87,8 +84,11 @@ function normalizeObjectTypes(values: readonly SharedObjectType[]): SharedObject
 
 function normalizeExpiry(value: string | null | undefined): string | null {
   if (value === null || value === undefined) return null;
-  const normalized = toIsoTime(value);
-  return normalized;
+  try {
+    return toIsoTime(value);
+  } catch {
+    throw new CapabilityContractError('INVALID_CAPABILITY_MANIFEST', 'expires_at is invalid');
+  }
 }
 
 function manifestIdentityPayload(manifest: Omit<CapabilityManifest, 'manifest_id'>): unknown {
@@ -170,6 +170,17 @@ export function validateCapabilityManifest(value: unknown): asserts value is Cap
   }
 }
 
+export function assertCapabilityActive(
+  manifest: CapabilityManifest,
+  at: number | string | Date = new Date(),
+): void {
+  validateCapabilityManifest(manifest);
+  const currentTime = Date.parse(toIsoTime(at));
+  if (manifest.expires_at !== null && Date.parse(manifest.expires_at) <= currentTime) {
+    throw new CapabilityContractError('CAPABILITY_EXPIRED', 'capability manifest has expired');
+  }
+}
+
 export function negotiateCapability(
   manifest: CapabilityManifest,
   requestedContractVersion: string,
@@ -195,29 +206,21 @@ export function negotiateCapability(
   };
 }
 
-export function assertCapabilityActive(
-  manifest: CapabilityManifest,
-  at: number | string | Date = new Date(),
-): void {
-  validateCapabilityManifest(manifest);
-  const currentTime = Date.parse(toIsoTime(at));
-  if (manifest.expires_at !== null && Date.parse(manifest.expires_at) <= currentTime) {
-    throw new CapabilityContractError('CAPABILITY_EXPIRED', 'capability manifest has expired');
-  }
-}
-
 export function validateCapabilitySession(
   session: CapabilitySession,
   at: number | string | Date = new Date(),
 ): void {
+  if (typeof session !== 'object' || session === null || Array.isArray(session)) {
+    throw new CapabilityContractError('INVALID_CAPABILITY_MANIFEST', 'capability session must be an object');
+  }
   validateCapabilityManifest(session.manifest);
+  const expectedSessionId = receiptId('capability-session', {
+    manifest_id: session.manifest.manifest_id,
+    contract_version: AGENT_API_CONTRACT_VERSION,
+  });
   if (
     session.negotiated_contract_version !== AGENT_API_CONTRACT_VERSION ||
-    session.session_id !==
-      receiptId('capability-session', {
-        manifest_id: session.manifest.manifest_id,
-        contract_version: AGENT_API_CONTRACT_VERSION,
-      }) ||
+    session.session_id !== expectedSessionId ||
     Number.isNaN(Date.parse(session.negotiated_at))
   ) {
     throw new CapabilityContractError('INVALID_CAPABILITY_MANIFEST', 'capability session is invalid');
