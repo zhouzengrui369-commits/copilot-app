@@ -30,6 +30,9 @@ export default defineConfig({
         'src/shared-engine/capability.ts',
         'src/shared-engine/agent-api.ts',
         'src/shared-engine/agent-conformance.ts',
+        'src/shared-engine/portability.ts',
+        'src/shared-engine/deletion.ts',
+        'src/shared-engine/sync.ts',
       ],
       thresholds: {
         perFile: true,
