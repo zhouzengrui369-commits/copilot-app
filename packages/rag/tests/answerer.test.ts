@@ -156,10 +156,17 @@ describe('Answerer', () => {
       model: 'bge-m3:latest', embeddedAt: 0,
     });
 
-    const scripted = ['OPC 是 ', 'One-Person Company 的缩写', '。'];
+    const scripted = [
+      'OPC 是 ',
+      'One-Person Company 的缩写',
+      '。(来源: glossary/opc)',
+    ];
     const factory: ChatStreamFactory = async function* () {
-      for (const d of scripted) {
-        yield { content: d, finishReason: undefined } as AnswererStreamChunk;
+      for (const [index, d] of scripted.entries()) {
+        yield {
+          content: d,
+          finishReason: index === scripted.length - 1 ? 'stop' : undefined,
+        } as AnswererStreamChunk;
       }
     };
 
@@ -224,6 +231,30 @@ describe('Answerer', () => {
     await store.close();
   });
 
+  it('uses deterministic ASCII/CJK text when vectors are absent and reports degraded health', async () => {
+    const localOnly = {
+      id: 'notes/local#0',
+      notePath: 'notes/local',
+      ordinal: 0,
+      text: 'OPC 本地知识整理与个人公司记录',
+      tokenCount: 3,
+      charRange: [0, 'OPC 本地知识整理与个人公司记录'.length] as [number, number],
+    };
+    await store.replaceNoteIndex('notes/local', [localOnly], []);
+    const answerer = new Answerer(embedder, store, async function* () {});
+
+    const ascii = await answerer.retrieve('OPC');
+    expect(ascii.hits.map((hit) => hit.chunk.id)).toEqual(['notes/local#0']);
+    expect(ascii.hits[0]?.evidence).toContain('local-text');
+    expect(ascii.providerStatus).toBe('degraded');
+    expect(ascii.diagnostics).toContain('RAG_VECTOR_INDEX_DEGRADED');
+
+    const cjk = await answerer.retrieve('知识整理');
+    expect(cjk.hits.map((hit) => hit.chunk.id)).toEqual(['notes/local#0']);
+    expect(cjk.mode).toBe('local-text');
+    expect(cjk.providerStatus).toBe('degraded');
+  });
+
   it.each([
     ['', 'empty'],
     [42, 'non-string'],
@@ -241,7 +272,7 @@ describe('Answerer', () => {
       options = receivedOptions;
       yield { content: '' };
       yield undefined as unknown as AnswererStreamChunk;
-      yield { content: '  grounded answer  ' };
+      yield { content: 'grounded answer (source: notes/long)', finishReason: 'stop' };
     };
     const answerer = answererWithHits(
       [retrievalHit('notes/long', 0.9, 0, 'long#0', 'abcdefgh')],
@@ -256,11 +287,19 @@ describe('Answerer', () => {
 
     const output = await consumeAnswer(answerer, 'what is grounded?');
 
-    expect(output.deltas).toEqual(['  grounded answer  ']);
-    expect(output.result.answer).toBe('grounded answer');
-    expect(output.result.totalChars).toBe('  grounded answer  '.length);
+    expect(output.deltas).toEqual(['grounded answer (source: notes/long)']);
+    expect(output.result.answer).toBe('grounded answer (source: notes/long)');
+    expect(output.result.totalChars).toBe('grounded answer (source: notes/long)'.length);
     expect(output.result.sourceDetails).toEqual([
-      { notePath: 'notes/long', evidence: ['vector'], score: 0.9 },
+      {
+        notePath: 'notes/long',
+        evidence: ['vector'],
+        score: 0.9,
+        chunkId: 'long#0',
+        charRange: [0, 8],
+        excerpt: 'abcdefgh',
+        mode: 'vector',
+      },
     ]);
     expect(messages[0]?.content).toContain('retrieval-augmented assistant');
     expect(messages[1]?.content).toContain('abcd…');
@@ -291,22 +330,21 @@ describe('Answerer', () => {
     await expect(iterator.next()).rejects.toBe(reason);
   });
 
-  it('creates AbortError for non-Error abort reasons during streaming', async () => {
+  it('creates AbortError for non-Error abort reasons while buffering the stream', async () => {
     const controller = new AbortController();
     const factory: ChatStreamFactory = async function* () {
       yield { content: 'first' };
+      controller.abort('user cancelled');
       yield { content: 'second' };
     };
     const answerer = answererWithHits([retrievalHit('notes/a')], factory);
     const iterator = answerer.answer('question', { signal: controller.signal });
-    expect((await iterator.next()).value).toMatchObject({ delta: 'first' });
-    controller.abort('user cancelled');
     await expect(iterator.next()).rejects.toMatchObject({ name: 'AbortError' });
   });
 
   it('defaults source-detail evidence and deduplicates duplicate note paths', async () => {
     const answerer = answererWithHits([], async function* () {
-      yield { content: 'ok' };
+      yield { content: 'ok (source: notes/same)', finishReason: 'stop' };
     });
     answerer.retrieve = vi.fn(async () => retrievalResult([
       retrievalHit('notes/same', 1, 0, 'same#0'),
@@ -316,9 +354,173 @@ describe('Answerer', () => {
     const output = await consumeAnswer(answerer, 'question');
     expect(output.result.sources).toEqual(['notes/same']);
     expect(output.result.sourceDetails).toEqual([
-      { notePath: 'notes/same', evidence: ['vector'], score: 1 },
-      { notePath: 'notes/same', evidence: ['vector'], score: 0.8 },
+      {
+        notePath: 'notes/same',
+        evidence: ['vector'],
+        score: 1,
+        chunkId: 'same#0',
+        charRange: [0, 'text for notes/same'.length],
+        excerpt: 'text for notes/same',
+        mode: 'vector',
+      },
     ]);
+  });
+
+  it.each([
+    ['', 'empty answer'],
+    ['unsupported answer', 'missing citation'],
+    ['answer (source: notes/hallucinated)', 'hallucinated path'],
+    ['answer (source: notes/real', 'unclosed citation'],
+    ['answer (source: notes/real) trailing text', 'text after citation'],
+  ])('fails closed with no sources for %s (%s)', async (content) => {
+    const answerer = answererWithHits(
+      [retrievalHit('notes/real')],
+      async function* () {
+        yield { content, finishReason: 'stop' };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(output.result.answer).toMatch(/核验|verifiable/i);
+    expect(output.result.sources).toEqual([]);
+    expect(output.result.sourceDetails).toEqual([]);
+    expect(output.result.diagnostics).toContain('RAG_CITATION_SOURCE_MISMATCH');
+    expect(output.deltas).toEqual([output.result.answer]);
+  });
+
+  it.each([
+    [undefined, 'missing'],
+    ['length', 'length'],
+    ['error', 'error'],
+    ['content_filter', 'content filtering'],
+    ['tool_calls', 'unknown'],
+  ])('fails closed for a %s terminal state (%s)', async (finishReason, _label) => {
+    const answerer = answererWithHits(
+      [retrievalHit('notes/real')],
+      async function* () {
+        yield { content: 'grounded (source: notes/real)', finishReason };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(output.result.answer).toMatch(/核验/);
+    expect(output.result.sources).toEqual([]);
+    expect(output.result.sourceDetails).toEqual([]);
+    expect(output.result.diagnostics).toContain('RAG_CITATION_SOURCE_MISMATCH');
+  });
+
+  it('fails closed when content arrives after an accepted terminal marker', async () => {
+    const answerer = answererWithHits(
+      [retrievalHit('notes/real')],
+      async function* () {
+        yield { content: 'grounded (source: notes/real)', finishReason: 'stop' };
+        yield { content: ' trailing content' };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(output.result.answer).toMatch(/核验/);
+    expect(output.result.sources).toEqual([]);
+    expect(output.result.sourceDetails).toEqual([]);
+  });
+
+  it('validates citations only against the exact prompt context slice', async () => {
+    let userPrompt = '';
+    const answerer = answererWithHits(
+      [
+        retrievalHit('notes/visible', 1),
+        retrievalHit('notes/hidden', 0.9),
+      ],
+      async function* (messages) {
+        userPrompt = messages[1]?.content ?? '';
+        yield { content: 'hidden claim (source: notes/hidden)', finishReason: 'stop' };
+      },
+      { maxContextChunks: 1 },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(userPrompt).toContain('notes/visible');
+    expect(userPrompt).not.toContain('notes/hidden');
+    expect(output.result.answer).toMatch(/核验/);
+    expect(output.result.sources).toEqual([]);
+    expect(output.result.sourceDetails).toEqual([]);
+  });
+
+  it.each([
+    ['grounded paragraph (source: notes/real)\n\nuncited paragraph', 'paragraph'],
+    ['- grounded bullet (source: notes/real)\n- uncited bullet', 'bullet'],
+  ])('requires every non-empty %s to carry a complete allowed citation', async (content) => {
+    const answerer = answererWithHits(
+      [retrievalHit('notes/real')],
+      async function* () {
+        yield { content, finishReason: 'stop' };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(output.result.answer).toMatch(/核验/);
+    expect(output.result.sources).toEqual([]);
+    expect(output.result.sourceDetails).toEqual([]);
+  });
+
+  it('accepts multiple paragraphs and bullets only when each is cited', async () => {
+    const content = [
+      'grounded paragraph (source: notes/real)',
+      '',
+      '- grounded bullet (source: notes/real)',
+      '- another grounded bullet (source: notes/real)',
+    ].join('\n');
+    const answerer = answererWithHits(
+      [retrievalHit('notes/real')],
+      async function* () {
+        yield { content, finishReason: 'stop' };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+
+    expect(output.result.answer).toBe(content);
+    expect(output.result.sources).toEqual(['notes/real']);
+    expect(output.result.sourceDetails).toHaveLength(1);
+  });
+
+  it('returns an exact UTF-16 excerpt range without splitting a surrogate pair', async () => {
+    const text = `${'a'.repeat(239)}😀tail`;
+    const hit = retrievalHit('notes/emoji', 1, 0, 'emoji#0', text);
+    hit.chunk.charRange = [11, 11 + text.length];
+    const answerer = answererWithHits(
+      [hit],
+      async function* () {
+        yield { content: 'grounded (source: notes/emoji)', finishReason: 'stop' };
+      },
+    );
+
+    const output = await consumeAnswer(answerer, 'question');
+    const detail = output.result.sourceDetails?.[0];
+
+    expect(detail?.excerpt).toBe('a'.repeat(239));
+    expect(detail?.charRange).toEqual([11, 250]);
+    expect((detail?.charRange[1] ?? 0) - (detail?.charRange[0] ?? 0))
+      .toBe(detail?.excerpt.length);
+  });
+
+  it('propagates store search errors instead of converting them to local-text fallback', async () => {
+    const fakeEmbedder = {
+      embed: vi.fn(async () => normalize([1, 0, 0, 0, 0, 0, 0, 0])),
+    } as unknown as Embedder;
+    const failure = new Error('store search failed');
+    const fakeStore = {
+      count: vi.fn(() => 1),
+      search: vi.fn(async () => { throw failure; }),
+    } as unknown as VectorStore;
+    const answerer = new Answerer(fakeEmbedder, fakeStore, async function* () {});
+
+    await expect(answerer.retrieve('question')).rejects.toBe(failure);
   });
 
   it('fuses real candidates with stable score, path, ordinal, and id tie-breaks', () => {

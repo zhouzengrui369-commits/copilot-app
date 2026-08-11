@@ -20,6 +20,8 @@ export function atomicStageBinary(source: string, destination: string): Promise<
 
 export function rebuildArgs(electronVersion: string, arch: string): string[];
 
+export function validateSourceOutputPath(outputPath: string): string;
+
 export function assertRootShaUnchanged(
   rootBinary: string,
   expectedSha: string,

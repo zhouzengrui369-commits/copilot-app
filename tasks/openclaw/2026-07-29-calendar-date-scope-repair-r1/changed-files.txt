@@ -1,0 +1,8 @@
+apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx
+apps/copilot-desktop/tests/r44-h1-schedule-owner-feedback.test.tsx
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/RESULT.md
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/EVIDENCE.md
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/commands.log
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/changed-files.txt
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-calendar-date-scope-repair-r1/ACCEPTANCE_LOG.md

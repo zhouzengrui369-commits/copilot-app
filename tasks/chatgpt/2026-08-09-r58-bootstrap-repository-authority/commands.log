@@ -1,0 +1,18 @@
+Parent PM remote GitHub execution receipt
+Date: 2026-08-09
+
+1. Verified Draft PR #20 exact head = 2927d0e3cd81e3997bb229ce544b95a1e3cbce8b.
+2. Read exact-source scripts/candidate-r30/registry-prefetch.mjs.
+3. Read exact-source scripts/candidate-r30/npm-native-cache-hydrate.mjs around repository validation and registry manifest construction.
+4. Read exact-source scripts/candidate-r30/registry-prefetch.test.mjs.
+5. Created branch chatgpt/r58-bootstrap-repository-root-injection from exact consumed R57 source.
+6. Replaced module-location repository inference with strict hydration --repository authority / explicit library repositoryRoot.
+7. Added bootstrap-path and fail-closed regression tests.
+8. Opened stacked Draft PR #31 against chatgpt/mvp-source-finalization.
+9. Source gate on code head 277e103ae26d56c6b1700456b9786cb0ee2b678b:
+   run=31296301736
+   job=93201820414
+   result=17/17_SUCCESS
+10. Aligned PROJECT_STATE.yaml and docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md to R57 consumed / R58 repair truth.
+11. Added R58 development receipt and standard task evidence.
+12. Next required command-equivalent action: run the complete source gate on this final evidence-containing head, then merge PR #31 only into Draft PR #20 if exact-head green.

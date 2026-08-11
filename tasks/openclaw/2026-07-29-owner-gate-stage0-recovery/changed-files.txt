@@ -1,0 +1,182 @@
+# changed-files.txt
+
+## Git-visible status
+
+ M README.md
+ M apps/copilot-desktop/electron-builder.yml
+ M apps/copilot-desktop/index.html
+ M apps/copilot-desktop/package.json
+ M apps/copilot-desktop/scripts/stage-electron-native.d.mts
+ M apps/copilot-desktop/scripts/stage-electron-native.mjs
+ M apps/copilot-desktop/src/main/domain-ipc.ts
+ M apps/copilot-desktop/src/main/local-knowledge-service.ts
+ M apps/copilot-desktop/src/main/main.ts
+ M apps/copilot-desktop/src/main/preload.ts
+ M apps/copilot-desktop/src/renderer/App.tsx
+ M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/index.tsx
+ M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/types.ts
+ M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/useKgData.ts
+ M apps/copilot-desktop/src/renderer/components/NoteDetail/MarkdownRenderer.tsx
+ M apps/copilot-desktop/src/renderer/components/NoteDetail/index.tsx
+ M apps/copilot-desktop/src/renderer/components/NoteDetail/styles.module.css
+ M apps/copilot-desktop/src/renderer/components/Settings/ModelApiConfig.tsx
+ M apps/copilot-desktop/src/renderer/components/Settings/index.tsx
+ M apps/copilot-desktop/src/renderer/components/Settings/styles.module.css
+ D apps/copilot-desktop/src/renderer/components/VoiceInput/CloudAsrProvider.ts
+ M apps/copilot-desktop/src/renderer/components/VoiceInput/RecorderButton.tsx
+ D apps/copilot-desktop/src/renderer/components/VoiceInput/WebSpeechProvider.ts
+ M apps/copilot-desktop/src/renderer/components/VoiceInput/index.tsx
+ D apps/copilot-desktop/src/renderer/components/VoiceInput/useTranscriber.ts
+ M apps/copilot-desktop/src/renderer/lib/copilot-api.ts
+ M apps/copilot-desktop/src/renderer/main.tsx
+ M apps/copilot-desktop/src/renderer/preload-shim.ts
+ M apps/copilot-desktop/src/renderer/startup-shell.tsx
+ M apps/copilot-desktop/src/renderer/styles/app.css
+ M apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.tsx
+ M apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.tsx
+ M apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.module.css
+ M apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx
+ M apps/copilot-desktop/src/renderer/workspaces/VoiceWorkspace.tsx
+ M apps/copilot-desktop/src/renderer/workspaces/WorkspaceState.tsx
+ M apps/copilot-desktop/src/shared/domain-api.ts
+ M apps/copilot-desktop/src/shared/ipc-channels.ts
+ M apps/copilot-desktop/tests/KnowledgeGraph.test.tsx
+ M apps/copilot-desktop/tests/NoteDetail.test.tsx
+ M apps/copilot-desktop/tests/SettingsPanel.test.tsx
+ D apps/copilot-desktop/tests/VoiceInput/CloudAsrProvider.test.ts
+ M apps/copilot-desktop/tests/VoiceInput/RecorderButton.test.tsx
+ M apps/copilot-desktop/tests/VoiceInput/VoiceInput.test.tsx
+ D apps/copilot-desktop/tests/VoiceInput/WebSpeechProvider.test.ts
+ M apps/copilot-desktop/tests/VoiceInput/accuracy.test.ts
+ M apps/copilot-desktop/tests/VoiceInput/asr-electron38-crash-guard-r4.test.tsx
+ D apps/copilot-desktop/tests/VoiceInput/asr-strict-local-r2.test.tsx
+ D apps/copilot-desktop/tests/VoiceInput/asr-strict-local-r3.test.tsx
+ D apps/copilot-desktop/tests/VoiceInput/local-asr-test-runtime.ts
+ D apps/copilot-desktop/tests/VoiceInput/paths.test.ts
+ M apps/copilot-desktop/tests/VoiceInput/strict-local-source-contract.test.ts
+ D apps/copilot-desktop/tests/VoiceInput/useTranscriber.test.ts
+ M apps/copilot-desktop/tests/coverage-main-domain-critical.test.ts
+ M apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+ M apps/copilot-desktop/tests/e2e/ask-voice-offline.spec.ts
+ M apps/copilot-desktop/tests/e2e/electron.fixture.ts
+ M apps/copilot-desktop/tests/e2e/knowledge.spec.ts
+ M apps/copilot-desktop/tests/e2e/window-nav-settings.spec.ts
+ M apps/copilot-desktop/tests/integration/local-first-domain-ipc.integration.test.ts
+ M apps/copilot-desktop/tests/preload-domain-coverage.test.ts
+ M apps/copilot-desktop/tests/preload.test.ts
+ M apps/copilot-desktop/tests/r22-startup-lazy-red.test.tsx
+ M apps/copilot-desktop/tests/r22-startup-review-fixes.test.tsx
+ M apps/copilot-desktop/tests/stage-electron-native.test.ts
+ M apps/copilot-desktop/tests/vitest.critical-coverage.config.ts
+ M apps/copilot-desktop/vite.config.ts
+ M packages/kb/src/store/sqlite-store.ts
+ M packages/kb/tests/md-file-store-edge.test.ts
+ M packages/kb/tests/sqlite-store.test.ts
+ M packages/kg/src/api/query.ts
+ M packages/kg/src/builder/kg-builder.ts
+ M packages/kg/src/builder/summarizer.ts
+ M packages/kg/src/index.ts
+ M packages/kg/src/store/migration.ts
+ M packages/kg/src/store/sqlite-store.ts
+ M packages/kg/src/types.ts
+ M packages/kg/tests/coverage-closure.test.ts
+ M packages/kg/tests/functional-runtime.test.ts
+ M packages/kg/tests/kg-builder.integration.test.ts
+ M packages/kg/tests/migration.test.ts
+ M packages/kg/tests/sqlite-store.test.ts
+ M packages/rag/src/answerer.ts
+ M packages/rag/src/index.ts
+ M packages/rag/src/indexer.ts
+ M packages/rag/src/types.ts
+ M packages/rag/src/vector-store.ts
+ M packages/rag/tests/answerer.test.ts
+ M packages/rag/tests/functional-runtime.test.ts
+ M packages/rag/tests/indexer.test.ts
+ M packages/rag/tests/rag-sources-pipeline.integration.test.ts
+ M packages/rag/tests/vector-store.test.ts
+?? CHANGELOG.md
+?? DECISIONS.md
+?? PROJECT_STATE.yaml
+?? PROJECT_STATUS.md
+?? TODO.md
+?? apps/copilot-desktop/resources/local-asr/BUNDLE-MANIFEST.json
+?? apps/copilot-desktop/resources/local-asr/THIRD-PARTY-NOTICES.md
+?? apps/copilot-desktop/resources/local-asr/licenses/Apache-2.0.txt
+?? apps/copilot-desktop/resources/local-asr/model/README.md
+?? apps/copilot-desktop/resources/local-asr/model/decoder-epoch-99-avg-1.int8.onnx
+?? apps/copilot-desktop/resources/local-asr/model/encoder-epoch-99-avg-1.int8.onnx
+?? apps/copilot-desktop/resources/local-asr/model/joiner-epoch-99-avg-1.int8.onnx
+?? apps/copilot-desktop/resources/local-asr/model/tokens.txt
+?? apps/copilot-desktop/resources/local-asr/runtime/README.md
+?? apps/copilot-desktop/resources/local-asr/runtime/local-asr-no-egress-preload.cjs
+?? apps/copilot-desktop/resources/local-asr/runtime/package.json
+?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-asr.js
+?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.js
+?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.wasm
+?? apps/copilot-desktop/src/main/local-asr-assets.ts
+?? apps/copilot-desktop/src/main/local-asr-ipc.ts
+?? apps/copilot-desktop/src/main/local-asr-manager.ts
+?? apps/copilot-desktop/src/main/local-asr-worker.ts
+?? apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.module.css
+?? apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.tsx
+?? apps/copilot-desktop/src/renderer/components/Assistant/types.ts
+?? apps/copilot-desktop/src/renderer/components/VoiceInput/audio-pcm.ts
+?? apps/copilot-desktop/src/renderer/components/VoiceInput/useLocalAsrCapture.ts
+?? apps/copilot-desktop/src/renderer/prototype/browser-api.ts
+?? apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css
+?? apps/copilot-desktop/src/renderer/styles/demo-source-v4.css
+?? apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.module.css
+?? apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.module.css
+?? apps/copilot-desktop/src/shared/local-asr-ipc-envelope.ts
+?? apps/copilot-desktop/src/shared/local-asr.ts
+?? apps/copilot-desktop/tests/KnowledgeWorkspace.source-navigation.test.tsx
+?? apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx
+?? apps/copilot-desktop/tests/VoiceInput/audio-pcm.test.ts
+?? apps/copilot-desktop/tests/VoiceInput/local-asr-capture.test.tsx
+?? apps/copilot-desktop/tests/VoiceInput/local-asr-quality.ts
+?? apps/copilot-desktop/tests/VoiceWorkspace.local-asr-draft.test.tsx
+?? apps/copilot-desktop/tests/ask-demo-direct-source-r1.test.tsx
+?? apps/copilot-desktop/tests/demo-first-prototype-r1.test.tsx
+?? apps/copilot-desktop/tests/e2e/demo-first-prototype.spec.ts
+?? apps/copilot-desktop/tests/e2e/helpers/fake-minimax-provider.ts
+?? apps/copilot-desktop/tests/e2e/knowledge-demo-alignment.spec.ts
+?? apps/copilot-desktop/tests/electron-fixture-window-readiness.test.ts
+?? apps/copilot-desktop/tests/electron-native-binding-selection.test.ts
+?? apps/copilot-desktop/tests/electron-source-runtime-selection.test.ts
+?? apps/copilot-desktop/tests/integration/note-wiki-before-rag-background.integration.test.ts
+?? apps/copilot-desktop/tests/integration/today-capture-knowledge-r1.integration.test.ts
+?? apps/copilot-desktop/tests/knowledge-demo-alignment-r1.test.tsx
+?? apps/copilot-desktop/tests/local-asr-assets.test.ts
+?? apps/copilot-desktop/tests/local-asr-ipc.test.ts
+?? apps/copilot-desktop/tests/local-asr-manager.test.ts
+?? apps/copilot-desktop/tests/local-asr-package-contract.test.ts
+?? apps/copilot-desktop/tests/r44-h1-schedule-owner-feedback.test.tsx
+?? apps/copilot-desktop/tests/r44-h2-knowledge-owner-feedback.test.tsx
+?? apps/copilot-desktop/tests/r44-h3-settings-owner-feedback.test.tsx
+?? apps/copilot-desktop/tests/r44-h4-global-assistant.test.tsx
+?? apps/copilot-desktop/tests/r44-h4-knowledge-product-experience.test.tsx
+?? apps/copilot-desktop/tests/r44-h4-settings-browser-boundary.test.tsx
+?? apps/copilot-desktop/tests/r44-h4-today-product-experience.test.tsx
+?? apps/copilot-desktop/tests/r44-h4c-assistant-context-overlap.test.tsx
+?? apps/copilot-desktop/tests/r44-h4c-knowledge-truth-reader.test.tsx
+?? apps/copilot-desktop/tests/r44-h4c-today-blockers.test.tsx
+?? apps/copilot-desktop/tests/r44-h4d-assistant-visual-overlap.test.tsx
+?? apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx
+?? apps/copilot-desktop/tests/r44-h4f-knowledge-settings-product-polish.test.tsx
+?? apps/copilot-desktop/tests/settings-demo-direct-source-r1.test.tsx
+?? docs/ARCHITECTURE.md
+?? packages/kb/tests/sqlite-native-binding.test.ts
+?? packages/kg/tests/sqlite-native-binding.test.ts
+
+## Task-owned ignored evidence files
+
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/ACCEPTANCE_LOG.md
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/DISPATCH_STATUS.md
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/EVIDENCE.md
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/MATERIALIZED_SOURCE_MANIFEST.json
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/RESULT.md
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/SCOPE_AND_SECRET_SCAN.json
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/changed-files.txt
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/commands.log
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/materialize_r3_snapshot.py
+modified/generated tasks/openclaw/2026-07-29-owner-gate-stage0-recovery/validate_scope_and_secrets.py

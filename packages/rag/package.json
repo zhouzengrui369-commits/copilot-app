@@ -2,7 +2,7 @@
   "name": "@copilot/rag",
   "version": "0.1.0",
   "private": true,
-  "description": "Local-first RAG (Retrieve-Augment-Generate) for Copilot app (Sprint 1.3 T-1.3.1). Embedding via Ollama bge-m3 (HTTP, local, 1024 dim), vector storage via sql.js (WASM SQLite — sqlite-vss fallback because Python 3.14 distutils block better-sqlite3 native build), answer streaming via @copilot/llm-client. 100% local — no cloud OpenAI (goal.md R5 + decision red line).",
+  "description": "Strict local-first RAG for Copilot: self-contained embedded-local hashing by default, explicit Ollama compatibility, durable local text fallback, model-scoped sql.js vectors, aligned answer sources.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

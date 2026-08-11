@@ -6,9 +6,11 @@
  * top-k order.
  */
 
-import { mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
+import initSqlJs from 'sql.js';
 
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import {
@@ -16,7 +18,7 @@ import {
   generateChunkId,
   type VectorStore,
 } from '../src/vector-store.js';
-import type { EmbeddedChunk } from '../src/types.js';
+import type { EmbeddedChunk, NoteChunk } from '../src/types.js';
 
 const tempDirs: string[] = [];
 
@@ -47,6 +49,58 @@ function dummyChunk(id: string, notePath: string, ordinal: number, text: string)
   };
 }
 
+function localTextChunk(id: string, notePath: string, ordinal: number, text: string): NoteChunk {
+  return {
+    id,
+    notePath,
+    ordinal,
+    text,
+    tokenCount: text.split(/\s+/u).length,
+    charRange: [0, text.length],
+  };
+}
+
+async function writeLegacyV1Database(dbPath: string): Promise<void> {
+  const require = createRequire(import.meta.url);
+  const wasmDir = dirname(require.resolve('sql.js/dist/sql-wasm.js'));
+  const SQL = await initSqlJs({ locateFile: (file) => join(wasmDir, file) });
+  const db = new SQL.Database();
+  db.exec(`
+    CREATE TABLE chunks (
+      id TEXT PRIMARY KEY,
+      note_path TEXT NOT NULL,
+      ordinal INTEGER NOT NULL,
+      text TEXT NOT NULL,
+      token_count INTEGER NOT NULL,
+      char_start INTEGER NOT NULL,
+      char_end INTEGER NOT NULL,
+      embedding BLOB NOT NULL,
+      model TEXT NOT NULL,
+      embedded_at INTEGER NOT NULL
+    );
+    CREATE INDEX idx_chunks_note_path ON chunks(note_path);
+    CREATE TABLE rag_index_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+    INSERT INTO rag_index_meta(key, value) VALUES('schema_version', '1');
+  `);
+  const vector = new Uint8Array(
+    new Float32Array([1, 0, 0, 0, 0, 0, 0, 0]).buffer,
+  );
+  const stmt = db.prepare(
+    `INSERT INTO chunks(
+      id, note_path, ordinal, text, token_count, char_start, char_end,
+      embedding, model, embedded_at
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  stmt.run(['legacy#0', 'legacy/note', 0, 'legacy text', 2, 0, 11, vector, 'legacy-8d', 1]);
+  stmt.free();
+  const bytes = db.export();
+  db.close();
+  await writeFile(dbPath, bytes);
+}
+
 describe('VectorStore', () => {
   let store: VectorStore;
 
@@ -65,6 +119,68 @@ describe('VectorStore', () => {
     await store.insert({ ...dummyChunk('1', 'n/a', 0, 'a'), embedding: e });
     await store.insert({ ...dummyChunk('2', 'n/b', 0, 'b'), embedding: e });
     expect(store.count()).toBe(2);
+    expect(store.textCount()).toBe(2);
+    expect(store.vectorCount()).toBe(2);
+  });
+
+  it('atomically replaces independent text and vector subsets', async () => {
+    const first = localTextChunk('text#0', 'n/text', 0, 'alpha local');
+    const second = localTextChunk('text#1', 'n/text', 1, 'beta local');
+    await store.replaceNoteIndex('n/text', [first, second], [{
+      ...first,
+      embedding: makeEmbedding([1, 0, 0, 0, 0, 0, 0, 0]),
+      model: 'test',
+      embeddedAt: 1,
+    }]);
+
+    expect(store.count()).toBe(1);
+    expect(store.textCount()).toBe(2);
+    expect(store.vectorCount()).toBe(1);
+    expect(store.listChunksForNote('n/text').map((chunk) => chunk.id))
+      .toEqual(['text#0', 'text#1']);
+    const vectorResult = await store.search(
+      makeEmbedding([1, 0, 0, 0, 0, 0, 0, 0]),
+    );
+    expect(vectorResult.candidates).toBe(1);
+    expect(vectorResult.hits[0]?.chunk.id).toBe('text#0');
+
+    const replacement = localTextChunk('text#0', 'n/text', 0, 'replacement only');
+    await store.replaceNoteIndex('n/text', [replacement], []);
+    expect(store.listChunksForNote('n/text').map((chunk) => chunk.text))
+      .toEqual(['replacement only']);
+    expect(store.textCount()).toBe(1);
+    expect(store.vectorCount()).toBe(0);
+
+    await store.deleteNote('n/text');
+    expect(store.textCount()).toBe(0);
+    expect(store.vectorCount()).toBe(0);
+  });
+
+  it('backfills and persists a v1 vector-only database across reopen', async () => {
+    await store.close();
+    const root = await mkdtemp(join(tmpdir(), 'copilot-rag-v1-'));
+    tempDirs.push(root);
+    const dbPath = join(root, 'rag.sqlite');
+    await writeLegacyV1Database(dbPath);
+
+    store = await createVectorStore({ dbPath, dimensions: 8 });
+    expect(store.schemaVersion()).toBe('2');
+    expect(store.textCount()).toBe(1);
+    expect(store.vectorCount()).toBe(1);
+    expect(store.listChunksForNote('legacy/note')[0]).toEqual(
+      expect.objectContaining({
+        id: 'legacy#0',
+        text: 'legacy text',
+        model: 'legacy-8d',
+      }),
+    );
+    await store.close();
+
+    store = await createVectorStore({ dbPath, dimensions: 8 });
+    expect(store.schemaVersion()).toBe('2');
+    expect(store.textCount()).toBe(1);
+    expect(store.vectorCount()).toBe(1);
+    expect(store.listNotePaths()).toEqual(['legacy/note']);
   });
 
   it('returns top-k by cosine similarity', async () => {
@@ -180,7 +296,7 @@ describe('VectorStore', () => {
   });
 
   it('reports schema version and generates fixed-width hexadecimal chunk ids', () => {
-    expect(store.schemaVersion()).toBe('1');
+    expect(store.schemaVersion()).toBe('2');
     vi.spyOn(Math, 'random').mockReturnValue(0);
     expect(generateChunkId()).toBe('0000000000000000');
     vi.mocked(Math.random).mockReturnValue(0.999999);

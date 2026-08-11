@@ -1,0 +1,11 @@
+AGENTS.md
+PROJECT_STATE.yaml
+PROJECT_STATUS.md
+TODO.md
+CHANGELOG.md
+DECISIONS.md
+docs/ARCHITECTURE.md
+
+# Existing accepted sibling task changes, preserved but not authored by this governance salvage:
+apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx

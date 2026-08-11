@@ -22,12 +22,23 @@ export interface NoteChunk {
 }
 
 export interface EmbeddedChunk extends NoteChunk {
-  /** dense embedding (mxbai-embed-large → 1024 dims) */
+  /** dense embedding produced by the selected local provider */
   embedding: Float32Array;
-  /** embedding model id (e.g. "mxbai-embed-large") */
+  /** stable embedding model id, including provider/dimension identity */
   model: string;
   /** unix-ms timestamp of embedding */
   embeddedAt: number;
+}
+
+/**
+ * Durable local-text row. Vector metadata is present only when the same chunk
+ * also has a successfully persisted embedding; text-only rows never receive a
+ * sentinel vector.
+ */
+export interface StoredChunk extends NoteChunk {
+  embedding?: Float32Array;
+  model?: string;
+  embeddedAt?: number;
 }
 
 /**
@@ -43,69 +54,129 @@ export interface RetrievalHit {
   evidence?: RetrievalEvidence[];
 }
 
-export type RetrievalEvidence = 'vector' | 'kg-entity' | 'kg-neighbor';
+/**
+ * Retrieval provenance enum — surfaces WHY a chunk landed in the candidate
+ * set. RAG R2 adds `local-text` to distinguish the deterministic indexed text
+ * fallback from vector and KG signals.
+ */
+export type RetrievalEvidence =
+  | 'vector'
+  | 'kg-entity'
+  | 'kg-neighbor'
+  | 'local-text';
+
+/** Stable, non-sensitive diagnostics safe for renderer/log surfaces. */
+export type RagDiagnosticCode =
+  | 'RAG_VECTOR'
+  | 'RAG_LOCAL_TEXT_FALLBACK'
+  | 'RAG_KG_SUPPLEMENTAL'
+  | 'RAG_PROVIDER_UNAVAILABLE'
+  | 'RAG_PROVIDER_FAILURE'
+  | 'RAG_VECTOR_INDEX_DEGRADED'
+  | 'RAG_NO_CANDIDATE'
+  | 'RAG_CITATION_SOURCE_MISMATCH';
+
+export type RetrievalMode = 'vector' | 'local-text' | 'kg' | 'empty';
+export type ProviderStatus = 'ok' | 'degraded' | 'unavailable' | 'failed';
+
+/** The packaged default is embedded-local. Ollama remains explicit opt-in. */
+export type EmbeddingProviderKind = 'embedded-local' | 'ollama';
+export type EmbeddingPrivacyClass = 'embedded-local' | 'local-service';
+export type EmbeddingHealthStatus = 'ok' | 'configured' | 'unavailable' | 'failed';
+
+export interface EmbeddingHealth {
+  status: EmbeddingHealthStatus;
+  providerId: string;
+  dimensions: number;
+  modelRevision: string;
+  privacyClass: EmbeddingPrivacyClass;
+}
+
+/** Narrow provider interface shared by indexing and retrieval. */
+export interface EmbeddingProvider {
+  readonly providerId: string;
+  readonly dimensions: number;
+  readonly modelId: string;
+  readonly modelRevision: string;
+  readonly privacyClass: EmbeddingPrivacyClass;
+  health(): Promise<EmbeddingHealth>;
+  embed(text: string, signal?: AbortSignal): Promise<Float32Array>;
+  embedAll(texts: readonly string[], signal?: AbortSignal): Promise<Float32Array[]>;
+}
 
 export interface RagSourceDetail {
   notePath: string;
   evidence: RetrievalEvidence[];
   score: number;
+  chunkId: string;
+  charRange: [number, number];
+  excerpt: string;
+  mode: RetrievalMode;
 }
 
 export interface RetrievalResult {
   query: string;
   queryEmbedding: Float32Array;
   hits: RetrievalHit[];
-  /** total candidates considered before top-k selection (for diagnostics) */
+  /** total candidates considered before top-k selection */
   candidates: number;
+  mode?: RetrievalMode;
+  providerStatus?: ProviderStatus;
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface RagAnswerChunk {
-  /** delta token from the streaming LLM (already a string fragment) */
   delta: string;
-  /** which sources are cited so far (notePaths surfaced from the retrieval pass) */
   citedSources: string[];
   sourceDetails?: RagSourceDetail[];
+  retrievalMode?: RetrievalMode;
+  providerStatus?: ProviderStatus;
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface RagAnswerResult {
   query: string;
-  /** final assembled answer */
   answer: string;
-  /** unique note paths cited (deduped, stable order) */
   sources: string[];
   sourceDetails?: RagSourceDetail[];
-  /** total tokens streamed (rough estimate) */
   totalChars: number;
+  retrievalMode?: RetrievalMode;
+  providerStatus?: ProviderStatus;
+  diagnostics?: RagDiagnosticCode[];
 }
 
 export interface EmbedderConfig {
-  /** Ollama HTTP endpoint, default http://127.0.0.1:11434 */
+  /** Default is embedded-local; Ollama must be selected or inferred explicitly. */
+  provider?: EmbeddingProviderKind;
+  /** Ollama HTTP endpoint, default http://127.0.0.1:11434. */
   baseUrl?: string;
-  /** Embedding model id, default "bge-m3:latest" (1024 dims) */
+  /** Ollama model id. Supplying this without provider infers Ollama compatibility mode. */
   model?: string;
-  /** request timeout in ms, default 8000 */
+  /** Stable implementation/model revision for evidence and migration. */
+  modelRevision?: string;
+  /** Ollama request timeout in ms, default 8000. */
   timeoutMs?: number;
-  /** fetch implementation (for tests); default globalThis.fetch */
+  /** Fetch implementation for explicit Ollama mode and tests. */
   fetchImpl?: typeof fetch;
-  /**
-   * Override expected embedding dim. Default 1024. Must match the actual
-   * model output — used to validate Ollama responses. Set this when
-   * using a non-default model with a different dim (e.g. nomic-embed-text
-   * → 768).
-   */
+  /** Expected vector dimension. Embedded-local defaults to 1024. */
   dimensions?: number;
 }
 
 export interface VectorStoreConfig {
-  /** sqlite db file path, default ":memory:" — persistent store is ".rag.db" in caller cwd */
+  /** sqlite db file path, default ":memory:" */
   dbPath?: string;
-  /** embedding dimensions; default 1024 (mxbai-embed-large) */
+  /** embedding dimensions; production default is 1024 */
   dimensions?: number;
+  /**
+   * Expected packaged model. Existing incompatible vector rows are invalidated
+   * while durable text rows remain available for local-text retrieval.
+   */
+  expectedEmbeddingModel?: string;
 }
 
 export interface VectorSearchOptions {
-  /** top-k, default 5 (Sprint 1.3 acceptance) */
+  /** top-k, default 5 */
   topK?: number;
-  /** cosine similarity floor in [-1, 1], default -1 (no filter) */
+  /** cosine similarity floor in [-1, 1], default -1 */
   minScore?: number;
 }

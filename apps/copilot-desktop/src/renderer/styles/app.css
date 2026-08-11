@@ -318,3 +318,98 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.ask-workspace .answer-card,
+.ask-workspace .answer-card__text,
+.ask-workspace .source-receipt,
+.ask-workspace .ask-diagnostics {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.ask-workspace .answer-card {
+  max-width: 880px;
+  margin-top: var(--copilot-space-4);
+  padding: var(--copilot-space-4);
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-md);
+  background: var(--copilot-bg-elev);
+}
+
+.answer-card__heading,
+.source-receipt__heading,
+.ask-diagnostics__heading,
+.ask-actions,
+.source-receipt__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--copilot-space-2);
+}
+
+.source-list {
+  display: grid;
+  gap: var(--copilot-space-3);
+  margin: var(--copilot-space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-receipt,
+.ask-diagnostics {
+  padding: var(--copilot-space-3);
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--copilot-radius-sm);
+  background: var(--copilot-bg);
+}
+
+.source-receipt[data-truth-state='UNKNOWN'],
+.source-receipt[data-truth-state='MISSING'],
+.answer-source-truth[data-truth-state='UNKNOWN'],
+.answer-source-truth[data-truth-state='NO_SOURCE'] {
+  border-left: 3px solid #a16207;
+}
+
+.source-receipt[data-truth-state='UNAVAILABLE'],
+.answer-source-truth[data-truth-state='UNAVAILABLE'] {
+  border-left: 3px solid var(--copilot-danger);
+}
+
+.source-receipt[data-truth-state='CHECKING'],
+.answer-source-truth[data-truth-state='CHECKING'] {
+  border-left: 3px solid var(--copilot-fg-muted);
+}
+
+.source-receipt__status,
+.source-receipt__reason,
+.source-receipt__preview,
+.ask-diagnostics {
+  color: var(--copilot-fg-muted);
+  font-family: var(--copilot-font-mono);
+  font-size: 12px;
+}
+
+.ask-workspace button:focus-visible,
+.ask-workspace input:focus-visible,
+.source-receipt:focus-visible,
+.ask-diagnostics:focus-visible,
+.answer-card:focus-visible {
+  outline: 2px solid var(--copilot-accent);
+  outline-offset: 2px;
+}
+
+.ask-workspace button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.workspace-state--checking,
+.workspace-state--unknown,
+.workspace-state--stale,
+.workspace-state--unavailable {
+  color: var(--copilot-fg-muted);
+  background: var(--copilot-bg-elev);
+}
+
+.workspace-state--unavailable {
+  color: var(--copilot-danger);
+}

@@ -11,6 +11,7 @@ export default defineConfig({
     globals: false,
     include: [
       'tests/retry.test.ts',
+      'tests/retry-stream-critical-edge.test.ts',
       'tests/token-limit.test.ts',
       'tests/stream-parser.test.ts',
       'tests/errors.test.ts',

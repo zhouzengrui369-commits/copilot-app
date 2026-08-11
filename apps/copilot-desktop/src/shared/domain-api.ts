@@ -9,6 +9,16 @@ import { IPC_CHANNELS } from './ipc-channels.js';
 
 export type NoteType = 'article' | 'note' | 'meeting' | 'todo' | 'reference' | 'idea';
 export type NoteStatus = 'draft' | 'active' | 'archived';
+export type KnowledgeBuildState = 'queued' | 'running' | 'ready' | 'failed' | 'not-ready';
+
+/**
+ * Renderer-safe local build truth. `revision` binds the state to local note
+ * bytes without exposing those bytes or provider details.
+ */
+export interface KnowledgeBuildStatusReceipt {
+  state: KnowledgeBuildState;
+  revision: string | null;
+}
 
 export interface NoteRecord {
   id: number;
@@ -23,6 +33,10 @@ export interface NoteRecord {
   updatedAt: number;
   confidence: number | null;
   agent: string | null;
+  /** Present on raw create/update receipts after the local commit succeeds. */
+  localState?: 'LOCAL_SAVED';
+  /** Present on raw create/update receipts and WIKI truth queries. */
+  knowledgeBuild?: KnowledgeBuildStatusReceipt;
 }
 
 export interface NoteDocument {
@@ -137,6 +151,77 @@ export interface ReindexResult {
   errors: string[];
 }
 
+export type WikiTruthState = 'current' | 'stale' | 'failed' | 'missing';
+export type WikiProjectionStatus = 'current' | 'stale' | 'failed';
+export type WikiFailureStage = 'provider' | 'parse' | 'persist';
+
+/** Renderer-safe WIKI projection. No prompt, note body, endpoint, key or raw provider error. */
+export interface WikiProjectionReceipt {
+  projectionId: string;
+  notePath: string;
+  status: WikiProjectionStatus;
+  contentDigest: string;
+  summary: string | null;
+  tags: string[];
+  entityIds: string[];
+  relationSignatures: string[];
+  generatedAt: number | null;
+  failureStage: WikiFailureStage | null;
+  failureReason: string | null;
+  provenance: WikiProvenanceReceipt | null;
+}
+
+export interface WikiProvenanceReceipt {
+  provider: string;
+  model: string;
+  generatedAt: number;
+}
+
+/**
+ * Digest-bound WIKI truth calculated in Electron main through the canonical
+ * package query. Renderer code must display, not derive, this result.
+ */
+export interface WikiTruthReceipt {
+  notePath: string;
+  expectedContentDigest: string | null;
+  truth: WikiTruthState;
+  projection: WikiProjectionReceipt | null;
+  current: WikiProjectionReceipt | null;
+  latest: WikiProjectionReceipt | null;
+  stale: WikiProjectionReceipt[];
+  failed: WikiProjectionReceipt[];
+  provenance: WikiProvenanceReceipt | null;
+  /** Durable kg_pending state reconciled with digest-bound WIKI truth. */
+  knowledgeBuild?: KnowledgeBuildStatusReceipt;
+}
+
+export type NoteBuildFailureStage = 'kg' | 'wiki' | 'rag';
+
+export interface NoteBuildReceipt {
+  state: 'BUILT' | 'BUILD_FAILED';
+  kg: {
+    state: 'ready' | 'failed';
+    entitiesAdded: number;
+    entitiesLinked: number;
+    reason: string | null;
+  };
+  wiki: WikiTruthReceipt;
+  rag: {
+    state: 'ready' | 'failed';
+    chunksInserted: number;
+    reason: string | null;
+  };
+  failureStage: NoteBuildFailureStage | null;
+  failureReason: string | null;
+}
+
+/** Local commit is authoritative even when the separate build receipt fails. */
+export interface NoteCommitBuildReceipt {
+  note: NoteRecord;
+  localState: 'LOCAL_SAVED';
+  build: NoteBuildReceipt;
+}
+
 export interface RagAnswer {
   text: string;
   sources: string[];
@@ -149,6 +234,29 @@ export interface RagSourceDetail {
   notePath: string;
   evidence: RagRetrievalEvidence[];
   score: number;
+}
+
+export interface AskSourceOrigin {
+  exchangeId: string;
+  intent: 'full-reader';
+  notePath: string;
+}
+
+export interface AskConversationSaveRequest {
+  exchangeId: string;
+  phase: 'completed';
+  question: string;
+  answer: RagAnswer;
+  todoReceipt: TodoRecord | null;
+  completedAt: number;
+}
+
+export type AskConversationSourceTruth = 'current' | 'stale' | 'missing';
+
+/** Main-process validated latest completed exchange. */
+export interface AskConversationSnapshot extends AskConversationSaveRequest {
+  schemaVersion: 1;
+  sourceTruth: AskConversationSourceTruth;
 }
 
 export interface RagStreamChunk {
@@ -266,9 +374,18 @@ export interface DomainIpcContract {
   [IPC_CHANNELS.NOTES_LIST]: { request: ListNotesRequest | undefined; response: NoteList };
   [IPC_CHANNELS.NOTES_GET]: { request: string; response: NoteDocument | null };
   [IPC_CHANNELS.NOTES_CREATE]: { request: CreateNoteRequest; response: NoteRecord };
+  [IPC_CHANNELS.NOTES_CREATE_WITH_BUILD]: {
+    request: CreateNoteRequest;
+    response: NoteCommitBuildReceipt;
+  };
   [IPC_CHANNELS.NOTES_UPDATE]: { request: UpdateNoteRequest; response: NoteRecord | null };
+  [IPC_CHANNELS.NOTES_UPDATE_WITH_BUILD]: {
+    request: UpdateNoteRequest;
+    response: NoteCommitBuildReceipt | null;
+  };
   [IPC_CHANNELS.NOTES_REMOVE]: { request: string; response: boolean };
   [IPC_CHANNELS.NOTES_GET_BACKLINKS]: { request: string; response: BacklinkRecord[] };
+  [IPC_CHANNELS.WIKI_GET_FOR_NOTE]: { request: string; response: WikiTruthReceipt };
   [IPC_CHANNELS.KG_GET_SUBGRAPH]: {
     request: KgSubgraphRequest | number | undefined;
     response: KgSubgraph;
@@ -277,6 +394,15 @@ export interface DomainIpcContract {
   [IPC_CHANNELS.RAG_ASK]: { request: string; response: RagAnswer };
   [IPC_CHANNELS.RAG_STREAM_START]: { request: RagStreamRequest; response: RagStreamStartResult };
   [IPC_CHANNELS.RAG_STREAM_CANCEL]: { request: string; response: RagStreamCancelResult };
+  [IPC_CHANNELS.ASK_CONVERSATION_SAVE]: {
+    request: AskConversationSaveRequest;
+    response: AskConversationSnapshot;
+  };
+  [IPC_CHANNELS.ASK_CONVERSATION_LOAD]: {
+    request: undefined;
+    response: AskConversationSnapshot | null;
+  };
+  [IPC_CHANNELS.ASK_CONVERSATION_CLEAR]: { request: undefined; response: void };
   [IPC_CHANNELS.TODOS_LIST]: { request: ListTodosRequest | undefined; response: TodoRecord[] };
   [IPC_CHANNELS.TODOS_CREATE]: { request: CreateTodoRequest; response: TodoRecord };
   [IPC_CHANNELS.TODOS_UPDATE]: { request: UpdateTodoRequest; response: TodoRecord | null };
@@ -299,9 +425,14 @@ export interface CopilotDomainBridge {
     list(request?: ListNotesRequest): Promise<NoteList>;
     get(path: string): Promise<NoteDocument | null>;
     create(request: CreateNoteRequest): Promise<NoteRecord>;
+    createWithBuild(request: CreateNoteRequest): Promise<NoteCommitBuildReceipt>;
     update(request: UpdateNoteRequest): Promise<NoteRecord | null>;
+    updateWithBuild(request: UpdateNoteRequest): Promise<NoteCommitBuildReceipt | null>;
     remove(path: string): Promise<boolean>;
     getBacklinks(path: string): Promise<BacklinkRecord[]>;
+  };
+  wiki: {
+    getForNote(path: string): Promise<WikiTruthReceipt>;
   };
   kg: {
     getSubgraph(request?: KgSubgraphRequest | number): Promise<KgSubgraph>;
@@ -312,6 +443,11 @@ export interface CopilotDomainBridge {
     startStream(request: RagStreamRequest): Promise<RagStreamStartResult>;
     cancelStream(requestId: string): Promise<RagStreamCancelResult>;
     onStreamEvent(listener: (event: RagStreamEvent) => void): () => void;
+  };
+  askConversation?: {
+    save(request: AskConversationSaveRequest): Promise<AskConversationSnapshot>;
+    load(): Promise<AskConversationSnapshot | null>;
+    clear(): Promise<void>;
   };
   todos: {
     list(request?: ListTodosRequest): Promise<TodoRecord[]>;

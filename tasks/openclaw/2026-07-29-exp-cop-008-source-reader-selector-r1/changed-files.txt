@@ -1,0 +1,7 @@
+apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/RESULT.md
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/EVIDENCE.md
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/commands.log
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/changed-files.txt
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-exp-cop-008-source-reader-selector-r1/ACCEPTANCE_LOG.md

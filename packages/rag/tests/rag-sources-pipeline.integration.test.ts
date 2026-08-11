@@ -63,7 +63,7 @@ describe('Phase 1 local RAG index -> retrieve -> answer -> sources integration',
     const answerer = new Answerer(embedder, store, async function* (messages) {
       observedPrompts.push(messages.at(-1)?.content ?? '');
       yield { content: 'OPC 是个人公司。' };
-      yield { content: '(来源: glossary/opc)' };
+      yield { content: '(来源: glossary/opc)', finishReason: 'stop' };
     }, { model: 'fixture', topK: 1, minScore: 0.5 });
 
     const retrieval = await answerer.retrieve('OPC 是什么？');
@@ -73,6 +73,58 @@ describe('Phase 1 local RAG index -> retrieve -> answer -> sources integration',
     expect(answer.result.sources).toEqual(['glossary/opc']);
     expect(observedPrompts[0]).toContain('[glossary/opc]');
     expect(observedPrompts[0]).not.toContain('[glossary/mro]');
+    await store.close();
+  });
+
+  it('answers with aligned local sources after index-time and query-time embedding unavailability', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rag-offline-sources-int-'));
+    tempDirs.push(dir);
+    const dbPath = path.join(dir, 'rag.sqlite');
+    const unavailableEmbedder = new Embedder({
+      baseUrl: 'http://127.0.0.1:11434',
+      model: 'offline-4d',
+      dimensions: DIM,
+      fetchImpl: (async () => {
+        throw new TypeError('fetch failed');
+      }) as typeof fetch,
+    });
+    let store: VectorStore = await createVectorStore({ dbPath, dimensions: DIM });
+    const report = await new Indexer(unavailableEmbedder, store).indexOneNote({
+      path: 'notes/offline',
+      title: 'Offline',
+      body: 'alpha local-first evidence',
+    });
+    expect(report).toMatchObject({
+      chunksInserted: 1,
+      vectorChunksInserted: 0,
+      vectorStatus: 'unavailable',
+    });
+    await store.close();
+
+    store = await createVectorStore({ dbPath, dimensions: DIM });
+    const answerer = new Answerer(unavailableEmbedder, store, async function* () {
+      yield {
+        content: 'Local answer (source: notes/offline)',
+        finishReason: 'stop',
+      };
+    });
+    const answer = await collectAnswer(answerer, 'alpha');
+
+    expect(answer.result.providerStatus).toBe('unavailable');
+    expect(answer.result.retrievalMode).toBe('local-text');
+    expect(answer.result.sources).toEqual(['notes/offline']);
+    expect(answer.result.sourceDetails).toEqual([
+      expect.objectContaining({
+        notePath: 'notes/offline',
+        chunkId: 'notes/offline#0',
+        excerpt: 'alpha local-first evidence',
+        charRange: [0, 'alpha local-first evidence'.length],
+        evidence: ['local-text'],
+        mode: 'local-text',
+      }),
+    ]);
+    expect(answer.result.sourceDetails?.map((source) => source.notePath))
+      .toEqual(answer.result.sources);
     await store.close();
   });
 });

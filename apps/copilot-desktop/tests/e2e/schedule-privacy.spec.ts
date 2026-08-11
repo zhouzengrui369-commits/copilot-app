@@ -12,9 +12,14 @@ test.describe('Schedule local CRUD, reminders, and persistence', () => {
   });
 
   test('66 add-todo form exposes title, time, and note link', async ({ appPage }) => {
-    await expect(appPage.getByRole('textbox', { name: '待办', exact: true })).toBeEditable();
-    await expect(appPage.getByLabel('到期与提醒时间')).toBeEditable();
-    await expect(appPage.getByLabel('关联笔记路径')).toBeEditable();
+    await appPage.getByRole('button', { name: '+ 新增待办' }).click();
+    const dialog = appPage.getByRole('dialog', { name: '新增待办' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: '待办标题' })).toBeEditable();
+    await expect(dialog.getByRole('button', { name: '选择日期与提醒' })).toBeVisible();
+    await expect(dialog.getByRole('combobox', { name: '搜索关联笔记' })).toBeEditable();
+    await dialog.getByRole('button', { name: '关闭' }).click();
+    await expect(dialog).toHaveCount(0);
   });
 
   test('67 typed bridge creates a pending linked todo', async ({ appPage }) => {

@@ -73,6 +73,8 @@ describe('Indexer', () => {
     expect(report.notes).toBe(1);
     expect(report.chunksAttempted).toBeGreaterThanOrEqual(1);
     expect(report.chunksInserted).toBe(report.chunksAttempted);
+    expect(report.vectorChunksInserted).toBe(report.chunksAttempted);
+    expect(report.vectorStatus).toBe('ok');
     expect(report.chunksSkipped).toBe(0);
     expect(report.errors).toEqual([]);
     expect(report.embeddingModel).toBe(embedder.modelId);
@@ -139,15 +141,51 @@ describe('Indexer', () => {
     ];
     const report = await indexer.indexNotes(notes);
 
-    // The first chunk produced an error; the second was embedded and inserted.
+    // The first chunk produced an error; both texts are retained and the
+    // second chunk also receives a vector.
     expect(report.errors.length).toBe(1);
     expect(report.errors[0]?.reason).toMatch(/500/);
-    expect(report.chunksInserted).toBeGreaterThanOrEqual(1);
-    expect(report.chunksInserted + report.errors.length).toBe(
+    expect(report.chunksInserted).toBe(report.chunksAttempted);
+    expect(report.vectorChunksInserted).toBeGreaterThanOrEqual(1);
+    expect(report.vectorChunksInserted + report.errors.length).toBe(
       report.chunksAttempted,
     );
-    // The store must reflect only the successful chunk.
-    expect(store.count()).toBe(report.chunksInserted);
+    expect(report.vectorStatus).toBe('degraded');
+    expect(store.count()).toBe(report.vectorChunksInserted);
+    expect(store.textCount()).toBe(report.chunksInserted);
+    expect(store.vectorCount()).toBe(report.vectorChunksInserted);
+  });
+
+  it('persists every text chunk and reports unavailable when all embeddings fail', async () => {
+    const embedder = new Embedder({
+      fetchImpl: (async () => {
+        throw new TypeError('fetch failed');
+      }) as typeof fetch,
+      dimensions: FAKE_DIM,
+    });
+    const report = await new Indexer(embedder, store).indexOneNote({
+      path: 'offline/all-fail',
+      body: 'local text remains searchable',
+    });
+
+    expect(report).toMatchObject({
+      notes: 1,
+      chunksAttempted: 1,
+      chunksInserted: 1,
+      vectorChunksInserted: 0,
+      vectorStatus: 'unavailable',
+    });
+    expect(report.errors).toHaveLength(1);
+    expect(store.count()).toBe(0);
+    expect(store.textCount()).toBe(1);
+    expect(store.vectorCount()).toBe(0);
+    expect(store.listChunksForNote('offline/all-fail')).toEqual([
+      expect.objectContaining({
+        id: 'offline/all-fail#0',
+        notePath: 'offline/all-fail',
+        text: 'local text remains searchable',
+      }),
+    ]);
   });
 
   it('indexOneNote is a single-note wrapper and reuses the same report shape', async () => {
@@ -177,6 +215,9 @@ describe('Indexer', () => {
     });
     const rejectingStore = {
       replaceNote: async () => {
+        throw failure;
+      },
+      replaceNoteIndex: async () => {
         throw failure;
       },
     } as unknown as VectorStore;

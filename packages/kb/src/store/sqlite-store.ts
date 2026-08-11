@@ -167,6 +167,8 @@ function parseJsonArray(raw: string | null): string[] {
 export interface SqliteStoreOptions {
   /** Absolute path to the SQLite file. The parent dir is created if missing. */
   dbPath: string;
+  /** Explicit runtime-specific better-sqlite3 addon. Omit for the host default. */
+  nativeBinding?: string;
   /** When true (default), set `PRAGMA journal_mode=WAL`. */
   wal?: boolean;
   /**
@@ -181,10 +183,12 @@ export class SqliteStore {
   private closed = false;
 
   constructor(opts: SqliteStoreOptions) {
-    const { dbPath, wal = true, migrate = true } = opts;
+    const { dbPath, nativeBinding, wal = true, migrate = true } = opts;
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    this.db = new Database(dbPath);
+    this.db = nativeBinding === undefined
+      ? new Database(dbPath)
+      : new Database(dbPath, { nativeBinding });
     if (wal) this.db.pragma('journal_mode = WAL');
     this.db.pragma('synchronous = NORMAL');
     this.db.pragma('foreign_keys = ON');

@@ -1,0 +1,85 @@
+# commands.log
+
+2026-07-29T07:24Z read /Users/njx/.codex/skills/codex-controller-fallback/SKILL.md
+exit 0
+
+2026-07-29T07:25Z read GOAL.md / TASK.md / PLAN.md
+exit 0
+
+2026-07-29T07:26Z git rev-parse --abbrev-ref HEAD
+exit 0
+stdout: codex/p0-owner-gate
+
+2026-07-29T07:26Z git rev-parse HEAD
+exit 0
+stdout: 96c861706126317c27965fcb64c765973df9ac89
+
+2026-07-29T07:26Z git status --short
+exit 0
+stdout: empty
+
+2026-07-29T07:26Z shasum -a 256 r3/SOURCE_SNAPSHOT_MANIFEST.json
+exit 0
+stdout: 3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4
+
+2026-07-29T07:28Z rg SNAPSHOT_POSTIMAGE/MATERIALIZATION_INPUT over r3 review docs
+exit 0
+stdout: SNAPSHOT_POSTIMAGE=PASS; MATERIALIZATION_INPUT_AUTHORIZED=YES
+
+2026-07-29T07:33Z /usr/bin/python3 materialize_r3_snapshot.py
+exit 0
+stdout: STAGE0_MATERIALIZATION_PASS; entries=414; trackedDeletions=7; bytes=51347389; aggregate=026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311; removedExtraFiles=10
+
+2026-07-29T07:38Z /usr/bin/python3 materialize_r3_snapshot.py --verify-only
+exit 0
+stdout: STAGE0_MATERIALIZATION_PASS; entries=414; trackedDeletions=7; bytes=51347389; aggregate=026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311
+
+2026-07-29T07:38Z git diff --check
+exit 0
+stdout: empty
+
+2026-07-29T07:40Z /usr/bin/python3 validate_scope_and_secrets.py
+exit 1
+stdout: scope PASS; unclassified secret rule hit in test fixture path only; no content emitted
+
+2026-07-29T07:41Z redacted line-only review of test fixture hit
+exit 0
+stdout: lines 156 and 169 only; content redacted
+
+2026-07-29T07:41Z /usr/bin/python3 validate_scope_and_secrets.py
+exit 0
+stdout: PASS; outsideAllowedScope=[]; unclassifiedSecretMatches=[]; classifiedTestFixtureMatches path/rule/line only
+
+2026-07-29T07:42Z /usr/bin/python3 materialize_r3_snapshot.py --verify-only
+exit 0
+stdout: STAGE0_MATERIALIZATION_PASS; entries=414; trackedDeletions=7; bytes=51347389; aggregate=026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311
+
+2026-07-29T07:42Z git diff --stat
+exit 0
+stdout: 92 files changed, 14893 insertions(+), 5592 deletions(-)
+
+2026-07-29T07:45Z generate changed-files.txt
+exit 0
+stdout: git_visible_status_count=165; task_evidence_count=9
+
+2026-07-29T07:46Z git diff --check
+exit 0
+stdout: empty
+
+Not run: tests, typecheck, build, Electron, package, dependency install, Git add/commit/push/PR, network fetch, credential/remote/global config changes.
+
+2026-07-29 controller post-acceptance governance correction
+exit 0
+stdout: corrected EXP-COP-008/009 mapping in governance and task contract; changed no r3 product-layer input
+
+2026-07-29 controller /usr/bin/python3 materialize_r3_snapshot.py --verify-only
+exit 0
+stdout: STAGE0_MATERIALIZATION_PASS; entries=414; trackedDeletions=7; bytes=51347389; aggregate=026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311; removedExtraFiles=0
+
+2026-07-29 controller /usr/bin/python3 validate_scope_and_secrets.py
+exit 0
+stdout: PASS; outsideAllowedScope=[]; unclassifiedSecretMatches=[]
+
+2026-07-29 controller git diff --check
+exit 0
+stdout: empty

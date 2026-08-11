@@ -3,13 +3,12 @@
  *
  * Mirrors the contract pinned for `@copilot/kb` (see `packages/kb/tests/migration.test.ts`):
  *   - the migration map is append-only
- *   - the runner is a no-op on the current schema version (v0)
+ *   - the runner is a no-op on the current schema version (v1)
+ *   - v0 stores are additively upgraded to v1 without losing KG rows
  *   - asking for a future version that has no registered step throws
  *   - the error message includes the missing version number for triage
  *
- * The Sprint 1.2 freeze locks KG at v0. If/when v1 lands (Sprint 1.4
- * candidate: composite index on `(type, updated_at)`), add a sibling
- * describe block for the happy-path migration rather than mutating these.
+ * WIKI local projection adds v1 while preserving the frozen v0 graph tables.
  */
 
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
@@ -25,7 +24,7 @@ afterEach(() => {
   store.close();
 });
 
-describe('KG_MIGRATIONS map (Sprint 1.2 v0 freeze)', () => {
+describe('KG_MIGRATIONS map (additive WIKI v1)', () => {
   it('is a plain object (stable JSON shape for SCHEMA-FROZEN snapshots)', () => {
     expect(KG_MIGRATIONS).toBeTypeOf('object');
     expect(KG_MIGRATIONS).not.toBeInstanceOf(Map);
@@ -39,21 +38,44 @@ describe('KG_MIGRATIONS map (Sprint 1.2 v0 freeze)', () => {
 });
 
 describe('runKgMigrations · skip-ahead forbidden', () => {
-  it('no-op when target equals current schema version (v0 → v0)', () => {
+  it('no-op when target equals current schema version (v1 → v1)', () => {
     const out = runKgMigrations(store);
-    expect(out.from).toBe(0);
-    expect(out.to).toBe(0);
+    expect(out.from).toBe(1);
+    expect(out.to).toBe(1);
     expect(out.applied).toEqual([]);
-    expect(store.schemaVersion).toBe(0);
+    expect(store.schemaVersion).toBe(1);
   });
 
-  it('throws when requested target skips a missing version (v0 → v2)', () => {
-    expect(() => runKgMigrations(store, 2)).toThrow(/v1 not registered/);
-    expect(store.schemaVersion).toBe(0);
+  it('upgrades a legacy v0 graph additively and preserves existing rows', () => {
+    store.upsertEntity({
+      entity_id: 'concept:preserved',
+      type: 'concept',
+      name: 'Preserved',
+      source_note: 'legacy/note',
+    }, 1);
+    store.raw.exec(`
+      DROP TABLE note_wiki;
+      UPDATE kg_schema_meta SET v = '0' WHERE k = 'version';
+    `);
+
+    const out = runKgMigrations(store);
+    expect(out).toEqual({ from: 0, to: 1, applied: [1] });
+    expect(store.schemaVersion).toBe(1);
+    expect(store.getEntityByIdString('concept:preserved')?.name).toBe('Preserved');
+    expect(
+      store.raw.prepare(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'note_wiki'`,
+      ).get(),
+    ).toEqual({ name: 'note_wiki' });
+  });
+
+  it('throws when requested target skips a missing version (v1 → v2)', () => {
+    expect(() => runKgMigrations(store, 2)).toThrow(/v2 not registered/);
+    expect(store.schemaVersion).toBe(1);
   });
 
   it('error message includes the first missing step (not the final target)', () => {
-    // Loop throws on the first missing step (v1) when v0 → v3 is requested.
+    // Loop throws on the first missing step (v2) when v1 → v3 is requested.
     let caught: Error | null = null;
     try {
       runKgMigrations(store, 3);
@@ -61,7 +83,7 @@ describe('runKgMigrations · skip-ahead forbidden', () => {
       caught = e as Error;
     }
     expect(caught).not.toBeNull();
-    expect(caught?.message).toMatch(/v1/);
+    expect(caught?.message).toMatch(/v2/);
     expect(caught?.message).toMatch(/skip-ahead/);
   });
 });

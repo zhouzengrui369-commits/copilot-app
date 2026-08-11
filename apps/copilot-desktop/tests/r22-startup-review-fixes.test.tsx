@@ -64,7 +64,7 @@ describe('r22 independent startup review fixes', () => {
     const loadApp = vi.fn(() => appLane.promise);
     render(<StartupAppBoundary loadApp={loadApp} />);
 
-    const routeIds: StartupView[] = ['knowledge', 'ask', 'voice', 'schedule', 'settings'];
+    const routeIds: StartupView[] = ['schedule', 'knowledge', 'ask', 'settings'];
     for (const route of routeIds) {
       const button = screen.getByTestId(`startup-nav-${route}`);
       expect(button).toBeEnabled();
@@ -72,11 +72,10 @@ describe('r22 independent startup review fixes', () => {
       expect(document.activeElement).toBe(button);
     }
 
-    fireEvent.click(screen.getByTestId('startup-nav-ask'));
-    expect(screen.getByTestId('startup-nav-ask')).toHaveAttribute('aria-current', 'page');
-    fireEvent.keyDown(screen.getByTestId('startup-nav-voice'), { key: 'Enter' });
-    expect(screen.getByTestId('startup-nav-voice')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('startup-view-voice')).toBeInTheDocument();
+    expect(screen.queryByTestId('startup-nav-voice')).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByTestId('startup-nav-settings'), { key: 'Enter' });
+    expect(screen.getByTestId('startup-nav-settings')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('startup-view-settings')).toBeInTheDocument();
 
     const ResolvedApp = vi.fn(({ initialView }: { initialView?: StartupView }) => (
       <section data-testid="resolved-app">{initialView}</section>
@@ -84,7 +83,7 @@ describe('r22 independent startup review fixes', () => {
     await act(async () => {
       appLane.resolve({ default: ResolvedApp });
     });
-    expect(await screen.findByTestId('resolved-app')).toHaveTextContent('voice');
+    expect(await screen.findByTestId('resolved-app')).toHaveTextContent('settings');
     expect(ResolvedApp).toHaveBeenCalled();
     expect(loadApp).toHaveBeenCalledTimes(1);
   });

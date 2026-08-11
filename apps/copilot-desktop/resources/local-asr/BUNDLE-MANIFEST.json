@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "bundle": "copilot-local-asr",
+  "self": {
+    "path": "BUNDLE-MANIFEST.json",
+    "excluded": true
+  },
+  "runtime": {
+    "package": "sherpa-onnx",
+    "version": "1.13.4",
+    "binding": "sherpa-onnx@1.13.4"
+  },
+  "model": {
+    "repository": "csukuangfj/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23",
+    "revision": "204ad334e2e683fd295359930cc16fc0432a23ac"
+  },
+  "integrityBindings": {
+    "scopeEvidenceSha256": "0ab41a65741069cdd93ddb2be6d48acc42f629de25e99e50af4fde85eaba4ff2",
+    "r7IntegritySha256": "1fd073664f5931caaff9b3f1093a917eff9b9fe60bd6bae1a5cfd011a904d3fc",
+    "r9ResultSha256": "9ca86ddf93be4a550089e67a000790b687b48430a1870cefea4eb4c7b7ac6455",
+    "r9EvidenceSha256": "5960b417155c897cbf84774b2efe75aba06fd6c96a9fc0e6dd558d5f264028d3",
+    "r9NodeDecodeSha256": "8a1c70cc407359ea8e3c8a7a7fcad758e8e9bb81ec0d5456e476f31778159fd3",
+    "r9ManifestSha256": "10db67b7896d57e60a7e3248bb01c4eb0c161c3868bfd5c36966c4065909aaf5",
+    "r9FrozenInputAggregateSha256": "bcd0c008f120384511798b26b9d4524eb8cb2368cdf3afa2d11a2161dcd46ef2"
+  },
+  "immutableProjection": {
+    "fileCount": 11,
+    "bytes": 46627285
+  },
+  "files": [
+    {
+      "path": "THIRD-PARTY-NOTICES.md",
+      "bytes": 577,
+      "sha256": "376b14f0e0c9412a80395aca57157fb238fca570d88613969003c76072b60e82"
+    },
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "model/README.md",
+      "bytes": 226,
+      "sha256": "515751f07faad368f0863ae41773ff09635eba5920122d549abb8e45d5c88282"
+    },
+    {
+      "path": "model/decoder-epoch-99-avg-1.int8.onnx",
+      "bytes": 1888682,
+      "sha256": "22f123bb8cba9b38974b3df18a3f45e7081f4985ebb2e075d9f21f618c468bbf"
+    },
+    {
+      "path": "model/encoder-epoch-99-avg-1.int8.onnx",
+      "bytes": 21621684,
+      "sha256": "1c556ea57cec304e55ec4b72e52c1cc098bb01476ed7d90f3de939fe126487b1"
+    },
+    {
+      "path": "model/joiner-epoch-99-avg-1.int8.onnx",
+      "bytes": 1795562,
+      "sha256": "a7cf9d82757bdcf786059454495a9ca95e4bd7347f72473fc08d794475c36169"
+    },
+    {
+      "path": "model/tokens.txt",
+      "bytes": 48697,
+      "sha256": "8b294db9045d6e5f94647f4c1eec1af4da143a75053c399611444b378ff966ac"
+    },
+    {
+      "path": "runtime/README.md",
+      "bytes": 302,
+      "sha256": "90423fd64838f5430535c55e457536d9afa19a7b045f5b2104507d64056d21c6"
+    },
+    {
+      "path": "runtime/local-asr-no-egress-preload.cjs",
+      "bytes": 4255,
+      "sha256": "63d6e17b9393dc75924ef307d747cd24b4cd5ea4b5c3f891570463a6bff54c97"
+    },
+    {
+      "path": "runtime/package.json",
+      "bytes": 1152,
+      "sha256": "ec8a701edab8c97f5b076159dfd17a41107ba86890d43024d743f0578d7c3c0e"
+    },
+    {
+      "path": "runtime/sherpa-onnx-asr.js",
+      "bytes": 53867,
+      "sha256": "d51ae8e8b756ee5e53423ffada0c9702973f154f561aca7984fe0b12f4060178"
+    },
+    {
+      "path": "runtime/sherpa-onnx-wasm-nodejs.js",
+      "bytes": 180879,
+      "sha256": "4c8003068271614b7a485d60352e74e633526e66447de605d738afd7f249552e"
+    },
+    {
+      "path": "runtime/sherpa-onnx-wasm-nodejs.wasm",
+      "bytes": 21024877,
+      "sha256": "8df60de2c2c8b82569555c36695583d7b97d5e75531324437a3b2ba294ffdb0d"
+    }
+  ]
+}

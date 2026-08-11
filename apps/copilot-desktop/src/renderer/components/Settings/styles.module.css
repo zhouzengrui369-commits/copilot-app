@@ -189,3 +189,370 @@
   padding: 1px 6px;
   border-radius: var(--copilot-radius-sm);
 }
+
+/* Demo v3 #settings direct-source adoption.
+ * This module intentionally owns the Settings layout so the existing shared
+ * App/demo CSS remains byte-identical.
+ */
+:global(.settings-panel).shell {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  color: var(--prototype-secondary);
+}
+
+.shellHeader {
+  margin: 0;
+}
+
+.headerCopy {
+  min-width: 0;
+}
+
+.headerCopy h2,
+.headerCopy p {
+  margin: 0;
+}
+
+.headerCopy p {
+  margin-top: 5px;
+  color: var(--prototype-secondary);
+  font-size: 12px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.errorBanner {
+  flex: 0 0 auto;
+  margin: 10px 20px 0;
+}
+
+.browserEnvironment {
+  flex: 0 0 auto;
+  margin: 10px 20px 0;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--prototype-border);
+  border-radius: 9px;
+  background: var(--prototype-unknown-soft);
+  color: var(--prototype-secondary);
+  font-size: 11px;
+}
+
+.browserEnvironment strong {
+  color: var(--prototype-text);
+}
+
+.layout {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px 20px;
+  overflow: hidden;
+}
+
+.menu {
+  min-width: 0;
+  align-self: start;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.menu a {
+  min-height: 34px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--prototype-secondary);
+  text-decoration: none;
+}
+
+.menu a:hover,
+.menu a:focus-visible,
+.menuActive {
+  background: var(--prototype-accent-soft);
+  color: var(--prototype-accent) !important;
+  font-weight: 700;
+}
+
+.content {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding-right: 2px;
+}
+
+.prototypePanel {
+  min-width: 0;
+  margin: 0;
+  padding: 13px;
+  border: 1px solid var(--prototype-border);
+  border-radius: 10px;
+  background: var(--prototype-surface);
+}
+
+.panelHeader {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.panelHeader h3,
+.panelHeader p,
+.prototypePanel h4,
+.prototypePanel p {
+  margin: 0;
+}
+
+.panelHeader h3 {
+  font-size: 16px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--prototype-tertiary);
+  font: 700 10px/1.2 var(--prototype-mono);
+  letter-spacing: 0.06em;
+}
+
+.panelIntro {
+  color: var(--prototype-secondary);
+  font-size: 12px;
+}
+
+.settingRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 280px);
+  gap: 14px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--prototype-border);
+}
+
+.settingRow h4 {
+  font-size: 13px;
+}
+
+.settingRow p {
+  margin-top: 3px;
+  color: var(--prototype-secondary);
+  font-size: 12px;
+}
+
+.settingRow > :last-child {
+  justify-self: end;
+}
+
+.settingRowLast {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.neutralBadge {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  min-height: 23px;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--prototype-border);
+  border-radius: 999px;
+  background: var(--prototype-surface-2);
+  color: var(--prototype-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.browserCredentialBoundary {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+  padding: 11px;
+  border: 1px dashed var(--prototype-strong);
+  border-radius: 9px;
+  background: var(--prototype-surface-2);
+}
+
+.browserCredentialBoundary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.browserCredentialBoundary strong {
+  color: var(--prototype-text);
+}
+
+.browserCredentialBoundary p {
+  margin: 0;
+  color: var(--prototype-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.boundaryCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.boundaryCard {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--prototype-border);
+  border-radius: 9px;
+  background: var(--prototype-surface-2);
+}
+
+.boundaryCard strong {
+  font-size: 12px;
+}
+
+.boundaryCard span {
+  color: var(--prototype-secondary);
+  font-size: 11px;
+}
+
+.prototypePanel :global(.settings-panel__group) {
+  margin: 10px 0 0;
+  padding: 12px;
+}
+
+.shortcutList {
+  margin-bottom: 10px;
+}
+
+.releasePanel {
+  margin-bottom: 2px;
+}
+
+.releaseBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Keep the real model/credential form compact enough for the 1440×900
+ * settings workbench without hiding or removing any field. */
+.group[data-testid='settings-model-api'] {
+  margin-top: 10px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 12px;
+}
+
+.group[data-testid='settings-model-api'] .legend,
+.group[data-testid='settings-model-api'] .hint,
+.group[data-testid='settings-model-api'] > div {
+  grid-column: 1 / -1;
+}
+
+.group[data-testid='settings-model-api'] > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group[data-testid='settings-model-api'] input,
+.group[data-testid='settings-model-api'] select {
+  min-width: 0;
+}
+
+.themeOptions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 184px minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .boundaryCards,
+  .themeOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .browserEnvironment,
+  .browserCredentialBoundary > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .group[data-testid='settings-model-api'] {
+    grid-template-columns: 1fr;
+  }
+
+  .group[data-testid='settings-model-api'] > * {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    overflow-y: auto;
+  }
+
+  .shellHeader {
+    flex-wrap: wrap;
+  }
+
+  .layout {
+    display: block;
+    overflow: visible;
+    padding: 10px;
+  }
+
+  .menu {
+    margin-bottom: 10px;
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .menu a {
+    flex: 0 0 auto;
+  }
+
+  .content {
+    overflow: visible;
+  }
+
+  .settingRow {
+    grid-template-columns: 1fr;
+  }
+
+  .settingRow > :last-child {
+    justify-self: start;
+  }
+}

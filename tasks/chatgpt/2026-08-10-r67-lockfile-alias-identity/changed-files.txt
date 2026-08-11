@@ -1,0 +1,11 @@
+scripts/candidate-r30/registry-prefetch.mjs
+scripts/candidate-r30/registry-prefetch-alias.test.mjs
+PROJECT_STATE.yaml
+docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/GOAL.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/TASK.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/PLAN.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/RESULT.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/EVIDENCE.md
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/commands.log
+tasks/chatgpt/2026-08-10-r67-lockfile-alias-identity/changed-files.txt

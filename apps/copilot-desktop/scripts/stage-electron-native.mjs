@@ -42,6 +42,7 @@ if (!/^\d+\.\d+\.\d+$/.test(DEFAULT_ELECTRON_VERSION)) {
   throw new Error(`ELECTRON_VERSION_NOT_EXACT: ${DEFAULT_ELECTRON_VERSION || '<missing>'}`);
 }
 const NATIVE_RELATIVE = 'node_modules/better-sqlite3/build/Release/better_sqlite3.node';
+const SOURCE_OUTPUT_ROOT = path.join(repoRoot, 'tasks/openclaw');
 
 export function resolveStagePaths(options = {}) {
   const appPath = path.resolve(options.appPath ?? DEFAULT_APP);
@@ -95,10 +96,40 @@ export async function assertRootShaUnchanged(rootBinary, expectedSha) {
   return actual;
 }
 
+export function validateSourceOutputPath(outputPath) {
+  if (
+    typeof outputPath !== 'string'
+    || !path.isAbsolute(outputPath)
+    || path.normalize(outputPath) !== outputPath
+  ) {
+    throw new Error('SOURCE_OUTPUT_PATH_INVALID');
+  }
+  const relative = path.relative(SOURCE_OUTPUT_ROOT, outputPath);
+  const segments = relative.split(path.sep);
+  if (
+    relative === ''
+    || relative === '..'
+    || relative.startsWith(`..${path.sep}`)
+    || path.isAbsolute(relative)
+    || segments.length !== 4
+    || !segments[0]
+    || segments[1] !== 'run'
+    || segments[2] !== 'native'
+    || path.extname(segments[3] ?? '') !== '.node'
+  ) {
+    throw new Error('SOURCE_OUTPUT_PATH_OUTSIDE_TASK_RUN_NATIVE');
+  }
+  const rootBinary = path.join(repoRoot, NATIVE_RELATIVE);
+  if (path.resolve(outputPath) === path.resolve(rootBinary)) {
+    throw new Error('SOURCE_OUTPUT_MUST_NOT_REPLACE_ROOT_NATIVE');
+  }
+  return outputPath;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const paths = resolveStagePaths({ appPath: options.appPath });
-  await assertPaths(paths);
+  await assertPaths(paths, { sourceOutput: options.sourceOutput });
 
   if (options.verifyOnly) {
     const verifyRoot = await mkdtemp('/private/tmp/copilot-electron-verify-');
@@ -125,14 +156,25 @@ async function main() {
   }
 
   const rootShaBefore = await sha256(paths.rootBinary);
-  const packagedShaBefore = await sha256(paths.packagedBinary);
+  const sourceOutput = options.sourceOutput
+    ? validateSourceOutputPath(options.sourceOutput)
+    : undefined;
+  const packagedShaBefore = sourceOutput ? null : await sha256(paths.packagedBinary);
+  const sourceOutputShaBefore = sourceOutput && existsSync(sourceOutput)
+    ? await sha256(sourceOutput)
+    : null;
   const stageRoot = await mkdtemp('/private/tmp/copilot-electron-native-');
   const stagePackage = path.join(stageRoot, 'better-sqlite3');
   let succeeded = false;
 
   process.stdout.write(`NATIVE_ABI_STAGING stage=${stageRoot}\n`);
   process.stdout.write(`root_sha_before=${rootShaBefore}\n`);
-  process.stdout.write(`packaged_sha_before=${packagedShaBefore}\n`);
+  if (sourceOutput) {
+    process.stdout.write(`source_output=${sourceOutput}\n`);
+    process.stdout.write(`source_output_sha_before=${sourceOutputShaBefore ?? '<missing>'}\n`);
+  } else {
+    process.stdout.write(`packaged_sha_before=${packagedShaBefore}\n`);
+  }
 
   try {
     await cp(paths.sourcePackage, stagePackage, {
@@ -183,11 +225,33 @@ async function main() {
       throw new Error('ABI_STAGING_INVALID: staged binary SHA equals Node24 root binary SHA');
     }
 
-    await atomicStageBinary(stagedBinary, paths.packagedBinary);
+    const destination = sourceOutput ?? paths.packagedBinary;
+    await atomicStageBinary(stagedBinary, destination);
     const rootShaAfter = await assertRootShaUnchanged(paths.rootBinary, rootShaBefore);
-    const packagedShaAfter = await sha256(paths.packagedBinary);
-    if (packagedShaAfter !== stagedSha || packagedShaAfter === rootShaAfter) {
-      throw new Error('PACKAGED_NATIVE_STAGE_FAILED: packaged binary hash mismatch');
+    const destinationShaAfter = await sha256(destination);
+    if (destinationShaAfter !== stagedSha || destinationShaAfter === rootShaAfter) {
+      throw new Error(
+        sourceOutput
+          ? 'SOURCE_NATIVE_STAGE_FAILED: source output binary hash mismatch'
+          : 'PACKAGED_NATIVE_STAGE_FAILED: packaged binary hash mismatch',
+      );
+    }
+
+    if (sourceOutput) {
+      succeeded = true;
+      process.stdout.write(`${JSON.stringify({
+        status: 'PASS',
+        mode: 'source-output',
+        electronVersion: options.electronVersion,
+        arch: options.arch,
+        rootShaBefore,
+        rootShaAfter,
+        sourceOutput,
+        sourceOutputShaBefore,
+        sourceOutputShaAfter: destinationShaAfter,
+        stagedSha,
+      }, null, 2)}\n`);
+      return;
     }
 
     const verification = await verifyPackagedRuntime(
@@ -196,7 +260,6 @@ async function main() {
       Math.min(options.timeoutMs, 120_000),
       options.electronVersion,
     );
-
     succeeded = true;
     process.stdout.write(`${JSON.stringify({
       status: 'PASS',
@@ -206,7 +269,7 @@ async function main() {
       rootShaBefore,
       rootShaAfter,
       packagedShaBefore,
-      packagedShaAfter,
+      packagedShaAfter: destinationShaAfter,
       stagedSha,
       appPath: paths.appPath,
       e2eRerun: packagedE2eCommand(paths.executable),
@@ -338,10 +401,16 @@ function packagedE2eCommand(executable) {
   ].join(' ');
 }
 
-async function assertPaths(paths) {
+async function assertPaths(paths, options = {}) {
   const realPaths = { ...paths };
   // app.asar paths are virtual and become readable only inside Electron.
   delete realPaths.asarPackage;
+  if (options.sourceOutput) {
+    delete realPaths.appPath;
+    delete realPaths.executable;
+    delete realPaths.asarArchive;
+    delete realPaths.packagedBinary;
+  }
   for (const [label, target] of Object.entries(realPaths)) {
     if (!existsSync(target)) throw new Error(`MISSING_${label.toUpperCase()}: ${target}`);
   }
@@ -356,6 +425,7 @@ function parseArgs(args) {
     keepStage: false,
     verifyOnly: false,
     python: undefined,
+    sourceOutput: undefined,
   };
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
@@ -366,6 +436,7 @@ function parseArgs(args) {
     else if (arg === '--keep-stage') options.keepStage = true;
     else if (arg === '--verify-only') options.verifyOnly = true;
     else if (arg === '--python') options.python = args[++i];
+    else if (arg === '--source-output') options.sourceOutput = args[++i];
     else throw new Error(`UNKNOWN_ARGUMENT: ${arg}`);
   }
   if (!options.appPath || !options.electronVersion || !options.arch) {
@@ -373,6 +444,9 @@ function parseArgs(args) {
   }
   if (!Number.isFinite(options.timeoutMs) || options.timeoutMs < 1_000) {
     throw new Error('INVALID_ARGUMENT: --timeout-ms must be >= 1000');
+  }
+  if (options.verifyOnly && options.sourceOutput) {
+    throw new Error('INVALID_ARGUMENT: --verify-only and --source-output are mutually exclusive');
   }
   return options;
 }

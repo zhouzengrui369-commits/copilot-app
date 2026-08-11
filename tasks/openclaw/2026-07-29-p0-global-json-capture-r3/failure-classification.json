@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "task": "2026-07-29-p0-global-json-capture-r3",
+  "receipt": {
+    "path": "/private/tmp/copilot-p0-current-global-r3.json",
+    "sha256": "ba7386294fec7b7ad2a55b05d6aaf543b6a57a02d9793f8dcbf0ac4728a261e2",
+    "totals": {
+      "suites": 305,
+      "passedSuites": 273,
+      "failedSuiteRecords": 32,
+      "tests": 1275,
+      "passedTests": 1242,
+      "failedTests": 33,
+      "pendingTests": 0
+    },
+    "parsedTestResults": 124,
+    "failedAssertionRecords": 33,
+    "suiteLevelZeroTestErrors": 4
+  },
+  "source": {
+    "branch": "codex/p0-owner-gate",
+    "head": "2b832c20b93e07ee68b6b325dc3ad758986b7f69"
+  },
+  "verdict": "BLOCKED",
+  "candidateBlocking": true,
+  "currentP0RegressionGreen": true,
+  "classificationCounts": {
+    "CURRENT_P0_REGRESSION": 0,
+    "EXECUTION_BRIDGE": 7,
+    "BASELINE_CONTRACT_OR_EVIDENCE": 30,
+    "UNCLASSIFIED": 0
+  },
+  "failureRecords": [
+    {
+      "id": 1,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 renders the current truth without upgrading it",
+      "firstExactError": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"moc-wiki-current\"] Ignored nodes: comments, script, style <body> <div> <section class=\"workspace knowledge-workspace\" data-assistant-avoid=\"critical\" data-testid=\"knowledge-workspace\" > <header class=\"workspace__header workspace-header\" > <div> <h2> 知识 </h2> <p> 从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。 </p> </div> <div class=\"_layoutActions_b09d8a\" > <button aria-expanded=\"true\" type=\"button\" > 收起知识目录 </button> <button aria-expanded=\"true\" type=\"button\" > 收起整理预览 </button> <button class=\"primary-button\" type=\"button\" > 新建笔记 </button> </div> </header> <div class=\"_knowledgeBody_b09d8a knowledge-grid\" data-reader-layo",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 2,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 uses raw create for immediate LOCAL_SAVED and keeps a separate WIKI failure fail-closed",
+      "firstExactError": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"note-detail-panel\"] Ignored nodes: comments, script, style <body> <div> <section class=\"workspace knowledge-workspace\" data-assistant-avoid=\"critical\" data-testid=\"knowledge-workspace\" > <header class=\"workspace__header workspace-header\" > <div> <h2> 知识 </h2> <p> 从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。 </p> </div> <div class=\"_layoutActions_b09d8a\" > <button aria-expanded=\"true\" type=\"button\" > 收起知识目录 </button> <button aria-expanded=\"true\" type=\"button\" > 收起整理预览 </button> <button class=\"primary-button\" type=\"button\" > 新建笔记 </button> </div> </header> <div class=\"_knowledgeBody_b09d8a knowledge-grid\" data-reader-lay",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 3,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 polls queued → running → current on one exact path without overlap or duplicate save",
+      "firstExactError": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"moc-wiki-current\"] Ignored nodes: comments, script, style <body> <div> <section class=\"workspace knowledge-workspace\" data-assistant-avoid=\"critical\" data-testid=\"knowledge-workspace\" > <header class=\"workspace__header workspace-header\" > <div> <h2> 知识 </h2> <p> 从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。 </p> </div> <div class=\"_layoutActions_b09d8a\" > <button aria-expanded=\"true\" type=\"button\" > 收起知识目录 </button> <button aria-expanded=\"true\" type=\"button\" > 收起整理预览 </button> <button class=\"primary-button\" type=\"button\" > 新建笔记 </button> </div> </header> <div class=\"_knowledgeBody_b09d8a knowledge-grid\" data-reader-layo",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 4,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 bounds pending polling at nine serial attempts and exposes exact-path retry",
+      "firstExactError": "AssertionError: expected \"spy\" to be called 9 times, but got 10 times",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 5,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 retries a failed build with raw update on the same path and never creates a duplicate",
+      "firstExactError": "Error: expect(element).toHaveAttribute(\"data-wiki-state\", \"failed\") // element.getAttribute(\"data-wiki-state\") === \"failed\" Expected the element to have attribute: data-wiki-state=\"failed\" Received: data-wiki-state=\"current\" Ignored nodes: comments, script, style <html> <head /> <body> <div> <section class=\"workspace knowledge-workspace\" data-assistant-avoid=\"critical\" data-testid=\"knowledge-workspace\" > <header class=\"workspace__header workspace-header\" > <div> <h2> 知识 </h2> <p> 从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。 </p> </div> <div class=\"_layoutActions_b09d8a\" > <button aria-expanded=\"true\" type=\"button\" > 收起知识目录 </button> <button aria-expanded=\"true\" type=\"button\" > 收起整理预览 </but",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 6,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "fullName": "KnowledgeWorkspace digest-bound WIKI truth R1 retries a query failure by re-reading the same path without saving or creating",
+      "firstExactError": "Error: expect(element).toHaveAttribute(\"data-wiki-state\", \"query-failed\") // element.getAttribute(\"data-wiki-state\") === \"query-failed\" Expected the element to have attribute: data-wiki-state=\"query-failed\" Received: data-wiki-state=\"current\" Ignored nodes: comments, script, style <html> <head /> <body> <div> <section class=\"workspace knowledge-workspace\" data-assistant-avoid=\"critical\" data-testid=\"knowledge-workspace\" > <header class=\"workspace__header workspace-header\" > <div> <h2> 知识 </h2> <p> 从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。 </p> </div> <div class=\"_layoutActions_b09d8a\" > <button aria-expanded=\"true\" type=\"button\" > 收起知识目录 </button> <button aria-expanded=\"true\" type=\"butt",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Test and KnowledgeWorkspace source are unchanged; moc-wiki-current and note-detail-panel are absent in both HEAD and current source, while the newer focused Knowledge truth test passed."
+    },
+    {
+      "id": 7,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/demo-first-prototype-r1.test.tsx",
+      "fullName": "Demo-first prototype IA and truth boundaries renders the Demo Today hierarchy from typed local Todo data without fixture truth",
+      "firstExactError": "AssertionError: expected null not to be null",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "The expected page-local floating-ai class is absent at HEAD/current, and HEAD already requires confirmation after Cancel draft; the unchanged test asserts the superseded interaction."
+    },
+    {
+      "id": 8,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/demo-first-prototype-r1.test.tsx",
+      "fullName": "Demo-first prototype IA and truth boundaries cancels without a write and saves raw local truth before exact-path WIKI",
+      "firstExactError": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"保存为本地笔记\" Here are the accessible roles: alertdialog: Name \"放弃本地草稿？\": <section aria-describedby=\"discard-draft-description\" aria-labelledby=\"discard-draft-title\" aria-modal=\"true\" class=\"_modalCard_875a7f _confirmDialog_875a7f\" role=\"alertdialog\" /> -------------------------------------------------- banner: Name \"\": <header class=\"_modalHeader_875a7f\" /> -------------------------------------------------- heading: Name \"放弃本地草稿？\": <h2 id=\"discard-draft-title\" /> -------------------------------------------------- paragraph: Name \"\": <p id=\"discard-draft-description\" /> ------------------------------",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "The expected page-local floating-ai class is absent at HEAD/current, and HEAD already requires confirmation after Cancel draft; the unchanged test asserts the superseded interaction."
+    },
+    {
+      "id": 9,
+      "recordType": "suite-level-zero-test",
+      "file": "apps/copilot-desktop/tests/direct-performance-probe.test.ts",
+      "fullName": null,
+      "firstExactError": "Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; zero assertions collected."
+    },
+    {
+      "id": 10,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/local-asr-package-contract.test.ts",
+      "fullName": "local ASR static package contract preserves unsigned mac, release and Windows configuration semantics",
+      "firstExactError": "AssertionError: package.json: expected '93bdcad90b164f4ebaabd1bde986a7283061f…' to be '368100e3fd208ff3bd122b1263abb275e8df8…' // Object.is equality",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged fixed-preimage package contract reports an exact package.json hash mismatch; package.json is outside the current diff."
+    },
+    {
+      "id": 11,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/post-package-evidence.test.ts",
+      "fullName": "post-package external evidence gate accepts only the complete schema-2 macos-distribution evidence contract",
+      "firstExactError": "AssertionError: expected { status: 'BLOCKED', …(4) } to match object { status: 'PASS', binding: { …(3) } } (5 matching properties omitted from actual)",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged external distribution-evidence gate received BLOCKED instead of PASS; no package/sign/notary evidence is changed by current P0."
+    },
+    {
+      "id": 12,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/preload-domain-coverage.test.ts",
+      "fullName": "preload domain bridge behavior routes every public bridge operation and owns listener lifecycle",
+      "firstExactError": "Error: Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; assertions fail at module resolution before behavior."
+    },
+    {
+      "id": 13,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/preload-domain-coverage.test.ts",
+      "fullName": "preload domain bridge behavior pins the exact preload channel and payload for create/update-with-build and WIKI read",
+      "firstExactError": "Error: Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; assertions fail at module resolution before behavior."
+    },
+    {
+      "id": 14,
+      "recordType": "suite-level-zero-test",
+      "file": "apps/copilot-desktop/tests/preload.test.ts",
+      "fullName": null,
+      "firstExactError": "Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; zero assertions collected."
+    },
+    {
+      "id": 15,
+      "recordType": "suite-level-zero-test",
+      "file": "apps/copilot-desktop/tests/r22-startup-lazy-red.test.tsx",
+      "fullName": null,
+      "firstExactError": "Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; zero assertions collected."
+    },
+    {
+      "id": 16,
+      "recordType": "suite-level-zero-test",
+      "file": "apps/copilot-desktop/tests/r22-startup-review-fixes.test.tsx",
+      "fullName": null,
+      "firstExactError": "Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; zero assertions collected."
+    },
+    {
+      "id": 17,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/r22-v3-run-identity-evidence-adversarial.test.ts",
+      "fullName": "r22 V3 RED-A truthful distinct direct-run identity rejects one V2 execution replayed as three and accepts only a valid forward V3 triple",
+      "firstExactError": "AssertionError: expected { replayedV2Accepted: false, …(9) } to deeply equal { replayedV2Accepted: false, …(9) }",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged r22 performance evidence contract and runner area are outside the current P0/readiness diff."
+    },
+    {
+      "id": 18,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/r22-v3-run-identity-evidence-adversarial.test.ts",
+      "fullName": "r22 V3 RED-A truthful distinct direct-run identity proves the real runner hashes its random challenge and binds it to the exact output basename",
+      "firstExactError": "AssertionError: expected { …(2) } to deeply equal { …(2) }",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged r22 performance evidence contract and runner area are outside the current P0/readiness diff."
+    },
+    {
+      "id": 19,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/r31-v1-candidate-bound-performance-adversarial.test.ts",
+      "fullName": "r31-v1 candidate-bound performance contract versioned readiness fixtures prove BLOCKED, READY, duplicate output and private mode",
+      "firstExactError": "AssertionError: expected 1 to be 2 // Object.is equality",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged candidate performance evidence contract; two exact historical r31 proposal/runner paths are absent from this worktree and the area is outside current P0."
+    },
+    {
+      "id": 20,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/r31-v1-candidate-bound-performance-adversarial.test.ts",
+      "fullName": "r31-v1 candidate-bound performance contract current readiness binds authorization/hash/preimage/path/marker and rejects consumed targets",
+      "firstExactError": "Error: ENOENT: no such file or directory, open '/Users/njx/openclaw/copilot.wt-S15C/tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/reports/protected-performance-contract-r31-authorization-proposal.md'",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged candidate performance evidence contract; two exact historical r31 proposal/runner paths are absent from this worktree and the area is outside current P0."
+    },
+    {
+      "id": 21,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/r31-v1-candidate-bound-performance-adversarial.test.ts",
+      "fullName": "r31-v1 candidate-bound performance contract statically binds the new runner/CLI and preserves all protected legacy files byte-identical",
+      "firstExactError": "Error: ENOENT: no such file or directory, open '/Users/njx/openclaw/copilot.wt-S15C/tasks/codex/2026-07-14T17-11-phase1-mvp-codex-takeover/scripts/check-final-candidate-readiness.mjs'",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged candidate performance evidence contract; two exact historical r31 proposal/runner paths are absent from this worktree and the area is outside current P0."
+    },
+    {
+      "id": 22,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/reversible-trash-preload-r1.test.ts",
+      "fullName": "reversible Trash preload bridge r1 exposes only the exact intent API and routes exact schemas",
+      "firstExactError": "Error: Failed to resolve entry for package \"electron\". The package may have incorrect main/module/exports specified in its package.json.",
+      "classification": "EXECUTION_BRIDGE",
+      "evidence": "App-local Electron wrapper did not resolve during the run; assertion fails at module resolution before behavior."
+    },
+    {
+      "id": 23,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/backup/backup-approval-broker-r1.test.ts",
+      "fullName": "Desktop Backup approval broker r1 publishes only the sanitized prompt and accepts the exact head response once",
+      "firstExactError": "AssertionError: expected { …(2) } to deeply equal { …(2) }",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Backup-only broker contract; Backup production area is outside the current P0/readiness diff."
+    },
+    {
+      "id": 24,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/backup/backup-approval-ui-r1.test.tsx",
+      "fullName": "Backup approval modal r1 disables exact-deadline confirmation and never auto-approves an expired prompt",
+      "firstExactError": "TestingLibraryElementError: Found multiple elements with the role \"alert\" Here are the matching elements: Ignored nodes: comments, script, style <p class=\"remote-approval-modal__danger\" role=\"alert\" > <strong> Permanent encrypted object deletion. </strong> </p> Ignored nodes: comments, script, style <p role=\"alert\" > This command expired and cannot be approved. </p> (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)). Ignored nodes: comments, script, style <body> <div> <div class=\"remote-approval-backdrop\" role=\"presentation\" > <section aria-label=\"Encrypted backup approval\" aria-modal=\"true\" class=\"remote-approval",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Backup modal test and source; failure is an obsolete multiple-alert query in a Backup-only area outside current P0."
+    },
+    {
+      "id": 25,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/backup/backup-ui-ipc-r1.test.tsx",
+      "fullName": "Backup owner consent UI has no direct switch or prechecked scope and shows the complete consent before enable",
+      "firstExactError": "TypeError: backup.onApprovalRequest is not a function",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Backup UI mock lacks onApprovalRequest required by unchanged BackupApprovalModal; Backup is outside current P0."
+    },
+    {
+      "id": 26,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/integration/reversible-trash-desktop-ui-r1.integration.test.ts",
+      "fullName": "renderer-reachable reversible Trash main boundary validates exact IPC schemas and fails restore collision/purge eligibility closed",
+      "firstExactError": "AssertionError: expected [Function] to throw error including 'restore destination already exists' but got '[INVALID_ARGUMENT] trash restore requ…'",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged integration contract; exact failing schema/restore paths are outside current P0 changes, and restore reindex source slice matches HEAD byte-for-byte."
+    },
+    {
+      "id": 27,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/integration/reversible-trash-desktop-ui-r1.integration.test.ts",
+      "fullName": "renderer-reachable reversible Trash main boundary closes and reopens real Desktop storage, reconciles note/Todo partial moves, and restores without data loss",
+      "firstExactError": "Error: promise rejected \"Error: [INTERNAL] restored note build fai…\" instead of resolving",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged integration contract; exact failing schema/restore paths are outside current P0 changes, and restore reindex source slice matches HEAD byte-for-byte."
+    },
+    {
+      "id": 28,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/integration/reversible-trash-source-r1.integration.test.ts",
+      "fullName": "reversible trash source r1 desktop integration moves and restores a note locally, with KG/RAG cleanup and no hard-delete mapping",
+      "firstExactError": "Error: promise rejected \"DomainServiceError: restored note build f… { code: '…' }\" instead of resolving",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged integration contract; exact restore reindex source slice producing WIKI_MISSING matches HEAD byte-for-byte."
+    },
+    {
+      "id": 29,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/integration/reversible-trash-source-r1.integration.test.ts",
+      "fullName": "reversible trash source r1 desktop integration restores a real system Todo only after the same durable KG/RAG re-index as notes",
+      "firstExactError": "Error: promise rejected \"DomainServiceError: restored note build f… { code: '…' }\" instead of resolving",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged integration contract; exact restore reindex source slice producing WIKI_MISSING matches HEAD byte-for-byte."
+    },
+    {
+      "id": 30,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/integration/reversible-trash-source-r1.integration.test.ts",
+      "fullName": "reversible trash source r1 desktop integration keeps failed restore indexing durable and completes it on startup retry",
+      "firstExactError": "DomainServiceError: restored note build failed: WIKI_MISSING",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged integration contract; exact restore reindex source slice producing WIKI_MISSING matches HEAD byte-for-byte."
+    },
+    {
+      "id": 31,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 writes exact request wx/0600 and atomically commits the exact pending response",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 32,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 rolls a claimed response back after failed durable activation and rejects wrong IDs/unsafe dirs",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 33,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 rejects hardlinks, non-regular files, zero/oversize bytes, unsafe mode, and symlink responses",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 34,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 removes a partially published request after partial-write failure",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 35,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 removes a partially published request after fsync failure",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 36,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 claims the original atomically and refuses rollback over a replacement collision",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    },
+    {
+      "id": 37,
+      "recordType": "assertion",
+      "file": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "fullName": "managed Pairing exchange r1 fails closed and preserves the claimed response when durable commit unlink fails",
+      "firstExactError": "RemoteError: managed pairing exchange is unavailable",
+      "classification": "BASELINE_CONTRACT_OR_EVIDENCE",
+      "evidence": "Unchanged Remote-only source/test; os.tmpdir is /var while its realpath is /private/var, so the fixed canonical-directory guard rejects the test fixture before the assertion scenario."
+    }
+  ],
+  "conclusion": "No CURRENT_P0_REGRESSION or UNCLASSIFIED records remain. Seven Electron module-resolution failures are execution-bridge defects, so the global candidate gate is incomplete. Thirty records are independently bounded baseline contract/evidence failures outside current P0/readiness scope."
+}

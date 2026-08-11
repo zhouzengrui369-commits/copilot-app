@@ -1,0 +1,17 @@
+MiniMax dispatch: executor started, read contract, then violated the no-install
+boundary. Controller sent Ctrl-C and accepted no worker result.
+
+Controller checks:
+- restore `PROJECT_STATE.yaml` from `git show HEAD:PROJECT_STATE.yaml` using
+  `apply_patch`
+- apply bounded governance diff with `apply_patch`
+- `git diff --check` -> exit 0
+- parse `PROJECT_STATE.yaml` with existing root `js-yaml` -> exit 0
+- `git status --short` and `git diff --stat` -> exact changed files recorded
+
+PR #15 clean-CI follow-up:
+- `gh run view 30689136694 --job 91340630147 --log-failed` -> exit 0; one
+  failure at `scripts/candidate-r30/document-authority.test.mjs:115`, requiring
+  exact `github_source: SOURCE_COMPLETE`; suite result `59/60`.
+- restore the exact source-capability token with `apply_patch`; no product,
+  dependency, candidate, runtime, credential, or release field changed.

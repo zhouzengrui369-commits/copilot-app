@@ -19,6 +19,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { IPC_CHANNELS } from '../shared/ipc-channels.js';
 import { registerDomainIpc } from './domain-ipc.js';
+import { registerAskConversationIpc } from './ask-conversation-ipc.js';
+import { AskConversationStore } from './ask-conversation-store.js';
 import {
   DesktopApprovalBroker,
   registerRemoteIpc,
@@ -44,6 +46,7 @@ import {
 import { registerAudioMediaPermissionHandlers } from './media-permission.js';
 import {
   createProductionKnowledgeService,
+  resolveSourceSqliteNativeBinding,
   type LocalKnowledgeService,
 } from './local-knowledge-service.js';
 import {
@@ -71,6 +74,8 @@ import {
   redactSettingsForRenderer,
 } from './settings-store.js';
 import { readManagedCredentialNamespace } from './managed-credential-namespace.js';
+import { registerLocalAsrIpc } from './local-asr-ipc.js';
+import { LocalAsrManager } from './local-asr-manager.js';
 import {
   ModelCredentialError,
   ModelCredentialStore,
@@ -81,6 +86,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const SOURCE_REPO_ROOT = path.resolve(__dirname, '../../../..');
 
 const VITE_DEV_URL = process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173';
 const IS_DEV = process.env.COPILOT_DEV === '1' || process.env.NODE_ENV === 'development';
@@ -123,6 +129,7 @@ let mainWindow: BrowserWindow | null = null;
 let storage: SettingsStorage | null = null;
 let modelCredentials: ModelCredentialStore | null = null;
 let knowledgeServicePromise: Promise<LocalKnowledgeService> | null = null;
+let askConversationStore: AskConversationStore | null = null;
 let telemetry: LocalTelemetry | null = null;
 let directPerformanceProbe: DirectPerformanceProbe | null = null;
 let startupCoordinator: StartupCoordinator | null = null;
@@ -132,6 +139,7 @@ let remoteRuntime: RemoteRuntime | null = null;
 let remoteApprovalBroker: DesktopApprovalBroker | null = null;
 let backupRuntime: ProductionBackupRuntime | null = null;
 let backupApprovalBroker: DesktopBackupApprovalBroker | null = null;
+let localAsrManager: LocalAsrManager | null = null;
 
 function startupOffsetMs(): number {
   return Math.max(0, Math.round((performance.now() - PROCESS_START_MONOTONIC) * 100) / 100);
@@ -336,10 +344,17 @@ function rendererSafeSettings(): ReturnType<typeof redactSettingsForRenderer> {
 
 function getKnowledgeService(): Promise<LocalKnowledgeService> {
   if (!knowledgeServicePromise) {
+    const sqliteNativeBinding = resolveSourceSqliteNativeBinding({
+      isPackaged: app.isPackaged,
+      configuredPath: process.env.COPILOT_SQLITE_NATIVE_BINDING,
+      allowedTaskRoot: path.join(SOURCE_REPO_ROOT, 'tasks/openclaw'),
+      sharedNodeModulesRoot: path.join(SOURCE_REPO_ROOT, 'node_modules'),
+    });
     knowledgeServicePromise = createProductionKnowledgeService({
       userDataPath: app.getPath('userData'),
       settings: getStorage(),
       credentials: getModelCredentials(),
+      ...(sqliteNativeBinding === undefined ? {} : { sqliteNativeBinding }),
     });
   }
   return knowledgeServicePromise.catch((error) => {
@@ -350,6 +365,13 @@ function getKnowledgeService(): Promise<LocalKnowledgeService> {
     }));
     throw error;
   });
+}
+
+function getAskConversationStore(): AskConversationStore {
+  if (!askConversationStore) {
+    askConversationStore = new AskConversationStore(app.getPath('userData'));
+  }
+  return askConversationStore;
 }
 
 function getRemoteRuntime(): RemoteRuntime {
@@ -432,6 +454,22 @@ function getBackupRuntime(): ProductionBackupRuntime {
     });
   }
   return backupRuntime;
+}
+
+function getLocalAsrManager(): LocalAsrManager {
+  if (!localAsrManager) {
+    const assetRoot = app.isPackaged
+      ? path.join(process.resourcesPath, 'local-asr')
+      : path.join(app.getAppPath(), 'resources', 'local-asr');
+    const workerEntryUrl = app.isPackaged
+      ? pathToFileURL(path.join(assetRoot, 'worker', 'local-asr-worker.js'))
+      : null;
+    localAsrManager = new LocalAsrManager({
+      assetRoot,
+      ...(workerEntryUrl ? { workerEntryUrl } : {}),
+    });
+  }
+  return localAsrManager;
 }
 
 function clampBoundsToDisplay(bounds: WindowBounds): WindowBounds {
@@ -581,6 +619,13 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function registerIpc(): void {
+  const isCurrentWindowSender = (event: unknown) =>
+    Boolean(
+      mainWindow
+      && !mainWindow.isDestroyed()
+      && (event as { sender?: { id?: number } } | null)?.sender?.id === mainWindow.webContents.id,
+    );
+
   ipcMain.handle(IPC_CHANNELS.STARTUP_GET_MILESTONES, () => getStartupMilestoneReport());
   ipcMain.on(IPC_CHANNELS.STARTUP_APP_ROOT_VISIBLE, (event) => {
     if (mainWindow && event.sender.id === mainWindow.webContents.id) {
@@ -693,21 +738,17 @@ function registerIpc(): void {
     getKnowledgeService,
     (operation) => telemetry?.recordOperation(operation),
   );
-  registerRemoteIpc(ipcMain, getRemoteRuntime, (event) =>
-    Boolean(
-      mainWindow
-      && !mainWindow.isDestroyed()
-      && (event as { sender?: { id?: number } } | null)?.sender?.id === mainWindow.webContents.id,
-    ));
-  registerBackupIpc(ipcMain, getBackupRuntime, (event) =>
-    Boolean(
-      mainWindow
-      && !mainWindow.isDestroyed()
-      && (event as { sender?: { id?: number } } | null)?.sender?.id === mainWindow.webContents.id,
-    ), (response) => {
-      if (!backupApprovalBroker) throw new Error('backup approval broker unavailable');
-      return backupApprovalBroker.respond(response);
-    });
+  registerAskConversationIpc(
+    ipcMain,
+    getAskConversationStore,
+    getKnowledgeService,
+  );
+  registerRemoteIpc(ipcMain, getRemoteRuntime, isCurrentWindowSender);
+  registerBackupIpc(ipcMain, getBackupRuntime, isCurrentWindowSender, (response) => {
+    if (!backupApprovalBroker) throw new Error('backup approval broker unavailable');
+    return backupApprovalBroker.respond(response);
+  });
+  registerLocalAsrIpc(ipcMain, getLocalAsrManager, isCurrentWindowSender);
 }
 
 app.whenReady().then(async () => {
@@ -757,6 +798,7 @@ app.on('before-quit', () => {
   if (knowledgeServicePromise) {
     void knowledgeServicePromise.then((service) => service.close()).catch(() => undefined);
   }
+  if (localAsrManager) void localAsrManager.close().catch(() => undefined);
 });
 
 // Surface uncaught errors in the main log instead of dying silently.

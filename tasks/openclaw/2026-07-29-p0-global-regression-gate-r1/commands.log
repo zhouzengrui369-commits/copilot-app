@@ -1,0 +1,4 @@
+npm run test:copilot-desktop -- --reporter=json --outputFile=/private/tmp/copilot-p0-current-global.json
+exit: 1
+classification: EXECUTION_COMMAND_FORWARDING_FAILED
+machine-readable JSON: absent

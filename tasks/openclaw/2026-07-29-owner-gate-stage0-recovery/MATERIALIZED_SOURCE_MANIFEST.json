@@ -1,0 +1,3182 @@
+{
+  "schemaVersion": "copilot-owner-gate-stage0-materialized-source/v1",
+  "status": "STAGE0_MATERIALIZATION_PASS / COMMIT_PENDING / MVP_NOT_COMPLETE",
+  "mode": "verify-only",
+  "createdAt": "2026-07-29T07:53:05.011835Z",
+  "workspace": "/Users/njx/openclaw/copilot.wt-S15C",
+  "git": {
+    "baseCommit": "96c861706126317c27965fcb64c765973df9ac89",
+    "branch": "codex/p0-owner-gate",
+    "head": "96c861706126317c27965fcb64c765973df9ac89",
+    "worktreeStatus": "DIRTY_EXPECTED_COMMIT_PENDING",
+    "statusShort": [
+      " M README.md",
+      " M apps/copilot-desktop/electron-builder.yml",
+      " M apps/copilot-desktop/index.html",
+      " M apps/copilot-desktop/package.json",
+      " M apps/copilot-desktop/scripts/stage-electron-native.d.mts",
+      " M apps/copilot-desktop/scripts/stage-electron-native.mjs",
+      " M apps/copilot-desktop/src/main/domain-ipc.ts",
+      " M apps/copilot-desktop/src/main/local-knowledge-service.ts",
+      " M apps/copilot-desktop/src/main/main.ts",
+      " M apps/copilot-desktop/src/main/preload.ts",
+      " M apps/copilot-desktop/src/renderer/App.tsx",
+      " M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/index.tsx",
+      " M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/types.ts",
+      " M apps/copilot-desktop/src/renderer/components/KnowledgeGraph/useKgData.ts",
+      " M apps/copilot-desktop/src/renderer/components/NoteDetail/MarkdownRenderer.tsx",
+      " M apps/copilot-desktop/src/renderer/components/NoteDetail/index.tsx",
+      " M apps/copilot-desktop/src/renderer/components/NoteDetail/styles.module.css",
+      " M apps/copilot-desktop/src/renderer/components/Settings/ModelApiConfig.tsx",
+      " M apps/copilot-desktop/src/renderer/components/Settings/index.tsx",
+      " M apps/copilot-desktop/src/renderer/components/Settings/styles.module.css",
+      " D apps/copilot-desktop/src/renderer/components/VoiceInput/CloudAsrProvider.ts",
+      " M apps/copilot-desktop/src/renderer/components/VoiceInput/RecorderButton.tsx",
+      " D apps/copilot-desktop/src/renderer/components/VoiceInput/WebSpeechProvider.ts",
+      " M apps/copilot-desktop/src/renderer/components/VoiceInput/index.tsx",
+      " D apps/copilot-desktop/src/renderer/components/VoiceInput/useTranscriber.ts",
+      " M apps/copilot-desktop/src/renderer/lib/copilot-api.ts",
+      " M apps/copilot-desktop/src/renderer/main.tsx",
+      " M apps/copilot-desktop/src/renderer/preload-shim.ts",
+      " M apps/copilot-desktop/src/renderer/startup-shell.tsx",
+      " M apps/copilot-desktop/src/renderer/styles/app.css",
+      " M apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.tsx",
+      " M apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.tsx",
+      " M apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.module.css",
+      " M apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx",
+      " M apps/copilot-desktop/src/renderer/workspaces/VoiceWorkspace.tsx",
+      " M apps/copilot-desktop/src/renderer/workspaces/WorkspaceState.tsx",
+      " M apps/copilot-desktop/src/shared/domain-api.ts",
+      " M apps/copilot-desktop/src/shared/ipc-channels.ts",
+      " M apps/copilot-desktop/tests/KnowledgeGraph.test.tsx",
+      " M apps/copilot-desktop/tests/NoteDetail.test.tsx",
+      " M apps/copilot-desktop/tests/SettingsPanel.test.tsx",
+      " D apps/copilot-desktop/tests/VoiceInput/CloudAsrProvider.test.ts",
+      " M apps/copilot-desktop/tests/VoiceInput/RecorderButton.test.tsx",
+      " M apps/copilot-desktop/tests/VoiceInput/VoiceInput.test.tsx",
+      " D apps/copilot-desktop/tests/VoiceInput/WebSpeechProvider.test.ts",
+      " M apps/copilot-desktop/tests/VoiceInput/accuracy.test.ts",
+      " M apps/copilot-desktop/tests/VoiceInput/asr-electron38-crash-guard-r4.test.tsx",
+      " D apps/copilot-desktop/tests/VoiceInput/asr-strict-local-r2.test.tsx",
+      " D apps/copilot-desktop/tests/VoiceInput/asr-strict-local-r3.test.tsx",
+      " D apps/copilot-desktop/tests/VoiceInput/local-asr-test-runtime.ts",
+      " D apps/copilot-desktop/tests/VoiceInput/paths.test.ts",
+      " M apps/copilot-desktop/tests/VoiceInput/strict-local-source-contract.test.ts",
+      " D apps/copilot-desktop/tests/VoiceInput/useTranscriber.test.ts",
+      " M apps/copilot-desktop/tests/coverage-main-domain-critical.test.ts",
+      " M apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx",
+      " M apps/copilot-desktop/tests/e2e/ask-voice-offline.spec.ts",
+      " M apps/copilot-desktop/tests/e2e/electron.fixture.ts",
+      " M apps/copilot-desktop/tests/e2e/knowledge.spec.ts",
+      " M apps/copilot-desktop/tests/e2e/window-nav-settings.spec.ts",
+      " M apps/copilot-desktop/tests/integration/local-first-domain-ipc.integration.test.ts",
+      " M apps/copilot-desktop/tests/preload-domain-coverage.test.ts",
+      " M apps/copilot-desktop/tests/preload.test.ts",
+      " M apps/copilot-desktop/tests/r22-startup-lazy-red.test.tsx",
+      " M apps/copilot-desktop/tests/r22-startup-review-fixes.test.tsx",
+      " M apps/copilot-desktop/tests/stage-electron-native.test.ts",
+      " M apps/copilot-desktop/tests/vitest.critical-coverage.config.ts",
+      " M apps/copilot-desktop/vite.config.ts",
+      " M packages/kb/src/store/sqlite-store.ts",
+      " M packages/kb/tests/md-file-store-edge.test.ts",
+      " M packages/kb/tests/sqlite-store.test.ts",
+      " M packages/kg/src/api/query.ts",
+      " M packages/kg/src/builder/kg-builder.ts",
+      " M packages/kg/src/builder/summarizer.ts",
+      " M packages/kg/src/index.ts",
+      " M packages/kg/src/store/migration.ts",
+      " M packages/kg/src/store/sqlite-store.ts",
+      " M packages/kg/src/types.ts",
+      " M packages/kg/tests/coverage-closure.test.ts",
+      " M packages/kg/tests/functional-runtime.test.ts",
+      " M packages/kg/tests/kg-builder.integration.test.ts",
+      " M packages/kg/tests/migration.test.ts",
+      " M packages/kg/tests/sqlite-store.test.ts",
+      " M packages/rag/src/answerer.ts",
+      " M packages/rag/src/index.ts",
+      " M packages/rag/src/indexer.ts",
+      " M packages/rag/src/types.ts",
+      " M packages/rag/src/vector-store.ts",
+      " M packages/rag/tests/answerer.test.ts",
+      " M packages/rag/tests/functional-runtime.test.ts",
+      " M packages/rag/tests/indexer.test.ts",
+      " M packages/rag/tests/rag-sources-pipeline.integration.test.ts",
+      " M packages/rag/tests/vector-store.test.ts",
+      "?? CHANGELOG.md",
+      "?? DECISIONS.md",
+      "?? PROJECT_STATE.yaml",
+      "?? PROJECT_STATUS.md",
+      "?? TODO.md",
+      "?? apps/copilot-desktop/resources/local-asr/BUNDLE-MANIFEST.json",
+      "?? apps/copilot-desktop/resources/local-asr/THIRD-PARTY-NOTICES.md",
+      "?? apps/copilot-desktop/resources/local-asr/licenses/Apache-2.0.txt",
+      "?? apps/copilot-desktop/resources/local-asr/model/README.md",
+      "?? apps/copilot-desktop/resources/local-asr/model/decoder-epoch-99-avg-1.int8.onnx",
+      "?? apps/copilot-desktop/resources/local-asr/model/encoder-epoch-99-avg-1.int8.onnx",
+      "?? apps/copilot-desktop/resources/local-asr/model/joiner-epoch-99-avg-1.int8.onnx",
+      "?? apps/copilot-desktop/resources/local-asr/model/tokens.txt",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/README.md",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/local-asr-no-egress-preload.cjs",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/package.json",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-asr.js",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.js",
+      "?? apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.wasm",
+      "?? apps/copilot-desktop/src/main/local-asr-assets.ts",
+      "?? apps/copilot-desktop/src/main/local-asr-ipc.ts",
+      "?? apps/copilot-desktop/src/main/local-asr-manager.ts",
+      "?? apps/copilot-desktop/src/main/local-asr-worker.ts",
+      "?? apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.module.css",
+      "?? apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.tsx",
+      "?? apps/copilot-desktop/src/renderer/components/Assistant/types.ts",
+      "?? apps/copilot-desktop/src/renderer/components/VoiceInput/audio-pcm.ts",
+      "?? apps/copilot-desktop/src/renderer/components/VoiceInput/useLocalAsrCapture.ts",
+      "?? apps/copilot-desktop/src/renderer/prototype/browser-api.ts",
+      "?? apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css",
+      "?? apps/copilot-desktop/src/renderer/styles/demo-source-v4.css",
+      "?? apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.module.css",
+      "?? apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.module.css",
+      "?? apps/copilot-desktop/src/shared/local-asr-ipc-envelope.ts",
+      "?? apps/copilot-desktop/src/shared/local-asr.ts",
+      "?? apps/copilot-desktop/tests/KnowledgeWorkspace.source-navigation.test.tsx",
+      "?? apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "?? apps/copilot-desktop/tests/VoiceInput/audio-pcm.test.ts",
+      "?? apps/copilot-desktop/tests/VoiceInput/local-asr-capture.test.tsx",
+      "?? apps/copilot-desktop/tests/VoiceInput/local-asr-quality.ts",
+      "?? apps/copilot-desktop/tests/VoiceWorkspace.local-asr-draft.test.tsx",
+      "?? apps/copilot-desktop/tests/ask-demo-direct-source-r1.test.tsx",
+      "?? apps/copilot-desktop/tests/demo-first-prototype-r1.test.tsx",
+      "?? apps/copilot-desktop/tests/e2e/demo-first-prototype.spec.ts",
+      "?? apps/copilot-desktop/tests/e2e/helpers/fake-minimax-provider.ts",
+      "?? apps/copilot-desktop/tests/e2e/knowledge-demo-alignment.spec.ts",
+      "?? apps/copilot-desktop/tests/electron-fixture-window-readiness.test.ts",
+      "?? apps/copilot-desktop/tests/electron-native-binding-selection.test.ts",
+      "?? apps/copilot-desktop/tests/electron-source-runtime-selection.test.ts",
+      "?? apps/copilot-desktop/tests/integration/note-wiki-before-rag-background.integration.test.ts",
+      "?? apps/copilot-desktop/tests/integration/today-capture-knowledge-r1.integration.test.ts",
+      "?? apps/copilot-desktop/tests/knowledge-demo-alignment-r1.test.tsx",
+      "?? apps/copilot-desktop/tests/local-asr-assets.test.ts",
+      "?? apps/copilot-desktop/tests/local-asr-ipc.test.ts",
+      "?? apps/copilot-desktop/tests/local-asr-manager.test.ts",
+      "?? apps/copilot-desktop/tests/local-asr-package-contract.test.ts",
+      "?? apps/copilot-desktop/tests/r44-h1-schedule-owner-feedback.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h2-knowledge-owner-feedback.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h3-settings-owner-feedback.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4-global-assistant.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4-knowledge-product-experience.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4-settings-browser-boundary.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4-today-product-experience.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4c-assistant-context-overlap.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4c-knowledge-truth-reader.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4c-today-blockers.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4d-assistant-visual-overlap.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx",
+      "?? apps/copilot-desktop/tests/r44-h4f-knowledge-settings-product-polish.test.tsx",
+      "?? apps/copilot-desktop/tests/settings-demo-direct-source-r1.test.tsx",
+      "?? docs/ARCHITECTURE.md",
+      "?? packages/kb/tests/sqlite-native-binding.test.ts",
+      "?? packages/kg/tests/sqlite-native-binding.test.ts"
+    ]
+  },
+  "inputs": {
+    "r3Task": "/Users/njx/openclaw/copilot/.worktrees/exp-cop-p0/tasks/openclaw/2026-07-28-current-desktop-source-snapshot-r3",
+    "r3ManifestSha256": "3425aba76d6d79b326b11b178ec96ad306ac8364feba84420f5ce9a2de812ec4",
+    "r3AggregateSha256": "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311",
+    "r3IndependentVerdict": "SNAPSHOT_POSTIMAGE=PASS / MATERIALIZATION_INPUT_AUTHORIZED=YES",
+    "productReviewPr": "https://github.com/zhouzengrui369-commits/copilot-app/pull/9",
+    "focusedReport": "https://github.com/zhouzengrui369-commits/copilot-app/blob/31dfd0c7f9feca77da82f4a02bf359d85818742c/reports/product-review/2026-07-28-copilot-focused-retest.md",
+    "reviewVerdict": "NOT_READY / BLOCKED_EXP_COP_008 / P0=1 / P1=6 / P2=3",
+    "ecosystemBaseline": {
+      "repository": "zhouzengrui369-commits/knowme-ecosystem",
+      "version": "0.2.0",
+      "commit": "965713b81a726279f63527eb17979f5e768423c1"
+    }
+  },
+  "materialized": {
+    "entries": 414,
+    "trackedDeletions": 7,
+    "snapshotBytes": 51347389,
+    "aggregate": {
+      "algorithm": "SHA256(UTF8 compact JSON-array records joined by LF with final LF; SCHEMA first, then F entries by UTF8 path bytes, then D deletions by UTF8 path bytes)",
+      "canonicalBytes": 65492,
+      "sha256": "026060bbc505e7f5fafceae98df600e067b97aaedbd087e2248195e74fd7f311"
+    },
+    "modeCounts": {
+      "0644": 414
+    },
+    "removedExtraFiles": [],
+    "trackedDeletionPaths": [
+      "apps/copilot-desktop/src/renderer/components/VoiceInput/CloudAsrProvider.ts",
+      "apps/copilot-desktop/src/renderer/components/VoiceInput/WebSpeechProvider.ts",
+      "apps/copilot-desktop/src/renderer/components/VoiceInput/useTranscriber.ts",
+      "apps/copilot-desktop/tests/VoiceInput/CloudAsrProvider.test.ts",
+      "apps/copilot-desktop/tests/VoiceInput/WebSpeechProvider.test.ts",
+      "apps/copilot-desktop/tests/VoiceInput/paths.test.ts",
+      "apps/copilot-desktop/tests/VoiceInput/useTranscriber.test.ts"
+    ]
+  },
+  "entries": [
+    {
+      "path": "apps/copilot-desktop/electron-builder.yml",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 5731,
+      "sha256": "482f636a1943b77a5a5729488e96fb54b070e87c03fbaba48786ab4933b7c56d"
+    },
+    {
+      "path": "apps/copilot-desktop/index.html",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 580,
+      "sha256": "b6d96cd038359cb97548ed0c4fe74a636bbf846e2c342593d5621550483510af"
+    },
+    {
+      "path": "apps/copilot-desktop/package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3301,
+      "sha256": "93bdcad90b164f4ebaabd1bde986a7283061fbc35a032c3f52bd93adfce207be"
+    },
+    {
+      "path": "apps/copilot-desktop/playwright.electron.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 682,
+      "sha256": "9557d3e8b5f0d7eeb89d9d5a0a412a934d8ca1bfae8b2e65cc0014273977e05f"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/BUNDLE-MANIFEST.json",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3315,
+      "sha256": "ea1748ebba0f6d46ca4ca206d2a5c60d4a4f90c0d4657445b4a04ef20a3cece2"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/THIRD-PARTY-NOTICES.md",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 577,
+      "sha256": "376b14f0e0c9412a80395aca57157fb238fca570d88613969003c76072b60e82"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/licenses/Apache-2.0.txt",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/model/README.md",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 226,
+      "sha256": "515751f07faad368f0863ae41773ff09635eba5920122d549abb8e45d5c88282"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/model/decoder-epoch-99-avg-1.int8.onnx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1888682,
+      "sha256": "22f123bb8cba9b38974b3df18a3f45e7081f4985ebb2e075d9f21f618c468bbf"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/model/encoder-epoch-99-avg-1.int8.onnx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21621684,
+      "sha256": "1c556ea57cec304e55ec4b72e52c1cc098bb01476ed7d90f3de939fe126487b1"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/model/joiner-epoch-99-avg-1.int8.onnx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1795562,
+      "sha256": "a7cf9d82757bdcf786059454495a9ca95e4bd7347f72473fc08d794475c36169"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/model/tokens.txt",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 48697,
+      "sha256": "8b294db9045d6e5f94647f4c1eec1af4da143a75053c399611444b378ff966ac"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/README.md",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 302,
+      "sha256": "90423fd64838f5430535c55e457536d9afa19a7b045f5b2104507d64056d21c6"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/local-asr-no-egress-preload.cjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4255,
+      "sha256": "63d6e17b9393dc75924ef307d747cd24b4cd5ea4b5c3f891570463a6bff54c97"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/package.json",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1152,
+      "sha256": "ec8a701edab8c97f5b076159dfd17a41107ba86890d43024d743f0578d7c3c0e"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-asr.js",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 53867,
+      "sha256": "d51ae8e8b756ee5e53423ffada0c9702973f154f561aca7984fe0b12f4060178"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.js",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 180879,
+      "sha256": "4c8003068271614b7a485d60352e74e633526e66447de605d738afd7f249552e"
+    },
+    {
+      "path": "apps/copilot-desktop/resources/local-asr/runtime/sherpa-onnx-wasm-nodejs.wasm",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21024877,
+      "sha256": "8df60de2c2c8b82569555c36695583d7b97d5e75531324437a3b2ba294ffdb0d"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/aggregate-electron-direct-performance-r31-v1.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8095,
+      "sha256": "def731a677f3d37c2d333234995c7a814f995c66c3d36b410fc7cdf73a4a072f"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/aggregate-electron-direct-performance.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 7873,
+      "sha256": "fa8c312582a8eeafb01c6ae9cb307521ec54a016b2c59159b06b4c43c001e9d8"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/build-canonical-release.mjs",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 79307,
+      "sha256": "654f73d2b575d578605adf11cf6a70386acf1146db2c627fff2833f3b557d4c3"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/dev-desktop.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2263,
+      "sha256": "c41218d911d67127062dcf51b44d4601741546e5f54468ad02c0cf625f2d4005"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/direct-performance-config.mjs",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 54414,
+      "sha256": "1e6751d9db7f084635e9d356ffb880feb13e21622c251479e02423a9a29eb678"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/direct-performance-contract-r31-v1.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 731,
+      "sha256": "accd011f72c6ebf95e04a59bb0021d7744ebdf971e978327b061897db63b1090"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/electron-builder-windows-sign.cjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4003,
+      "sha256": "91a2506a0a17ed8fe34d88ac1b9a4dc20062ddaec8491ce658d3100ecb7907bb"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/finalize-canonical-release.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8501,
+      "sha256": "02d4e1a7e8d1db10f6cb819928c753f9b24b52482ba801ff2f17e1ff2ec69561"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/gen-icon.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 4082,
+      "sha256": "92b5ce88be8dce970df7281d00da9a523db4f5725d6dd7962bf91c2b3f4cbd77"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/gen-screenshots.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 9033,
+      "sha256": "aa5f8aac18cd8c356ad27cb9ef7d02dae0af5256f9d788e0d066b621b2d35135"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/measure-electron-direct-performance-r31-v1.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17941,
+      "sha256": "4ff0a75c2a055595ffa93b2c314482c81673a44578e0f990bfa012ca68ba51b3"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/measure-electron-direct-performance.mjs",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 17543,
+      "sha256": "5d31d651be00cda48edabdefa2bdd1edc9e319e20bb0c8af61ed2e4de0fab61f"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/measure-electron-performance.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 10227,
+      "sha256": "a58df8e382fc095a9563c1e0d4f105cc2b161ad86186bff09761f2433f83f4cf"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/north-star-gates.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 61855,
+      "sha256": "294acd58bb8d7290af53bdceed5e86660fccd1812c3df306ff3a8fabd492bdda"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/north-star-source-validation.d.mts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 881,
+      "sha256": "5436e0ba2fffc676861e3e5293034275a0ece06eba14fe7d3efd2c013c252cd6"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/north-star-source-validation.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10977,
+      "sha256": "6b3941b0cb4f9bcff6580977eba424fcc670087feed606129474a1bfc166856e"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/performance-config.mjs",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 39937,
+      "sha256": "76d0bb52290f65d3ad5e8e0a1cc7c0237e8db6a5c610a9eaf3f8487987a62d9f"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/performance-kg-harness.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 11971,
+      "sha256": "2b0ad1c186aed2f4b1cd3db3757cadd14296fe1a398d5098c19e884e618b8b16"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/pm-replay-attestation.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3167,
+      "sha256": "fbceceae91c3d6044616e05315562017c0049b737116801ec64811b505961d92"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/post-package-evidence.d.mts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 854,
+      "sha256": "7a9707dbb3a5473ba6dd65c30577f088b69d6506329fb54423259a7939bf5811"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/post-package-evidence.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 37873,
+      "sha256": "0c0e0fdfeff041db8c72a0ba1fb7e6719974701ef8c8d7792a542a9ff4d9845b"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/private-replay-evidence.d.mts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2056,
+      "sha256": "5ff50f76fcba709b80cca79c3f88500afe2ef9626f4a30249ca9522b3ea48289"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/private-replay-evidence.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 67238,
+      "sha256": "675cb4a72eab180e109ba0ffa8d1c45370171f0234fc3d8a690805d271c2b82c"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/release-identity-evidence.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 63929,
+      "sha256": "f8ae28c15e73b074e93e274b419b8ce30a20db45d0590a4a19fb26ff854c180d"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/release-macos-signing.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 34138,
+      "sha256": "1fb175cbd693d43f1f8b4807ff6723dc188c9489701c20c3f6b7ffa5b20ba1a0"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/release-signing-evidence.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 26598,
+      "sha256": "71b317ee0dab8d3c405f215740a5f92cd267b78f92d31dbc01df5efd27510766"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/release-signing-profile.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8117,
+      "sha256": "dea21face2c735e7ae76d2bf906105b3363637bcad3fe3bf00417c35ac12aaca"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/release-windows-signing.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 12040,
+      "sha256": "f92623edd175a7195e6c5dac7b8117315f236cfddf841f02c267d3333549dd7c"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/run-electron-e2e.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15152,
+      "sha256": "a54d09f7bca072fdfd96abeab37e289b38b29273c63ed9ddaaa21cd97f9302b4"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/stage-electron-native.d.mts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1157,
+      "sha256": "abf842fd049674c4923af2a4f0773d205e287d5897f23d92c1030b02b6dad71a"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/stage-electron-native.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17426,
+      "sha256": "0fd02e33e49a48c9b70e66d08b1263b89c3bb1ddd16fd47d3b31a65cd4a347ce"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/test-asr-accuracy.mjs",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3804,
+      "sha256": "2a7ee6c29d8ffc5eb2be3f359b51f52eadc1258fc6eb81456384edeb924bcbd4"
+    },
+    {
+      "path": "apps/copilot-desktop/scripts/verify-renderer-bundle.mjs",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4523,
+      "sha256": "d7f67f11a1e3bf8120089af0c5659e87ac61bc207891659749e177859a117d19"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/approval.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8622,
+      "sha256": "fa759ff1b7776be2c6cec5c5bdccfcb9ef5954fc33899a86484190d9d9b5c992"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/cloud-adapters.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 13608,
+      "sha256": "4d00fa5df51d635d1d375d282ecc5f1ec641b301298953af70abdf7f4e7c6162"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/ipc.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6488,
+      "sha256": "73b34be0fa0110179f8ee433240a330e3a0559c669fcd7796e06daa4a755b0b5"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/manager.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 55541,
+      "sha256": "bb53dfa23a41cb56809e86f515f2f68204a8843be77fec39ae3d9bd1a7561b96"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/native-keyring-credential-store.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7784,
+      "sha256": "2ee934dd30a699ca3b894a992714281ec10793799508a266c960a49cb2e87253"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/production-runtime.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8632,
+      "sha256": "7de6d50ffc338f3f647b283f4affa1f19da9f106e1a86492ec73a622c4a65c51"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/repository.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11724,
+      "sha256": "91488dacce57ed16eec0a5d61299d13712258517dd715cf7322baa8d92dc9aad"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/safe-storage-credential-store.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3918,
+      "sha256": "a6423a239ae5b860f7e987601a148e2ec25870f820527d302e1a5155ef24fafd"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup-integration/source.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17870,
+      "sha256": "99913e56dba05f68300a95b2a8737c0788dd7ffeb204c283c96fc3977f4a4de8"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/consent.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 997,
+      "sha256": "862ec45df4824b3a5a2b7abd1c6c760e4ecaea8e0198915eaa10cbbb9dae7f4e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/container.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 18468,
+      "sha256": "2f62a5dea39ad671d8377aaf36e22dcc6dd5d0d4005be74786ee207a1e575d8b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/engine.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10739,
+      "sha256": "4aa7bb5ad6857402a2470ef83eebdd8d22df53ab6cfd9d72610c85e4998af966"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/errors.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1635,
+      "sha256": "2cbce411c1e8f33638c83ef6240517600ada09da6954c42548c4bc9c18554313"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/index.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1049,
+      "sha256": "8e52cf82855d4d7d2943181b3e8b090f94278d4ecec370168ae1b4592ae448bd"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/presign.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4555,
+      "sha256": "102139846377f57e9f085d59724a61c8bd1c9968554993a0a8c21b50c988b21e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/types.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5760,
+      "sha256": "efbb433c6d4b0ed55bb858cc488b1c6e74e3bd02c759c9437762019982785343"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/backup/validation.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 12228,
+      "sha256": "7b93d0635df3ea5fe600a1985ee8ed01bbab2ee00e31da376686cdcf03358b07"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/direct-performance-probe.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 27389,
+      "sha256": "719724e280152b7fe05f0cb1e40a3c551200c9da00fefdd04c14e60d0fa48fae"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/domain-ipc.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 16313,
+      "sha256": "6c373f3d5552521f14983f693c12a4bb20d335a17279a97b3c18509b877ce970"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-asr-assets.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6916,
+      "sha256": "31e7ab4ebaf967dafc52b689861472e26f5253eba6d61df2e936667625724b46"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-asr-ipc.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2193,
+      "sha256": "e0560dec12b82b64f909a6549b02669704d8d290811d88de74e2a263f4aa34d2"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-asr-manager.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11335,
+      "sha256": "6d98fae3c79438172e5419b277a47cc0db48413665d63bd4a894a080cb3bee38"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-asr-worker.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8629,
+      "sha256": "b5da89ec849ef02f5e4bb759e770e86a198523c0b28c98ef703339f15bfd8a1d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-knowledge-service.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 82706,
+      "sha256": "3089b46c3b4adffa8a56c643bf8b1dafb4405f8167c5456abf83acd23a6f87ef"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/local-telemetry.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 13582,
+      "sha256": "af15b7ca9b57c37d8d5499dece37cf73d34c5838e9e0620fce644b760e56b11a"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/main.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 29618,
+      "sha256": "8bf7e4838957575648c0a517f336a47c447958ad1de4b39c97dd8dd091455362"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/managed-credential-namespace.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 851,
+      "sha256": "85a8dfd1692b49f9284dda11947d8a9d83a0c29c9f74bd3456f6851a1e152e96"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/media-permission.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3148,
+      "sha256": "d979de2adb6c4f524941edae395a96284096c6ef15256be95eb22cef2a93208b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/model-credential-store.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9717,
+      "sha256": "421f8427d4c014774483b4602820130b6cb852f1dca0af0b2afc635e03d6d73c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/preload.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 14460,
+      "sha256": "8f1a8baff44b8dcdbd3ce74fc2598b93660113934173359074a8da15a365d6a1"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/audit.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10322,
+      "sha256": "057e92388d1cbf607c3f7911b6d5854a837d62540aaae4abddfcbf6dcb5a59c4"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/controller.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21605,
+      "sha256": "95bcb0f81ca71d55604ec7f73131117b11dd38e108f2275c1b187a06883f0fb3"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/credential-adapter.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2103,
+      "sha256": "0a7f43af7e7454f2e6aa3823ad675e678e7c9806a38399e71e5513d92957705e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/desktop-signer.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1876,
+      "sha256": "9421b2df898080ba18e731d0a11ba76d80c3dc3ec05289e1c38bad42999c866d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/index.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 389,
+      "sha256": "efcfd2f5c19345a1ea463a7151f1ca270d2951e42aa3f779970d46982b2a8526"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/ipc.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8247,
+      "sha256": "7df38746ad462122510978f0ef92d49ea7315fe912c013301d39f90728e457da"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/local-adapter.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9073,
+      "sha256": "80ff2d6781b382d40a9242707522bb66f33781ae6fe63f9a04946ddd6a27836e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/native-credential-store.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6516,
+      "sha256": "276a24c79d292a63b6d3e67288f16711ecc3bbe70161b1ceb1f43c52200d2a45"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/online-client.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8616,
+      "sha256": "380ac46ad70a6e66dc1ab743b6553e1de4c9167691e1771553320271633e8f3e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/pairing-file-port.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5291,
+      "sha256": "48fb6ecbd1086de75110ef7452d36ecf0827e93e895f10f7ea663d479f718b11"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/pairing.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 30559,
+      "sha256": "205d5fa0f43008d8816f0efc22777ea2af664a41dba9fbdcc22207e3ea57272a"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/preferences.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1255,
+      "sha256": "60117f923f3ba0919b3909eca0022a96cccce153ca24ab5b0ea0cf7ed6a5a7b2"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/production-runtime.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10074,
+      "sha256": "1ef52e653e9121545494ad386f71e66dba3f40eb4083a506333a672ce2608c9b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/protocol.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 18185,
+      "sha256": "a6ebd37e6040cae5b05e2309feaa1041ea3d5c1b8a379940be017117f2c0f84d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/session-crypto.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9223,
+      "sha256": "0f150209e8d7c12191af32cd61489a2b8f0ee9b9837dbf716d43fed0f2fe9ad0"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/remote/ws-shim.d.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 166,
+      "sha256": "b64b22051b7a074092a970c0754b20a3a609f2b54fef9851a63d22269b2e2b47"
+    },
+    {
+      "path": "apps/copilot-desktop/src/main/settings-store.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 18581,
+      "sha256": "1ae683e3af8473b6cf3ccee33fc97f8f8d5e33a19ae301f2eb721435457e0b2f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/App.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 11651,
+      "sha256": "dfaf632fbb51f80096946eddbd261fb30404b4325c353118d2a56418ff85f568"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.module.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3702,
+      "sha256": "a48ade9768927399cb2afce53f9dfc0084b6275800c1f9b929a33a9415b2619b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Assistant/GlobalAssistant.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17590,
+      "sha256": "5bfca88eddf26b276ab3f0899154ca8b05dd638d33f90c8886cc68101d98c829"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Assistant/types.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 980,
+      "sha256": "6da2f20f6a8dbece0d66a329df199084cac053b98d6c08b524a75f04b9116f15"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/FilterPanel.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3636,
+      "sha256": "839efcf2405cdea2a6e4df7e524ddc0ac401b6a9f1a67710b108ee26e0a29e5c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/NodeInteraction.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2682,
+      "sha256": "acb30d329dd5615016a8830f7288fa6f9a3c9fd22811925445c1beb371e3ab70"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/SearchBox.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2208,
+      "sha256": "632c618d9e0f0e5f94e85d0bcdf1ad1adb4d348aeae1702d21a5b21c1c858d8b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/SigmaCanvas.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 9239,
+      "sha256": "ec6c638be46ff22b41167a7a8324ec692c47100d858a7bbb94154f60e4102a47"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/fixtureData.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5604,
+      "sha256": "5d9a370affd3ddcf23c97263bbd24bf800b7dbdf25ad7bbc79fde8dcc51a4076"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/index.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6608,
+      "sha256": "251244057a0e52b49fd1adc674c394a7d4070610cee7950f55dd8e3d5e3ced1a"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/styles.module.css",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 4296,
+      "sha256": "6790224344776d24ce7a7c7d19fb3f196a0d9e6b1f472f2d6b59182a225dc577"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/types.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 4792,
+      "sha256": "d629be32789b3c6506b92a2e1e698fcb5ac98c84b416fa598cd1eb42d135f5f6"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/KnowledgeGraph/useKgData.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 7637,
+      "sha256": "e47882b619c1f1992cf06b2bbd687b0e97d51351c0d2d8361069a6180d68da7d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/BacklinkList.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2570,
+      "sha256": "06d3d0203f2a7c8f82a010daaa2371847d050d5c32312fa0f9ac6d0afc709dec"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/MarkdownRenderer.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 8329,
+      "sha256": "2eb459df7fae95d941a4350701259937eee642c5318e72b101a4aae7444e76f7"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/WikilinkHandler.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2703,
+      "sha256": "2c8b73d98c6a35fe359c90207a5a1e4fe40b5e7c12dd0015c9d63bef3053dc7d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/css-modules.d.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 477,
+      "sha256": "42474002f16a258da49c5bbe3362b52bc058fef67891408ec2ebd5db8d6b3b19"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/index.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 4555,
+      "sha256": "6187f744cca62662a9b80978a7ac79c12ac217d47ec392fcc5cf673f493002d4"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/styles.module.css",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6827,
+      "sha256": "b6f02c7bad4f876dfa068d8c8ca8b7b8907abf046aed25a23919e34aa473d28c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/types.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 1960,
+      "sha256": "c3c790ad145b6b63c658f9819018fb392242e823d9dcd061a49c92f90879d99f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/NoteDetail/useNoteData.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5628,
+      "sha256": "7493325c5ac177a2f648f8a4735cbc51423f0a4ed8d4bcced31c0112c5406d38"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/RemoteManagement/RemoteApprovalModal.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4696,
+      "sha256": "bbc5dd79fb96dc199346a5d88731b100dfb8236202f4574d8682b3104f0a669a"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/RemoteManagement/RemoteManagementSettings.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5835,
+      "sha256": "f62cc1a4919504c690dfc4b279e6773138a6bcf6a7e73d4d5caeda76ec0bf30b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/BackupApprovalModal.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3436,
+      "sha256": "b1f9ecab2c926a44c328942bbceea2ba4cafa25690c29cf5d6b32d6442e6ccd3"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/BackupManagementSettings.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9411,
+      "sha256": "e08b071a149a3fe0c3e42b984c935c1c69a57f67ec882cd5c729b7fedd5933bb"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/ModelApiConfig.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 7708,
+      "sha256": "8f93984e8e004b5ff93f87fe9129629aaf82efd2ee4cd8030d516dcf17b9e2bf"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/ResetButton.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3063,
+      "sha256": "622b11ef6903a565b18db5349390edf86f162419e79b0ce74cdc057a49f36b35"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/ThemeSelector.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2865,
+      "sha256": "484a97a6c9bd3815a399b291085ad533d34edbe141610a0b66151f616b0b213e"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/TrashManagementSettings.module.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1409,
+      "sha256": "4cba65a13165657b4f04f9d4cba8cdff08302b9d434e6bce2badea68d9e0a387"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/TrashManagementSettings.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5269,
+      "sha256": "1ab500242ed2f000c9f5774260fce1cd3a340470cedee42cabfc49a44171587d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/index.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 11852,
+      "sha256": "de8ab5712ff03ca938869859494c0545da7514157036a192aaa1b1480d102748"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/styles.module.css",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 10302,
+      "sha256": "e85015643faf704a2d00b66fc8a73365183c2909d412b550072c9f9a58e7f391"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/Settings/useSettings.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3085,
+      "sha256": "c964e5df28e9d3fc9b90bd07570536bfb27720ceefc60f48ccc38b798fe0d196"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/SettingsPanel.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 483,
+      "sha256": "be5b29e9f2d3c99229c980455422c61c0f673fcfe77d61c48ade7385775073e6"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/RecorderButton.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2706,
+      "sha256": "ef3685e3571c8d69595bea85570827109d260fec203ecfc139e7d1dd47afc75b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/Waveform.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5598,
+      "sha256": "36b4bb9fadfa77a91693c90e4bf33f2bfb4806d14e0df776051ac3ea52927ff3"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/audio-pcm.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9412,
+      "sha256": "a36d1e08c36f7b672122406244cdd255cabc099fa68996325bddb418588a5809"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/index.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 5964,
+      "sha256": "e326973debc4b17661e3727a338759b5434c3c29384395fa5d7e49d412c3d44f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/styles.module.css",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3136,
+      "sha256": "8796ad6db99d71ef8fcd1612c41b5cd53f8897887d4d6c09065e5bdd901980dd"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/useLocalAsrCapture.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17938,
+      "sha256": "1b4dae08660650957937f5c40e36d246639f883f281df0f328b7ebdde2a5b390"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/css-modules.d.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 112,
+      "sha256": "137ddb04a97f6210f6c258f25c843ee541bea597a0d9bfcd5cbdebecf4450ca6"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/lib/copilot-api.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 16985,
+      "sha256": "73199490f233b219fe9d5afec1e1016259b0bfbb4c832c6b88dfc8c7009f516a"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/main.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1514,
+      "sha256": "129fee46dad61d61434bff3264c49d8df8c010bd4b60273e26dbaf8427d2de1d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/preload-shim.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 770,
+      "sha256": "ffe0dd537575b2b9b297d9c438883a03a701a3e6e9df55301c2195f5f0105338"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/prototype/browser-api.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10548,
+      "sha256": "77531b1a41e8a10fabf8e315b293ebca96136e8d430ba5356908a11c11f7aa08"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/startup-shell.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2823,
+      "sha256": "8639b74710f04559db9ae51aeae34a72d42b268e3e58bd3bfd5c0b68ff6d4a7f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/stores/settings.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6517,
+      "sha256": "24b2b3a4fa666ea967fbbbab767722fda6ef059ff250ee90be8eaacfd5cfab3b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/styles/app.css",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 9005,
+      "sha256": "97ff065152aa973bae1cf01f1ba5c362590efe44252fa330b106f84f48944a8c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/styles/demo-first-prototype.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9980,
+      "sha256": "1a01cccb6f3f2a34afcbba7cb0d658115e5c2d97ffd77340719f2eeecbf5dfcf"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/styles/demo-source-v4.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 30984,
+      "sha256": "7f7ea4f60afefa0464121dd2b765147fece2e6e173223c8e50e26e6e1c32515f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/styles/theme.css",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 1442,
+      "sha256": "84b20a8762f9af51019b954e0df9d50dbab69de4cb4103aac7b9b4e55d9c645c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/types/css-modules.d.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 215,
+      "sha256": "2b3905bab91da6eaa4912d0ffcc81deda795390d3cfa28c2d8964b0788ef5379"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/types/settings.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2070,
+      "sha256": "32ba17bf5dc5a19aad866d3a0d2c670145fe1d7c9d0165c4e0edf89f04802173"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.module.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5404,
+      "sha256": "281f515c09ac4ce29cb754a5afa87cf23e73d192abb1915126fe2bf712170621"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/AskWorkspace.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 27505,
+      "sha256": "b0be21fb63ea5fcec5b1058785a55285fe1c6b9564003554dcc8b33fe1125706"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.module.css",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17149,
+      "sha256": "d19dcae15d0273b5b52898ff035ce3cba98b6913868f0aeb423f67c1a8bfa56c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/KnowledgeWorkspace.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 53257,
+      "sha256": "ea8e58a83601a5225c3780faedba689d0a92f8f2c6d7bc638b96ff9f1eb57a6b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.module.css",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12188,
+      "sha256": "ac6f5413d6b91d671c41d41aa138f31d39d4b050b136e0cc98b4b50cea94cad9"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 71943,
+      "sha256": "a08d8b3e3d8630cf3d42bad4a3333b3f5b7ba0cdb6290cb8ddddbdc08c53e28b"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/VoiceWorkspace.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 539,
+      "sha256": "9f36566cb805b189fd06f75dc1fe89c0971570dd5c537fb298f791c8608714a1"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/workspaces/WorkspaceState.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 819,
+      "sha256": "2ef9c824b75edb16972b9a91ffbf17b23912d0f7986c398aa0162300580e5f77"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/backup-management.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4997,
+      "sha256": "3220287ca78ee2d8da635534cb1a3d8f2085b843dbd4234fe9e37f33718212ee"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/domain-api.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12424,
+      "sha256": "fa0a13c7b3d1fbf5cc91702af22d5d67f361c93e6447f8b7d123531101ca189f"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/ipc-channels.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3825,
+      "sha256": "f2a9868f8fcde70d6683fac13f82a500a0f48ce42ae64faf5fa76644be6085a0"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/local-asr-ipc-envelope.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2227,
+      "sha256": "b22b5bec26af5ebf8851829f1e4c613c7e93261a9b87d970bc1d0e001f1e7f5c"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/local-asr.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4140,
+      "sha256": "843d158f52077dbf7f1ed20c8dfa140b97cb0e5aee0ee52077fa07f0e4783fa9"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/product-capabilities.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 251,
+      "sha256": "2d97ab8674779aed528d96d2a79467dfb154bdaa7ed8b471a0e432b424c8f86d"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/remote-management.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4928,
+      "sha256": "fea7bafe4afc4a666ef450561f21fbc22cc8e5f90ecec35259eb74c1a3933c86"
+    },
+    {
+      "path": "apps/copilot-desktop/src/shared/runtime-meta.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 626,
+      "sha256": "ebc33c1e9718e6696bdb6e62eb774a15933b980e918c465b4248db5391d81ab0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/KnowledgeGraph.filter-search.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5090,
+      "sha256": "838fc9d2f84323af3cc3591e61572334db911a3056c4f9695d0349e6fa27b2d3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/KnowledgeGraph.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 22975,
+      "sha256": "795809c65943a309fe02129924c2da33f47f6a98e30ce545d24e03f342c1f3c5"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/KnowledgeWorkspace.source-navigation.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2579,
+      "sha256": "b7abdd3d63218c929f043da1d9474c30e4d844c0f025a8a9d293f5af305cb542"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/KnowledgeWorkspace.wiki-truth-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 16365,
+      "sha256": "8c96a7cac51731d04801fd997b4b0a2f0a7b082d2f0f8052c40fa3e205bb2277"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/NoteDetail.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 10494,
+      "sha256": "c7980b8becc0609f36d14ec46eb92f33dbfae53f9f665ec403b0820269fdcedf"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/NoteDetail.wikilink.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2464,
+      "sha256": "182a0d90288bd6648535c38e6583e92e42d52f9866dce44618aaf33b90f4f634"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/Settings.ModelApiConfig.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 5330,
+      "sha256": "cb37397d1dba03129266a20a2219a0f9bd4c5153b87cdf89432ac9ba5612f272"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/Settings.ResetButton.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2642,
+      "sha256": "e449a5f853be81e0541ead7134dd433e46bd04dd3edf0b60a8403da94163b572"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/Settings.ThemeSelector.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2861,
+      "sha256": "b99d3a1ef5a0575b0379c9d2ecc52c9369d1b2be3027d6cd6a0f758149d008a9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/Settings.useSettings.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6164,
+      "sha256": "9551b0ea8fa2c4693049a75e6a54689208e2213fd4aab375d2e32c7b2acd1921"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/SettingsPanel.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 8410,
+      "sha256": "ec3fe1e1130b306ec9d5846ee889ed66b49371960d2c99d9bbc0eb39cc588c60"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/T-1.2.6-settings.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 10260,
+      "sha256": "b1f46a184f4866475a41c60a1819438619818149e24be9e16b8b79432654e0c3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/RecorderButton.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2700,
+      "sha256": "4fa1458ac4866693490f788b5861eb10bd28c2d58f865d968c8d31a5d856a683"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/VoiceInput.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6757,
+      "sha256": "4bcf5ed2850a007606ce5fea917b74f5f094021f27a9df6abcc33411abb0c273"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/Waveform.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2401,
+      "sha256": "2900ed9d770db7c9cf6a15d55e30b98c7ba87de46bb2852329061c312dc68db2"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/accuracy.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1806,
+      "sha256": "4f2c8e45bd3dd220e341d5defb8c4de35ea8e4e74a5ddba3dc858677dcfe934e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/asr-electron38-crash-guard-r4.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4919,
+      "sha256": "6976981188e32acd7f142288f5cda1af3469fcaf9c0a472566e520b05c04cfea"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/audio-pcm.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7250,
+      "sha256": "22a5daa6068b7284488c2a7a4aa960b0b36de82fc83f8a0fb8f73b06f1952336"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/local-asr-capture.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21967,
+      "sha256": "514432b815f18edca9ff2cd86f2fa8c6d07c36b095af79b5e1ed42a651c5ae6a"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/local-asr-quality.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2291,
+      "sha256": "aa60256da72a3c9ac54554ad74ef85b89ceb5b28d2dc00f1869f4665e5d48eb9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/strict-local-source-contract.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2602,
+      "sha256": "b0ccd669264e4977c8b9fc553cd1346edafc1005dcd96966b544478efb9329c7"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceWorkspace.local-asr-draft.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2829,
+      "sha256": "60bd5b42c04bc107b63930ff2bcc22ae5af85e2796c277881d068ce4260a1179"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/ask-demo-direct-source-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6550,
+      "sha256": "eaf0b67d50cf5d3cc2d05c3a97b8aa55396ea08024236d754f6c15a8ee5d4528"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-approval-broker-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9448,
+      "sha256": "78f01e9e50187250164efe980e36834d4f7bcf169089c40d8cdc246ebed620d3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-approval-ui-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4106,
+      "sha256": "ff163f56a0886dd69c23fedaa77da4a62d4a8c43d87f35b69c167ae82a8d7d05"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-engine-r2.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 19389,
+      "sha256": "09a34c33a680fbc16295e195833a409c96932a241d435a36a2cb014fc403e853"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-engine.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15354,
+      "sha256": "e86a87bea7a2ee1c5e7d3f72805ecd029a035cb5060cbcdbad6beff7e1fb33d1"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-g1-loopback-endpoint-policy.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6214,
+      "sha256": "16cb7a0705b3c1d6d4d01f57605d7bf49923677f49a984c6a8ad0201cd8aeca2"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 16681,
+      "sha256": "33c56b8d1040b39d21cf684ddb63c4e121946c75b49faf2f07b45b11ab7e650d"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r2-security.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 18792,
+      "sha256": "f991a22b7f9dc16f9412e1c1e802deba5aa71f230d947aeb37ea1271e853e16f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r3-consistency.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11793,
+      "sha256": "33b1aa149f960e1de249a6c6a2c8394eaa893d375d84a05cf0e43a52b09580e2"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r4-durable-recovery.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7281,
+      "sha256": "fc7f47b1539c8b758ca1ad5287cefae2c455decbef11359065ae8acbbce7dc9c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r5-intent-semantics.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8561,
+      "sha256": "900d71ae5c3ec377c40c63a2191c8cd703a5bdbeae23c2e68da2e77df1d2b2a0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-integration-r6-restore-apply.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 23570,
+      "sha256": "c206278489e1de3560ce605805368ab9c6edd418ea272e1e375f7ee5d13a6e28"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-presign.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 13161,
+      "sha256": "3f8394528c09355a7b5fddf0af3dd8d1fe12400feab47bbdaea0fa7dd9df2451"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-ui-ipc-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4180,
+      "sha256": "9f61db35f72519c207811383ef329287b2cfb314f7b7c3f5c5490fd81df6571f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/backup-ui-ipc-r2-restore-apply.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4817,
+      "sha256": "9fdd4b94c8265b238a99b385847c370568e41957da07f1699eff8b1532720f27"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/backup/native-keyring-credential-store.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8080,
+      "sha256": "b9454fa41e6a431d7302193907e0c87fe610a33e267980948472073cc8618869"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/coverage-main-domain-critical.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 68195,
+      "sha256": "aa9083487aadc4d2d8fb994d1fea9d42d2341a133d07cd69b1e68facdac5910b"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 60898,
+      "sha256": "e7ef9f1159f54875f2a05ecb86b5899bae144f754a5c8942c7a1de23e3eff95f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/demo-first-prototype-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 13656,
+      "sha256": "25a12cbd908046edb0a3c4e926a74e2c5b9ae4fe5f3d8a88862c1eee7b5a1503"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/direct-performance-probe.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 6678,
+      "sha256": "0f0ed2adbff21d8beb31f83200dd0f209d67c570208ee82e9b0a4b99d137e00f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/direct-performance.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 31313,
+      "sha256": "74d949295a0c399561ba7bab0d7e7178b14ebeff9454e3024099ae557e3a02aa"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/ask-voice-offline.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21251,
+      "sha256": "37668b93972e5d304819104dec8e2604ec860a21adcf29d947cd62bfded96a61"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/current-security-surfaces.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7112,
+      "sha256": "ac6386d2d30d714ed9b26bc9f5e16f114d96357be531fe1608665141b4d28325"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/demo-first-prototype.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10270,
+      "sha256": "b129fa9c3ffc394fa859044ddcb7ef598f99bfd6e406ef492545e9e9f0e04bc1"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/electron.fixture.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 18518,
+      "sha256": "7487fea2ff63031ca3ba9268aadb3ec560d79a9d0c701ea53dc4743c2fff3548"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/helpers/fake-minimax-provider.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 17970,
+      "sha256": "57921fdf707ab642d51d7bc6fb4c33616c867548f01722be1ef9ee18df32aaec"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/knowledge-demo-alignment.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 20104,
+      "sha256": "f9f43098ff62a150b1a5056ed919e97bf93edc023d71f5e2dd8c1149b90399c7"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/knowledge.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 14616,
+      "sha256": "dcb32d99e508b0a8a946d83a80c55350f2f489343a66de1569366330b6e5327c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/schedule-privacy.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8109,
+      "sha256": "85ef215201262391fc70654d9da0776808d8d578e2c3889733f6fea3a580e6bd"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/e2e/window-nav-settings.spec.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8796,
+      "sha256": "9a49cb721104e4dae65af8ea0b6403fb2fcb85e4eb536fb97f4fb7bbb1c478a4"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/electron-fixture-window-readiness.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5087,
+      "sha256": "e42f1a33e86591ef2581484d7b846af9b1dbaeb0f0122db7704537d47f6a5bbf"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/electron-native-binding-selection.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5020,
+      "sha256": "01015ab84c588a97d36e9fe66eb7cab5ff2fecf7753393d03a09b543cf07b718"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/electron-source-runtime-selection.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2374,
+      "sha256": "9567ebba479bccb40d79b6b481ff1561735c7c42265958b34753fc36d8d6662e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/finalize-canonical-release.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2706,
+      "sha256": "6c83b39857773e5c86e30c0ed19550e77cc1c56a362ce07b9b5326810edc1202"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/fixtures/asr-samples-zh.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3116,
+      "sha256": "78bc4205b2f92c911c0cbadc7cd87de2c50898c304508e9b26e5b8cd697c6882"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/backup-cloud-paired.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6937,
+      "sha256": "57bb5b1d677ac516bf2e44d5ffb4875f91644c349d032638215afe700f9569e5"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/backup-restore-import-as-copy-r1.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11778,
+      "sha256": "3fd39d98b51a30faca32689650ca95b359e00d2476b4d07f41fe0e1fe4df0d63"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/local-first-domain-ipc.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 14103,
+      "sha256": "dd7ec2fe669b7a200f904cbdeb48e4ab200c6b238bd2dcc0fab37b44bf558de9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/minimax-provider-production-composition-r1.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6810,
+      "sha256": "f69a928c102a41ad694668764371226b167a9cf1b6fb56ad31d9e4365e03af19"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/note-wiki-before-rag-background.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 19865,
+      "sha256": "32ba8672fa26258077f6e4aed01799f5a4b18857680904e8b59a67ff9ee14296"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/reversible-trash-desktop-ui-r1.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 14064,
+      "sha256": "ddf4da3fb0dd9ae0c95a332a91b7d15cbce19f961d298e9b9197df8fffd2f6dc"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/reversible-trash-source-r1.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9151,
+      "sha256": "e16b1727bf2ef59a42739ed83bdce8b58ffd2e4d8a82ecd57166ede6be759af6"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/integration/today-capture-knowledge-r1.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15111,
+      "sha256": "f801c16c63a92c5ce435e331157b3c85cb0487ec1ff4e45fe60703956bd23bfc"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/keyring-managed-namespace-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3214,
+      "sha256": "b40bc94b8947c93d03e738f8ef8ac119cb876e5fbc6689df3ffeed14842f2a4f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/knowledge-demo-alignment-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 25403,
+      "sha256": "4798e327722ae170dddf7f8c5c67855921523b0945e61228889c037817a4bd36"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/local-asr-assets.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5922,
+      "sha256": "d5e81ab64d0b9f4a1c25e6ab5a39c13c761d07f0e07567467c0f488ead7b62ff"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/local-asr-ipc.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6441,
+      "sha256": "b99258bbf23eaf4b22b1a463d526bc2e41248785312a2eafd27953d25f8d5b09"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/local-asr-manager.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15715,
+      "sha256": "0ac107cb9644191a05d3b1cce76d36673444933a39cd459626aeb1e20617552d"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/local-asr-package-contract.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 18542,
+      "sha256": "6884ea3d8110ae8abb15f4c327e532b732eb0b92a0ecc8d77cdab9824eaa95a3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/model-credential-store-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5033,
+      "sha256": "959d31e7df458db42269383de94e10b10ddbe31ba82b57838ea0819020bf71fc"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/north-star-gates.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 37718,
+      "sha256": "3f5a87b43e570f6dbd20d125ca0270b73033ab2d07ac94337bd7cc729b55f9c0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/packaged-runtime-dependencies.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2914,
+      "sha256": "f15fe06cfb8e350d3c486e9b19a6b11a84128ce9fb0920197013e01d3b4fc644"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/playwright-reporting.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9616,
+      "sha256": "01734913fcc890ba82e5907c919112198d34a7d31c68ac5cff6ed33384ff16fd"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/post-package-evidence.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 59885,
+      "sha256": "75e5653466dd7abf393a65f82730bdf2ae3c4f2d557cdadca8db744751df8c98"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/preload-domain-coverage.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9495,
+      "sha256": "427f75a6b3e8666651b3183758ea5663b47d13fbb23d829ffcd58a1942eb0b26"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/preload-shim.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 1155,
+      "sha256": "ea136bbd0a4ef74d167e598478c5a77163bb3711461fdc9d7e008dd10f115766"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/preload.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12004,
+      "sha256": "74368e2ca5ff1c6b7e06b8f5cb0e6c0fa4012abb64700971744ec82e4d1c4294"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/private-replay-evidence.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 24727,
+      "sha256": "70daa205fda87978f7cd3085520eabe202b0650b3a4850ce799da190536c904e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-direct-diagnostics-review-fix.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 10475,
+      "sha256": "cfbd502107f4e53c063cfebb5cf136bae4d8d9ce126beb73b8366d6a64a1909c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-kg-harness-binding.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 33553,
+      "sha256": "4476b5d79fa20d3417a4051d240f540ba27bf0b44ffb2d96eb84057a6c15006c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-kg-one-population.test.tsx",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 15516,
+      "sha256": "99b035db1ec55e58fe369f1e17fb27a7a4d6f43f2da73e2de59355207a514da6"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-preserve-aggregate-review-fix.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 14222,
+      "sha256": "45b90a29541ce8ea1371b97c50f8a931771317c6c54078c11376109be5be4e0e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-real-raw-aggregate-causal-review-fix.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 27529,
+      "sha256": "343b54d48847127a26121d90b97b70622adf6de3d49f2239650a5b8f67226664"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-renderer-chunks-red.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2394,
+      "sha256": "1d6f153256f9280a82280b137917ab4e549fd735903ac4d413dda23996ca27c3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-startup-lazy-red.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 34207,
+      "sha256": "3928f41880f6391225367431aea84912fb5776da4f5792b1ed8eedbb7195e9d0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-startup-review-fixes.test.tsx",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3665,
+      "sha256": "a4dcfe4f77b619d46999314dcf3cd3a487773d2e93bc6d168b7ad0e9620c589a"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r22-v3-run-identity-evidence-adversarial.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 32702,
+      "sha256": "040f46df0f27679e24e5e4db7f68a2eef4ec98ea53b71ad3fee5e5a0ea4d6bf9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r31-v1-candidate-bound-performance-adversarial.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 43103,
+      "sha256": "86b3b4f946766db2377babae6fbc272fc9a4722ee46bdb9e720a1f098dd3be1f"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h1-schedule-owner-feedback.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7549,
+      "sha256": "5bbab442a695703c589493e11ee0b2e6bdaf5a11adcc05931a324ffea3ac558a"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h2-knowledge-owner-feedback.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5102,
+      "sha256": "e297e68a0d461c93b87d2de1506b54eccafded70368f8659709a46bffb5a61db"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h3-settings-owner-feedback.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2144,
+      "sha256": "b0474c0cea2c0b5fc04ab869eaf632f49e15b7492dd7218254edf9050c4c9b48"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4-global-assistant.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6688,
+      "sha256": "0e15d1744f95d76f2b52fb13b4c7bdf8fdb0f1b81db792028f4ab818151d277a"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4-knowledge-product-experience.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6341,
+      "sha256": "2773bfac13c5ae10d0b4c47fbe7257abc78fe6ebf2932052fe35f2b62bc227f0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4-settings-browser-boundary.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2759,
+      "sha256": "2fe34916fc13bd65bf59e62f5fe2f69f87bc647cd0471566a0b8dac3e74a8942"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4-today-product-experience.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8535,
+      "sha256": "5f4a2a43a5dfe86b48b167786f87c6eb16282f2df184c5848c8d2a297299ffff"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4c-assistant-context-overlap.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 19568,
+      "sha256": "f7ade12089cee15597724e2a0f39d067256ddcfc4e6a11ebd903e056e2ecff6e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4c-knowledge-truth-reader.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 13821,
+      "sha256": "c5c9bf310900b4b5cd0bb11506774b8995428e82d7e3f345df3f26a80c4f86ca"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4c-today-blockers.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10675,
+      "sha256": "ca07aab9cbbf441f5572a117bc90bd7265f76081d100338ba1322c6a7e6acf8a"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4d-assistant-visual-overlap.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8920,
+      "sha256": "f13b8ee741e8461cceff2468add43ead88f32b0add1578ab6a4d530e05cae2ab"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4e-today-product-polish.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15526,
+      "sha256": "06dce202225cbae54acf2b13bc50f650edba25c331f20fc55af11871e6f51df5"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/r44-h4f-knowledge-settings-product-polish.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8140,
+      "sha256": "6ea87008656587e730d6149b02d80ebadd179ef0529e765f9fa79d3194940798"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/release-identity-evidence.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 43960,
+      "sha256": "3597a6ca7c6e547bc5d3bba8e91e92dc5c01fd6784a8e476b4cb4eb4d3f862ef"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/release-macos-signing.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 38941,
+      "sha256": "cc61209390f11409fe8a0fdbe9ae670a364b19823219d6aa9887e3fda8a2bdd1"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/release-signing-evidence.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 28863,
+      "sha256": "5e2088886510ecf3d94ffae674a1bffb1c111e5cea0a9e7c53717b10a60bb9a9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/release-signing-profile.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 19987,
+      "sha256": "9767384ac1e14a677548413d855e53b8638b8beb48ff5b7571699f899812154b"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/release-windows-signing.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 20611,
+      "sha256": "cfe1db3a9b732281a071fd642baf9d07385909b8b6ed34f1f0556cf7e3124f74"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/pairing-managed-exchange-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8202,
+      "sha256": "82426a63f8126f18a6a4c4c2e91be62b48efeb3dcf3c5ea310d78b90f070e1d5"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-key-lifecycle.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3932,
+      "sha256": "923fc5a3e9291f747431f5480960be2a3fb5437bf7f9fca17cb0975543f685b3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-pairing.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9979,
+      "sha256": "2d612a8e0973ae946812ca32d48a96a4443779a9261ee8cac8d6ddb8c3d034e8"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-production-crypto.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7044,
+      "sha256": "2afc477a933a4fd000827d3bb12145c6ab8cc177f65d957220163a8326e28263"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-production-runtime.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8645,
+      "sha256": "29051e938fdf9d5ab74c934e25bb7c3b089cb70d7c35e4bdf4efe90b5493cbc4"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 20713,
+      "sha256": "94fc793e123e179b2c2b86a5707be8d692754f357a44cf594d5ae798ef1f843c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-r2-security.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 21180,
+      "sha256": "f5e3609057888af178406e48ecdce4ffb2c88f69268a1d9bf1140f2a9426028e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-a-desktop-r3-ai-binding.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8116,
+      "sha256": "461d4b1b727641d98b71f51625d50856e8caef0d57caa5c392d2afc4ec61e0f2"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-approval-modal-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3301,
+      "sha256": "3a26999d44be819d474955642642275f1f9a8b0e50b78f229cd0ccb81af3ee89"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-approval-modal-r2.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3538,
+      "sha256": "3f8d6b6b3c4cde0c16fbf4ec61206f367858cddfd3d9678060e64297a09912a8"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-g1-loopback-relay-policy.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1012,
+      "sha256": "4f7890adf81b884bd64ebd3b6823e3666a8eb39aacd34a88cae836a9666044d3"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-ipc-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2975,
+      "sha256": "bf79f54acd199844749c4dba3b0dbba894930b8b4c1f867d354142c9195bc7c1"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-ipc-r2-pairing.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1975,
+      "sha256": "dc9c5729d45e7df88e71f09c0ad0aa670b65507e3fa7e65254bbc63fecff663c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-management-pairing-ui.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4974,
+      "sha256": "53346629e529564fd02cbe3604c37db69ea5ee70b26063a9e4be6d568a8ee470"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-online-expiry-r2.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2766,
+      "sha256": "ba5b65e246a385be56e7f6d1728d0f522e714318ef6b8031c6ed4cba71d6be71"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-online-expiry-r3-reenable.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4949,
+      "sha256": "1952d852e1bb8e874f45b95c7a947eaa701240c5af7fba271aa83d961ac6d614"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/remote/remote-pairing-signer-r2-security.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 10100,
+      "sha256": "efd9df71d13f0606d173198448d241dba58eff7181e865bfc5d138023da8d6fb"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/renderer-bundle-verifier.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1759,
+      "sha256": "0107eb05b9578b710d79059b23914cb80438bd1dbe09fe0e02e454e29d7a3ff0"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/reversible-trash-preload-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1653,
+      "sha256": "a2f44ec031c2b343e6d1b886ee1349fc97b522fd87883487df7bbb1cb4657e49"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/reversible-trash-ui-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6826,
+      "sha256": "a408e9bff7b00c3cf81ea6468dc308fb21325c3b78f31f2e381b600c550519bb"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/settings-demo-direct-source-r1.test.tsx",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4206,
+      "sha256": "66b944e7fe4e26becbee8f1d342d281c5a205e1f3b5400ec207ecf0196c97500"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/settings-store.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 14602,
+      "sha256": "614c9f4977e78dce7db68ce9fe56c0cacd6ef1b7bb5b507a6db554820504e02e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/setup.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 841,
+      "sha256": "bb27d08474c2a4fa0b268a53f100851e0101a52c66563a3bf73015a59e9481ff"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/stage-electron-native.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3625,
+      "sha256": "10c5b3c4e7b4617d7be09655f69b967f9e0d743af1f2840a7e5f6da64cb87f1e"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/startup-performance.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 22132,
+      "sha256": "4b1dafdb03c918d230f491d490e44716eb484b1bdfe1d8ea7b76ff59e5a09892"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/support/electron-isolation.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 679,
+      "sha256": "bd8329219f93ff78ab3431cc6b8423d1fc1606631abf7d47c69fd8d4172b36c8"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/support/playwright-reporting.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1718,
+      "sha256": "482e9be922a936f2e2698c2118584cc6168ae32d7651fe1488f3d3b269db41ba"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/vitest.critical-coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 2275,
+      "sha256": "b32c640a244524803fa966b57515b0b27ed174408ccb6ec7cf1e2cf7d89844e6"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/vitest.desktop-coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1123,
+      "sha256": "bb0b4d572147ad106c06da9db4ecb439bdcb710c43fa24cd646e9396329a004c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/vitest.release-evidence.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 302,
+      "sha256": "e469691c5a777d85a1220eb3f3473ee8d2c5d88f5b7773fbd6cc78cd0c79d5ef"
+    },
+    {
+      "path": "apps/copilot-desktop/tsconfig.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 443,
+      "sha256": "ab64fe25051c7c80fa0cbb001897e662cdeb8e689bf2d6a5940ea93cb62aa5a1"
+    },
+    {
+      "path": "apps/copilot-desktop/tsconfig.main.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 609,
+      "sha256": "8fc41bd089b801d716f6cfbae5510cb6d06e01afa8b2043b8abdec7a58cb4d1b"
+    },
+    {
+      "path": "apps/copilot-desktop/tsconfig.renderer.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 675,
+      "sha256": "52896ac334e2b29ca70ea1b5c5769414c938ca979d9994c01c0263305b5ba0e6"
+    },
+    {
+      "path": "apps/copilot-desktop/tsconfig.tests.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 528,
+      "sha256": "792a7ec14dbf448d3065f8e445629d871137b837cb99a2a358beb286302e04fa"
+    },
+    {
+      "path": "apps/copilot-desktop/vite.config.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1598,
+      "sha256": "3f3e8cc7373b0a41a612ca332a2608da63c158e3fed8ed388ba74faa589f9108"
+    },
+    {
+      "path": "apps/copilot-desktop/vitest.config.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 665,
+      "sha256": "e03fd62fdc3f705d237d5061a566b60781462b0061cb7e3f6fc1641960f97a7e"
+    },
+    {
+      "path": "package-lock.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 489748,
+      "sha256": "0e142ba82c69ba901c7c996bf84b94cceb83f8d8d383934812b072f493850c76"
+    },
+    {
+      "path": "package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 4878,
+      "sha256": "17e6cb26bfb74e303507c874a44728de421f4f23ffd57313e389a1f8abb2b1c3"
+    },
+    {
+      "path": "packages/kb/SCHEMA-FROZEN-1.1.md",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 9948,
+      "sha256": "0cd0d230fbe8bfd8a545cb5e939bfb7cbdc79b4117596c8546e7188b5ec22201"
+    },
+    {
+      "path": "packages/kb/package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1506,
+      "sha256": "f915d474471a6a2d0ea610231d48560bb6df9bf8100370454ec8852582bacb1d"
+    },
+    {
+      "path": "packages/kb/src/api/crud.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 43150,
+      "sha256": "6ee78b6dfd2e4ad30f8fde24458cd8720b6589b2d7080c287671de8bc6410c8a"
+    },
+    {
+      "path": "packages/kb/src/api/migration.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3261,
+      "sha256": "03df37b69ddc73097ee3ddf94d38b1e99c4d69e46bb8fa27325d71b037f4af49"
+    },
+    {
+      "path": "packages/kb/src/index.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2037,
+      "sha256": "9dd19dd38a01492221c26c3ec2e33716a855d9d122374cfa051bfee2830d0c30"
+    },
+    {
+      "path": "packages/kb/src/store/md-file-store.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 21852,
+      "sha256": "cdc07b40f27f04c16acb7328ffcc778af92375230459e29126acf17f42e0407c"
+    },
+    {
+      "path": "packages/kb/src/store/sqlite-store.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 26921,
+      "sha256": "afadb0718acb6d7e94cd95a9635c992d5803d1303d9cffa04f3ee08a8b203b46"
+    },
+    {
+      "path": "packages/kb/src/types.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 5093,
+      "sha256": "0d2683d95a608a2331af59e8e019951e5b57656a3fa68b95a9d351c3ccd061a6"
+    },
+    {
+      "path": "packages/kb/src/util/path-encoding.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3711,
+      "sha256": "2109de39a3a15be845d6d9ad4b5add64ba5af50cbc7de23ff48a9e168f515533"
+    },
+    {
+      "path": "packages/kb/tests/body-integrity-fail-closed.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4779,
+      "sha256": "e0c728a4f15dca0fd6e30c2f2f381897d8a4065b7e9dbdcab15c6a6d25b50886"
+    },
+    {
+      "path": "packages/kb/tests/crud.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 7805,
+      "sha256": "b053a2099956ea385af16a5ec023e87094e5a0c183338613da50e054974f3a46"
+    },
+    {
+      "path": "packages/kb/tests/e2e.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 4255,
+      "sha256": "0652b31685e157e9c0546b3255f0d7bb912cdc6f130664783e51962dd40688fd"
+    },
+    {
+      "path": "packages/kb/tests/md-file-store-edge.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 22682,
+      "sha256": "c393c0a13cea40e6348d1b46f16c643ef41b24a6c2e615190fecc8bf7dc0a615"
+    },
+    {
+      "path": "packages/kb/tests/md-file-store.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 5228,
+      "sha256": "29b82e84ec2895ac255f3b7d87fac3be42d5745d11ca5585f271497b4d4b7a4b"
+    },
+    {
+      "path": "packages/kb/tests/migration.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3600,
+      "sha256": "3ae121e0c3545d9a91e7a463122ee4b6073819af16150790bc9ae886cbb53d12"
+    },
+    {
+      "path": "packages/kb/tests/path-encoding.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3082,
+      "sha256": "9bc66a990ff2f352531f08da48c229aac9ad93e9d0831929715e7e454aff290a"
+    },
+    {
+      "path": "packages/kb/tests/perf.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3254,
+      "sha256": "916c2eca8ffec51051e7a7e695a95e4520fc89e3bdc4753bcdbff2be52a4e2f2"
+    },
+    {
+      "path": "packages/kb/tests/reversible-trash-r2-integrity.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 11951,
+      "sha256": "f8ab761ef19e8519828f5a417c91601dbeda1c77490cdf6180a8c9af92f304bd"
+    },
+    {
+      "path": "packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 8714,
+      "sha256": "c1941cf6b4489f28cdbaedff3e42d1e2fbc5b3a3b2b195b980774430bf8e51aa"
+    },
+    {
+      "path": "packages/kb/tests/reversible-trash.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 9991,
+      "sha256": "0f7fec87e0075455865d8f8defd9f5e31271d21b337864dce925b7e5926ab04a"
+    },
+    {
+      "path": "packages/kb/tests/sqlite-native-binding.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1207,
+      "sha256": "e16ba41b3dbde9f55580ccaab2a8f80a9dda24a3d4f68a98643c46307a71766a"
+    },
+    {
+      "path": "packages/kb/tests/sqlite-store.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 14265,
+      "sha256": "5474da2f65ba7ab89a03ef80907236bf5004e34f87247df81a32ba6b746b7102"
+    },
+    {
+      "path": "packages/kb/tests/write-integrity-fail-closed.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 6693,
+      "sha256": "7e993a628a83d56296a572a5188c91c7a66d9c5fd86a854130753b05963a121a"
+    },
+    {
+      "path": "packages/kb/tsconfig.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 627,
+      "sha256": "dc7c1bb4ce222241f385bbd2d3a123c9b2e8becb319bb012882e3b93c4c71567"
+    },
+    {
+      "path": "packages/kb/vitest.config.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 686,
+      "sha256": "2866ae40827c9a2fce8ea1d2dca3e82f8390a3eb7add30cdcf5b84247e6d12a9"
+    },
+    {
+      "path": "packages/kb/vitest.critical-coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1172,
+      "sha256": "e4b7594513eab9ff4b7d0b69d61149fd05ada7dc86d2e03c584150319cc22984"
+    },
+    {
+      "path": "packages/kb/vitest.release-coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 746,
+      "sha256": "171cb86be67c5c600287fe2b1084ac1498615bc4a290f135ad7ff58dc49fe341"
+    },
+    {
+      "path": "packages/kg/package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1468,
+      "sha256": "aaa676cba0847b88c219d1440b53fc6a9dfff9d6d675888bb37b4f206a67d189"
+    },
+    {
+      "path": "packages/kg/src/api/query.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7435,
+      "sha256": "09d4d8c47411a8c0a4a70b4680ba9f90c494cee4ba08c682bb3d92f8d33ffa13"
+    },
+    {
+      "path": "packages/kg/src/builder/entity-extractor.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 8621,
+      "sha256": "533a60fd2fa5ca645910abde92ddb22f3785b03b68d10138a526b4d231249729"
+    },
+    {
+      "path": "packages/kg/src/builder/kg-builder.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 20531,
+      "sha256": "0f19e7519b4799fc0fb186741a42d2b6b2a33d247b88c97420f2780816c8704b"
+    },
+    {
+      "path": "packages/kg/src/builder/relation-extractor.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 4389,
+      "sha256": "46e0d76a0e0ca035c78b49268ed5b99b25db77f1d4be2f65c8f86498199a637e"
+    },
+    {
+      "path": "packages/kg/src/builder/summarizer.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 7136,
+      "sha256": "8e505c3e944694995117d7d168339c1c567fce177afd632682ca3a3526ba61da"
+    },
+    {
+      "path": "packages/kg/src/builder/tagger.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3235,
+      "sha256": "f0c0c453ce06e90d3e16102a598cfc4c6ce83ba1d3a0135d5a69da0cccfdf433"
+    },
+    {
+      "path": "packages/kg/src/index.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2890,
+      "sha256": "b4e23a9245b7a70366e49f538b3f7f0955853dee9623f95d78e3d24e2e28282d"
+    },
+    {
+      "path": "packages/kg/src/store/migration.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3874,
+      "sha256": "b5ad731b5713e574497b15f00400130a13409949c66ad2006106c6cae4bf94c5"
+    },
+    {
+      "path": "packages/kg/src/store/sqlite-store.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 39498,
+      "sha256": "e6a6ad005b68a29f0c42f4905e916113c5dcffb86b593580b9a3b47b6cffced2"
+    },
+    {
+      "path": "packages/kg/src/types.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 11498,
+      "sha256": "fe19bc295f95f348a72d354a6a15a93aa4cabb9647c3523800ca33ea7b57f38d"
+    },
+    {
+      "path": "packages/kg/tests/.gitkeep",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 75,
+      "sha256": "5dd8ab2e18e0bbbf37d7be5adbbdeec9d3b07f4fff6598e8e9a73a09486c9f2f"
+    },
+    {
+      "path": "packages/kg/tests/coverage-closure.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 24519,
+      "sha256": "2b6f25c146df5798507c37573e612c217be891aa3e72fcbc68e4b6545bdce54d"
+    },
+    {
+      "path": "packages/kg/tests/entity-extractor.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6661,
+      "sha256": "51a73c2dbe556642f2eb55e751b465ec8bf7830eb872f8eef6aa4d6ab464867f"
+    },
+    {
+      "path": "packages/kg/tests/functional-runtime.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 16398,
+      "sha256": "88668bafdfbd37acf3b8fb5a1b6283edd57abe061255286f9be1892113abf174"
+    },
+    {
+      "path": "packages/kg/tests/kg-builder.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5750,
+      "sha256": "6568ca9afb22d9f6ec29dd6f52902c12fad618564599b60129112c1284e71e2e"
+    },
+    {
+      "path": "packages/kg/tests/migration.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 3144,
+      "sha256": "efd057ae5f23b2fbe3bfedf5e7d5585ea0c80f9f219c5fe786e6b091ae21f64a"
+    },
+    {
+      "path": "packages/kg/tests/sqlite-native-binding.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 813,
+      "sha256": "fdfa840ad500999584b2d4cbfec343cf168e2f603dfbf92fa8ec03f97ea3b5a4"
+    },
+    {
+      "path": "packages/kg/tests/sqlite-store.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12780,
+      "sha256": "2acdc8e19eae1500b8cb9547b3ba417914ae8b36e63002db01b9efd195478479"
+    },
+    {
+      "path": "packages/kg/tsconfig.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 628,
+      "sha256": "3076f546b523b4cabed201979c87e3e7a159f424c4a590ea5660334618337de3"
+    },
+    {
+      "path": "packages/kg/vitest.config.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 687,
+      "sha256": "b4b6f15127d54ac3938f95a0762820e0f731339242d0519f07203a1d3a9196cc"
+    },
+    {
+      "path": "packages/kg/vitest.critical-coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1304,
+      "sha256": "5673790f17530d49aaf69688634ead48541381f2d6b8dddabfd09e060a253b2d"
+    },
+    {
+      "path": "packages/llm-client/package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1625,
+      "sha256": "af4f3291fb6e68d1da72d83e462a8508d557e065e4e306c13e52f7481b035750"
+    },
+    {
+      "path": "packages/llm-client/src/client.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12740,
+      "sha256": "5715af7f5c06567177b7cba3d72a7d53d7ffaf02c8181f02230ba7adca402d8e"
+    },
+    {
+      "path": "packages/llm-client/src/config.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 12315,
+      "sha256": "3e21971cfc940a3f85ca3f851ea6f33912f47e0668a7cef435763c9b19b50482"
+    },
+    {
+      "path": "packages/llm-client/src/index.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2189,
+      "sha256": "077984d33ee630d9eb134b6157c7214179220cf216066d36e71bf3952526fab2"
+    },
+    {
+      "path": "packages/llm-client/src/middleware/retry.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 4825,
+      "sha256": "a0797cf705635b632f2cff2b122fbee5384f62b57002b1504869b9db883ef499"
+    },
+    {
+      "path": "packages/llm-client/src/middleware/stream-parser.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 6002,
+      "sha256": "dcbbc8155be58aa65e873bdfb384597da5c79817ad87e209bf75e0a7da012e6c"
+    },
+    {
+      "path": "packages/llm-client/src/middleware/token-limit.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5472,
+      "sha256": "30397d447e0a25b9cf9972e59878087b13b920530bf24099e6be9609f12007a2"
+    },
+    {
+      "path": "packages/llm-client/src/providers/claude.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 12450,
+      "sha256": "d77d294d07f3ba2e5ba2c0e6c6abecd7b86c0c7a90a526356120495dadbd3324"
+    },
+    {
+      "path": "packages/llm-client/src/providers/custom.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2204,
+      "sha256": "74a9692737e5bb9cf9206df312d8c0a8cff769b257b15243e6b1a8da74c88810"
+    },
+    {
+      "path": "packages/llm-client/src/providers/index.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2289,
+      "sha256": "7a7a73e9b285461a2db76e281b09693594a723d6817d4c8f251448604ce29843"
+    },
+    {
+      "path": "packages/llm-client/src/providers/minimax.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 12655,
+      "sha256": "c0cbcc67f615280ca9f0137bb4c6eda1a3a6281c3352cc74e6cc14dcbc70dcd0"
+    },
+    {
+      "path": "packages/llm-client/src/providers/openai.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 10368,
+      "sha256": "97edcb43152c2ececdad1e98fefd7ba88e01e39cfb03c19703a46e97c4083867"
+    },
+    {
+      "path": "packages/llm-client/src/providers/types.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 2002,
+      "sha256": "6a0a69d5ec2cf61714ad2a38abbf51f8922c2f546d0709b8e0c3f14efade5d17"
+    },
+    {
+      "path": "packages/llm-client/src/types.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3726,
+      "sha256": "1bb0c5553a282755e2632502253ca8b6e718a61d34f95f963dc1efd1567e3af0"
+    },
+    {
+      "path": "packages/llm-client/src/util/errors.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5691,
+      "sha256": "40f76e057a8f18f730ecd7475c89537419762a76e20024df0fcb750ee3eb1416"
+    },
+    {
+      "path": "packages/llm-client/tests/claude.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5082,
+      "sha256": "3c9fba423600c8325dab7afc52cd4224611ff72da9aa8bcbd2e9e0046e4cf289"
+    },
+    {
+      "path": "packages/llm-client/tests/client-streaming-security-r1.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 3935,
+      "sha256": "8649a672ec42758ac3328630d22e12305ee9964e99eb0d1a38c196e6ea8ee6a4"
+    },
+    {
+      "path": "packages/llm-client/tests/client.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 16517,
+      "sha256": "48cdc73106026e1a15a488f79715b40d00ce89735dfd79a06ae709a71e48653d"
+    },
+    {
+      "path": "packages/llm-client/tests/config.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6821,
+      "sha256": "f26cdf678dbe1e5fbd84a2abaec2f284c5db22591ffe70f2cf93c21ffcb9f21f"
+    },
+    {
+      "path": "packages/llm-client/tests/custom.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 1543,
+      "sha256": "5345933109c53b9c5f4087a5d1a376a8b743af015f77f070905dc2aae86b90c0"
+    },
+    {
+      "path": "packages/llm-client/tests/errors.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 4904,
+      "sha256": "1ff7584686b32e40801a73ea380b3e6c9ad7e6beabb7f692926aefa4ec10b0c1"
+    },
+    {
+      "path": "packages/llm-client/tests/integration/chat.integration.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 7261,
+      "sha256": "b75080cf4f3c3b1b3ce71671a9f80f8449925ce7af727d9ce59187cbd5bfe1c1"
+    },
+    {
+      "path": "packages/llm-client/tests/minimax.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 19898,
+      "sha256": "a8221fd184275568dad328d7dc82f30b5db60051f5bbeb2b9fd5f333e12bf8b9"
+    },
+    {
+      "path": "packages/llm-client/tests/openai.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5087,
+      "sha256": "0839d486118fc7981df05fc3b51ea792c002959ed35f44f7f79bc8a1c1c209c4"
+    },
+    {
+      "path": "packages/llm-client/tests/provider-coverage-closure.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 13176,
+      "sha256": "f163b34c5ba6bd2ec83f52095daa02ed88ec8bee7c3fa5b8d086a14112188e46"
+    },
+    {
+      "path": "packages/llm-client/tests/retry.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 9294,
+      "sha256": "e487d248e9981a967b5f7d474e407ea7c78f3c2be7855b49dfe778a15bc389f7"
+    },
+    {
+      "path": "packages/llm-client/tests/stream-and-errors-edge.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3893,
+      "sha256": "21aa269919b9928b5134aff9b8e4f289658ddf3e4246cf1a45da06abc9de824a"
+    },
+    {
+      "path": "packages/llm-client/tests/stream-parser.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 8341,
+      "sha256": "bfc4f696b78be0b75affab68d816ada5e5595083c3fb36caa6bbf0493e401e22"
+    },
+    {
+      "path": "packages/llm-client/tests/token-limit.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 5593,
+      "sha256": "9ab7b60eda492adf3e1424b36f95162d2b016a3c1b37e3881e370bea12541128"
+    },
+    {
+      "path": "packages/llm-client/tsconfig.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 768,
+      "sha256": "07a9cdc2152ee38662c902b4aee34e9b62a41a235a399cd15690a319fe0dbb79"
+    },
+    {
+      "path": "packages/llm-client/vitest.config.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 733,
+      "sha256": "e410b7c45584a35a9c906dd8b96f3b71525f37f1c3d5dd95d7cdec1200dfd081"
+    },
+    {
+      "path": "packages/llm-client/vitest.critical.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 1071,
+      "sha256": "012921508fd5f539fa7d2c84cb2bbaccef877c93244c0f6f5d3c90055aabeeb8"
+    },
+    {
+      "path": "packages/rag/SCHEMA-FROZEN-1.2.md",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 7423,
+      "sha256": "3689f13624f9dc25952a549981790e12411dfafbfd8d4e87f7d3400adc4b05c2"
+    },
+    {
+      "path": "packages/rag/package.json",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 1439,
+      "sha256": "ac47665bde4ec08ef6dc5fefe8dcb04135848205d6ecbdefbc817385c6718ecf"
+    },
+    {
+      "path": "packages/rag/src/answerer.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 22982,
+      "sha256": "e0e20a24660407ba906efea538afe21c373444518f2b34aa0b11c0678d235e5e"
+    },
+    {
+      "path": "packages/rag/src/chunker.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 6929,
+      "sha256": "b993f220d61dfd9810bce389fcc25406b8315bf51ad1700f398132662d5720fb"
+    },
+    {
+      "path": "packages/rag/src/embedder.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 4500,
+      "sha256": "10e9fd00fcdf88bd4f608bb8f2d4b95d5833cf8a10390d0c526b3b60ed6ded78"
+    },
+    {
+      "path": "packages/rag/src/index.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 2711,
+      "sha256": "a73661e3815093029183eb1435405c4dd6f7133a817d3c1e6b099309afc98c9e"
+    },
+    {
+      "path": "packages/rag/src/indexer.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6517,
+      "sha256": "a6de7e5dc2e7b7be9f64b811b5370ac2f1347203acdc7cfff4ffb925417b449b"
+    },
+    {
+      "path": "packages/rag/src/types.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 6272,
+      "sha256": "ad57c156411bc1573efb4e8e6ce50c1d479017b09049cb7e7cb83defd00b5be3"
+    },
+    {
+      "path": "packages/rag/src/vector-store.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 22285,
+      "sha256": "92dbc79649d7f2b11dbbb1f68ceda45546b3f8a2b766ba166834940d0a66916b"
+    },
+    {
+      "path": "packages/rag/tests/answerer.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 19445,
+      "sha256": "23bd6de1e734c28ffe39ee5cfbf566da66104b30a829dda527c525b4fac2b20a"
+    },
+    {
+      "path": "packages/rag/tests/chunker.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3743,
+      "sha256": "113a373b04fede6535f8f3a2c871cd65c653bed0c6aa3b7de415393ce984762d"
+    },
+    {
+      "path": "packages/rag/tests/embedder.test.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 3120,
+      "sha256": "6684ac7ddec9bed1c17911fe214ca0443f7cda1eb391a12124e2fc170fc9b3a0"
+    },
+    {
+      "path": "packages/rag/tests/functional-runtime.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 15622,
+      "sha256": "2c7ffaa41814160e866c53983498b1a7fa7beb23ee4b1417bc52d3e415c55dea"
+    },
+    {
+      "path": "packages/rag/tests/indexer.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 8399,
+      "sha256": "9c4c596fc36e45cab854239f14a61e40d5c00cb892970ba423549658d843f13e"
+    },
+    {
+      "path": "packages/rag/tests/rag-sources-pipeline.integration.test.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 5199,
+      "sha256": "64c371e1945b8d06415d32c220a9f5aa3f72365889dd90f6dd09104a66d1175c"
+    },
+    {
+      "path": "packages/rag/tests/vector-store.test.ts",
+      "status": "MODIFIED",
+      "mode": "0644",
+      "bytes": 11190,
+      "sha256": "95137cb268ca29d5ccfa31d97b8a53f8948f183100c0bff3bd31253a08ab9abf"
+    },
+    {
+      "path": "packages/rag/tsconfig.json",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 628,
+      "sha256": "3076f546b523b4cabed201979c87e3e7a159f424c4a590ea5660334618337de3"
+    },
+    {
+      "path": "packages/rag/vitest.config.ts",
+      "status": "TRACKED",
+      "mode": "0644",
+      "bytes": 309,
+      "sha256": "71a6184b8e7d2a241732b406a3159b5f620bb993015ea6809030a7128e284243"
+    },
+    {
+      "path": "packages/rag/vitest.coverage.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 638,
+      "sha256": "5755a725c74793e34afd9940c3ba8af61a239cf2dc96b714bf9e6aa62f58d55d"
+    },
+    {
+      "path": "packages/rag/vitest.critical.config.ts",
+      "status": "UNTRACKED",
+      "mode": "0644",
+      "bytes": 694,
+      "sha256": "c1c785c6111ba1c6dd996bbc99214cf0ba56ec3131c52dd8912494587bc74c52"
+    }
+  ],
+  "trackedDeletions": [
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/CloudAsrProvider.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 6604,
+      "sha256": "3daa24e05294a8185c3df30615724eb58c3d88dacd382fd0e91510c7967c74b6"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/WebSpeechProvider.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 6628,
+      "sha256": "e04a6ca73f84c706bd0bd8075ef0353c8672173d4dd3c9537fc2821a85a618ef"
+    },
+    {
+      "path": "apps/copilot-desktop/src/renderer/components/VoiceInput/useTranscriber.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 17941,
+      "sha256": "feeda10fd054e66e089b215e005144004b53320b05db5df9e0b21a9f4301f1f9"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/CloudAsrProvider.test.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 4882,
+      "sha256": "cae280fa93d5f87d6174e8b1e7efba429884ee436a1706caaed90e26dc1e8308"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/WebSpeechProvider.test.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 6466,
+      "sha256": "d281fda3e3c19f9b54fba8ccc3634e2fafab951b99b203f267b8fb84bb62af2c"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/paths.test.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 7384,
+      "sha256": "09eb60b494e9fd6b5340c63c3f32f4705cc481bb27a180f3210c0a196e6db9dc"
+    },
+    {
+      "path": "apps/copilot-desktop/tests/VoiceInput/useTranscriber.test.ts",
+      "status": "DELETED",
+      "reason": "WORKTREE_MISSING",
+      "lastKnownFrom": "INDEX",
+      "mode": "100644",
+      "bytes": 7875,
+      "sha256": "c25a6e97fc04576c2787d5abdb8f4a48e85ded0d5429fc1480ed73bfe97f6ea3"
+    }
+  ]
+}

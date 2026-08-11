@@ -1,0 +1,8 @@
+apps/copilot-desktop/src/renderer/workspaces/ScheduleWorkspace.tsx
+apps/copilot-desktop/tests/VoiceWorkspace.local-asr-draft.test.tsx
+apps/copilot-desktop/tests/coverage-renderer-critical.test.tsx
+apps/copilot-desktop/tests/r44-h1-schedule-owner-feedback.test.tsx
+apps/copilot-desktop/tests/r44-h4-today-product-experience.test.tsx
+apps/copilot-desktop/tests/reversible-trash-ui-r1.test.tsx
+apps/copilot-desktop/tests/exp-cop-008-todo-closure-r1.test.tsx
+apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts

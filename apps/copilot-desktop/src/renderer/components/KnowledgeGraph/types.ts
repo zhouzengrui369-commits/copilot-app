@@ -8,7 +8,7 @@
  * KG is 100% local (decision red line #2 in goal.md v6.2) — this
  * module never opens a network socket. The store is queried through
  * `useKgData` which goes through the Electron preload bridge in
- * production and an in-memory fixture during tests.
+ * production and an explicitly injected in-memory fixture during tests.
  */
 
 import type { Entity, EntityType, Relation, Subgraph } from '@copilot/kg';
@@ -54,7 +54,11 @@ export interface KgFilter {
 
 /** Props for the main KnowledgeGraph component. */
 export interface KnowledgeGraphProps {
-  /** Data source — defaults to in-memory fixtures for tests. */
+  /**
+   * Explicitly injected graph source. When absent, KnowledgeGraph keeps its
+   * existing chrome/canvas but fails closed as unavailable with zero graph
+   * nodes and edges; it never creates a fixture implicitly.
+   */
   dataSource?: KgDataSource;
   /** Initial filter (default: empty filter = show everything). */
   initialFilter?: Partial<KgFilter>;

@@ -16,16 +16,44 @@ test.describe('Electron shell and navigation', () => {
     await expect(appPage.getByText('v6.2 · local-first personal copilot')).toBeVisible();
   });
 
-  for (const [index, view] of ['knowledge', 'ask', 'voice', 'schedule', 'settings'].entries()) {
+  for (const [index, view] of ['schedule', 'knowledge', 'ask', 'settings'].entries()) {
     test(`${String(index + 4).padStart(2, '0')} ${view} navigation opens the real desktop view`, async ({ appPage }) => {
       await openView(appPage, view);
     });
   }
 
-  test('09 Knowledge is the default view after renderer reload', async ({ appPage }) => {
+  test('08 Today embeds a truthful local voice capture surface', async ({ appPage }) => {
+    await openView(appPage, 'schedule');
+    await expect(appPage.getByTestId('view-schedule')).toBeVisible();
+    await expect(appPage.getByTestId('schedule-workspace')).toBeVisible();
+
+    const captureCard = appPage.getByTestId('today-capture-card');
+    await expect(captureCard).toBeVisible();
+    const draft = captureCard.getByTestId('today-capture-draft');
+    await expect(draft).toBeEditable();
+    await draft.fill('AC08 本地草稿');
+    await expect(draft).toHaveValue('AC08 本地草稿');
+
+    await captureCard.getByText('开始本地语音', { exact: true }).click();
+    const voiceInput = captureCard.getByTestId('voice-input-root');
+    const recorder = voiceInput.getByTestId('voice-recorder-button');
+    await expect(voiceInput).toBeVisible();
+    await expect(recorder).toBeVisible();
+    await recorder.focus();
+    await expect(recorder).toBeFocused();
+
+    await expect(appPage.getByTestId('nav-voice')).toHaveCount(0);
+    await expect(captureCard.getByText('LOCAL ASR · NOT_READY', { exact: true }).first()).toBeVisible();
+    await expect(voiceInput.getByTestId('voice-transcript')).toHaveCount(0);
+    await expect(voiceInput.getByTestId('voice-provider-badge')).toHaveCount(0);
+    expect(await captureCard.innerText()).not.toMatch(/(?:DECODE|NO-EGRESS)[^\n]{0,24}\bPASS\b/iu);
+  });
+
+  test('09 Today is the default view after renderer reload', async ({ appPage }) => {
     await appPage.reload();
-    await expect(appPage.getByTestId('view-knowledge')).toBeVisible();
-    await expect(appPage.getByTestId('knowledge-workspace')).toBeVisible();
+    await expect(appPage.getByTestId('view-schedule')).toBeVisible();
+    await expect(appPage.getByTestId('schedule-workspace')).toBeVisible();
+    await expect(appPage.getByTestId('nav-voice')).toHaveCount(0);
   });
 
   test('10 renderer context isolation removes CommonJS require', async ({ appPage }) => {
@@ -52,8 +80,8 @@ test.describe('Electron shell and navigation', () => {
     expect(await appPage.evaluate(() => location.protocol)).toBe('file:');
   });
 
-  test('15 local product API reports connected', async ({ appPage }) => {
-    await expect(appPage.getByTestId('status-product-api')).toContainText('connected');
+  test('15 bridge presence does not masquerade as fresh health', async ({ appPage }) => {
+    await expect(appPage.getByTestId('status-product-api')).toContainText('PRESENT · HEALTH NOT_PROBED');
   });
 
   test('16 preload exposes bounded domain APIs and no raw Node primitives', async ({ appPage }) => {
@@ -70,13 +98,13 @@ test.describe('Persisted settings through the Electron bridge', () => {
   });
 
   test('18 cloud backup defaults OFF in a fresh isolated profile', async ({ appPage }) => {
-    await expect(appPage.getByTestId('cloud-backup-toggle')).not.toBeChecked();
+    await expect(appPage.getByTestId('settings-post-mvp-boundary')).toContainText('OFF · POST-MVP');
     const settings = await appPage.evaluate(() => (window as any).copilot.settings.get());
     expect(settings.cloudBackupEnabled).toBe(false);
   });
 
   test('19 metadata-only cloud boundary is reported as unavailable', async ({ appPage }) => {
-    await expect(appPage.getByTestId('status-cloud-backup')).toContainText('UNAVAILABLE (metadata-only)');
+    await expect(appPage.getByTestId('status-cloud-backup')).toHaveText('Cloud backup: OFF / POST-MVP');
   });
 
   test('20 unsupported cloud opt-in fails closed and remains OFF', async ({ appPage }) => {
@@ -148,7 +176,7 @@ test.describe('Persisted settings through the Electron bridge', () => {
     appPage.once('dialog', (dialog) => dialog.accept());
     await button.click();
     await expect(button).toHaveAttribute('data-armed', 'false');
-    await expect(appPage.getByTestId('cloud-backup-toggle')).not.toBeChecked();
+    await expect(appPage.getByTestId('settings-post-mvp-boundary')).toContainText('OFF · POST-MVP');
     await expect(appPage.getByTestId('theme-radio-auto')).toBeChecked();
   });
 });

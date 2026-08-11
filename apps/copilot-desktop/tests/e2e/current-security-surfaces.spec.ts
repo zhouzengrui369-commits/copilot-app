@@ -23,22 +23,18 @@ test.describe('Current-source Electron and reachable security surfaces', () => {
     expect(['darwin', 'win32']).toContain(identity.platform);
   });
 
-  test('88 fresh profile shows encrypted backup OFF and unconfigured', async ({ appPage }) => {
+  test('88 fresh profile keeps backup management out of the Phase 1 UI and shows the POST-MVP boundary', async ({ appPage }) => {
     await openView(appPage, 'settings');
-    const group = appPage.getByTestId('backup-management');
-    await expect(group).toBeVisible();
-    await expect(group).toContainText('State: OFF');
-    await expect(group.getByRole('status')).toContainText('endpoint/token and COS owner binding are not configured');
+    await expect(appPage.getByTestId('settings-post-mvp-boundary'))
+      .toContainText('Remote / Backup · OFF · POST-MVP');
+    await expect(appPage.getByTestId('backup-management')).toHaveCount(0);
   });
 
-  test('89 backup owner consent starts empty and cannot proceed without configuration', async ({ appPage }) => {
-    const consent = appPage.getByTestId('backup-owner-consent');
-    await expect(consent.locator('input[type="checkbox"]')).toHaveCount(3);
-    for (const checkbox of await consent.locator('input[type="checkbox"]').all()) {
-      await expect(checkbox).not.toBeChecked();
-    }
-    await expect(consent.getByRole('button', { name: 'Review owner consent' })).toBeDisabled();
+  test('89 backup owner consent and manual actions are absent from the Phase 1 UI', async ({ appPage }) => {
+    await expect(appPage.getByTestId('backup-owner-consent')).toHaveCount(0);
     await expect(appPage.getByTestId('backup-manual-actions')).toHaveCount(0);
+    await expect(appPage.getByTestId('settings-post-mvp-boundary'))
+      .toContainText('Remote / Backup · OFF · POST-MVP');
   });
 
   test('90 real backup bridge exposes a redacted fail-closed state', async ({ appPage }) => {
@@ -88,28 +84,30 @@ test.describe('Current-source Electron and reachable security surfaces', () => {
     expect(JSON.stringify(result)).not.toMatch(/https?:\/\/|authorization|bearer|ciphertext/i);
   });
 
-  test('92 backup OFF and unconfigured state survives renderer reload', async ({ appPage }) => {
+  test('92 backup management remains absent and POST-MVP after renderer reload', async ({ appPage }) => {
     await appPage.reload();
     await openView(appPage, 'settings');
-    const group = appPage.getByTestId('backup-management');
-    await expect(group).toContainText('State: OFF');
-    await expect(group.getByRole('status')).toContainText('not configured');
+    await expect(appPage.getByTestId('backup-management')).toHaveCount(0);
+    await expect(appPage.getByTestId('backup-owner-consent')).toHaveCount(0);
+    await expect(appPage.getByTestId('settings-post-mvp-boundary'))
+      .toContainText('Remote / Backup · OFF · POST-MVP');
   });
 
-  test('93 fresh profile shows remote management OFF with pairing required', async ({ appPage }) => {
-    const group = appPage.getByTestId('settings-remote-management-group');
-    await expect(group).toBeVisible();
-    await expect(appPage.getByTestId('remote-management-state')).toContainText('State: OFF');
-    await expect(appPage.getByTestId('remote-management-state')).toContainText('Queued commands: 0');
-    await expect(appPage.getByTestId('remote-pairing-status')).toContainText('Pairing: required');
+  test('93 fresh profile keeps remote management out of the Phase 1 UI', async ({ appPage }) => {
+    await expect(appPage.getByTestId('settings-remote-management-group')).toHaveCount(0);
+    await expect(appPage.getByTestId('remote-management-state')).toHaveCount(0);
+    await expect(appPage.getByTestId('remote-pairing-status')).toHaveCount(0);
+    await expect(appPage.getByTestId('settings-post-mvp-boundary'))
+      .toContainText('Remote / Backup · OFF · POST-MVP');
   });
 
-  test('94 import revoke and enable stay disabled before a verified pairing', async ({ appPage }) => {
-    const group = appPage.getByTestId('settings-remote-management-group');
-    await expect(group.getByRole('button', { name: 'Create public pairing request' })).toBeEnabled();
-    await expect(group.getByRole('button', { name: 'Import encrypted signed response' })).toBeDisabled();
-    await expect(group.getByRole('button', { name: 'Revoke pairing' })).toBeDisabled();
-    await expect(group.getByRole('button', { name: 'Enable with owner consent' })).toBeDisabled();
+  test('94 remote pairing and enablement affordances are absent from the Phase 1 UI', async ({ appPage }) => {
+    await expect(appPage.getByRole('button', { name: 'Create public pairing request' })).toHaveCount(0);
+    await expect(appPage.getByRole('button', { name: 'Import encrypted signed response' })).toHaveCount(0);
+    await expect(appPage.getByRole('button', { name: 'Revoke pairing' })).toHaveCount(0);
+    await expect(appPage.getByRole('button', { name: 'Enable with owner consent' })).toHaveCount(0);
+    await expect(appPage.getByTestId('settings-post-mvp-boundary'))
+      .toContainText('Remote / Backup · OFF · POST-MVP');
   });
 
   test('95 real remote bridge rejects enable without pairing and remains OFF', async ({ appPage }) => {

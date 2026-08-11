@@ -1,0 +1,28 @@
+2026-07-29 RED
+COMMAND: npm run test --workspace @copilot/desktop -- tests/r44-h1-schedule-owner-feedback.test.tsx
+EXIT: 1
+RESULT: 4 tests; 1 failed, 3 passed. Selected-day aria-pressed remained false after Unscheduled -> calendar date.
+
+2026-07-29 GREEN
+COMMAND: npm run test --workspace @copilot/desktop -- tests/r44-h1-schedule-owner-feedback.test.tsx
+EXIT: 0
+RESULT: 1 file; 4 tests passed.
+
+2026-07-29 FOCUSED P0
+COMMAND: npm run test --workspace @copilot/desktop -- tests/r44-h1-schedule-owner-feedback.test.tsx tests/exp-cop-008-todo-closure-r1.test.tsx
+EXIT: 0
+RESULT: 2 files; 8 tests passed.
+
+2026-07-29 RENDERER TSC
+COMMAND: npx tsc -p apps/copilot-desktop/tsconfig.renderer.json --noEmit
+EXIT: 0
+
+2026-07-29 DESKTOP BUILD
+COMMAND: npm run build --workspace @copilot/desktop
+EXIT: 0
+RESULT: RENDERER_BUNDLE_VERIFIED: files=7
+
+2026-07-29 CURRENT-SOURCE ELECTRON (FIRST/ONLY RUN)
+COMMAND: env COPILOT_SQLITE_NATIVE_BINDING=/Users/njx/openclaw/copilot.wt-S15C/tasks/openclaw/2026-07-29-exp-cop-008-todo-canonical-closure-r1/run/native/better_sqlite3.node COPILOT_E2E_EXECUTABLE_PATH=/Users/njx/openclaw/copilot/apps/copilot-desktop/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron ELECTRON_OVERRIDE_DIST_PATH=/Users/njx/openclaw/copilot/apps/copilot-desktop/node_modules/electron/dist npx playwright test --config apps/copilot-desktop/playwright.electron.config.ts apps/copilot-desktop/tests/e2e/exp-cop-008-todo-closure.spec.ts
+EXIT: 0
+RESULT: 1 passed (13.3s)

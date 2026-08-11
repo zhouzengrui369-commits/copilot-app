@@ -1,0 +1,161 @@
+schema_version: 8
+project: copilot-app
+updated_at: "2026-08-10"
+status:
+  verdict: BLOCKED
+  mvp: MVP_NOT_COMPLETE
+  release: RELEASE_NOT_READY
+  experience: EXPERIENCE_NOT_READY
+  github_source: SOURCE_COMPLETE
+  runtime_proof: NOT_RUNTIME_PROOF
+source:
+  repository: zhouzengrui369-commits/copilot-app
+  product_source_pr: 20
+  product_source_branch: chatgpt/mvp-source-finalization
+  exact_final_commit: "resolve from final PR #20 head after this R67 authority-alignment commit and complete source gate"
+  final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
+workflow:
+  chatgpt:
+    role: Parent PM and GitHub remote source developer
+    local_candidate_execution: FORBIDDEN
+  minimax_code:
+    role: exact-SHA local hydration/package/Candidate evidence producer
+    current_state: STOPPED_UNTIL_FINAL_PR20_SOURCE_GREEN
+  codex:
+    role: independent packaged Electron product acceptance
+    current_state: WAITING_FOR_CANDIDATE_IDENTITY
+r30:
+  role: GITHUB_BOUND_CANDIDATE_RUNNER
+  runner_path: scripts/candidate-r30/run-candidate.mjs
+  gate_count: 12
+  local_execution: NOT_RUN
+r31:
+  role: PHASE1_SOURCE_COMPLETION
+  status: SOURCE_COMPLETE
+  local_execution: NOT_RUN
+  deployment_authority_bootstrap: "scripts/candidate-r30/minimax-authority.mjs reads docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md from the exact Git object"
+  electron_discovery: 113_tests_in_9_files
+r64_local_attempt:
+  source_commit: 5924aa96df9a15399fde281c9a4935392c8123b8
+  run_stamp: 20260809T134000Z
+  source_tests: 105/105_PASS
+  authority_bootstrap: PASS
+  runtime_registry_manifest: PASS
+  runtime_registry_manifest_typescript_6_0_3: PASS
+  exact_source_launcher: PASS
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  registry_prefetch_batches: 35/35_PASS
+  approximate_hydration_wall_clock: 21_minutes
+  registry_cache_closure: FAIL
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_CACHE_CLOSURE
+  blocker_sample: zustand@4.5.7_ENOTCACHED
+  source_consumed: true
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  assets: FORBIDDEN_REFERENCE_ONLY
+r65_registry_closure_completeness:
+  role: ROOT_LOCK_UNIQUE_EXACT_SPEC_COVERAGE
+  branch: chatgpt/r65-registry-closure-completeness
+  pr: 35
+  strategy: lockfile-batched-name-version-npm-pack-v2
+  completeness_mode: root-unique-exact-specs-covered-v1
+  root_lock_path_count_is_not_completeness_metric: true
+  completeness_metric: UNIQUE_EXACT_NAME_VERSION_SPECS
+  identity_classes:
+    resolved_lock_identity: lockfile-resolved-integrity
+    supplemental_identity: tracked-supplemental-lock
+    exact_version_only_identity: root-lock-exact-version-only
+  integrity_invention_for_exact_version_only: false
+  focused_regressions:
+    typescript_6_0_3_supplemental_identity: REQUIRED
+    zustand_4_5_7_exact_version_only_presence: REQUIRED
+    covered_root_closure_spec_count_equals_root_closure_spec_count: REQUIRED
+    entry_count_equals_root_closure_spec_count: REQUIRED
+  package_or_lockfile_changed: false
+  retry_policy_changed: false
+  mirror_changed: false
+  host_allowlist_expanded: false
+  candidate_network_authority: deny-network
+  code_green_head: cb7cbd5051da759c388564ee87d6dc21f55d2e83
+  code_source_gate:
+    run: 31348549679
+    job: 93334962219
+    steps: 17/17_PASS
+r66_local_attempt:
+  source_commit: beb951b95695233911da0a17543ef342acc6df93
+  run_stamp: 20260810T015500Z
+  source_tests: 106/106_PASS
+  root_closure_completeness: PASS
+  root_closure_spec_count: 1361
+  covered_root_closure_spec_count: 1361
+  runtime_manifest_typescript_6_0_3: PASS
+  runtime_manifest_zustand_4_5_7: PASS
+  exact_source_launcher: PASS
+  hydration_execution_count: 1
+  candidate_execution_count: 0
+  registry_prefetch_progress: 50_batches_PASS_then_batch_51_FAIL
+  blocker: BLOCKED_NATIVE_CACHE_HYDRATION_REGISTRY_PREFETCH
+  blocker_sample: string-width-cjs@4.2.3_ETARGET
+  blocker_classification: LOCKFILE_ALIAS_REGISTRY_IDENTITY_MISINTERPRETATION
+  source_consumed: true
+  retry_attempted: false
+  source_changes_by_minimax: NONE
+  assets: FORBIDDEN_REFERENCE_ONLY
+r67_lockfile_alias_identity:
+  role: NPM_ALIAS_REGISTRY_IDENTITY_REPAIR
+  branch: chatgpt/r67-lockfile-alias-identity
+  pr: 36
+  rule: "for exact-version-only node_modules entries, prefer valid lock entry name; otherwise fall back to install-path package name"
+  non_node_modules_entries_excluded: true
+  package_or_lockfile_changed: false
+  dependency_versions_changed: false
+  mirror_changed: false
+  host_allowlist_expanded: false
+  retry_policy_changed: false
+  candidate_network_authority: deny-network
+  focused_regressions:
+    string_width_cjs_path_maps_to_string_width_4_2_3: REQUIRED
+    strip_ansi_cjs_path_maps_to_strip_ansi_6_0_1: REQUIRED
+    wrap_ansi_cjs_path_maps_to_wrap_ansi_7_0_0: REQUIRED
+    fake_cjs_registry_specs_absent: REQUIRED
+    root_workspace_entry_excluded: REQUIRED
+  code_green_head: 20003b07b8137a369263e0fadb3b4f4171d7d392
+  code_source_gate:
+    run: 31354821614
+    job: 93352458882
+    steps: 17/17_PASS
+  final_evidence_head: 05185bf6d8239da22b80e89cf1c27edf1bb3d4c6
+  final_evidence_source_gate:
+    run: 31355390496
+    final_job: 93354715454
+    steps: 17/17_PASS
+    initial_step_12_failure: CI_TRANSIENT_ADJUDICATED
+  integrated_into_pr20_as: 68e9cb99f65bfb79562c9e6d49cf9351cb8a70a5
+gates:
+  gate_1: "exact source and clean preimage"
+  gate_2: "exact-source launcher; root-closure-complete alias-aware registry manifest; native-cache receipt; strict registry closure; deny-network proofs"
+  gate_3: "all tracked regular files SHA256 ledger"
+  gate_4: "candidate source contracts and ordered LLM -> KB -> KG -> RAG build"
+  gate_5: "checks, tests, coverage, desktop build, Phase 1, CycloneDX SBOM"
+  gate_6: "canonical unsigned macOS arm64 package"
+  gate_7: "source and artifact identities"
+  gate_8: "focused packaged Electron journeys"
+  gate_9: "exact discovery 113 tests in 9 files"
+  gate_10: "packaged Electron 113/113 with zero skipped/unexpected/flaky"
+  gate_11: "three candidate-bound performance runs"
+  gate_12: "final evidence, hashes, screenshots, runtime and terminal state"
+candidate:
+  established: false
+  candidate_id: null
+  source_snapshot_sha256: null
+  artifact_sha256: null
+  app_asar_sha256: null
+  runtime_id: null
+  test_data_manifest: null
+  performance_receipt: null
+independent_acceptance:
+  minimax_candidate_receipt: NOT_RECEIVED
+  codex_focused_retest: NOT_RUN
+next_single_action: "Pass the complete source gate on the resulting exact PR #20 head after this authority alignment, freeze that 40-character SHA with no later tracked source change, then issue MiniMax R68 with a new RUN_STAMP and six fresh local paths."
+conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

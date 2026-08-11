@@ -3,7 +3,11 @@ import type { ChatRequest, ChatResponse, LLMProvider } from '@copilot/llm-client
 import { KgBuilder } from '../src/builder/kg-builder.js';
 import { parseRelationResponse } from '../src/builder/relation-extractor.js';
 import { normalizeTag, parseTaggerResponse } from '../src/builder/tagger.js';
-import { parseSummarizeResponse } from '../src/builder/summarizer.js';
+import {
+  NoteSummaryParseError,
+  parseNoteSummaryResponse,
+  parseSummarizeResponse,
+} from '../src/builder/summarizer.js';
 import { KgQuery } from '../src/api/query.js';
 import { KgStore } from '../src/store/sqlite-store.js';
 import type {
@@ -39,6 +43,19 @@ class QueueProvider implements LLMProvider {
 }
 
 describe('LLM WIKI extraction boundaries', () => {
+  it('strictly parses the dedicated note summary schema and Unicode limit', () => {
+    expect(parseNoteSummaryResponse('```json\n{"summary":"  一份   本地摘要  "}\n```'))
+      .toBe('一份 本地摘要');
+    expect(() => parseNoteSummaryResponse('{"summary":"ok","extra":true}'))
+      .toThrow(/SCHEMA_INVALID/);
+    expect(() => parseNoteSummaryResponse('{"summary":""}'))
+      .toThrow(/LENGTH_INVALID/);
+    expect(() => parseNoteSummaryResponse(JSON.stringify({ summary: '长'.repeat(241) })))
+      .toThrow(/LENGTH_INVALID/);
+    expect(() => parseNoteSummaryResponse('not json'))
+      .toThrow(/JSON_OBJECT_REQUIRED/);
+  });
+
   it('normalizes relation, tag, and summary responses without inventing nodes', () => {
     const relations = parseRelationResponse(`answer:\n\`\`\`json\n[
       {"from":"张三","to":"Tencent","rel":"works-at","weight":2},
@@ -82,6 +99,7 @@ describe('LLM WIKI extraction boundaries', () => {
       JSON.stringify([{ from: 'Ada', to: 'Compiler', rel: 'created_by', weight: 0.9 }]),
       JSON.stringify(['Computing']),
       JSON.stringify({ 'person:ada': 'Pioneer', 'concept:compiler': 'Programming tool' }),
+      JSON.stringify({ summary: 'Ada created an early compiler.' }),
     ]);
     const store = new KgStore({ dbPath: ':memory:' });
     const builder = new KgBuilder({ store, provider });
@@ -93,8 +111,32 @@ describe('LLM WIKI extraction boundaries', () => {
     }));
     expect(store.listNodes().map((node) => node.summary)).toEqual(['Pioneer', 'Programming tool']);
     expect(store.listTags()).toEqual([expect.objectContaining({ name: 'computing', note_count: 1 })]);
-    expect(provider.requests).toHaveLength(4);
+    expect(store.listWikiProjectionsForNote('history/ada')[0]).toMatchObject({
+      status: 'current',
+      summary: 'Ada created an early compiler.',
+      provider: 'queue',
+      model: 'MiniMax-M3',
+    });
+    expect(provider.requests).toHaveLength(5);
     expect(provider.requests.every((request) => request.model === 'MiniMax-M3')).toBe(true);
+    store.close();
+  });
+
+  it('binds provider validation to the extractor schema instead of prompt text', async () => {
+    const provider = new QueueProvider([JSON.stringify(['tag-shaped-not-entities'])]);
+    const store = new KgStore({ dbPath: ':memory:' });
+    const result = await new KgBuilder({ store, provider }).buildNote({
+      path: 'schema/entity',
+      title: 'Entity schema',
+      body: 'The response must use the entity schema.',
+    });
+    expect(result.status).toBe('failed');
+    expect(store.listWikiProjectionsForNote('schema/entity')[0]).toMatchObject({
+      status: 'failed',
+      failure_stage: 'parse',
+      failure_reason: 'WIKI_SCHEMA_VALIDATION_FAILED',
+    });
+    expect(provider.requests).toHaveLength(1);
     store.close();
   });
 });
@@ -127,6 +169,13 @@ describe('atomic incremental graph and local query', () => {
         summarize: async ({ entities }) => new Map(
           entities.map((entity) => [entity.entity_id, `${version}:${entity.name}`]),
         ),
+      },
+      noteSummarizer: {
+        summarizeNote: async ({ note_title }) => ({
+          summary: `${version}:${note_title}`,
+          provider: 'fixture',
+          model: 'fixture',
+        }),
       },
     });
 
@@ -193,6 +242,13 @@ describe('atomic incremental graph and local query', () => {
       relationExtractor: { extract: async () => [] },
       tagger: { extract: async () => [] },
       summarizer: { summarize: async () => new Map() },
+      noteSummarizer: {
+        summarizeNote: async ({ note_title }) => ({
+          summary: `Summary ${note_title}`,
+          provider: 'fixture',
+          model: 'fixture',
+        }),
+      },
     });
     const result = await builder.buildPending({ perNoteTimeoutMs: 5 });
     expect(result.processed).toBe(1);
@@ -201,6 +257,137 @@ describe('atomic incremental graph and local query', () => {
     expect(statuses.get('missing')).toBe('failed');
     expect(statuses.get('fail')).toBe('failed');
     expect(statuses.get('slow')).toBe('failed');
+    store.close();
+  });
+});
+
+describe('WIKI builder failure and cache truth', () => {
+  it('persists provider and parse failures without green provenance', async () => {
+    const providerStore = new KgStore({ dbPath: ':memory:' });
+    const providerBuilder = new KgBuilder({
+      store: providerStore,
+      entityExtractor: { extract: async () => { throw new Error('offline'); } },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [] },
+      summarizer: { summarize: async () => new Map() },
+      noteSummarizer: {
+        summarizeNote: async () => ({ summary: 'unused', provider: 'fixture', model: 'fixture' }),
+      },
+    });
+    const providerNote = { path: 'fail/provider', title: 'Provider', body: 'body' };
+    const providerResult = await providerBuilder.buildNote(providerNote);
+    expect(providerResult.status).toBe('failed');
+    const providerTruth = new KgQuery(providerStore).wikiForNote(providerNote);
+    expect(providerTruth).toMatchObject({ truth: 'failed', provenance: null });
+    expect(providerTruth.failed[0]).toMatchObject({
+      failure_stage: 'provider',
+      failure_reason: 'WIKI_PROVIDER_FAILED',
+    });
+    providerStore.close();
+
+    const parseStore = new KgStore({ dbPath: ':memory:' });
+    const parseBuilder = new KgBuilder({
+      store: parseStore,
+      entityExtractor: { extract: async () => [] },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [] },
+      summarizer: { summarize: async () => new Map() },
+      noteSummarizer: {
+        summarizeNote: async () => {
+          throw new NoteSummaryParseError('bad summary');
+        },
+      },
+    });
+    const parseNote = { path: 'fail/parse', title: 'Parse', body: 'body' };
+    const parseResult = await parseBuilder.buildNote(parseNote);
+    expect(parseResult.status).toBe('failed');
+    const parseTruth = new KgQuery(parseStore).wikiForNote(parseNote);
+    expect(parseTruth).toMatchObject({ truth: 'failed', provenance: null });
+    expect(parseTruth.failed[0]).toMatchObject({
+      failure_stage: 'parse',
+      failure_reason: 'WIKI_SCHEMA_VALIDATION_FAILED',
+    });
+    parseStore.close();
+  });
+
+  it('rolls back graph mutations when WIKI persistence fails, then records the failed attempt', async () => {
+    const store = new KgStore({ dbPath: ':memory:' });
+    const originalUpsert = store.upsertWikiProjection.bind(store);
+    let upsertCalls = 0;
+    store.upsertWikiProjection = ((input, now) => {
+      upsertCalls += 1;
+      if (upsertCalls === 1) throw new Error('fixture persist failure');
+      return originalUpsert(input, now);
+    }) as typeof store.upsertWikiProjection;
+    const builder = new KgBuilder({
+      store,
+      entityExtractor: {
+        extract: async ({ note_path }) => [{
+          entity_id: 'concept:rollback',
+          type: 'concept',
+          name: 'Rollback',
+          source_note: note_path,
+        }],
+      },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [{ name: 'rollback' }] },
+      summarizer: { summarize: async () => new Map([['concept:rollback', 'summary']]) },
+      noteSummarizer: {
+        summarizeNote: async () => ({
+          summary: 'A projection that must roll back.',
+          provider: 'fixture',
+          model: 'fixture',
+        }),
+      },
+    });
+    const note = { path: 'fail/persist', title: 'Persist', body: 'body' };
+    const result = await builder.buildNote(note);
+    expect(result).toMatchObject({ status: 'failed', reason: 'WIKI_PERSIST_FAILED' });
+    expect(store.countNodes()).toBe(0);
+    expect(store.countEdges()).toBe(0);
+    expect(store.listTags()).toEqual([]);
+    expect(new KgQuery(store).wikiForNote(note)).toMatchObject({
+      truth: 'failed',
+      provenance: null,
+      failed: [expect.objectContaining({ failure_stage: 'persist' })],
+    });
+    store.close();
+  });
+
+  it('returns the digest-bound current cache without invoking extractors twice', async () => {
+    const store = new KgStore({ dbPath: ':memory:' });
+    const calls = { entity: 0, relation: 0, tag: 0, entitySummary: 0, noteSummary: 0 };
+    const builder = new KgBuilder({
+      store,
+      entityExtractor: { extract: async () => { calls.entity += 1; return []; } },
+      relationExtractor: { extract: async () => { calls.relation += 1; return []; } },
+      tagger: { extract: async () => { calls.tag += 1; return [{ name: 'cache' }]; } },
+      summarizer: {
+        summarize: async () => { calls.entitySummary += 1; return new Map(); },
+      },
+      noteSummarizer: {
+        summarizeNote: async () => {
+          calls.noteSummary += 1;
+          return { summary: 'Cached note summary.', provider: 'fixture', model: 'fixture' };
+        },
+      },
+    });
+    const note = { path: 'cache/note', title: 'Cache', body: 'same bytes' };
+    const first = await builder.buildNote(note);
+    const second = await builder.buildNote(note);
+    expect(first.wiki).toMatchObject({ truth: 'current', inserted_current: true });
+    expect(second.wiki).toMatchObject({
+      truth: 'current',
+      inserted_current: false,
+      projection_id: first.wiki.projection_id,
+    });
+    expect(calls).toEqual({
+      entity: 1,
+      relation: 1,
+      tag: 1,
+      entitySummary: 1,
+      noteSummary: 1,
+    });
     store.close();
   });
 });

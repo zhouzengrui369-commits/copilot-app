@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { KgBuilder } from '../src/builder/kg-builder.js';
 import { EntityExtractor } from '../src/builder/entity-extractor.js';
+import { KgQuery } from '../src/api/query.js';
 import { KgStore } from '../src/store/sqlite-store.js';
 import type { ChatRequest, ChatResponse, LLMProvider } from '@copilot/llm-client';
 
@@ -84,6 +86,75 @@ describe('Phase 1 deterministic local KG build/query integration', () => {
       from_entity_id: 'concept:knowledge-graph',
       to_entity_id: 'concept:rag',
       evidence: ['notes/two'],
+    });
+    reopened.close();
+  });
+
+  it('atomically persists and reopens a digest-bound note WIKI projection', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kg-wiki-int-'));
+    tempDirs.push(dir);
+    const dbPath = path.join(dir, 'kg.sqlite');
+    const store = new KgStore({ dbPath });
+    const builder = new KgBuilder({
+      store,
+      entityExtractor: {
+        extract: async ({ note_path }) => [{
+          entity_id: 'concept:local-first',
+          type: 'concept',
+          name: 'Local first',
+          source_note: note_path,
+        }],
+      },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [{ name: 'local-first' }] },
+      summarizer: {
+        summarize: async () => new Map([['concept:local-first', 'Stored locally']]),
+      },
+      noteSummarizer: {
+        summarizeNote: async () => ({
+          summary: 'The note requires local-first storage.',
+          provider: 'deterministic-local-fixture',
+          model: 'fixture',
+        }),
+      },
+      clock: () => 1_700_000_000_010,
+    });
+    const note = {
+      path: 'notes/local-first',
+      title: 'Local first',
+      body: 'All knowledge remains on this device.',
+      tags: ['Local First'],
+      metadata: { nested: { b: 2, a: 1 } },
+    };
+    const built = await builder.buildNote(note);
+    expect(built).toMatchObject({
+      status: 'done',
+      wiki: {
+        truth: 'current',
+        is_current: true,
+        inserted_current: true,
+        provider: 'deterministic-local-fixture',
+        model: 'fixture',
+      },
+    });
+    expect(new KgQuery(store).wikiForNote(note)).toMatchObject({
+      truth: 'current',
+      provenance: {
+        provider: 'deterministic-local-fixture',
+        model: 'fixture',
+        generated_at: 1_700_000_000_010,
+      },
+    });
+    store.close();
+
+    const reopened = new KgStore({ dbPath });
+    expect(new KgQuery(reopened).wikiForNote(note)).toMatchObject({
+      truth: 'current',
+      current: expect.objectContaining({
+        summary: 'The note requires local-first storage.',
+        tags: ['local-first'],
+        entity_ids: ['concept:local-first'],
+      }),
     });
     reopened.close();
   });

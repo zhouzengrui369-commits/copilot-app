@@ -1,88 +1,676 @@
-.viewSwitch {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--copilot-border);
-  border-radius: var(--copilot-radius-md);
-  background: var(--copilot-bg-elev);
+.inlineActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
 }
 
-.viewSwitch button {
-  min-height: 32px;
+.inlineActions button {
   border: 0;
-  border-radius: var(--copilot-radius-sm);
-  padding: 0 var(--copilot-space-3);
-  background: transparent;
-  color: var(--copilot-fg-muted);
+  cursor: pointer;
 }
 
-.viewSwitch button[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--copilot-accent) 16%, var(--copilot-bg));
-  color: var(--copilot-accent);
-  font-weight: 600;
-}
-
-.calendar {
-  display: grid;
-  gap: var(--copilot-space-3);
-  margin-top: var(--copilot-space-4);
-}
-
-.calendarEmpty,
-.emptyGroup {
+.emptyCopy,
+.truthCopy {
   margin: 0;
-  color: var(--copilot-fg-muted);
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
 }
 
-.calendarEmpty {
-  padding: var(--copilot-space-3);
-  border: 1px dashed var(--copilot-border);
-  border-radius: var(--copilot-radius-md);
+.truthCopy {
+  color: var(--secondary, var(--prototype-secondary));
+  line-height: 1.55;
+}
+
+.timelineEmpty {
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px dashed var(--border, var(--prototype-border));
+  border-radius: 9px;
+  background: var(--surface-2, var(--prototype-surface-2));
   text-align: center;
 }
 
-.calendarGroup {
-  overflow: hidden;
-  border: 1px solid var(--copilot-border);
-  border-radius: var(--copilot-radius-md);
-  background: var(--copilot-bg-elev);
+.voiceDisclosure {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border, var(--prototype-border));
 }
 
-.calendarGroupHeader {
+.voiceDisclosure summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.voiceDisclosure > p {
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 10px;
+}
+
+.captureTruth {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 9px;
+  background: var(--surface, var(--prototype-surface));
+}
+
+.captureTruth strong {
+  color: var(--ok, var(--prototype-ready));
+  font-size: 11px;
+}
+
+.captureTruth code {
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.captureTruth button {
+  justify-self: start;
+}
+
+.captureError,
+.captureWarning,
+.captureSuccess {
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.captureError {
+  background: var(--danger-soft, #fff0ef);
+  color: var(--danger, var(--prototype-danger));
+}
+
+.captureWarning {
+  background: var(--checking-soft, #fff6dc);
+  color: var(--checking, #936709);
+}
+
+.captureSuccess {
+  background: var(--ok-soft, #eaf8f1);
+  color: var(--ok, var(--prototype-ready));
+}
+
+.reminderStack {
+  display: grid;
+  gap: 7px;
+}
+
+.reminderStack > div {
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--warn, #a65208);
+  border-radius: 9px;
+  background: var(--warn-soft, #fff0e2);
+}
+
+.reminderStack button {
+  margin-left: auto;
+}
+
+.captureToolbar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captureToolbar small {
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 36%);
+  backdrop-filter: blur(4px);
+}
+
+.modalCard {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  display: grid;
+  gap: 16px;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 14px;
+  background: var(--surface, var(--prototype-surface));
+  box-shadow: 0 24px 70px rgb(15 23 42 / 24%);
+}
+
+.modalCard button,
+.datePopover button {
+  min-height: 44px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--copilot-space-3);
-  padding: var(--copilot-space-3);
-  border-bottom: 1px solid var(--copilot-border);
+  gap: 16px;
 }
 
-.calendarGroupHeader h3 {
+.modalHeader h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: 18px;
 }
 
-.calendarGroupHeader span {
-  color: var(--copilot-fg-muted);
+.modalHeader p {
+  margin: 4px 0 0;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 11px;
+}
+
+.dialogForm {
+  display: grid;
+  gap: 13px;
+}
+
+.dialogForm label {
+  display: grid;
+  gap: 6px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 11px;
+}
+
+.dialogForm input,
+.dateButton {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--strong, var(--prototype-border));
+  border-radius: 8px;
+  background: var(--surface-2, var(--prototype-surface-2));
+  color: inherit;
+  font: inherit;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dateField {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 11px;
+}
+
+.dateButton {
+  text-align: left;
+  cursor: pointer;
+}
+
+.datePopover {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--accent, var(--prototype-accent));
+  border-radius: 10px;
+  background: var(--surface, var(--prototype-surface));
+  box-shadow: 0 12px 32px rgb(15 23 42 / 14%);
+}
+
+.datePopover header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.datePopover h3,
+.datePopover p {
+  margin: 0;
+}
+
+.datePopover h3 {
+  color: var(--text, var(--prototype-text));
   font-size: 12px;
 }
 
-.calendarGroup :global(.todo-list) {
-  margin-top: 0;
+.datePopover header span,
+.datePopover p {
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
+}
+
+.datePopover label {
+  display: grid;
+  gap: 5px;
+}
+
+.datePopover input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dateShortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.dateGridToolbar {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateGridToolbar strong {
+  text-align: center;
+}
+
+.dateMonthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(44px, 1fr));
+  gap: 4px;
+}
+
+.dateMonthGrid > span {
+  display: grid;
+  min-height: 24px;
+  place-items: center;
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 9px;
+}
+
+.dateGridDay {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 8px;
+  background: var(--surface-2, var(--prototype-surface-2));
+  color: inherit;
+  cursor: pointer;
+}
+
+.dateGridDay[aria-selected='true'] {
+  border-color: var(--accent, var(--prototype-accent));
+  background: var(--accent-soft, #e8efff);
+  color: var(--accent, var(--prototype-accent));
+  font-weight: 700;
+}
+
+.dateGridDayMuted {
+  color: var(--tertiary, var(--prototype-tertiary));
+  opacity: 0.58;
+}
+
+.noteChooser {
+  display: grid;
+  gap: 6px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 11px;
+}
+
+.noteChooser > input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 9px 10px;
+  border: 1px solid var(--strong, var(--prototype-border));
+  border-radius: 8px;
+  background: var(--surface-2, var(--prototype-surface-2));
+  color: inherit;
+  font: inherit;
+}
+
+.noteCandidates {
+  max-height: 190px;
+  overflow: auto;
+  display: grid;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 8px;
+}
+
+.noteCandidates > button {
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--surface, var(--prototype-surface));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.noteCandidates > button[aria-selected='true'] {
+  border-color: var(--accent, var(--prototype-accent));
+  background: var(--accent-soft, #e8efff);
+}
+
+.noteCandidates code,
+.selectedNote code {
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.selectedNote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--accent, var(--prototype-accent));
+  border-radius: 8px;
+  background: var(--accent-soft, #e8efff);
+}
+
+.selectedNote code {
+  grid-column: 1;
+}
+
+.selectedNote button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.confirmDialog {
+  width: min(440px, calc(100vw - 32px));
+}
+
+.immersiveDialog {
+  width: min(1120px, calc(100vw - 32px));
+  height: min(760px, calc(100vh - 32px));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.immersiveGrid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+}
+
+.immersiveEditor {
+  min-width: min(640px, 100%);
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 11px;
+}
+
+.immersiveEditor textarea {
+  width: 100%;
+  min-height: 420px;
+  box-sizing: border-box;
+  resize: none;
+  padding: 14px;
+  border: 1px solid var(--strong, var(--prototype-border));
+  border-radius: 10px;
+  background: var(--surface-2, var(--prototype-surface-2));
+  color: inherit;
+  font: inherit;
+  line-height: 1.65;
+}
+
+.immersiveTruth {
+  align-content: start;
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 10px;
+  background: var(--surface-2, var(--prototype-surface-2));
+}
+
+.immersiveTruth p {
+  margin: 0;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.immersiveTruth code {
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.todoState {
+  list-style: none;
+}
+
+.todoScopes {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.todoScopes button[aria-pressed='true'] {
+  border-color: var(--accent, var(--prototype-accent));
+  background: var(--accent-soft, #e8efff);
+  color: var(--accent, var(--prototype-accent));
+}
+
+:global(.todo[data-focused='true']) {
+  outline: 2px solid var(--accent, var(--prototype-accent));
+  outline-offset: 2px;
+}
+
+.todoCardBody {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.todoCardTrigger {
+  display: grid;
+  gap: 3px;
+  padding: 0;
   border: 0;
-  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.emptyGroup {
-  padding: var(--copilot-space-3);
+.todoCardTrigger strong {
+  font-size: 12px;
 }
 
-@media (max-width: 720px) {
-  .viewSwitch {
+.todoCardTrigger small {
+  color: var(--tertiary, var(--prototype-tertiary));
+}
+
+.todoMemoryEditor,
+.todoMemorySummary {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 8px;
+  background: var(--surface-2, var(--prototype-surface-2));
+}
+
+.todoMemoryEditor p,
+.todoMemorySummary small,
+.prototypeLabel {
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
+}
+
+.todoMemoryEditor label {
+  display: grid;
+  gap: 4px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 10px;
+}
+
+.todoMemoryEditor textarea,
+.todoMemoryEditor input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 7px 8px;
+  border: 1px solid var(--strong, var(--prototype-border));
+  border-radius: 7px;
+  background: var(--surface, var(--prototype-surface));
+  color: inherit;
+  font: inherit;
+}
+
+.logHistory {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.logHistory li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 7px;
+  background: var(--surface, var(--prototype-surface));
+  font-size: 10px;
+}
+
+.logHistory time {
+  color: var(--tertiary, var(--prototype-tertiary));
+}
+
+.knowledgeLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 10px;
+}
+
+.todoMemoryActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.todoMemorySummary span {
+  color: var(--secondary, var(--prototype-secondary));
+}
+
+.todoSaveStates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--secondary, var(--prototype-secondary));
+  font-size: 10px;
+}
+
+.miniNote {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dayNoteList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dayNoteButton {
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 10px;
+  border: 1px solid var(--border, var(--prototype-border));
+  border-radius: 9px;
+  background: var(--surface-2, var(--prototype-surface-2));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dayNoteButton strong,
+.dayNoteButton code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dayNoteButton code {
+  grid-column: 1;
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 9px;
+}
+
+.dayNoteButton span {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--tertiary, var(--prototype-tertiary));
+  font-size: 10px;
+}
+
+.todoDeleteButton {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (max-width: 900px) {
+  .captureToolbar {
     width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
   }
 
-  .viewSwitch button {
-    flex: 1;
+  .modalBackdrop {
+    padding: 8px;
+  }
+
+  .modalCard,
+  .immersiveDialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .immersiveGrid {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .immersiveEditor {
+    min-width: 0;
+  }
+
+  .immersiveEditor textarea {
+    min-height: 320px;
   }
 }

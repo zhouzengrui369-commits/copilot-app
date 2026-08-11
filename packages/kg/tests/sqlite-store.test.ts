@@ -13,7 +13,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { KgQuery } from '../src/api/query.js';
 import { KgStore } from '../src/store/sqlite-store.js';
+import type { WikiProjectionInput } from '../src/types.js';
 
 let store: KgStore;
 
@@ -157,5 +159,185 @@ describe('KgStore · kg_edges + kg_tags (smoke; full coverage in wave 2)', () =>
 
     store.incrementTagCount('project', 3);
     expect(store.listTags()[0]?.note_count).toBe(3);
+  });
+});
+
+const DIGEST_A = 'a'.repeat(64);
+const DIGEST_B = 'b'.repeat(64);
+const DIGEST_C = 'c'.repeat(64);
+const DIGEST_D = 'd'.repeat(64);
+
+function currentProjection(
+  digest: string,
+  now: number,
+  overrides: Partial<WikiProjectionInput> = {},
+): WikiProjectionInput {
+  return {
+    note_path: 'wiki/note',
+    content_digest: digest,
+    summary: `Summary ${digest[0]}`,
+    tags: ['local-first'],
+    entity_ids: ['concept:wiki'],
+    relation_signatures: [],
+    provenance: { provider: 'fixture', model: 'fixture-model', generated_at: now },
+    status: 'current',
+    ...overrides,
+  };
+}
+
+function failedProjection(
+  digest: string,
+  now: number,
+  overrides: Partial<WikiProjectionInput> = {},
+): WikiProjectionInput {
+  return {
+    note_path: 'wiki/note',
+    content_digest: digest,
+    summary: null,
+    tags: [],
+    entity_ids: [],
+    relation_signatures: [],
+    provenance: { provider: 'fixture', model: 'fixture-model', generated_at: now },
+    status: 'failed',
+    failure_reason: 'fixture failure',
+    failure_stage: 'provider',
+    ...overrides,
+  };
+}
+
+describe('KgStore · WIKI persistence safety', () => {
+  it('handles A → B → A digest cycling before both successful and failed C attempts', () => {
+    store.upsertWikiProjection(currentProjection(DIGEST_A, 1), 1);
+    store.upsertWikiProjection(currentProjection(DIGEST_B, 2), 2);
+    store.upsertWikiProjection(currentProjection(DIGEST_A, 3), 3);
+    const success = store.upsertWikiProjection(currentProjection(DIGEST_C, 4), 4);
+    expect(success).toMatchObject({ isCurrent: true, priorMarkedStale: 1 });
+    expect(store.listWikiProjectionsForNote('wiki/note')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 'current', content_digest: DIGEST_C }),
+      expect.objectContaining({ status: 'stale', content_digest: DIGEST_A }),
+      expect.objectContaining({ status: 'stale', content_digest: DIGEST_B }),
+    ]));
+    expect(
+      store.listWikiProjectionsForNote('wiki/note')
+        .filter((row) => row.content_digest === DIGEST_A && row.status === 'stale'),
+    ).toHaveLength(1);
+
+    const failureStore = new KgStore({ dbPath: ':memory:' });
+    failureStore.upsertWikiProjection(currentProjection(DIGEST_A, 1), 1);
+    failureStore.upsertWikiProjection(currentProjection(DIGEST_B, 2), 2);
+    failureStore.upsertWikiProjection(currentProjection(DIGEST_A, 3), 3);
+    const failure = failureStore.upsertWikiProjection(failedProjection(DIGEST_C, 4), 4);
+    expect(failure).toMatchObject({ isCurrent: false, priorMarkedStale: 1 });
+    expect(failureStore.listWikiProjectionsForNote('wiki/note')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 'failed', content_digest: DIGEST_C }),
+      expect.objectContaining({ status: 'stale', content_digest: DIGEST_A }),
+      expect.objectContaining({ status: 'stale', content_digest: DIGEST_B }),
+    ]));
+    failureStore.close();
+  });
+
+  it('rejects malformed current, failed, digest, provenance, and public stale inputs', () => {
+    const invalid = (input: WikiProjectionInput) =>
+      expect(() => store.upsertWikiProjection(input, 1)).toThrow();
+
+    invalid(currentProjection('not-a-digest', 1));
+    invalid(currentProjection(DIGEST_A, 1, { summary: '   ' }));
+    invalid(currentProjection(DIGEST_A, 1, { summary: '长'.repeat(241) }));
+    invalid(currentProjection(DIGEST_A, 1, {
+      provenance: { provider: '', model: 'fixture', generated_at: 1 },
+    }));
+    invalid(currentProjection(DIGEST_A, 1, {
+      provenance: { provider: 'fixture', model: 'fixture', generated_at: Number.NaN },
+    }));
+    invalid(currentProjection(DIGEST_A, 1, { tags: ['Not Normalized'] }));
+    invalid(currentProjection(DIGEST_A, 1, { relation_signatures: ['broken'] }));
+    invalid(currentProjection(DIGEST_A, 1, { failure_reason: 'not allowed' }));
+    invalid(failedProjection(DIGEST_A, 1, { summary: 'must be null' }));
+    invalid(failedProjection(DIGEST_A, 1, { tags: ['success-facet'] }));
+    invalid(failedProjection(DIGEST_A, 1, { failure_reason: ' ' }));
+    invalid(failedProjection(DIGEST_A, 1, { failure_stage: null }));
+    invalid({ ...currentProjection(DIGEST_A, 1), status: 'stale' } as WikiProjectionInput);
+    expect(() => store.upsertWikiProjection(currentProjection(DIGEST_A, 1), Number.NaN))
+      .toThrow(/finite/);
+  });
+
+  it('canonicalizes normalized deduplicated tags and recursively ordered metadata', () => {
+    const first = store.computeNoteContentDigest({
+      title: 'Canonical',
+      body: 'same',
+      tags: [' AI Agent ', '知识 图谱', 'ai-agent'],
+      metadata: {
+        z: { second: 2, first: { b: true, a: false } },
+        a: [{ y: 2, x: 1 }],
+      },
+    });
+    const reordered = store.computeNoteContentDigest({
+      title: 'Canonical',
+      body: 'same',
+      tags: ['知识-图谱', 'AI-Agent'],
+      metadata: {
+        a: [{ x: 1, y: 2 }],
+        z: { first: { a: false, b: true }, second: 2 },
+      },
+    });
+    expect(reordered).toBe(first);
+    expect(store.computeNoteContentDigest({
+      title: 'Canonical',
+      body: 'changed',
+      tags: ['知识-图谱', 'ai-agent'],
+      metadata: { a: [{ x: 1, y: 2 }], z: { first: { a: false, b: true }, second: 2 } },
+    })).not.toBe(first);
+  });
+});
+
+describe('KgQuery · digest-bound WIKI truth and provenance', () => {
+  it('fails closed across current, stale, exact failure, unrelated failure, and missing truth', () => {
+    const query = new KgQuery(store);
+    expect(query.noteProjection('wiki/note', DIGEST_A)).toMatchObject({
+      truth: 'missing',
+      current: null,
+      provenance: null,
+    });
+
+    store.upsertWikiProjection(failedProjection(DIGEST_D, 1), 1);
+    expect(query.noteProjection('wiki/note', DIGEST_A)).toMatchObject({
+      truth: 'missing',
+      provenance: null,
+    });
+
+    store.upsertWikiProjection(currentProjection(DIGEST_A, 2), 2);
+    expect(query.noteProjection('wiki/note', DIGEST_A)).toMatchObject({
+      truth: 'current',
+      current: expect.objectContaining({ content_digest: DIGEST_A }),
+      provenance: { provider: 'fixture', model: 'fixture-model', generated_at: 2 },
+    });
+    expect(query.noteProjection('wiki/note')).toMatchObject({
+      truth: 'missing',
+      current: null,
+      provenance: null,
+      stale: [expect.objectContaining({ content_digest: DIGEST_A })],
+    });
+    expect(query.noteProjection('wiki/note', DIGEST_B)).toMatchObject({
+      truth: 'stale',
+      current: null,
+      provenance: { provider: 'fixture', model: 'fixture-model', generated_at: 2 },
+    });
+
+    store.upsertWikiProjection(failedProjection(DIGEST_B, 3), 3);
+    expect(query.noteProjection('wiki/note', DIGEST_B)).toMatchObject({
+      truth: 'failed',
+      current: null,
+      provenance: null,
+    });
+    expect(query.noteProjection('wiki/note', DIGEST_C)).toMatchObject({
+      truth: 'stale',
+      current: null,
+      provenance: { provider: 'fixture', model: 'fixture-model', generated_at: 2 },
+    });
+    expect(query.noteProjection('wiki/note')).toMatchObject({
+      truth: 'missing',
+      current: null,
+      provenance: null,
+    });
   });
 });

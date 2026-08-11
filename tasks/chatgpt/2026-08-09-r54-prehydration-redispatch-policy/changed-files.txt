@@ -1,0 +1,19 @@
+R54 governance/source files changed by ChatGPT:
+PROJECT_STATE.yaml
+docs/MINIMAX_LOCAL_DEPLOYMENT_MVP.md
+docs/development/R54_PREHYDRATION_REDISPATCH_POLICY_2026-08-09.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/GOAL.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/TASK.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/PLAN.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/RESULT.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/EVIDENCE.md
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/commands.log
+tasks/chatgpt/2026-08-09-r54-prehydration-redispatch-policy/changed-files.txt
+
+PRODUCT_CODE_CHANGES = NONE
+R50_HYDRATOR_CHANGES = NONE
+PACKAGE_LOCK_CHANGES = NONE
+TEST_CHANGES = NONE
+COVERAGE_THRESHOLD_CHANGES = NONE
+HOST_ALLOWLIST_CHANGES = NONE
+MAIN_CHANGES = NONE

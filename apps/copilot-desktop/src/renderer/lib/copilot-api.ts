@@ -1,8 +1,13 @@
 import type {
+  AskConversationSaveRequest,
+  AskConversationSnapshot,
   CopilotDomainBridge,
   CreateNoteRequest,
   CreateTodoRequest,
+  KnowledgeBuildStatusReceipt,
   KgSubgraph,
+  NoteBuildReceipt,
+  NoteCommitBuildReceipt,
   NoteRecord,
   NoteStatus,
   NoteType,
@@ -13,6 +18,7 @@ import type {
   TrashPurgeRequest,
   TrashRestoreRequest,
   UpdateTodoRequest,
+  WikiTruthReceipt,
 } from '../../shared/domain-api.js';
 import type {
   BacklinkRef,
@@ -29,6 +35,8 @@ export interface CopilotNoteSummary {
   status?: NoteStatus | null;
   updatedAt?: number;
   updated_at?: number;
+  localState?: 'LOCAL_SAVED';
+  knowledgeBuild?: KnowledgeBuildStatusReceipt;
 }
 
 export interface CopilotNote extends CopilotNoteSummary {
@@ -42,6 +50,12 @@ export interface CopilotNoteInput {
   tags?: string[];
   type?: NoteType | null;
   status?: NoteStatus | null;
+}
+
+export interface CopilotNoteCommitBuildReceipt {
+  note: CopilotNote;
+  localState: 'LOCAL_SAVED';
+  build: NoteBuildReceipt;
 }
 
 export interface CopilotBacklink {
@@ -74,6 +88,7 @@ export type TodoStatus = 'pending' | 'done' | 'cancelled';
 export interface CopilotTodo {
   id: string | number;
   title: string;
+  body?: string;
   status: TodoStatus;
   dueAt?: number | null;
   remindAt?: number | null;
@@ -85,6 +100,7 @@ export interface CopilotTodo {
 
 export interface CopilotTodoInput {
   title: string;
+  body?: string;
   dueAt?: number | null;
   remindAt?: number | null;
   linkedNotePaths?: string[];
@@ -95,9 +111,17 @@ export interface CopilotProductApi {
     list(): Promise<ReadonlyArray<CopilotNoteSummary> | { items: CopilotNoteSummary[] }>;
     get(path: string): Promise<CopilotNote | { note: CopilotNoteSummary; body: string } | null>;
     create(input: CopilotNoteInput): Promise<CopilotNote>;
+    createWithBuild?(input: CopilotNoteInput): Promise<CopilotNoteCommitBuildReceipt>;
     update(path: string, input: Partial<CopilotNoteInput>): Promise<CopilotNote | null>;
+    updateWithBuild?(
+      path: string,
+      input: Partial<CopilotNoteInput>,
+    ): Promise<CopilotNoteCommitBuildReceipt | null>;
     remove(path: string): Promise<boolean>;
     getBacklinks(path: string): Promise<ReadonlyArray<CopilotBacklink>>;
+  };
+  wiki?: {
+    getForNote(path: string): Promise<WikiTruthReceipt>;
   };
   kg: {
     getSubgraph(maxNodes?: number): Promise<KgSubgraph>;
@@ -109,6 +133,11 @@ export interface CopilotProductApi {
       question: string,
       onEvent: (event: RagStreamEvent) => void,
     ): CopilotRagStreamHandle;
+  };
+  askConversation?: {
+    save(request: AskConversationSaveRequest): Promise<AskConversationSnapshot>;
+    load(): Promise<AskConversationSnapshot | null>;
+    clear(): Promise<void>;
   };
   todos: {
     list(): Promise<ReadonlyArray<CopilotTodo>>;
@@ -153,9 +182,11 @@ export function resolveCopilotProductApi(
     return { api: null, error: '本地服务桥接不可用，请从桌面 App 启动。' };
   }
   const notes = value.notes;
+  const wiki = value.wiki;
   const kg = value.kg;
   const rag = value.rag;
   const todos = value.todos;
+  const askConversation = value.askConversation;
   const trash = value.trash;
   if (!hasFunctions(notes, ['list', 'get', 'create', 'update', 'remove', 'getBacklinks'])) {
     return { api: null, error: '知识库 IPC 尚未就绪。' };
@@ -170,8 +201,12 @@ export function resolveCopilotProductApi(
     return { api: null, error: '日程 IPC 尚未就绪。' };
   }
   const bridge = value as unknown as CopilotDomainBridge;
+  const hasNoteBuild = hasFunctions(notes, ['createWithBuild', 'updateWithBuild']);
+  const hasWiki = hasFunctions(wiki, ['getForNote']);
   const hasRagStream = hasFunctions(rag, ['startStream', 'cancelStream', 'onStreamEvent']);
   const hasTrash = hasFunctions(trash, ['moveNote', 'moveTodo', 'list', 'restore', 'purge']);
+  const hasAskConversation = hasFunctions(askConversation, ['save', 'load', 'clear']);
+  const askConversationBridge = bridge.askConversation;
   const trashBridge = bridge.trash;
   const api: CopilotProductApi = {
     notes: {
@@ -179,8 +214,14 @@ export function resolveCopilotProductApi(
       get: async (path) => bridge.notes.get(path),
       create: async (input) => {
         const created = await bridge.notes.create(toCreateNoteRequest(input));
-        return noteRecordToNote(created, input.body);
+        return noteRecordToNote(created, input.body, true);
       },
+      ...(hasNoteBuild ? {
+        createWithBuild: async (input: CopilotNoteInput) => {
+          const receipt = await bridge.notes.createWithBuild(toCreateNoteRequest(input));
+          return noteCommitReceiptToProduct(receipt, input.body);
+        },
+      } : {}),
       update: async (path, input) => {
         const updated = await bridge.notes.update({
           path,
@@ -194,8 +235,25 @@ export function resolveCopilotProductApi(
         });
         if (!updated) return null;
         const current = input.body === undefined ? await bridge.notes.get(updated.path) : null;
-        return noteRecordToNote(updated, input.body ?? current?.body ?? '');
+        return noteRecordToNote(updated, input.body ?? current?.body ?? '', true);
       },
+      ...(hasNoteBuild ? {
+        updateWithBuild: async (path: string, input: Partial<CopilotNoteInput>) => {
+          const receipt = await bridge.notes.updateWithBuild({
+            path,
+            patch: {
+              title: input.title,
+              body: input.body,
+              type: input.type,
+              status: input.status,
+              tags: input.tags,
+            },
+          });
+          if (!receipt) return null;
+          const current = input.body === undefined ? await bridge.notes.get(receipt.note.path) : null;
+          return noteCommitReceiptToProduct(receipt, input.body ?? current?.body ?? '');
+        },
+      } : {}),
       remove: (path) => bridge.notes.remove(path),
       getBacklinks: async (path) => {
         const links = await bridge.notes.getBacklinks(path);
@@ -210,6 +268,11 @@ export function resolveCopilotProductApi(
         }));
       },
     },
+    ...(hasWiki ? {
+      wiki: {
+        getForNote: (path: string) => bridge.wiki.getForNote(path),
+      },
+    } : {}),
     kg: {
       getSubgraph: (maxNodes) => bridge.kg.getSubgraph(maxNodes),
       reindexNote: (path) => bridge.kg.reindexNote(path),
@@ -221,6 +284,13 @@ export function resolveCopilotProductApi(
           startRagStream(bridge, question, onEvent),
       } : {}),
     },
+    ...(hasAskConversation && askConversationBridge ? {
+      askConversation: {
+        save: (request: AskConversationSaveRequest) => askConversationBridge.save(request),
+        load: () => askConversationBridge.load(),
+        clear: () => askConversationBridge.clear(),
+      },
+    } : {}),
     todos: {
       list: async () => (await bridge.todos.list()).map(todoRecordToTodo),
       create: async (input) => todoRecordToTodo(await bridge.todos.create(toCreateTodoRequest(input))),
@@ -330,7 +400,14 @@ function toCreateNoteRequest(input: CopilotNoteInput): CreateNoteRequest {
   };
 }
 
-function noteRecordToNote(record: NoteRecord, body: string): CopilotNote {
+function noteRecordToNote(
+  record: NoteRecord,
+  body: string,
+  includeRawBuildReceipt = false,
+): CopilotNote {
+  const rawBuildReceipt = includeRawBuildReceipt
+    ? normalizeRawBuildReceipt(record)
+    : null;
   return {
     path: record.path,
     title: record.title,
@@ -339,12 +416,61 @@ function noteRecordToNote(record: NoteRecord, body: string): CopilotNote {
     type: record.type,
     status: record.status,
     updatedAt: record.updatedAt,
+    ...(rawBuildReceipt ?? {}),
+  };
+}
+
+const KNOWLEDGE_BUILD_STATES = new Set<KnowledgeBuildStatusReceipt['state']>([
+  'queued',
+  'running',
+  'ready',
+  'failed',
+  'not-ready',
+]);
+const KNOWLEDGE_BUILD_REVISION = /^note:\d+:[0-9a-f]{64}$/u;
+
+function normalizeRawBuildReceipt(
+  record: NoteRecord,
+): Pick<CopilotNoteSummary, 'localState' | 'knowledgeBuild'> | null {
+  if (record.localState !== 'LOCAL_SAVED' || !isRecord(record.knowledgeBuild)) {
+    return null;
+  }
+  const state = record.knowledgeBuild.state;
+  const revision = record.knowledgeBuild.revision;
+  if (
+    typeof state !== 'string'
+    || !KNOWLEDGE_BUILD_STATES.has(state as KnowledgeBuildStatusReceipt['state'])
+    || (
+      revision !== null
+      && (typeof revision !== 'string' || !KNOWLEDGE_BUILD_REVISION.test(revision))
+    )
+  ) {
+    return null;
+  }
+  return {
+    localState: 'LOCAL_SAVED',
+    knowledgeBuild: {
+      state: state as KnowledgeBuildStatusReceipt['state'],
+      revision,
+    },
+  };
+}
+
+function noteCommitReceiptToProduct(
+  receipt: NoteCommitBuildReceipt,
+  body: string,
+): CopilotNoteCommitBuildReceipt {
+  return {
+    note: noteRecordToNote(receipt.note, body),
+    localState: receipt.localState,
+    build: receipt.build,
   };
 }
 
 function toCreateTodoRequest(input: CopilotTodoInput): CreateTodoRequest {
   return {
     title: input.title,
+    ...(input.body !== undefined ? { body: input.body } : {}),
     due_at_ms: input.dueAt,
     remind_at_ms: input.remindAt,
     note_links: input.linkedNotePaths,
@@ -354,6 +480,7 @@ function toCreateTodoRequest(input: CopilotTodoInput): CreateTodoRequest {
 function toUpdateTodoPatch(patch: Partial<CopilotTodo>): UpdateTodoRequest['patch'] {
   const output: UpdateTodoRequest['patch'] = {};
   if (patch.title !== undefined) output.title = patch.title;
+  if (patch.body !== undefined) output.body = patch.body;
   if (patch.status !== undefined) output.status = patch.status;
   const dueAt = patch.dueAt !== undefined ? patch.dueAt : patch.due_at_ms;
   if (dueAt !== undefined) output.due_at_ms = dueAt;
@@ -368,6 +495,7 @@ function todoRecordToTodo(record: TodoRecord): CopilotTodo {
   return {
     id: record.id,
     title: record.title,
+    body: record.body,
     status: record.status,
     due_at_ms: record.due_at_ms,
     remind_at_ms: record.remind_at_ms,

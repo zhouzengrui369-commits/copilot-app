@@ -15,6 +15,7 @@ import {
   RelationExtractor,
 } from '../src/builder/relation-extractor.js';
 import {
+  buildNoteSummaryPrompt,
   buildSummarizePrompt,
   parseSummarizeResponse,
   Summarizer,
@@ -150,6 +151,12 @@ describe('canonical KG coverage closure — extraction validation branches', () 
   it('validates summary parsing, truncation, rejected shapes, and empty extractor input', async () => {
     expect(buildSummarizePrompt({ note_title: 'T', note_body: 'x'.repeat(4001), entities })[1]?.content)
       .toContain('truncated');
+    expect(buildNoteSummaryPrompt({
+      note_path: 'notes/long',
+      note_title: 'Long',
+      note_body: 'x'.repeat(6001),
+      note_meta: { private: true },
+    })[1]?.content).toContain('Metadata: {"private":true}');
     expect(parseSummarizeResponse('', entities).size).toBe(0);
     expect(parseSummarizeResponse('bad', entities).size).toBe(0);
     expect(parseSummarizeResponse('null', entities).size).toBe(0);
@@ -159,12 +166,15 @@ describe('canonical KG coverage closure — extraction validation branches', () 
     \`\`\``, entities);
     expect(summaries).toEqual(new Map([['person:ada', 'Ada pioneer']]));
 
-    const provider = new RecordingProvider(['{}']);
+    const provider = new RecordingProvider(['{}', '{}']);
     const summarizer = new Summarizer({ provider, defaultModel: 'm', temperature: 0.3 });
     expect(await summarizer.summarize({ note_title: '', note_body: '', entities: [] })).toEqual(new Map());
     await summarizer.summarize({ note_title: '', note_body: '', entities });
+    const controller = new AbortController();
+    await summarizer.summarize({ note_title: '', note_body: '', entities }, controller.signal);
     expect(provider.requests[0]?.temperature).toBe(0.3);
     expect(provider.requests[0]).not.toHaveProperty('signal');
+    expect(provider.requests[1]?.signal).toBe(controller.signal);
   });
 
   it('filters blocked/duplicate tags, handles mixed LLM shapes, and caps at eight', async () => {
@@ -256,7 +266,20 @@ describe('canonical KG coverage closure — store, query, builder and migration 
     });
     await expect(builder.buildNote({ path: ' ', title: '', body: '' })).rejects.toThrow('note path is required');
     expect(await builder.buildNote({ path: 'empty', title: '', body: '', tags: [' A ', '---', 'A'] }))
-      .toEqual(expect.objectContaining({ tagsTotal: 2, tagsTouched: 1, elapsedMs: 0 }));
+      .toEqual(expect.objectContaining({
+        status: 'failed',
+        reason: 'WIKI_EMPTY_NOTE',
+        entitiesTotal: 0,
+        relationsTotal: 0,
+        tagsTotal: 0,
+        tagsTouched: 0,
+        elapsedMs: 0,
+        wiki: expect.objectContaining({
+          truth: 'failed',
+          is_current: false,
+          inserted_current: false,
+        }),
+      }));
     expect(await builder.buildNote({ path: 'skip', title: 'content', body: '', tags: [] }, { skipLlm: true }))
       .toEqual(expect.objectContaining({ entitiesTotal: 0, relationsTotal: 0 }));
     await expect(builder.buildPending()).rejects.toThrow('source is required');
@@ -290,8 +313,288 @@ describe('canonical KG coverage closure — store, query, builder and migration 
     pendingStore.close();
   });
 
+  it('fails closed for malformed projection facets and failed-attempt persistence errors', async () => {
+    const cases: Array<Record<string, unknown>> = [
+      { entities: {} },
+      {
+        entities: [
+          { entity_id: 'person:ada', type: 'person', name: 'Ada', source_note: 'case' },
+          { entity_id: 'person:ada', type: 'person', name: 'Ada duplicate', source_note: 'case' },
+        ],
+      },
+      {
+        relations: [{
+          from_entity_id: 'person:ada',
+          to_entity_id: 'concept:engine',
+          rel: ' ',
+          evidence_note: 'case',
+        }],
+      },
+      { tags: [{ name: '---' }] },
+      { summaries: [] },
+      { summaries: new Map([['person:ada', ' ']]) },
+      { noteSummary: { summary: 'Valid summary', provider: 'injected', model: ' ' } },
+    ];
+    const pick = (
+      values: Record<string, unknown>,
+      key: string,
+      fallback: unknown,
+    ): unknown => Object.prototype.hasOwnProperty.call(values, key) ? values[key] : fallback;
+
+    for (const values of cases) {
+      const store = new KgStore({ dbPath: ':memory:' });
+      const validEntities = [
+        { entity_id: 'person:ada', type: 'person', name: 'Ada', source_note: 'case' },
+        { entity_id: 'concept:engine', type: 'concept', name: 'Engine', source_note: 'case' },
+      ];
+      const builder = new KgBuilder({
+        store,
+        entityExtractor: { extract: async () => pick(values, 'entities', validEntities) as never },
+        relationExtractor: { extract: async () => pick(values, 'relations', []) as never },
+        tagger: { extract: async () => pick(values, 'tags', []) as never },
+        summarizer: { summarize: async () => pick(values, 'summaries', new Map()) as never },
+        noteSummarizer: {
+          summarizeNote: async () => pick(values, 'noteSummary', {
+            summary: 'Valid summary',
+            provider: 'injected',
+            model: 'model',
+          }) as never,
+        },
+        clock: () => 1,
+      });
+      await expect(builder.buildNote({
+        path: 'case',
+        title: 'Content',
+        body: 'Body',
+      })).resolves.toEqual(expect.objectContaining({
+        status: 'failed',
+        reason: 'WIKI_SCHEMA_VALIDATION_FAILED',
+        wiki: expect.objectContaining({ truth: 'failed', is_current: false }),
+      }));
+      store.close();
+    }
+
+    const persistenceStore = new KgStore({ dbPath: ':memory:' });
+    persistenceStore.raw.exec(`
+      CREATE TRIGGER reject_failed_wiki
+      BEFORE INSERT ON note_wiki
+      BEGIN
+        SELECT RAISE(ABORT, 'blocked failed attempt');
+      END;
+    `);
+    const persistenceBuilder = new KgBuilder({
+      store: persistenceStore,
+      entityExtractor: { extract: async () => [] },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [] },
+      summarizer: { summarize: async () => new Map() },
+      clock: () => 2,
+    });
+    await expect(persistenceBuilder.buildNote({
+      path: 'persist-failure',
+      title: '',
+      body: '',
+    })).rejects.toThrow('failed projection could not be persisted');
+    persistenceStore.close();
+  });
+
+  it('uses the default pending timeout and stringifies non-Error source failures', async () => {
+    const statuses: string[] = [];
+    const source: KgKnowledgeSource = {
+      listKgPending: () => [
+        { note_path: 'good', status: 'pending', queued_at: 0 },
+        { note_path: 'bad', status: 'pending', queued_at: 0 },
+      ],
+      setKgStatus: (path, status) => { statuses.push(`${path}:${status}`); },
+      readNote: (path) => {
+        if (path === 'bad') throw 'plain failure';
+        return { note: { path, title: 'content', tags: [], related: [] }, body: '' };
+      },
+    };
+    const store = new KgStore({ dbPath: ':memory:' });
+    const builder = new KgBuilder({
+      store,
+      source,
+      entityExtractor: { extract: async () => [] },
+      relationExtractor: { extract: async () => [] },
+      tagger: { extract: async () => [] },
+      summarizer: { summarize: async () => new Map() },
+      noteSummarizer: {
+        summarizeNote: async () => ({
+          summary: 'Valid summary',
+          provider: 'injected',
+          model: 'model',
+        }),
+      },
+      clock: () => 3,
+    });
+    expect(await builder.buildPending()).toEqual(expect.objectContaining({
+      processed: 1,
+      failed: [{ path: 'bad', reason: 'plain failure' }],
+    }));
+    expect(statuses).toEqual([
+      'good:processing',
+      'good:done',
+      'bad:processing',
+      'bad:failed',
+    ]);
+    store.close();
+  });
+
+  it('covers malformed stored JSON and public store fail-closed boundaries', () => {
+    const malformedStore = new KgStore({ dbPath: ':memory:', wal: false });
+    malformedStore.upsertEntity({
+      entity_id: 'concept:malformed',
+      type: 'concept',
+      name: 'Malformed',
+      source_note: 'notes/malformed',
+    }, 1);
+    malformedStore.raw.prepare(
+      `UPDATE kg_nodes SET aliases = NULL, source_notes = 'not-json' WHERE entity_id = ?`,
+    ).run('concept:malformed');
+    expect(malformedStore.getEntityByIdString('concept:malformed')).toEqual(
+      expect.objectContaining({ aliases: [], source_notes: [] }),
+    );
+    malformedStore.raw.prepare(
+      `UPDATE kg_nodes SET aliases = '"scalar"', source_notes = '[]' WHERE entity_id = ?`,
+    ).run('concept:malformed');
+    expect(malformedStore.getEntityByIdString('concept:malformed')?.aliases).toEqual([]);
+
+    expect(() => malformedStore.replaceNoteGraph({
+      note_path: ' ',
+      entities: [],
+      relations: [],
+      tags: [],
+    }, 1)).toThrow('note_path is required');
+    expect(malformedStore.replaceNoteGraph({
+      note_path: 'notes/missing-endpoint',
+      entities,
+      relations: [{
+        from_entity_id: 'person:ada',
+        to_entity_id: 'concept:missing',
+        rel: 'related_to',
+        evidence_note: 'ignored',
+      }],
+      tags: [],
+    }, 2).relationsAdded).toBe(0);
+    expect(() => malformedStore.removeNoteGraph(' ')).toThrow('note_path is required');
+
+    const digest = 'a'.repeat(64);
+    expect(() => malformedStore.upsertWikiProjection({
+      note_path: ' ',
+      content_digest: digest,
+      summary: null,
+      tags: [],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: null,
+      status: 'failed',
+      failure_reason: 'failure',
+      failure_stage: 'provider',
+    })).toThrow('note_path is required');
+    expect(() => malformedStore.upsertWikiProjection({
+      note_path: 'invalid-tags',
+      content_digest: digest,
+      summary: null,
+      tags: [' '],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: null,
+      status: 'failed',
+      failure_reason: 'failure',
+      failure_stage: 'provider',
+    }, 3)).toThrow('tags must contain non-empty strings');
+    expect(() => malformedStore.upsertWikiProjection({
+      note_path: 'invalid-summary',
+      content_digest: digest,
+      summary: null,
+      tags: [],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: {
+        provider: 'provider',
+        model: 'model',
+        generated_at: 4,
+      },
+      status: 'current',
+    }, 4)).toThrow('current status requires summary');
+    expect(() => malformedStore.upsertWikiProjection({
+      note_path: 'invalid-provenance',
+      content_digest: digest,
+      summary: 'Summary',
+      tags: [],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: 'invalid' as unknown as {
+        provider: string;
+        model: string;
+        generated_at: number;
+      },
+      status: 'current',
+    }, 5)).toThrow('provenance is invalid');
+
+    expect(malformedStore.upsertWikiProjection({
+      note_path: 'input-now',
+      content_digest: 'b'.repeat(64),
+      summary: null,
+      tags: [],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: null,
+      status: 'failed',
+      failure_reason: 'failure',
+      failure_stage: 'provider',
+      now: 6,
+    }).projection).toEqual(expect.objectContaining({
+      provider: null,
+      model: null,
+      generated_at: 6,
+    }));
+    expect(malformedStore.upsertWikiProjection({
+      note_path: 'clock-now',
+      content_digest: 'c'.repeat(64),
+      summary: null,
+      tags: [],
+      entity_ids: [],
+      relation_signatures: [],
+      provenance: null,
+      status: 'failed',
+      failure_reason: 'failure',
+      failure_stage: 'parse',
+    }).projection.generated_at).toBeGreaterThan(0);
+
+    expect(malformedStore.computeNoteContentDigest({ title: '', body: '' }))
+      .toMatch(/^[a-f0-9]{64}$/);
+    expect(malformedStore.computeNoteContentDigest({
+      title: '',
+      body: '',
+      metadata: {
+        infinity: Number.POSITIVE_INFINITY,
+        omitted: undefined,
+        nested: {
+          fn: () => 'ignored',
+          symbol: Symbol('ignored'),
+        },
+      },
+    })).toMatch(/^[a-f0-9]{64}$/);
+    expect(malformedStore.getWikiProjectionById(999_999)).toBeNull();
+    malformedStore.close();
+
+    const noMigrationStore = new KgStore({
+      dbPath: ':memory:',
+      wal: false,
+      migrate: false,
+    });
+    noMigrationStore.raw.exec(
+      `CREATE TABLE kg_schema_meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)`,
+    );
+    expect(noMigrationStore.schemaVersion).toBe(1);
+    noMigrationStore.close();
+  });
+
   it('applies one registered migration transactionally and exposes the new version', () => {
     const store = new KgStore({ dbPath: ':memory:' });
+    store.raw.prepare(`UPDATE kg_schema_meta SET v = '0' WHERE k = 'version'`).run();
     KG_MIGRATIONS[1] = (target) => {
       target.raw.exec('CREATE TABLE coverage_migration_probe (id INTEGER PRIMARY KEY)');
     };

@@ -1,0 +1,9 @@
+apps/copilot-desktop/src/main/local-knowledge-service.ts
+apps/copilot-desktop/tests/integration/note-wiki-before-rag-background.integration.test.ts
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/PLAN.md
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/RESULT.md
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/EVIDENCE.md
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/commands.log
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/changed-files.txt
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/DISPATCH_STATUS.md
+tasks/openclaw/2026-07-29-wiki-rag-readiness-fail-closed-r1/ACCEPTANCE_LOG.md

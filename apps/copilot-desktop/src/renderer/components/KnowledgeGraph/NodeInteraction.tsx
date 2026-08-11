@@ -13,7 +13,7 @@
  * click counter + hovered-entity id for the verifier / tests.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Entity } from '@copilot/kg';
 
 export interface NodeInteractionProps {
@@ -50,25 +50,35 @@ export function useNodeInteraction({
   const [clickCount, setClickCount] = useState<number>(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const handleClick = useCallback(
-    (entity_id: string) => {
-      setClickCount((n) => n + 1);
-      onClickNode?.(entity_id);
-      const entity = entityIndex.get(entity_id);
-      if (entity) onNodeClick?.(entity);
-    },
-    [entityIndex, onClickNode, onNodeClick],
-  );
+  // Sigma owns long-lived event handlers. Keep their public function identity
+  // stable, but resolve every event against the latest committed entity index
+  // and consumer callbacks. This prevents a graph that has already rendered
+  // fresh nodes from dispatching through the initial empty-index closure before
+  // a passive handler-sync effect runs.
+  const entityIndexRef = useRef(entityIndex);
+  const onNodeClickRef = useRef(onNodeClick);
+  const onNodeHoverRef = useRef(onNodeHover);
+  const onClickNodeRef = useRef(onClickNode);
+  const onHoverNodeRef = useRef(onHoverNode);
+  entityIndexRef.current = entityIndex;
+  onNodeClickRef.current = onNodeClick;
+  onNodeHoverRef.current = onNodeHover;
+  onClickNodeRef.current = onClickNode;
+  onHoverNodeRef.current = onHoverNode;
 
-  const handleHover = useCallback(
-    (entity_id: string | null) => {
-      setHoveredId(entity_id);
-      onHoverNode?.(entity_id);
-      const entity = entity_id ? entityIndex.get(entity_id) ?? null : null;
-      onNodeHover?.(entity);
-    },
-    [entityIndex, onHoverNode, onNodeHover],
-  );
+  const handleClick = useCallback((entity_id: string) => {
+    setClickCount((n) => n + 1);
+    onClickNodeRef.current?.(entity_id);
+    const entity = entityIndexRef.current.get(entity_id);
+    if (entity) onNodeClickRef.current?.(entity);
+  }, []);
+
+  const handleHover = useCallback((entity_id: string | null) => {
+    setHoveredId(entity_id);
+    onHoverNodeRef.current?.(entity_id);
+    const entity = entity_id ? entityIndexRef.current.get(entity_id) ?? null : null;
+    onNodeHoverRef.current?.(entity);
+  }, []);
 
   const reset = useCallback(() => {
     setClickCount(0);

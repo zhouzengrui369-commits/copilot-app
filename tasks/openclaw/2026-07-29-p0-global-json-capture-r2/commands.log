@@ -1,0 +1,52 @@
+2026-07-29 task contract read
+command: full read GOAL.md, TASK.md, PLAN.md
+exit: 0
+
+2026-07-29 initial execution bridge creation (sandbox)
+command: create root dependency symlink and app-local Electron wrapper
+exit: 1
+first exact error: ln: node_modules: Operation not permitted
+classification: controller sandbox boundary; no partial bridge created
+
+2026-07-29 execution bridge creation (controller-authorized)
+command: create root dependency symlink; copy local Electron 38.8.6 package.json/index.js/path.txt; link existing dist
+exit: 0
+electron_version: 38.8.6
+package_json_sha256: 348dbf8cba44a4925b2764f496cd6738b58c1b544ba7f3808db1a44aabd757b1
+index_js_sha256: 46a7d3a2da5d96cd693612e5c3ec407c38ac9c15c44f97ad2be478cbcf80b43c
+path_txt_sha256: 3e0e50495f130af5c4349169f9a109d7a1543b8eca72ec2b5c9b3e8028b7a596
+
+2026-07-29 direct Vitest JSON capture
+command: /Users/njx/openclaw/copilot/node_modules/.bin/vitest run --config apps/copilot-desktop/vitest.config.ts --reporter=json --outputFile=/private/tmp/copilot-p0-current-global-r2.json
+run_count: 1
+exit: 1
+stdout: include tests/**/*.test.{ts,tsx}; No test files found, exiting with code 1
+json_exists: false
+classification: EXECUTION_BRIDGE
+rerun: prohibited and not performed
+
+2026-07-29 JSON validation
+command: test -f /private/tmp/copilot-p0-current-global-r2.json
+exit: 1
+result: absent; no parse or totals possible
+
+2026-07-29 desktop workspace check
+command: npm run check --workspace @copilot/desktop
+run_count: 1
+exit: 2
+first diagnostics: ImportMeta.env missing; H4C optional array mismatch; duplicate Vite/Vitest plugin types
+
+2026-07-29 diff check
+command: git diff --check
+run_count: 1
+exit: 0
+stdout: empty
+
+2026-07-29 execution bridge cleanup
+command: unlink root node_modules; remove exact app-local Electron wrapper
+exit: 0
+
+2026-07-29 cleanup verification
+command: test ! -L node_modules; test ! -e apps/copilot-desktop/node_modules/electron; inspect git status for node_modules
+exit: 0
+result: both bridges absent; no node_modules status entry

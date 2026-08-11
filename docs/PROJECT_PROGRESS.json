@@ -1,19 +1,164 @@
 {
-  "schema_version": "1.0.0",
-  "project_id": "copilot",
-  "scope": "Phase 1 macOS-first MVP",
-  "mode": "weighted_gates",
-  "source": "README.md + delivery.md Owner Amendment",
-  "confidence": "low",
-  "confidence_label": "低可信基线",
-  "updated_at": "2026-07-16",
-  "gates": [
-    {"id": "baseline", "title": "架构与源码基线", "weight": 20, "status": "done"},
-    {"id": "local-core", "title": "本地数据与核心闭环", "weight": 20, "status": "partial"},
-    {"id": "minimax", "title": "MiniMax 真实能力闭环", "weight": 15, "status": "partial"},
-    {"id": "asr", "title": "内嵌本地 ASR candidate-bound", "weight": 15, "status": "blocked"},
-    {"id": "quality", "title": "覆盖率 / 集成 / E2E", "weight": 15, "status": "blocked"},
-    {"id": "signing", "title": "签名 / 公证 / 安装", "weight": 10, "status": "blocked"},
-    {"id": "owner", "title": "Owner 验收", "weight": 5, "status": "pending"}
-  ]
+  "schema_version": 5,
+  "project": "copilot-app",
+  "updated_at": "2026-08-03",
+  "confidence": "authoritative_mirror",
+  "authority": {
+    "root_baseline": [
+      "AGENTS.md",
+      "goal.md",
+      "plan.md",
+      "rules.md",
+      "delivery.md"
+    ],
+    "root_current_truth": [
+      "PROJECT_STATE.yaml",
+      "PROJECT_STATUS.md",
+      "TODO.md",
+      "DECISIONS.md",
+      "CHANGELOG.md"
+    ],
+    "mirror_only": true
+  },
+  "status": "BLOCKED",
+  "mvp_status": "MVP_NOT_COMPLETE",
+  "release_status": "RELEASE_NOT_READY",
+  "experience_status": "EXPERIENCE_NOT_READY",
+  "runtime_proof_status": "NOT_RUNTIME_PROOF",
+  "github_source_status": "SOURCE_COMPLETE",
+  "source": {
+    "repository": "zhouzengrui369-commits/copilot-app",
+    "original_takeover": {
+      "branch": "codex/p0-owner-gate",
+      "commit": "6aa6b8c0792c5549b818107a0f64e4f32651dacd",
+      "pull_request": 12
+    },
+    "product_source": {
+      "branch": "chatgpt/mvp-source-finalization",
+      "commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
+      "pull_request": 20,
+      "workflow_run": 30784565586,
+      "workflow_result": "SUCCESS"
+    },
+    "active_fix": {
+      "branch": "chatgpt/gate2-native-cache-hydration",
+      "final_commit_source": "external final 40-hex active-fix PR head after complete source gate"
+    }
+  },
+  "r28": {
+    "status": "NEVER_RUN_PERMANENTLY_REJECTED",
+    "reusable": false
+  },
+  "r30": {
+    "role": "github_bound_candidate_runner",
+    "runner": "scripts/candidate-r30/run-candidate.mjs",
+    "local_execution": "NOT_RUN",
+    "gate_9": {
+      "exact_discovery": {
+        "tests": 113,
+        "files": 9
+      }
+    }
+  },
+  "r31": {
+    "status": "SOURCE_COMPLETE",
+    "local_execution": "NOT_RUN",
+    "source_features": {
+      "embedding_default": "embedded-local-hash-v1",
+      "ollama": "explicit_opt_in_local_service_only",
+      "vector_model_scope": "single_model_preserve_durable_text",
+      "candidate_gate_count": 12,
+      "canonical_arm64_authority": "selected arm64 ZIP and DMG plus release and artifact identities are independently revalidated",
+      "deployment_authority_bootstrap": "exact_git_object"
+    },
+    "source_validation_checkpoint": {
+      "node": 24,
+      "platform": "macOS",
+      "workflow": "copilot-source-gate",
+      "workflow_steps": 17,
+      "exact_source_commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
+      "desktop_phase1_tests": {
+        "passed": 1107,
+        "total": 1107
+      },
+      "strict_global_coverage": "PASS",
+      "strict_critical_coverage": "PASS",
+      "critical_file_minimum_percent": 90,
+      "local_knowledge_service_branch_percent": 90,
+      "cyclonedx_sbom": "PASS",
+      "electron_list_only": {
+        "tests": 113,
+        "files": 9,
+        "exact": true
+      },
+      "tracked_source_unchanged": "PASS"
+    }
+  },
+  "first_mvp_candidate_attempt": {
+    "source_commit": "74454d21910f0c01e0b9d4f8117b4394defe3228",
+    "exact_object_setup": "PASS",
+    "registry_only_hydration": "PASS",
+    "registry_cache_contract_tests": "34/34 PASS",
+    "candidate_source_contracts": "68/68 PASS",
+    "dry_run": "PASS",
+    "candidate_execution_count": 1,
+    "failed_gate": 2,
+    "blocker": "BLOCKED_NPM_OFFLINE_INSTALL_FAILED",
+    "root_cause": "hydration disabled lifecycle scripts while candidate enabled them under deny-network; native prebuild and header inputs were absent",
+    "source_changes_by_minimax": "NONE",
+    "candidate_established": false,
+    "artifact_sha256": null,
+    "runtime_id": null,
+    "old_cache_reuse": "FORBIDDEN_REFERENCE_ONLY"
+  },
+  "r45": {
+    "status": "SOURCE_UNDER_REVIEW",
+    "role": "receipt_bound_native_toolchain_cache_repair",
+    "owner_authority": "OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION",
+    "hydrator": "scripts/candidate-r30/npm-native-cache-hydrate.mjs",
+    "policy": "scripts/candidate-r30/native-cache-policy.mjs",
+    "runtime": "scripts/candidate-r30/native-cache-runtime.mjs",
+    "candidate_network_authority": "deny-network",
+    "hydration": {
+      "child_network": "localhost_connect_proxy_only",
+      "host_policy": "exact_source_allowlist",
+      "lifecycle_scripts": "enabled",
+      "build_from_source": true,
+      "online_electron_arm64_rebuild": "required",
+      "offline_full_install_proof": "required",
+      "offline_electron_arm64_rebuild_proof": "required",
+      "automatic_retry": false
+    },
+    "receipt": {
+      "source_commit": "required",
+      "lock_sha256": "required",
+      "lifecycle_package_set": "required",
+      "connect_audit": "required",
+      "electron_nodedir": "required",
+      "cache_all_regular_files_sha256": "required",
+      "cache_aggregate_sha256": "required",
+      "candidate_created": false,
+      "evidence_created": false
+    },
+    "candidate_gate_2": {
+      "full_lifecycle_offline_install": "required",
+      "cache_immutable_after_install": "required",
+      "online_fallback": false
+    },
+    "local_execution": "NOT_RUN"
+  },
+  "candidate": {
+    "established": false,
+    "candidate_id": null,
+    "source_snapshot_sha256": null,
+    "native_cache_receipt_sha256": null,
+    "artifact_sha256": null,
+    "app_asar_sha256": null,
+    "runtime_id": null,
+    "test_data_manifest": null,
+    "performance_receipt": null,
+    "screenshots": null,
+    "process_terminal_state": null
+  },
+  "next_action": "pass the complete source gate on the exact R45 fix head, obtain explicit bounded native-toolchain hydration authority, and run one new hydration plus one new candidate attempt using entirely new identities"
 }
