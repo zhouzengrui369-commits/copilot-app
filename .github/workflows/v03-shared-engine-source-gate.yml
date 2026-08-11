@@ -60,7 +60,12 @@ jobs:
         run: |
           set -euo pipefail
           git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
-            package.json package-lock.json packages/kb/package.json apps/copilot-desktop/package.json
+            package.json \
+            package-lock.json \
+            packages/kb/package.json \
+            packages/kg/package.json \
+            packages/llm-client/package.json \
+            apps/copilot-desktop/package.json
 
       - name: Prove legacy KB critical inputs stayed byte-identical
         shell: bash
@@ -122,6 +127,11 @@ jobs:
             exit 1
           fi
           echo "STORAGE_NEUTRAL_SHARED_ENGINE_BOUNDARY=PASS"
+
+      - name: Build desktop TypeScript dependencies
+        run: |
+          npm run build --workspace @copilot/llm-client
+          npm run build --workspace @copilot/kg
 
       - name: Check desktop TypeScript contract
         run: npm run check --workspace @copilot/desktop
