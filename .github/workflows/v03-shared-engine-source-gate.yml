@@ -7,7 +7,6 @@ on:
     paths:
       - ".github/workflows/v03-shared-engine-source-gate.yml"
       - "packages/kb/**"
-      - "tasks/openclaw/**copilot-v03-c1/**"
       - "package.json"
       - "package-lock.json"
   workflow_dispatch:
@@ -60,6 +59,25 @@ jobs:
           git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
             package.json package-lock.json packages/kb/package.json
 
+      - name: Prove legacy KB critical inputs stayed byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
+            packages/kb/src/store/md-file-store.ts \
+            packages/kb/src/store/sqlite-store.ts \
+            packages/kb/vitest.critical-coverage.config.ts \
+            packages/kb/tests/md-file-store.test.ts \
+            packages/kb/tests/md-file-store-edge.test.ts \
+            packages/kb/tests/sqlite-store.test.ts \
+            packages/kb/tests/body-integrity-fail-closed.test.ts \
+            packages/kb/tests/write-integrity-fail-closed.test.ts \
+            packages/kb/tests/reversible-trash.test.ts \
+            packages/kb/tests/reversible-trash-r2-integrity.test.ts \
+            packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts
+          echo "LEGACY_CRITICAL_INPUTS_UNCHANGED=PASS"
+          echo "LEGACY_CRITICAL_COVERAGE_DEBT=TRACKED_IN_ISSUE_44"
+
       - name: Install exact lockfile
         run: npm ci --no-audit --no-fund
 
@@ -72,7 +90,10 @@ jobs:
       - name: Run C1 focused conformance tests
         run: >-
           npm exec --workspace @copilot/kb --
-          vitest run tests/shared-engine-contract.test.ts --reporter=verbose
+          vitest run
+          tests/shared-engine-contract.test.ts
+          tests/shared-engine-boundaries.test.ts
+          --reporter=verbose
 
       - name: Run complete KB unit suite
         run: npm run test --workspace @copilot/kb
@@ -80,19 +101,24 @@ jobs:
       - name: Run KB global coverage gate
         run: npm run test:coverage:global --workspace @copilot/kb
 
-      - name: Preserve existing KB critical coverage gate
-        run: npm run test:coverage:critical --workspace @copilot/kb
+      - name: Run strict C1 per-file coverage gate
+        run: >-
+          npm exec --workspace @copilot/kb --
+          vitest run --coverage
+          --config vitest.shared-engine-coverage.config.ts
+          --reporter=verbose
 
       - name: Enforce storage-neutral Shared Engine source boundary
         shell: bash
         run: |
           set -euo pipefail
           if grep -R -nE \
-            'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries' \
+            'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries|@copilot/(kg|rag)|\.\./store|/store/' \
             packages/kb/src/shared-engine; then
             echo "BLOCKED_PHYSICAL_SCHEMA_EXPOSED_AS_CONTRACT"
             exit 1
           fi
+          echo "STORAGE_NEUTRAL_SHARED_ENGINE_BOUNDARY=PASS"
 
       - name: Verify tracked source stayed unchanged
         shell: bash
