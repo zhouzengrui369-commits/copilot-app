@@ -3,6 +3,7 @@ import {
   type CanonicalObject,
   type PrivacyClass,
   type ReviewState,
+  type SharedObjectType,
   type TombstoneState,
   validateCanonicalObject,
 } from './contract.js';
@@ -63,6 +64,20 @@ export class SyncContractError extends Error {
 }
 
 const AUTO_ASSERTIONS = new Set<AssertionType>(['SYSTEM_INFERENCE', 'TEMPORARY_HYPOTHESIS']);
+const OBJECT_TYPES = new Set<SharedObjectType>(['Source', 'Knowledge', 'Entity', 'Relation']);
+const PRIVACY_CLASSES = new Set<PrivacyClass>(['D0', 'D1', 'D2', 'D3']);
+const REVIEW_STATES = new Set<ReviewState>(['PROPOSED', 'ACCEPTED', 'REJECTED', 'DISPUTED', 'EXPIRED']);
+const ASSERTION_TYPES = new Set<AssertionType>([
+  'SOURCE_FACT',
+  'USER_DECLARED_FACT',
+  'DIRECT_OBSERVATION',
+  'SYSTEM_INFERENCE',
+  'TEMPORARY_HYPOTHESIS',
+  'DISPUTED',
+  'STALE',
+  'SUPERSEDED',
+]);
+const TOMBSTONE_STATES = new Set<TombstoneState>(['ACTIVE', 'TOMBSTONED']);
 
 export function createSyncEnvelope(object: CanonicalObject): SyncEnvelope {
   validateCanonicalObject(object);
@@ -94,13 +109,21 @@ export function validateSyncEnvelope(value: unknown): asserts value is SyncEnvel
   if (
     record.contract_version !== SYNC_CONTRACT_VERSION ||
     typeof record.object_id !== 'string' ||
+    !record.object_id.startsWith('ske:0.3:') ||
+    !OBJECT_TYPES.has(record.object_type) ||
     typeof record.namespace !== 'string' ||
+    record.namespace.length === 0 ||
     typeof record.content_hash !== 'string' ||
     !/^sha256:[a-f0-9]{64}$/.test(record.content_hash) ||
     !Number.isInteger(record.revision) ||
     record.revision < 1 ||
+    !PRIVACY_CLASSES.has(record.privacy_class) ||
     typeof record.permission_fingerprint !== 'string' ||
     !/^sha256:[a-f0-9]{64}$/.test(record.permission_fingerprint) ||
+    !REVIEW_STATES.has(record.review_state) ||
+    !ASSERTION_TYPES.has(record.assertion_type) ||
+    !TOMBSTONE_STATES.has(record.tombstone_state) ||
+    (record.supersedes !== null && typeof record.supersedes !== 'string') ||
     typeof record.envelope_id !== 'string'
   ) {
     throw new SyncContractError('INVALID_SYNC_ENVELOPE', 'sync envelope structure is invalid');
