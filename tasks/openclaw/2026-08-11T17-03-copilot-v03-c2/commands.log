@@ -1,0 +1,52 @@
+2026-08-11 C2 base planning SHA = 1e65b20f5b0874d23419a3f4a625b8761b775fe4
+CREATE branch chatgpt/v03-c2-ingestion-review-conflict-r1
+WRITE C2 GOAL.md
+WRITE C2 TASK.md
+WRITE C2 PLAN.md
+CREATE packages/kb/src/shared-engine/ingestion.ts
+CREATE packages/kb/src/shared-engine/compiler.ts
+CREATE packages/kb/src/shared-engine/review.ts
+CREATE packages/kb/src/shared-engine/conflict.ts
+UPDATE ingestion.ts -> deterministic result identity + bounded machine error codes
+UPDATE compiler.ts -> content-safe bounded failures + proposal-only outputs
+UPDATE review.ts -> Agent terminal review denied + bounded reasons + no-op correction denied
+UPDATE conflict.ts -> explicit dual-side preservation + Agent resolution denied + bounded reasons
+UPDATE packages/kb/src/shared-engine/index.ts -> export C2 lifecycle surface
+UPDATE packages/kb/vitest.shared-engine-coverage.config.ts -> strict per-file coverage includes 9 Shared Engine files
+CREATE packages/kb/tests/shared-engine-lifecycle.test.ts
+CREATE packages/kb/tests/shared-engine-lifecycle-boundaries.test.ts
+CREATE PR #45 Draft stacked on v0.3 planning branch
+SOURCE_GATE_SHA=462e5cb3e6965c8d63e6063a339a41ff5f584ac1
+RUN 31476951616 job 93732734016 -> PASS
+  exact identity PASS
+  package/lock authority unchanged PASS
+  legacy critical inputs byte-identical PASS
+  npm ci PASS (1454 packages)
+  KB build PASS
+  KB check PASS
+  explicit C1 conformance 28/28 PASS
+  complete KB regression 196/196 PASS across 17 files
+  whole KB global coverage PASS: 93.55 statements / 81.04 branches / 97.94 functions / 93.55 lines
+  Shared Engine strict tests 62/62 PASS across 4 files
+  Shared Engine strict per-file coverage PASS
+  Shared Engine total 100 statements / 98.24 branches / 100 functions / 100 lines
+  ingestion.ts 100 / 98.27 / 100 / 100
+  compiler.ts 100 / 98.41 / 100 / 100
+  review.ts 100 / 96.66 / 100 / 100
+  conflict.ts 100 / 97.67 / 100 / 100
+  storage-neutral boundary PASS
+  source-clean PASS
+WRITE RESULT.md
+WRITE EVIDENCE.md
+WRITE commands.log
+
+PROTECTED_MVP_PR20_MUTATION_BY_C2=NONE
+MAIN_MUTATION_BY_C2=NONE
+PHYSICAL_SCHEMA_CHANGE=NONE
+PACKAGE_LOCK_CHANGE=NONE
+PREDECESSOR_EVIDENCE_CHANGE=NONE
+RUNTIME_EXECUTION=NONE
+MINIMAX_DISPATCH=NONE
+CODEX_DISPATCH=NONE
+D3_ENABLEMENT=NONE
+SIGN_NOTARIZE_RELEASE=NONE
