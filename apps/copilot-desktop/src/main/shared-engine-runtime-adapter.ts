@@ -31,6 +31,7 @@ import {
   type ProjectionRecord,
   type ReadCapabilityRequest,
   type RetrievalHit,
+  type RetrievalKind,
   type UnifiedRetrievalResult,
 } from '@copilot/kb';
 import type {
@@ -106,10 +107,13 @@ const PROJECTION_KINDS: readonly ProjectionKind[] = [
   'DIALOGUE_CONTEXT',
 ];
 
-const EVIDENCE_PROJECTION: Record<RagRetrievalEvidence, ProjectionKind> = {
-  vector: 'VECTOR',
-  'kg-entity': 'GRAPH',
-  'kg-neighbor': 'GRAPH',
+const EVIDENCE_PROJECTION: Record<
+  RagRetrievalEvidence,
+  { projectionKind: ProjectionKind; retrievalKind: RetrievalKind }
+> = {
+  vector: { projectionKind: 'VECTOR', retrievalKind: 'VECTOR' },
+  'kg-entity': { projectionKind: 'GRAPH', retrievalKind: 'GRAPH' },
+  'kg-neighbor': { projectionKind: 'GRAPH', retrievalKind: 'GRAPH' },
 };
 
 function capabilityIdForConsumer(consumerId: string): string {
@@ -263,10 +267,18 @@ export function mapDesktopRagSourceDetails(
     if (evidence.length === 0) {
       throw new DesktopSharedEngineAdapterError('RAG source detail must declare retrieval evidence');
     }
+    const seen = new Set<string>();
     for (const item of evidence) {
-      const kind = EVIDENCE_PROJECTION[item];
-      if (!kind) throw new DesktopSharedEngineAdapterError(`unsupported RAG retrieval evidence: ${item}`);
-      hits.push({ projection: projections[kind], score: detail.score });
+      const mapped = EVIDENCE_PROJECTION[item];
+      if (!mapped) throw new DesktopSharedEngineAdapterError(`unsupported RAG retrieval evidence: ${item}`);
+      const key = `${mapped.projectionKind}:${mapped.retrievalKind}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      hits.push({
+        projection: projections[mapped.projectionKind],
+        retrieval_kind: mapped.retrievalKind,
+        score: detail.score,
+      });
     }
   }
   return hits;
