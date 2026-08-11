@@ -1,0 +1,102 @@
+name: v03-shared-engine-source-gate
+
+on:
+  pull_request:
+    branches:
+      - "chatgpt/v03-shared-knowledge-engine-plan-r1"
+    paths:
+      - ".github/workflows/v03-shared-engine-source-gate.yml"
+      - "packages/kb/**"
+      - "tasks/openclaw/**copilot-v03-c1/**"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v03-shared-engine-source-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  CI: "true"
+  PYTHON: "/usr/bin/python3"
+
+jobs:
+  source-gate:
+    name: Node 24 macOS v0.3 C1 source gate
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Record exact source and toolchain identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          node --version
+          npm --version
+          "$PYTHON" --version
+          uname -a
+
+      - name: Require unchanged package and lock authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
+            package.json package-lock.json packages/kb/package.json
+
+      - name: Install exact lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Build shared KB package
+        run: npm run build --workspace @copilot/kb
+
+      - name: Check shared KB package
+        run: npm run check --workspace @copilot/kb
+
+      - name: Run C1 focused conformance tests
+        run: >-
+          npm exec --workspace @copilot/kb --
+          vitest run tests/shared-engine-contract.test.ts --reporter=verbose
+
+      - name: Run complete KB unit suite
+        run: npm run test --workspace @copilot/kb
+
+      - name: Run KB global coverage gate
+        run: npm run test:coverage:global --workspace @copilot/kb
+
+      - name: Preserve existing KB critical coverage gate
+        run: npm run test:coverage:critical --workspace @copilot/kb
+
+      - name: Enforce storage-neutral Shared Engine source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE \
+            'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries' \
+            packages/kb/src/shared-engine; then
+            echo "BLOCKED_PHYSICAL_SCHEMA_EXPOSED_AS_CONTRACT"
+            exit 1
+          fi
+
+      - name: Verify tracked source stayed unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
