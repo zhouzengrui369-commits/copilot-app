@@ -11,6 +11,10 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+  NATIVE_COMMAND_WATCHDOG_KILL_GRACE_MS,
+  NATIVE_COMMAND_WATCHDOG_TIMEOUT_MS,
+} from './native-cache-command-watchdog-policy.mjs';
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/u;
 const OWNER_AUTHORITY = 'OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION';
@@ -59,6 +63,12 @@ function requireAbsent(label, target) {
       target,
     });
   }
+}
+
+function watchdogLogPath(launchReceipt) {
+  return launchReceipt.endsWith('.json')
+    ? `${launchReceipt.slice(0, -'.json'.length)}.command-watchdog.jsonl`
+    : `${launchReceipt}.command-watchdog.jsonl`;
 }
 
 export function parseNativeCacheBackgroundLaunchArgs(argv) {
@@ -133,9 +143,14 @@ export function nativeCacheBackgroundLaunchPlan(options) {
   const stdout = requireAbsolute('stdout', options.stdout);
   const stderr = requireAbsolute('stderr', options.stderr);
   const launchReceipt = requireAbsolute('launch receipt', options.launchReceipt);
+  const watchdogLog = watchdogLogPath(launchReceipt);
   const hydratorScript = path.join(
     repository,
     'scripts/candidate-r30/npm-native-cache-hydrate.mjs',
+  );
+  const watchdogScript = path.join(
+    repository,
+    'scripts/candidate-r30/native-cache-command-watchdog.mjs',
   );
 
   for (const [label, target] of [
@@ -144,12 +159,14 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     ['stdout', stdout],
     ['stderr', stderr],
     ['launch receipt', launchReceipt],
+    ['command watchdog log', watchdogLog],
   ]) requireAbsent(label, target);
 
   for (const [label, target] of [
     ['stdout', stdout],
     ['stderr', stderr],
     ['launch receipt', launchReceipt],
+    ['command watchdog log', watchdogLog],
   ]) {
     if (inside(cacheDir, target)) {
       block(
@@ -192,7 +209,11 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     stdout,
     stderr,
     launchReceipt,
+    watchdogLog,
     hydratorScript,
+    watchdogScript,
+    watchdogTimeoutMs: NATIVE_COMMAND_WATCHDOG_TIMEOUT_MS,
+    watchdogKillGraceMs: NATIVE_COMMAND_WATCHDOG_KILL_GRACE_MS,
     command: process.execPath,
     hydratorArgs,
   };
@@ -208,7 +229,7 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
 
   // Only evidence/log parent directories may be created by the launcher.
   // The cache target and native-cache PASS receipt MUST remain absent for the hydrator itself.
-  for (const file of [plan.stdout, plan.stderr, plan.launchReceipt]) {
+  for (const file of [plan.stdout, plan.stderr, plan.launchReceipt, plan.watchdogLog]) {
     mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   }
 
@@ -221,7 +242,11 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
     child = spawnImpl(plan.command, plan.hydratorArgs, {
       cwd: plan.repository,
       detached: true,
-      env: process.env,
+      env: {
+        ...process.env,
+        NODE_OPTIONS: `--import=${pathToFileURL(plan.watchdogScript).href}`,
+        COPILOT_NATIVE_COMMAND_WATCHDOG_LOG: plan.watchdogLog,
+      },
       stdio: ['ignore', stdoutFd, stderrFd],
       shell: false,
     });
@@ -240,6 +265,11 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
       cacheDir: plan.cacheDir,
       receiptOutput: plan.receiptOutput,
       hydratorScript: plan.hydratorScript,
+      watchdogScript: plan.watchdogScript,
+      watchdogLog: plan.watchdogLog,
+      watchdogTimeoutMs: plan.watchdogTimeoutMs,
+      watchdogKillGraceMs: plan.watchdogKillGraceMs,
+      inheritedNodeOptionsStripped: true,
       processId: child.pid,
       detached: true,
       shell: false,
@@ -261,6 +291,10 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
       repository: plan.repository,
       cacheDir: plan.cacheDir,
       receiptOutput: plan.receiptOutput,
+      watchdogScript: plan.watchdogScript,
+      watchdogLog: plan.watchdogLog,
+      watchdogTimeoutMs: plan.watchdogTimeoutMs,
+      watchdogKillGraceMs: plan.watchdogKillGraceMs,
       launcherDidCreateCacheDir: false,
       launcherDidCreateReceiptOutput: false,
       automaticRetry: false,
