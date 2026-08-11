@@ -205,7 +205,10 @@ export function validateCanonicalObject(value: unknown): asserts value is Canoni
 
   if (
     value.confidence !== null &&
-    (typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1)
+    (typeof value.confidence !== 'number' ||
+      !Number.isFinite(value.confidence) ||
+      value.confidence < 0 ||
+      value.confidence > 1)
   ) {
     throw new SharedEngineContractError('INVALID_CANONICAL_OBJECT', 'confidence must be null or within 0..1');
   }
