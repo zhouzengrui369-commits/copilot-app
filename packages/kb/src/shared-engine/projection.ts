@@ -60,6 +60,21 @@ export class ProjectionContractError extends Error {
   }
 }
 
+const PROJECTION_KINDS = new Set<ProjectionKind>([
+  'CARD_2D',
+  'WIKI',
+  'FULL_TEXT',
+  'VECTOR',
+  'GRAPH',
+  'DIALOGUE_CONTEXT',
+]);
+const OBJECT_TYPES = new Set<SharedObjectType>(['Source', 'Knowledge', 'Entity', 'Relation']);
+const PRIVACY_CLASSES = new Set<PrivacyClass>(['D0', 'D1', 'D2', 'D3']);
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
 function requireText(value: string, field: string): string {
   const trimmed = value.trim();
   if (!trimmed) throw new ProjectionContractError(`${field} is required`);
@@ -85,6 +100,41 @@ export function permissionFingerprint(object: CanonicalObject): string {
     privacy_class: object.privacy_class,
     permission_scope: normalizedPermissionScope(object.permission_scope),
   });
+}
+
+export function validateProjectionRecord(value: unknown): asserts value is ProjectionRecord {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new ProjectionContractError('projection record must be an object');
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.projection_id !== 'string' ||
+    !record.projection_id.startsWith('ske-receipt:projection:sha256:') ||
+    !PROJECTION_KINDS.has(record.projection_kind as ProjectionKind) ||
+    typeof record.canonical_object_id !== 'string' ||
+    !record.canonical_object_id.startsWith('ske:0.3:') ||
+    !OBJECT_TYPES.has(record.canonical_object_type as SharedObjectType) ||
+    typeof record.canonical_content_hash !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/.test(record.canonical_content_hash) ||
+    !Number.isInteger(record.canonical_revision) ||
+    (record.canonical_revision as number) < 1 ||
+    typeof record.namespace !== 'string' ||
+    record.namespace.length === 0 ||
+    !isStringArray(record.source_refs) ||
+    !PRIVACY_CLASSES.has(record.privacy_class as PrivacyClass) ||
+    typeof record.permission_fingerprint !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/.test(record.permission_fingerprint) ||
+    typeof record.projection_payload_hash !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/.test(record.projection_payload_hash) ||
+    typeof record.recipe_id !== 'string' ||
+    record.recipe_id.length === 0 ||
+    typeof record.recipe_version !== 'string' ||
+    record.recipe_version.length === 0 ||
+    record.authoritative !== false ||
+    record.rebuildable !== true
+  ) {
+    throw new ProjectionContractError('projection record is invalid');
+  }
 }
 
 export function createProjection(
@@ -137,6 +187,7 @@ export function checkProjectionFreshness(
   projection: ProjectionRecord,
   object: CanonicalObject,
 ): ProjectionFreshness {
+  validateProjectionRecord(projection);
   validateCanonicalObject(object);
   const reasons: ProjectionStaleReason[] = [];
   if (projection.canonical_object_id !== object.object_id) reasons.push('OBJECT_ID_MISMATCH');
