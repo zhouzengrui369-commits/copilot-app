@@ -176,15 +176,19 @@ export function mapLegacyNote(
   const sourceId = sourceObjectIdForNote(context.namespace, note.path);
   const knowledgeId = knowledgeObjectIdForNote(context.namespace, note.path);
   const contentRef = `copilot-note:${note.path}`;
+  const sourceContentHash = contentHash({
+    body: note.body,
+    title: note.title,
+    legacy_source_hash: note.sourceHash,
+  });
 
   const sourcePayload: SourcePayload = {
     source_kind: 'copilot_note',
     source_key: note.path,
-    source_revision: String(note.updatedAt),
+    source_revision: note.sourceHash ?? sourceContentHash,
     content_ref: contentRef,
     title: note.title,
   };
-  const sourceContentHash = contentHash({ body: note.body });
   const sourceRevision = mappingReceipt(sourceId, sourceContentHash, observedAt, previous.source);
 
   const sourceObject: CanonicalObject<SourcePayload> = {
@@ -274,13 +278,16 @@ export function mapLegacyEntity(
   options: DerivedObjectOptions = {},
 ): MappedObject<EntityPayload> {
   const identity = entityObjectId(context.namespace, entity.legacyId);
+  const sourceRefs = [...new Set(entity.sourceNotePaths)]
+    .sort()
+    .map((path) => sourceObjectIdForNote(context.namespace, path));
   const payload: EntityPayload = {
     entity_kind: entity.type,
     name: entity.name,
     aliases: [...new Set(entity.aliases)].sort(),
     summary: entity.summary,
   };
-  const nextHash = contentHash(payload);
+  const nextHash = contentHash({ payload, source_refs: sourceRefs });
   const mappedAt = toIsoTime(entity.updatedAt);
   const mapped = mappingReceipt(identity, nextHash, mappedAt, options.previous);
 
@@ -290,9 +297,7 @@ export function mapLegacyEntity(
       object_type: 'Entity',
       namespace: context.namespace,
       schema_version: SHARED_ENGINE_SCHEMA_VERSION,
-      source_refs: [...new Set(entity.sourceNotePaths)]
-        .sort()
-        .map((path) => sourceObjectIdForNote(context.namespace, path)),
+      source_refs: sourceRefs,
       content_hash: nextHash,
       observed_at: mappedAt,
       valid_from: toIsoTime(entity.createdAt),
@@ -325,13 +330,16 @@ export function mapLegacyRelation(
     objectType: 'Relation',
     sourceIdentity: `copilot-relation:${relation.fromLegacyEntityId}:${relation.predicate}:${relation.toLegacyEntityId}`,
   });
+  const sourceRefs = [...new Set(relation.sourceNotePaths)]
+    .sort()
+    .map((path) => sourceObjectIdForNote(context.namespace, path));
   const payload: RelationPayload = {
     from_object_id: fromId,
     to_object_id: toId,
     predicate: relation.predicate,
     weight: relation.weight,
   };
-  const nextHash = contentHash(payload);
+  const nextHash = contentHash({ payload, source_refs: sourceRefs });
   const mappedAt = toIsoTime(relation.createdAt);
   const mapped = mappingReceipt(identity, nextHash, mappedAt, options.previous);
 
@@ -341,9 +349,7 @@ export function mapLegacyRelation(
       object_type: 'Relation',
       namespace: context.namespace,
       schema_version: SHARED_ENGINE_SCHEMA_VERSION,
-      source_refs: [...new Set(relation.sourceNotePaths)]
-        .sort()
-        .map((path) => sourceObjectIdForNote(context.namespace, path)),
+      source_refs: sourceRefs,
       content_hash: nextHash,
       observed_at: mappedAt,
       valid_from: mappedAt,
