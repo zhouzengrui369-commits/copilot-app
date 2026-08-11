@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 import type { CanonicalObject, PreviousNoteMapping, RevisionState } from '@copilot/kb';
 import type { KgSubgraph, NoteDocument, RagSourceDetail } from '../src/shared/domain-api.js';
@@ -165,8 +166,8 @@ describe('C6 actual KG DTO mapping', () => {
     const reloaded = mapDesktopKgSubgraph(graph(1000), context);
     expect(reloaded.entities.map((entry) => entry.object_id)).toEqual(first.entities.map((entry) => entry.object_id));
     expect(reloaded.relations.map((entry) => entry.object_id)).toEqual(first.relations.map((entry) => entry.object_id));
-    expect(first.entities[0]?.source_refs[0]).toMatch(/^ske:0\.3:Source:/);
-    expect(first.relations[0]?.source_refs[0]).toMatch(/^ske:0\.3:Source:/);
+    expect(first.entities[0]?.source_refs[0]).toMatch(/^ske:0\.3:source:/);
+    expect(first.relations[0]?.source_refs[0]).toMatch(/^ske:0\.3:source:/);
   });
 
   it('fails closed when a relation endpoint is absent from the supplied subgraph', () => {
