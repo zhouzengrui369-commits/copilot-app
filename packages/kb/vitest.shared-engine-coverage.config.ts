@@ -25,6 +25,8 @@ export default defineConfig({
         'src/shared-engine/compiler.ts',
         'src/shared-engine/review.ts',
         'src/shared-engine/conflict.ts',
+        'src/shared-engine/projection.ts',
+        'src/shared-engine/retrieval.ts',
       ],
       thresholds: {
         perFile: true,
