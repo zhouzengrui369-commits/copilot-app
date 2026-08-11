@@ -147,3 +147,46 @@ export type {
   StaleRetrievalAudit,
   UnifiedRetrievalResult,
 } from './retrieval.js';
+
+export {
+  AGENT_API_CONTRACT_VERSION,
+  CAPABILITY_MANIFEST_VERSION,
+  CapabilityContractError,
+  assertCapabilityActive,
+  createCapabilityManifest,
+  negotiateCapability,
+  validateCapabilityManifest,
+  validateCapabilitySession,
+} from './capability.js';
+export type {
+  AgentWriteMode,
+  CapabilityManifest,
+  CapabilityManifestInput,
+  CapabilitySession,
+} from './capability.js';
+
+export {
+  AgentApiContractError,
+  readCanonicalObjects,
+  retrieveForAgent,
+  submitAgentWriteProposal,
+} from './agent-api.js';
+export type {
+  AgentApiAction,
+  AgentApiDecision,
+  AgentApiReceipt,
+  AgentObjectDenyAudit,
+  AgentObjectDenyReason,
+  AgentRetrievalInput,
+  AgentRetrievalResult,
+  AgentWriteProposalInput,
+  AgentWriteProposalResult,
+  ReadObjectsInput,
+  ReadObjectsResult,
+} from './agent-api.js';
+
+export {
+  AGENT_CONFORMANCE_FIXTURE_VERSION,
+  buildAgentConformanceFixture,
+} from './agent-conformance.js';
+export type { AgentConformanceFixture } from './agent-conformance.js';

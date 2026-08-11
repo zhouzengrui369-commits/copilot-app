@@ -1,0 +1,59 @@
+# COPILOT-SKE-V03-C4-R3 commands.log
+
+SOURCE_GATED_SHA=f10226c58f8e4a0ee18339fe8238b47347619d32
+SOURCE_GATE_RUN=31486885217
+SOURCE_GATE_JOB=93764214771
+
+Gate commands executed by GitHub Actions:
+
+```sh
+test "$(git rev-parse HEAD)" = "f10226c58f8e4a0ee18339fe8238b47347619d32"
+node --version
+npm --version
+/usr/bin/python3 --version
+uname -a
+
+git diff --exit-code "266af98cde6c947df8ceb092d67f0197bd69ced0..HEAD" -- package.json package-lock.json packages/kb/package.json
+
+git diff --exit-code "266af98cde6c947df8ceb092d67f0197bd69ced0..HEAD" -- \
+  packages/kb/src/store/md-file-store.ts \
+  packages/kb/src/store/sqlite-store.ts \
+  packages/kb/vitest.critical-coverage.config.ts \
+  packages/kb/tests/md-file-store.test.ts \
+  packages/kb/tests/md-file-store-edge.test.ts \
+  packages/kb/tests/sqlite-store.test.ts \
+  packages/kb/tests/body-integrity-fail-closed.test.ts \
+  packages/kb/tests/write-integrity-fail-closed.test.ts \
+  packages/kb/tests/reversible-trash.test.ts \
+  packages/kb/tests/reversible-trash-r2-integrity.test.ts \
+  packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts
+
+npm ci --no-audit --no-fund
+npm run build --workspace @copilot/kb
+npm run check --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- vitest run tests/shared-engine-contract.test.ts tests/shared-engine-boundaries.test.ts --reporter=verbose
+npm run test --workspace @copilot/kb
+npm run test:coverage:global --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- vitest run --coverage --config vitest.shared-engine-coverage.config.ts --reporter=verbose
+
+grep -R -nE 'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries|@copilot/(kg|rag)|\.\./store|/store/' packages/kb/src/shared-engine
+# expected: no matches; workflow emitted STORAGE_NEUTRAL_SHARED_ENGINE_BOUNDARY=PASS
+
+git diff --exit-code
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+```
+
+Observed PASS summary:
+
+```text
+NPM_CI_PACKAGES=1454
+C1_FOCUSED=28/28
+COMPLETE_KB=255/255 (22 files)
+STRICT_SHARED_ENGINE=121/121 (9 files)
+STRICT_COVERAGE=99.77_STMTS/97.29_BRANCH/100_FUNCS/99.77_LINES
+CAPABILITY_COVERAGE=100_STMTS/96.87_BRANCH/100_FUNCS/100_LINES
+STORAGE_NEUTRAL=PASS
+SOURCE_CLEAN=PASS
+```
+
+No failed R1 SHA rerun was used. R3 ran as a distinct new source SHA.
