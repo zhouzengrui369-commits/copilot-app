@@ -6,7 +6,7 @@ import {
   type ReviewState,
   validateCanonicalObject,
 } from './contract.js';
-import { contentHash, receiptId, stableSerialize, toIsoTime } from './identity.js';
+import { contentHash, receiptId, sha256Hex, stableSerialize, toIsoTime } from './identity.js';
 import { permissionFingerprint } from './projection.js';
 
 export const PORTABILITY_CONTRACT_VERSION = '1' as const;
@@ -120,7 +120,7 @@ function canonicalEntry(object: CanonicalObject): PortableCanonicalEntry {
 }
 
 function decodeBase64Canonical(value: string): Uint8Array {
-  if (value.length === 0 || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) {
+  if (value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) {
     throw new PortabilityContractError('INVALID_PORTABLE_BUNDLE', 'source bytes must be canonical base64');
   }
   const decoded = Buffer.from(value, 'base64');
@@ -159,7 +159,7 @@ function sourceEntry(
       throw new PortabilityContractError('INVALID_PORTABLE_BUNDLE', 'included source bytes require data');
     }
     const bytes = decodeBase64Canonical(input.data_base64);
-    if (bytes.byteLength !== input.byte_length || contentHash(bytes) !== input.content_sha256) {
+    if (bytes.byteLength !== input.byte_length || `sha256:${sha256Hex(bytes)}` !== input.content_sha256) {
       throw new PortabilityContractError('CHECKSUM_MISMATCH', 'source byte checksum mismatch');
     }
   } else if (input.data_base64 !== null) {
