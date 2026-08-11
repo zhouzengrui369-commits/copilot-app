@@ -90,6 +90,14 @@ function requireText(value: string, field: string): string {
   return trimmed;
 }
 
+function requireCode(value: string, field: string): string {
+  const trimmed = requireText(value, field);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$/.test(trimmed)) {
+    throw new ConflictContractError(`${field} must be a bounded machine code`);
+  }
+  return trimmed;
+}
+
 function objectRef(object: CanonicalObject): ConflictObjectRef {
   return {
     object_id: object.object_id,
@@ -210,7 +218,7 @@ export function resolveConflict<TLeft, TRight>(
   }
 
   const actorId = requireText(input.authority.actor_id, 'authority.actor_id');
-  const reason = requireText(input.reason, 'reason');
+  const reason = requireCode(input.reason, 'reason');
   const resolvedAt = toIsoTime(input.resolved_at ?? new Date());
   let leftObject = input.conflict.left_object;
   let rightObject = input.conflict.right_object;
