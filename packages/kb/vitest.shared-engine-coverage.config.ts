@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 const packageRoot = fileURLToPath(new URL('.', import.meta.url));
 
-/** Strict per-file gate for the v0.3 C1 storage-neutral contract boundary. */
+/** Strict per-file gate for the v0.3 storage-neutral Shared Engine boundary. */
 export default defineConfig({
   root: packageRoot,
   test: {
@@ -21,6 +21,10 @@ export default defineConfig({
         'src/shared-engine/identity.ts',
         'src/shared-engine/policy.ts',
         'src/shared-engine/write-proposal.ts',
+        'src/shared-engine/ingestion.ts',
+        'src/shared-engine/compiler.ts',
+        'src/shared-engine/review.ts',
+        'src/shared-engine/conflict.ts',
       ],
       thresholds: {
         perFile: true,
