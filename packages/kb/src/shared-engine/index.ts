@@ -61,3 +61,56 @@ export type { ReadDecision } from './policy.js';
 
 export { createWriteProposal } from './write-proposal.js';
 export type { CreateWriteProposalInput } from './write-proposal.js';
+
+export { IngestionContractError, recordIngestionAttempt } from './ingestion.js';
+export type {
+  IngestionAttemptInput,
+  IngestionFailure,
+  IngestionPreviousState,
+  IngestionReceipt,
+  IngestionRequestedOutcome,
+  IngestionResult,
+  IngestionStatus,
+} from './ingestion.js';
+
+export { CompilationContractError, recordCompilation } from './compiler.js';
+export type {
+  CompilationFailure,
+  CompilationInput,
+  CompilationOutcome,
+  CompilationReceipt,
+  CompilationRecipe,
+  CompilationResult,
+} from './compiler.js';
+
+export {
+  ReviewContractError,
+  createReviewQueueItem,
+  createUserCorrection,
+  decideReview,
+} from './review.js';
+export type {
+  CorrectionReceipt,
+  ReviewActorKind,
+  ReviewAuthority,
+  ReviewDecision,
+  ReviewDecisionInput,
+  ReviewDecisionReceipt,
+  ReviewDecisionResult,
+  ReviewQueueItem,
+  UserCorrectionInput,
+  UserCorrectionResult,
+} from './review.js';
+
+export { ConflictContractError, createConflict, resolveConflict } from './conflict.js';
+export type {
+  ConflictKind,
+  ConflictObjectRef,
+  ConflictRecord,
+  ConflictResolutionAuthority,
+  ConflictResolutionReceipt,
+  ConflictResolutionStrategy,
+  ResolveConflictInput,
+  ResolveConflictResult,
+  SupersessionReceipt,
+} from './conflict.js';
