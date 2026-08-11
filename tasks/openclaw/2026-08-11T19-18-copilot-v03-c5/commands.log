@@ -1,0 +1,74 @@
+# COPILOT-SKE-V03-C5-R1 commands.log
+
+SOURCE_GATED_SHA=cdc6c194ac996808420f7f22603efa4e3cfe06b3
+SOURCE_GATE_RUN=31489206879
+SOURCE_GATE_JOB=93771466308
+
+GitHub Actions executed:
+
+```sh
+# exact identity / toolchain
+test "$(git rev-parse HEAD)" = "cdc6c194ac996808420f7f22603efa4e3cfe06b3"
+node --version
+npm --version
+/usr/bin/python3 --version
+uname -a
+
+# unchanged package / lock authority
+git diff --exit-code "6aea3b9b249af91af25c8619fb996cde705a74ba..HEAD" -- \
+  package.json package-lock.json packages/kb/package.json
+
+# legacy critical inputs byte-identical
+git diff --exit-code "6aea3b9b249af91af25c8619fb996cde705a74ba..HEAD" -- \
+  packages/kb/src/store/md-file-store.ts \
+  packages/kb/src/store/sqlite-store.ts \
+  packages/kb/vitest.critical-coverage.config.ts \
+  packages/kb/tests/md-file-store.test.ts \
+  packages/kb/tests/md-file-store-edge.test.ts \
+  packages/kb/tests/sqlite-store.test.ts \
+  packages/kb/tests/body-integrity-fail-closed.test.ts \
+  packages/kb/tests/write-integrity-fail-closed.test.ts \
+  packages/kb/tests/reversible-trash.test.ts \
+  packages/kb/tests/reversible-trash-r2-integrity.test.ts \
+  packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts
+
+npm ci --no-audit --no-fund
+npm run build --workspace @copilot/kb
+npm run check --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- \
+  vitest run tests/shared-engine-contract.test.ts tests/shared-engine-boundaries.test.ts --reporter=verbose
+npm run test --workspace @copilot/kb
+npm run test:coverage:global --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- \
+  vitest run --coverage --config vitest.shared-engine-coverage.config.ts --reporter=verbose
+
+# storage-neutral boundary
+if grep -R -nE \
+  'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries|@copilot/(kg|rag)|\.\./store|/store/' \
+  packages/kb/src/shared-engine; then
+  exit 1
+fi
+
+# source clean
+git diff --exit-code
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+```
+
+Observed exact results:
+
+```text
+NODE=v24.18.0
+NPM=11.16.0
+PYTHON=3.9.6
+NPM_CI_PACKAGES=1454
+C1_FOCUSED=28/28_PASS_2_FILES
+COMPLETE_KB=303/303_PASS_25_FILES
+STRICT_SHARED_ENGINE=169/169_PASS_12_FILES
+KB_GLOBAL_COVERAGE=95.33_STMTS/85.82_BRANCH/98.47_FUNCS/95.33_LINES
+STRICT_COVERAGE=99.44_STMTS/97.38_BRANCH/100_FUNCS/99.44_LINES
+PORTABILITY=99.34_STMTS/97.97_BRANCH/100_FUNCS/99.34_LINES
+DELETION=97.05_STMTS/95_BRANCH/100_FUNCS/97.05_LINES
+SYNC=100_STMTS/100_BRANCH/100_FUNCS/100_LINES
+STORAGE_NEUTRAL=PASS
+SOURCE_CLEAN=PASS
+```
