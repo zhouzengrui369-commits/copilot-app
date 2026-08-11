@@ -59,7 +59,7 @@ export interface KnowledgePayload {
   kind: string | null;
   state: string | null;
   tags: readonly string[];
-  related_source_keys: readonly string[];
+  related_object_ids: readonly string[];
   content_ref: string;
 }
 
@@ -203,7 +203,10 @@ export function validateCanonicalObject(value: unknown): asserts value is Canoni
     throw new SharedEngineContractError('INVALID_CANONICAL_OBJECT', 'canonical object envelope is invalid');
   }
 
-  if (value.confidence !== null && (typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1)) {
+  if (
+    value.confidence !== null &&
+    (typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1)
+  ) {
     throw new SharedEngineContractError('INVALID_CANONICAL_OBJECT', 'confidence must be null or within 0..1');
   }
 
