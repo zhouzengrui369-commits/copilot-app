@@ -27,6 +27,9 @@ export default defineConfig({
         'src/shared-engine/conflict.ts',
         'src/shared-engine/projection.ts',
         'src/shared-engine/retrieval.ts',
+        'src/shared-engine/capability.ts',
+        'src/shared-engine/agent-api.ts',
+        'src/shared-engine/agent-conformance.ts',
       ],
       thresholds: {
         perFile: true,
