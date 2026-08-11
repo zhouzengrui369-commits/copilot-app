@@ -69,6 +69,14 @@ function requireNonEmpty(value: string, label: string): string {
   return trimmed;
 }
 
+function requireCode(value: string, label: string): string {
+  const trimmed = requireNonEmpty(value, label);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$/.test(trimmed)) {
+    throw new IngestionContractError(`${label} must be a bounded machine code`);
+  }
+  return trimmed;
+}
+
 function validatePrevious(source: CanonicalObject<SourcePayload>, previous: IngestionPreviousState): void {
   if (previous.object_id !== source.object_id) {
     throw new IngestionContractError('previous object_id does not match source object identity');
@@ -118,10 +126,8 @@ export function recordIngestionAttempt(input: IngestionAttemptInput): IngestionR
   if (requested === 'SUCCESS' && input.failure) {
     throw new IngestionContractError('successful ingestion cannot carry failure metadata');
   }
-  if (input.failure) {
-    requireNonEmpty(input.failure.code, 'failure.code');
-    requireNonEmpty(input.failure.stage, 'failure.stage');
-  }
+  const errorCode = input.failure ? requireCode(input.failure.code, 'failure.code') : null;
+  const errorStage = input.failure ? requireCode(input.failure.stage, 'failure.stage') : null;
 
   const completedAt = toIsoTime(input.completed_at ?? new Date());
   const status = deriveStatus(input.source, input.previous, requested);
@@ -133,16 +139,16 @@ export function recordIngestionAttempt(input: IngestionAttemptInput): IngestionR
     recipe_id: recipeId,
     recipe_version: recipeVersion,
   });
+  const receiptIdValue = receiptId('ingestion-result', {
+    ingestion_id: ingestionId,
+    status,
+    previous_content_hash: input.previous?.content_hash ?? null,
+    previous_revision: input.previous?.revision ?? null,
+    error_code: errorCode,
+    error_stage: errorStage,
+  });
   const receipt: IngestionReceipt = {
-    receipt_id: receiptId('ingestion-result', {
-      ingestion_id: ingestionId,
-      status,
-      previous_content_hash: input.previous?.content_hash ?? null,
-      previous_revision: input.previous?.revision ?? null,
-      error_code: input.failure?.code ?? null,
-      error_stage: input.failure?.stage ?? null,
-      completed_at: completedAt,
-    }),
+    receipt_id: receiptIdValue,
     ingestion_id: ingestionId,
     source_object_id: input.source.object_id,
     source_content_hash: input.source.content_hash,
@@ -153,8 +159,8 @@ export function recordIngestionAttempt(input: IngestionAttemptInput): IngestionR
     canonical_commit_allowed: canonicalCommitAllowed,
     previous_content_hash: input.previous?.content_hash ?? null,
     previous_revision: input.previous?.revision ?? null,
-    error_code: input.failure?.code ?? null,
-    error_stage: input.failure?.stage ?? null,
+    error_code: errorCode,
+    error_stage: errorStage,
     observed_at: input.source.observed_at,
     completed_at: completedAt,
   };
