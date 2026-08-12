@@ -1,0 +1,115 @@
+# COPILOT-SKE-V03-C6-R1 commands.log
+
+SOURCE_GATED_SHA=047a446076bbf6e14df8ba34e85ae16558083be8
+SOURCE_GATE_RUN=31549743615
+SOURCE_GATE_JOB=93969711091
+
+GitHub Actions executed:
+
+```sh
+# exact identity / toolchain
+test "$(git rev-parse HEAD)" = "047a446076bbf6e14df8ba34e85ae16558083be8"
+node --version
+npm --version
+/usr/bin/python3 --version
+uname -a
+
+# unchanged package / lock authority
+git diff --exit-code "8adf7c596126306df5b7eaa07d31241d66230536..HEAD" -- \
+  package.json \
+  package-lock.json \
+  packages/kb/package.json \
+  packages/kg/package.json \
+  packages/llm-client/package.json \
+  apps/copilot-desktop/package.json
+
+# legacy KB critical inputs byte-identical
+git diff --exit-code "8adf7c596126306df5b7eaa07d31241d66230536..HEAD" -- \
+  packages/kb/src/store/md-file-store.ts \
+  packages/kb/src/store/sqlite-store.ts \
+  packages/kb/vitest.critical-coverage.config.ts \
+  packages/kb/tests/md-file-store.test.ts \
+  packages/kb/tests/md-file-store-edge.test.ts \
+  packages/kb/tests/sqlite-store.test.ts \
+  packages/kb/tests/body-integrity-fail-closed.test.ts \
+  packages/kb/tests/write-integrity-fail-closed.test.ts \
+  packages/kb/tests/reversible-trash.test.ts \
+  packages/kb/tests/reversible-trash-r2-integrity.test.ts \
+  packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts
+
+npm ci --no-audit --no-fund
+npm run build --workspace @copilot/kb
+npm run check --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- \
+  vitest run tests/shared-engine-contract.test.ts tests/shared-engine-boundaries.test.ts --reporter=verbose
+npm run test --workspace @copilot/kb
+npm run test:coverage:global --workspace @copilot/kb
+npm exec --workspace @copilot/kb -- \
+  vitest run --coverage --config vitest.shared-engine-coverage.config.ts --reporter=verbose
+
+# storage-neutral Shared Engine boundary
+if grep -R -nE \
+  'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries|@copilot/(kg|rag)|\.\./store|/store/' \
+  packages/kb/src/shared-engine; then
+  exit 1
+fi
+
+# desktop type dependencies and full desktop typecheck
+npm run build --workspace @copilot/llm-client
+npm run build --workspace @copilot/kg
+npm run check --workspace @copilot/desktop
+
+# C6 focused conformance
+npm exec --workspace @copilot/desktop -- \
+  vitest run \
+  tests/shared-engine-runtime-adapter.test.ts \
+  tests/shared-engine-runtime-adapter-branches.test.ts \
+  --reporter=verbose
+
+# strict C6 adapter coverage
+npm exec --workspace @copilot/desktop -- \
+  vitest run --coverage \
+  --config tests/vitest.shared-engine-runtime-coverage.config.ts \
+  --reporter=verbose
+
+# narrow implementation boundary
+if grep -nE \
+  'better-sqlite3|SqliteStore|KgStore|createVectorStore|VectorStore|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|ipcMain' \
+  apps/copilot-desktop/src/main/shared-engine-runtime-adapter.ts; then
+  exit 1
+fi
+
+# source clean
+git diff --exit-code
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+```
+
+Observed exact results:
+
+```text
+NODE=v24.18.0
+NPM=11.16.0
+PYTHON=3.9.6
+NPM_CI_PACKAGES=1454
+C1_FOCUSED=28/28_PASS_2_FILES
+COMPLETE_KB=303/303_PASS_25_FILES
+STRICT_SHARED_ENGINE=169/169_PASS_12_FILES
+C6_FOCUSED=29/29_PASS_2_FILES
+KB_GLOBAL_COVERAGE=95.33_STMTS/85.82_BRANCH/98.47_FUNCS/95.33_LINES
+STRICT_SHARED_ENGINE_COVERAGE=99.44_STMTS/97.38_BRANCH/100_FUNCS/99.44_LINES
+C6_ADAPTER_COVERAGE=100_STMTS/96.55_BRANCH/100_FUNCS/100_LINES
+STORAGE_NEUTRAL=PASS
+C6_NARROW_ADAPTER_BOUNDARY=PASS
+SOURCE_CLEAN=PASS
+```
+
+Predecessor closure:
+
+```text
+OLD_FAIL_SHA=0802f1d68206716c60090324887700d440afb0cf
+OLD_C6_BRANCH_COVERAGE=89.02
+FINAL_C6_BRANCH_COVERAGE=96.55
+OLD_FAILED_SHA_RERUN=NO
+COVERAGE_THRESHOLD_LOWERED=NO
+ADAPTER_SOURCE_CHANGED_FOR_COVERAGE=NO
+```
