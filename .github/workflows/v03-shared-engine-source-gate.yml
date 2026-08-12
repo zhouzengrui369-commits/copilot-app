@@ -8,7 +8,7 @@ on:
       - ".github/workflows/v03-shared-engine-source-gate.yml"
       - "packages/kb/**"
       - "apps/copilot-desktop/src/main/shared-engine-runtime-adapter.ts"
-      - "apps/copilot-desktop/tests/shared-engine-runtime-adapter.test.ts"
+      - "apps/copilot-desktop/tests/shared-engine-runtime-adapter*.test.ts"
       - "apps/copilot-desktop/tests/vitest.shared-engine-runtime-coverage.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -141,6 +141,7 @@ jobs:
           npm exec --workspace @copilot/desktop --
           vitest run
           tests/shared-engine-runtime-adapter.test.ts
+          tests/shared-engine-runtime-adapter-branches.test.ts
           --reporter=verbose
 
       - name: Run strict C6 desktop adapter coverage gate
