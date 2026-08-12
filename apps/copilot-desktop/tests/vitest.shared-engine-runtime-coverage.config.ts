@@ -8,7 +8,7 @@ export default defineConfig({
   root: appRoot,
   test: {
     environment: 'node',
-    include: ['tests/shared-engine-runtime-adapter.test.ts'],
+    include: ['tests/shared-engine-runtime-adapter*.test.ts'],
     minWorkers: 1,
     maxWorkers: 2,
     testTimeout: 30_000,
