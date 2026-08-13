@@ -119,7 +119,7 @@ class UnconfiguredBackupRuntime implements ProductionBackupRuntime {
       enabled: false,
       configured: false,
       region: this.region,
-      platformProtection: 'OS credential store not configured',
+      platformProtection: 'OS-protected local key store unavailable',
       catalog: [], allowedScopes: [], activeOperation: null, schedulingAvailable: false, replaceCurrentAvailable: false,
       recoveryRequired: await this.hasRecoveryIntent(),
     };
