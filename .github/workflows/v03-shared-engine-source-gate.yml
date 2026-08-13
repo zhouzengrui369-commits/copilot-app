@@ -10,6 +10,11 @@ on:
       - "apps/copilot-desktop/src/main/shared-engine-runtime-adapter.ts"
       - "apps/copilot-desktop/tests/shared-engine-runtime-adapter*.test.ts"
       - "apps/copilot-desktop/tests/vitest.shared-engine-runtime-coverage.config.ts"
+      - "apps/copilot-desktop/src/main/domain-ipc.ts"
+      - "apps/copilot-desktop/scripts/run-electron-e2e.mjs"
+      - "apps/copilot-desktop/tests/e2e/electron.fixture.ts"
+      - "apps/copilot-desktop/tests/e2e/current-security-surfaces.spec.ts"
+      - "apps/copilot-desktop/tests/c6-runtime-source-repair.test.ts"
       - "package.json"
       - "package-lock.json"
   workflow_dispatch:
@@ -135,6 +140,36 @@ jobs:
 
       - name: Check desktop TypeScript contract
         run: npm run check --workspace @copilot/desktop
+
+      - name: Run C6 runtime source-repair regression tests
+        run: >-
+          npm exec --workspace @copilot/desktop --
+          vitest run
+          tests/c6-runtime-source-repair.test.ts
+          --reporter=verbose
+
+      - name: Preserve exact 96-test Electron discovery without launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_file="${RUNNER_TEMP}/c6-electron-list.txt"
+          npm run test:e2e:electron --workspace @copilot/desktop -- --list 2>&1 | tee "$output_file"
+          node --input-type=module - "$output_file" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const text = await readFile(process.argv[2], 'utf8');
+          const match = /Total:\s+(\d+)\s+tests?\s+in\s+(\d+)\s+files?/u.exec(text);
+          if (!match) {
+            console.error('BLOCKED_ELECTRON_DISCOVERY_SUMMARY_MISSING');
+            process.exit(1);
+          }
+          const tests = Number(match[1]);
+          const files = Number(match[2]);
+          if (tests !== 96 || files !== 5) {
+            console.error(`BLOCKED_ELECTRON_DISCOVERY_DRIFT ${tests} tests in ${files} files`);
+            process.exit(1);
+          }
+          console.log(`ELECTRON_DISCOVERY_96_5=PASS ${tests} tests in ${files} files`);
+          NODE
 
       - name: Run C6 desktop runtime adapter conformance tests
         run: >-
