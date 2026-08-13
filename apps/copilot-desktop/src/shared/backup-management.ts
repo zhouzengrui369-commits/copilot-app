@@ -62,7 +62,7 @@ export interface BackupManagementState {
     | 'macOS Keychain via Electron safeStorage'
     | 'Windows DPAPI via Electron safeStorage'
     | 'Electron safeStorage'
-    | 'OS credential store not configured';
+    | 'OS-protected local key store unavailable';
   catalog: BackupCatalogEntry[];
   allowedScopes: BackupScope[];
   activeOperation: string | null;

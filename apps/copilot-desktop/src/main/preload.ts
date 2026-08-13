@@ -105,6 +105,17 @@ const invokeDomain = <C extends DomainIpcChannel>(
 ): Promise<DomainIpcResponse<C>> =>
   ipcRenderer.invoke(channel, payload) as Promise<DomainIpcResponse<C>>;
 
+async function setLegacyCloudBackup(enabled: boolean): Promise<RendererSafeCopilotSettings> {
+  try {
+    return await invoke<RendererSafeCopilotSettings>(IPC_CHANNELS.SETTINGS_SET_CLOUD_BACKUP, enabled);
+  } catch (error) {
+    if (enabled && String(error).includes('[CONSENT_REQUIRED]')) {
+      throw new Error('[UNAVAILABLE] direct cloud backup toggle is unavailable; use the Backup owner-consent flow');
+    }
+    throw error;
+  }
+}
+
 let startupComplete = false;
 ipcRenderer.on(IPC_CHANNELS.STARTUP_COMPLETE, () => {
   startupComplete = true;
@@ -113,8 +124,7 @@ ipcRenderer.on(IPC_CHANNELS.STARTUP_COMPLETE, () => {
 const bridge: CopilotBridge = {
   settings: {
     get: () => invoke<RendererSafeCopilotSettings>(IPC_CHANNELS.SETTINGS_GET),
-    setCloudBackup: (enabled) =>
-      invoke<RendererSafeCopilotSettings>(IPC_CHANNELS.SETTINGS_SET_CLOUD_BACKUP, enabled),
+    setCloudBackup: (enabled) => setLegacyCloudBackup(enabled),
     setTheme: (theme) => invoke<RendererSafeCopilotSettings>(IPC_CHANNELS.SETTINGS_SET_THEME, theme),
     setWindowBounds: (bounds) =>
       invoke<RendererSafeCopilotSettings>(IPC_CHANNELS.SETTINGS_SET_WINDOW_BOUNDS, bounds),
