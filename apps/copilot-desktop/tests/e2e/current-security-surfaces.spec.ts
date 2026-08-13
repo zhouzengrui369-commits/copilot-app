@@ -134,25 +134,36 @@ test.describe('Current-source Electron and reachable security surfaces', () => {
     expect(JSON.stringify(result)).not.toMatch(/relayToken|privateKey|sessionKey|bearer/i);
   });
 
-  test('96 preload exposes bounded backup and remote methods without trash or raw IPC escape hatches', async ({ appPage }) => {
-    const surface = await appPage.evaluate(() => {
+  test('96 preload exposes bounded bridges and preserves invalid RAG IPC errors', async ({ appPage }) => {
+    const result = await appPage.evaluate(async () => {
       const api = (window as any).copilot;
+      let ragError = '';
+      try {
+        await api.rag.ask('');
+      } catch (error) {
+        ragError = String(error);
+      }
       return {
-        backup: Object.keys(api.backup).sort(),
-        remote: Object.keys(api.remote).sort(),
-        root: Object.keys(api).sort(),
+        surface: {
+          backup: Object.keys(api.backup).sort(),
+          remote: Object.keys(api.remote).sort(),
+          root: Object.keys(api).sort(),
+        },
+        ragError,
       };
     });
 
-    expect(surface.backup).toEqual([
+    expect(result.surface.backup).toEqual([
       'create', 'deleteRemote', 'disable', 'downloadVerify', 'enable', 'getState',
       'onApprovalLifecycle', 'onApprovalRequest', 'prepareEnable', 'respondApproval',
       'restoreApply', 'restorePreview', 'upload',
     ]);
-    expect(surface.remote).toEqual([
+    expect(result.surface.remote).toEqual([
       'createPairingRequest', 'disable', 'enable', 'getState', 'importPairing',
       'onApprovalLifecycle', 'onApprovalRequest', 'respondApproval', 'revokePairing',
     ]);
-    expect(surface.root).not.toEqual(expect.arrayContaining(['ipcRenderer', 'fs', 'process', 'require', 'trash']));
+    expect(result.surface.root).not.toEqual(expect.arrayContaining(['ipcRenderer', 'fs', 'process', 'require', 'trash']));
+    expect(result.ragError).toContain('INVALID_ARGUMENT');
+    expect(result.ragError).not.toContain('[INTERNAL]');
   });
 });
