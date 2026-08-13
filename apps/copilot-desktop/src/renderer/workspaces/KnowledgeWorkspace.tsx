@@ -27,6 +27,7 @@ interface KnowledgeWorkspaceProps {
   sourceOrigin?: AskSourceOrigin | null;
   onReturnToAsk?(exchangeId: string): void;
   onOpenAsk?(): void;
+  onOpenStudio?(): void;
   onAssistantContextChange?(context: GlobalAssistantContext): void;
 }
 
@@ -286,6 +287,7 @@ export function KnowledgeWorkspace({
   requestedPath,
   sourceOrigin,
   onReturnToAsk,
+  onOpenStudio,
   onAssistantContextChange,
 }: KnowledgeWorkspaceProps): ReactElement {
   const browserPrototype = import.meta.env.VITE_COPILOT_BROWSER_PROTOTYPE === '1'
@@ -876,6 +878,11 @@ export function KnowledgeWorkspace({
             : '从真实本地路径浏览文件夹与 2D MOC；整理后内容仅在 WIKI current 后显示。'}</p>
         </div>
         <div className={styles.layoutActions}>
+          {onOpenStudio ? (
+            <button type="button" onClick={onOpenStudio}>
+              打开知识整理台
+            </button>
+          ) : null}
           <button
             type="button"
             aria-expanded={!railCollapsed}

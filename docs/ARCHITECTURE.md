@@ -28,6 +28,21 @@ The architecture does not add a Python resident service, a second database, a se
 
 ## 2. Product Process Boundaries
 
+### Web-first UI development gate
+
+The renderer must first run as a browser prototype from the same React source used by the desktop renderer. The Owner-pinned HTML and its SHA256 define the UI journey and information architecture. Browser fixture data must remain labeled `PROTOTYPE / NOT_RUNTIME_PROOF`.
+
+Primary information architecture is exactly:
+
+```text
+Today / Schedule
+Knowledge / default readable MOC
+Conversations / grounded Ask
+Settings
+```
+
+Wiki Studio is a secondary organizer tool entered from Knowledge, not a fifth top-level destination. Electron main/preload integration, native staging, packaging, signing, notarization, and deployment are downstream gates and remain blocked until explicit Owner web acceptance.
+
 ### Electron main process
 
 The main process owns:

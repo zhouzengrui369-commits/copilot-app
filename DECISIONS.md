@@ -1,5 +1,23 @@
 # DECISIONS
 
+## D-2026-08-13-01: Owner Demo HTML Is The UI Authority And Web Acceptance Precedes Packaging
+
+### Background
+
+An Electron app was opened before the HTML/browser UI had been revalidated, and its fifth primary `知识台` destination diverged from the Owner Demo's four-destination information architecture. The Owner explicitly required immediate correction and declared the Demo UI source authoritative.
+
+### Decision
+
+1. Bind `design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html` at `52046` bytes and SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205` as the sole UI source.
+2. Develop and verify the same-source browser renderer before Electron integration or package work.
+3. Keep the four primary destinations `今天 / 知识 / 对话 / 设置`.
+4. Keep Wiki Studio as a secondary Knowledge action, preserving its implementation without allowing IA drift.
+5. Require explicit NJX `OWNER_WEB_UI_ACCEPTANCE=PASS` before any successor may integrate Electron, package, or notify the local deployment executor.
+
+### Impact
+
+The browser prototype becomes the current product-experience acceptance surface but remains `NOT_RUNTIME_PROOF`. Existing candidate, signing, notarization, release, and Human Owner gates are unchanged and cannot be closed by this web work.
+
 ## D-2026-08-07-03: Prove Npm Registry Metadata Closure Before Lifecycle Hydration
 
 ### Background

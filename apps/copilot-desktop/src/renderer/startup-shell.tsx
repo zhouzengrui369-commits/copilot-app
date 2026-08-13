@@ -12,7 +12,6 @@ export type StartupView = 'knowledge' | 'studio' | 'ask' | 'voice' | 'schedule' 
 const STARTUP_NAV: ReadonlyArray<{ id: StartupView; label: string }> = [
   { id: 'schedule', label: '今天' },
   { id: 'knowledge', label: '知识' },
-  { id: 'studio', label: '知识台' },
   { id: 'ask', label: '对话' },
   { id: 'settings', label: '设置' },
 ];

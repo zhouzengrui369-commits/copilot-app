@@ -2,6 +2,20 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
+## P0 — Web-first Demo UI gate
+
+- [x] Bind the Owner Demo HTML by exact path, `52046` bytes, and SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.
+- [x] Start from Draft PR #20 exact head `d450badfc85b65d3eef20f05eeb0607c1bf6a912` in isolated branch `codex/demo-ui-web-first-r1`.
+- [x] Restore the Demo's four primary destinations: Today, Knowledge, Conversations, Settings.
+- [x] Keep Wiki Studio reachable from Knowledge without making it a fifth primary destination.
+- [x] Pass focused renderer typecheck and web tests.
+- [x] Capture source and implementation at the same 1440x900 viewport and finish `design-qa.md` with `final result: passed`.
+- [ ] Publish a web-only Draft PR.
+- [ ] Obtain explicit `OWNER_WEB_UI_ACCEPTANCE=PASS` from NJX.
+- [ ] Only after Owner PASS, issue a separate Electron integration/package successor.
+
+Exact unlock condition: NJX explicitly accepts the live web page derived from the bound source. A screenshot, browser test, commit, PR, CI result, worker report, or local app launch does not unlock packaging.
+
 R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is integrated into Draft PR #20. R66 consumed source `beb951b95695233911da0a17543ef342acc6df93` after one real hydrator completed 50 registry-prefetch batches and stopped fail-closed on the invalid registry spec `string-width-cjs@4.2.3`. R67 repairs npm alias/install-path identity without changing package/lockfile bytes. No Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
 ## P0 — Product source

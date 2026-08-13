@@ -4,6 +4,18 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
+## 2026-08-13 web-first UI correction
+
+- Exact base: Draft PR #20 `d450badfc85b65d3eef20f05eeb0607c1bf6a912`.
+- Active branch: `codex/demo-ui-web-first-r1`.
+- Sole UI authority: `design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html`, `52046` bytes, SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.
+- Objective: align and accept the browser renderer at 1440x900 before any Electron integration or package work.
+- Completed: exact authority copied byte-for-byte; primary navigation corrected to four Demo destinations; Wiki Studio retained as a secondary Knowledge action.
+- In progress: focused web tests and browser visual QA.
+- Next step: publish the web-only Draft PR and wait for explicit NJX Owner web acceptance.
+- Risks: browser fixture is not runtime proof; the Demo contains deferred fixture-only surfaces; no package/deployment authority is active.
+- Latest important change: `UI_SOURCE_AUTHORITY=OWNER_GRANTED / OWNER_WEB_UI_ACCEPTANCE=PENDING`.
+
 R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
 
 ## Current source chain
@@ -102,4 +114,8 @@ local material
 
 ## Next single action
 
-Run the complete source gate on the exact PR #20 head after this authority alignment. If `17/17 PASS`, freeze that SHA without further tracked changes and issue the MiniMax R68 local successor. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
+Finish browser-only tests and source-bound visual QA, then submit the web-only Draft PR for NJX Owner acceptance. Do not issue MiniMax, Electron, package, or deployment authority before `OWNER_WEB_UI_ACCEPTANCE=PASS`.
+
+Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
+
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. No native or package repair is authorized in this gate.

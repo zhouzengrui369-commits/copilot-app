@@ -4,6 +4,8 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
+> 2026-08-13 UI 纠偏：Owner 已授权 [`design/COPILOT_DEMO_UI_AUTHORITY_R3.md`](design/COPILOT_DEMO_UI_AUTHORITY_R3.md) 绑定的 Demo HTML 为唯一 UI 源码依据。当前只允许网页开发、浏览器测试与网页验收；`OWNER_WEB_UI_ACCEPTANCE=PENDING`，Electron 集成、打包和本地部署通知均被阻塞。
+
 ## 权威与当前工作分工
 
 唯一项目基线是根目录：
@@ -130,6 +132,12 @@ node scripts/candidate-r30/run-candidate.mjs \
 ```bash
 npm install
 npm run dev:copilot-desktop
+```
+
+网页 UI 验收先运行同源 browser prototype；只有 NJX 明确接受网页结果后，才能进入 Electron/打包 successor：
+
+```bash
+npm run preview:browser --workspace @copilot/desktop
 ```
 
 常用源码验证：

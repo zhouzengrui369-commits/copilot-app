@@ -58,7 +58,6 @@ export const defaultRouteLoader: RouteLoader = (route) => {
 const NAV: ReadonlyArray<{ id: View; label: string; href: string }> = [
   { id: 'schedule', label: '今天', href: '#today' },
   { id: 'knowledge', label: '知识', href: '#knowledge' },
-  { id: 'studio', label: '知识台', href: '#studio' },
   { id: 'ask', label: '对话', href: '#conversations' },
   { id: 'settings', label: '设置', href: '#settings' },
 ];
@@ -231,6 +230,7 @@ export function App({
             navigateTo('ask');
           },
           onOpenAsk: () => navigateTo('ask'),
+          onOpenStudio: () => navigateTo('studio'),
           onAssistantContextChange: handleAssistantContextChange,
         };
       case 'studio':

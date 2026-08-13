@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-14 — Web-first UI verification receipt
+
+- Added source/implementation 1440x900 comparison evidence and `design-qa.md` with `final result: passed`.
+- Recorded the passing browser-only typecheck, build, focused `21/21` UI tests, four-destination journey, and zero browser console errors.
+- Recorded the broad Desktop suite as `NOT PASS` rather than hiding or upgrading unrelated native/Electron and historical-fixture failures.
+- Kept Electron launch, native staging, packaging, signing, deployment, and deployment-executor notification blocked pending explicit Owner web acceptance.
+
+## 2026-08-13 — Demo-source web-first UI correction
+
+- Added the exact Owner-pinned Demo HTML as an immutable repository authority copy (`52046` bytes, SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`).
+- Corrected the renderer and startup shell from five primary destinations to the Demo's four: Today, Knowledge, Conversations, Settings.
+- Kept Wiki Studio available through a secondary action inside Knowledge.
+- Added the explicit sequencing gate: browser development/test/Owner acceptance first; Electron integration, packaging, and local deployment notification later under separate successor authority.
+- Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / OWNER_WEB_UI_ACCEPTANCE=PENDING`.
+
 ## 2026-08-10 — R67 npm alias registry identity repair
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.
