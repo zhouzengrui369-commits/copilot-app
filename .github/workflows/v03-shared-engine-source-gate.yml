@@ -1,0 +1,206 @@
+name: v03-shared-engine-source-gate
+
+on:
+  pull_request:
+    branches:
+      - "chatgpt/v03-shared-knowledge-engine-plan-r1"
+    paths:
+      - ".github/workflows/v03-shared-engine-source-gate.yml"
+      - "packages/kb/**"
+      - "apps/copilot-desktop/src/main/shared-engine-runtime-adapter.ts"
+      - "apps/copilot-desktop/tests/shared-engine-runtime-adapter*.test.ts"
+      - "apps/copilot-desktop/tests/vitest.shared-engine-runtime-coverage.config.ts"
+      - "apps/copilot-desktop/src/main/domain-ipc.ts"
+      - "apps/copilot-desktop/scripts/run-electron-e2e.mjs"
+      - "apps/copilot-desktop/tests/e2e/electron.fixture.ts"
+      - "apps/copilot-desktop/tests/e2e/current-security-surfaces.spec.ts"
+      - "apps/copilot-desktop/tests/c6-runtime-source-repair.test.ts"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v03-shared-engine-source-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  CI: "true"
+  PYTHON: "/usr/bin/python3"
+
+jobs:
+  source-gate:
+    name: Node 24 macOS v0.3 source gate
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Record exact source and toolchain identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          node --version
+          npm --version
+          "$PYTHON" --version
+          uname -a
+
+      - name: Require unchanged package and lock authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
+            package.json \
+            package-lock.json \
+            packages/kb/package.json \
+            packages/kg/package.json \
+            packages/llm-client/package.json \
+            apps/copilot-desktop/package.json
+
+      - name: Prove legacy KB critical inputs stayed byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "${{ github.event.pull_request.base.sha }}..HEAD" -- \
+            packages/kb/src/store/md-file-store.ts \
+            packages/kb/src/store/sqlite-store.ts \
+            packages/kb/vitest.critical-coverage.config.ts \
+            packages/kb/tests/md-file-store.test.ts \
+            packages/kb/tests/md-file-store-edge.test.ts \
+            packages/kb/tests/sqlite-store.test.ts \
+            packages/kb/tests/body-integrity-fail-closed.test.ts \
+            packages/kb/tests/write-integrity-fail-closed.test.ts \
+            packages/kb/tests/reversible-trash.test.ts \
+            packages/kb/tests/reversible-trash-r2-integrity.test.ts \
+            packages/kb/tests/reversible-trash-r3-lease-integrity.test.ts
+          echo "LEGACY_CRITICAL_INPUTS_UNCHANGED=PASS"
+          echo "LEGACY_CRITICAL_COVERAGE_DEBT=TRACKED_IN_ISSUE_44"
+
+      - name: Install exact lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Build shared KB package
+        run: npm run build --workspace @copilot/kb
+
+      - name: Check shared KB package
+        run: npm run check --workspace @copilot/kb
+
+      - name: Run C1 focused conformance tests
+        run: >-
+          npm exec --workspace @copilot/kb --
+          vitest run
+          tests/shared-engine-contract.test.ts
+          tests/shared-engine-boundaries.test.ts
+          --reporter=verbose
+
+      - name: Run complete KB unit suite
+        run: npm run test --workspace @copilot/kb
+
+      - name: Run KB global coverage gate
+        run: npm run test:coverage:global --workspace @copilot/kb
+
+      - name: Run strict Shared Engine per-file coverage gate
+        run: >-
+          npm exec --workspace @copilot/kb --
+          vitest run --coverage
+          --config vitest.shared-engine-coverage.config.ts
+          --reporter=verbose
+
+      - name: Enforce storage-neutral Shared Engine source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE \
+            'better-sqlite3|sqlite-store|CREATE[[:space:]]+TABLE|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|trash_entries|@copilot/(kg|rag)|\.\./store|/store/' \
+            packages/kb/src/shared-engine; then
+            echo "BLOCKED_PHYSICAL_SCHEMA_EXPOSED_AS_CONTRACT"
+            exit 1
+          fi
+          echo "STORAGE_NEUTRAL_SHARED_ENGINE_BOUNDARY=PASS"
+
+      - name: Build desktop TypeScript dependencies
+        run: |
+          npm run build --workspace @copilot/llm-client
+          npm run build --workspace @copilot/kg
+
+      - name: Check desktop TypeScript contract
+        run: npm run check --workspace @copilot/desktop
+
+      - name: Run C6 runtime source-repair regression tests
+        run: >-
+          npm exec --workspace @copilot/desktop --
+          vitest run
+          tests/c6-runtime-source-repair.test.ts
+          --reporter=verbose
+
+      - name: Preserve exact 96-test Electron discovery without launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_file="${RUNNER_TEMP}/c6-electron-list.txt"
+          npm run test:e2e:electron --workspace @copilot/desktop -- --list 2>&1 | tee "$output_file"
+          node --input-type=module - "$output_file" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const text = await readFile(process.argv[2], 'utf8');
+          const match = /Total:\s+(\d+)\s+tests?\s+in\s+(\d+)\s+files?/u.exec(text);
+          if (!match) {
+            console.error('BLOCKED_ELECTRON_DISCOVERY_SUMMARY_MISSING');
+            process.exit(1);
+          }
+          const tests = Number(match[1]);
+          const files = Number(match[2]);
+          if (tests !== 96 || files !== 5) {
+            console.error(`BLOCKED_ELECTRON_DISCOVERY_DRIFT ${tests} tests in ${files} files`);
+            process.exit(1);
+          }
+          console.log(`ELECTRON_DISCOVERY_96_5=PASS ${tests} tests in ${files} files`);
+          NODE
+
+      - name: Run C6 desktop runtime adapter conformance tests
+        run: >-
+          npm exec --workspace @copilot/desktop --
+          vitest run
+          tests/shared-engine-runtime-adapter.test.ts
+          tests/shared-engine-runtime-adapter-branches.test.ts
+          --reporter=verbose
+
+      - name: Run strict C6 desktop adapter coverage gate
+        run: >-
+          npm exec --workspace @copilot/desktop --
+          vitest run --coverage
+          --config tests/vitest.shared-engine-runtime-coverage.config.ts
+          --reporter=verbose
+
+      - name: Enforce C6 adapter narrow implementation boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -nE \
+            'better-sqlite3|SqliteStore|KgStore|createVectorStore|VectorStore|kg_nodes|kg_edges|note_entities|rag_index_meta|md_path|ipcMain' \
+            apps/copilot-desktop/src/main/shared-engine-runtime-adapter.ts; then
+            echo "BLOCKED_C6_PHYSICAL_IMPLEMENTATION_LEAK"
+            exit 1
+          fi
+          echo "C6_NARROW_ADAPTER_BOUNDARY=PASS"
+
+      - name: Verify tracked source stayed unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"

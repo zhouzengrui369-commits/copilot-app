@@ -44,7 +44,11 @@ export function registerDomainIpc(
   handle(ipc, IPC_CHANNELS.NOTES_GET_BACKLINKS, getService, (service, request) => service.notes.getBacklinks(request), recordOperation, 'notes.backlinks');
   handle(ipc, IPC_CHANNELS.KG_GET_SUBGRAPH, getService, (service, request) => service.kg.getSubgraph(request), recordOperation, 'kg.view');
   handle(ipc, IPC_CHANNELS.KG_REINDEX_NOTE, getService, (service, request) => service.kg.reindexNote(request), recordOperation, 'kg.reindex');
-  handle(ipc, IPC_CHANNELS.RAG_ASK, getService, (service, request) => service.rag.ask(request), recordOperation, 'rag.ask');
+  handle(ipc, IPC_CHANNELS.RAG_ASK, getService, (service, request) => {
+    const question = typeof request === 'string' ? request.trim() : '';
+    if (!question) throw new DomainServiceError('INVALID_ARGUMENT', 'question is required');
+    return service.rag.ask(question);
+  }, recordOperation, 'rag.ask');
   ipc.handle(IPC_CHANNELS.RAG_STREAM_START, async (event, payload) => {
     try {
       const request = assertRagStreamRequest(payload);

@@ -1,0 +1,52 @@
+2026-08-11 C1 base planning SHA = 66509b4eda084f08aa3bc957d92a59a59e097a4a
+CREATE branch chatgpt/v03-c1-canonical-object-provenance-r1
+WRITE C1 GOAL.md
+WRITE C1 TASK.md
+WRITE C1 PLAN.md
+CREATE packages/kb/src/shared-engine/contract.ts
+CREATE packages/kb/src/shared-engine/identity.ts
+CREATE packages/kb/src/shared-engine/adapters.ts
+CREATE packages/kb/src/shared-engine/policy.ts
+CREATE packages/kb/src/shared-engine/write-proposal.ts
+CREATE packages/kb/src/shared-engine/index.ts
+UPDATE packages/kb/src/index.ts -> export Shared Engine C1 surface only
+CREATE packages/kb/tests/shared-engine-contract.test.ts
+CREATE PR #43 (Draft, stacked on planning branch)
+CREATE .github/workflows/v03-shared-engine-source-gate.yml
+RUN 31474531940 job 93725075637 -> C1 build/check/focused/full/global PASS; legacy critical coverage pre-existing FAIL
+CREATE Issue #44 -> track real legacy store coverage debt; threshold remains 90%
+CREATE packages/kb/vitest.shared-engine-coverage.config.ts -> per-file statements/lines/branches/functions 90%
+CREATE packages/kb/tests/shared-engine-boundaries.test.ts
+UPDATE adapters.ts -> source revision tied to source/content identity; Entity/Relation source refs included in revision hash
+UPDATE workflow -> prove legacy critical inputs byte-identical; gate C1 per-file 90%; storage-neutral scan
+RUN 31475224910 job 93727324759 -> build/check PASS; focused boundary test exposed NaN confidence validator bug
+UPDATE contract.ts -> reject non-finite confidence
+SOURCE_GATE_SHA=8a591d1d9fb60e545c306e009222b3b990781421
+RUN 31475428608 job 93727905759 -> PASS
+  exact identity PASS
+  package/lock authority unchanged PASS
+  legacy critical inputs byte-identical PASS
+  npm ci PASS (1454 packages)
+  KB build PASS
+  KB check PASS
+  focused C1 28/28 PASS
+  complete KB 162/162 PASS
+  global coverage PASS
+  Shared Engine strict per-file 90% PASS
+  Shared Engine coverage total=100 statements / 98.63 branches / 100 functions / 100 lines
+  storage-neutral boundary PASS
+  source-clean PASS
+WRITE RESULT.md
+WRITE EVIDENCE.md
+WRITE commands.log
+
+PROTECTED_MVP_PR20_MUTATION_BY_C1=NONE
+MAIN_MUTATION_BY_C1=NONE
+PHYSICAL_SCHEMA_CHANGE=NONE
+PACKAGE_LOCK_CHANGE=NONE
+PREDECESSOR_EVIDENCE_CHANGE=NONE
+RUNTIME_EXECUTION=NONE
+MINIMAX_DISPATCH=NONE
+CODEX_DISPATCH=NONE
+D3_ENABLEMENT=NONE
+SIGN_NOTARIZE_RELEASE=NONE

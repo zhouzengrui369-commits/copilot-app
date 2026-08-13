@@ -13,7 +13,7 @@
  *
  *   const kb = new KbClient({
  *     sqlite: new SqliteStore({ dbPath: '/abs/data/kb.sqlite' }),
- *     md: new MdFileStore({ rootDir: '/abs/data/notes' }),
+ *     md:     new MdFileStore({ rootDir: '/abs/data/notes' }),
  *   });
  *
  *   const note = kb.createNote({
@@ -77,3 +77,8 @@ export type {
   TrashErrorCode,
 } from './types.js';
 export { TrashError } from './types.js';
+
+// v0.3 Shared Knowledge Engine C1: storage-neutral contract/adapter surface.
+// This export does not expose SQLite table names or database handles as an
+// ecosystem integration contract.
+export * from './shared-engine/index.js';

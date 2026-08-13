@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -34,6 +35,16 @@ async function waitForExit(child: ReturnType<ElectronApplication['process']>): P
   ]);
 }
 
+function launchScopedRuntimeIdentityPath(basePath: string, workerIndex: number, pid: number | undefined): string {
+  const parsed = path.parse(basePath);
+  const extension = parsed.ext || '.json';
+  const processId = Number.isInteger(pid) ? String(pid) : 'unknown-pid';
+  return path.join(
+    parsed.dir,
+    `${parsed.name}-worker-${workerIndex}-pid-${processId}-${randomUUID()}${extension}`,
+  );
+}
+
 export const test = base.extend<{}, WorkerFixtures>({
   e2eUserData: [async ({}, use) => {
     const configured = process.env.COPILOT_E2E_USER_DATA;
@@ -44,7 +55,7 @@ export const test = base.extend<{}, WorkerFixtures>({
     if (!configured) await rm(directory, { recursive: true, force: true });
   }, { scope: 'worker' }],
 
-  electronApp: [async ({ e2eUserData }, use) => {
+  electronApp: [async ({ e2eUserData }, use, workerInfo) => {
     const executablePath = process.env.COPILOT_E2E_EXECUTABLE_PATH;
     if (!executablePath && (!existsSync(MAIN_ENTRY) || !existsSync(RENDERER_ENTRY))) {
       throw new Error(
@@ -90,10 +101,15 @@ export const test = base.extend<{}, WorkerFixtures>({
           canonicalUserData,
         })}`);
       }
-      const runtimeIdentityPath = process.env.COPILOT_E2E_RUNTIME_IDENTITY_PATH;
-      if (!runtimeIdentityPath || !path.isAbsolute(runtimeIdentityPath)) {
+      const runtimeIdentityBasePath = process.env.COPILOT_E2E_RUNTIME_IDENTITY_PATH;
+      if (!runtimeIdentityBasePath || !path.isAbsolute(runtimeIdentityBasePath)) {
         throw new Error('BLOCKED_ELECTRON_RUNTIME_IDENTITY_PATH_INVALID');
       }
+      const runtimeIdentityPath = launchScopedRuntimeIdentityPath(
+        runtimeIdentityBasePath,
+        workerInfo.workerIndex,
+        child.pid,
+      );
       const runtimeIdentity = await app.evaluate(() => ({
         schemaVersion: 1,
         source: 'launched-electron-main-process',
@@ -105,6 +121,7 @@ export const test = base.extend<{}, WorkerFixtures>({
         arch: process.arch,
         platform: process.platform,
       }));
+      await mkdir(path.dirname(runtimeIdentityPath), { recursive: true });
       await writeFile(runtimeIdentityPath, `${JSON.stringify(runtimeIdentity, null, 2)}\n`, {
         flag: 'wx',
         mode: 0o600,

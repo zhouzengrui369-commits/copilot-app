@@ -75,6 +75,25 @@ export function BackupManagementSettings() {
     <>
     <fieldset className="settings-panel__group" data-testid="backup-management">
       <legend>Encrypted cloud backup</legend>
+      <div aria-label="Cloud backup compatibility status">
+        <label>
+          <input
+            type="checkbox"
+            data-testid="cloud-backup-toggle"
+            checked={state.enabled}
+            readOnly
+            aria-label="Cloud backup enabled state"
+          />{' '}
+          Cloud backup
+        </label>
+        <p data-testid="status-cloud-backup">
+          {state.configured
+            ? state.enabled
+              ? 'ON (owner-consent managed)'
+              : 'AVAILABLE (owner-consent required)'
+            : 'UNAVAILABLE (metadata-only)'}
+        </p>
+      </div>
       <p><strong>State: {state.enabled ? 'ON' : 'OFF'}</strong> · Region: {state.region} · {state.platformProtection}</p>
       <p>OFF is the default: no backup credential, snapshot file, presign, or cloud request is created.</p>
       {state.recoveryRequired ? <p role="alert">Backup cleanup is quarantined. Re-enable and new commands remain blocked until local recovery succeeds.</p> : null}

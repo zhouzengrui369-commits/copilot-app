@@ -193,6 +193,45 @@ export function validateElectronRuntimeIdentity(value, executionMode = mode) {
   return structuredClone(value);
 }
 
+export async function readElectronRuntimeIdentityEvidence(basePath, executionMode = mode) {
+  if (!basePath || !path.isAbsolute(basePath)) {
+    throw new Error('BLOCKED_ELECTRON_RUNTIME_IDENTITY_PATH_INVALID');
+  }
+  const parsed = path.parse(basePath);
+  const extension = parsed.ext || '.json';
+  const prefix = `${parsed.name}-worker-`;
+  let names;
+  try {
+    names = (await readdir(parsed.dir))
+      .filter((name) => name.startsWith(prefix) && name.endsWith(extension))
+      .sort();
+  } catch (error) {
+    throw new Error(
+      `BLOCKED_ELECTRON_RUNTIME_IDENTITY_EVIDENCE_MISSING: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (names.length === 0) {
+    throw new Error('BLOCKED_ELECTRON_RUNTIME_IDENTITY_EVIDENCE_MISSING: no launch-scoped identity files');
+  }
+  const evidence = [];
+  for (const name of names) {
+    const identityPath = path.join(parsed.dir, name);
+    let identity;
+    try {
+      identity = validateElectronRuntimeIdentity(
+        JSON.parse(await readFile(identityPath, 'utf8')),
+        executionMode,
+      );
+    } catch (error) {
+      throw new Error(
+        `BLOCKED_ELECTRON_RUNTIME_IDENTITY: ${name}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    evidence.push({ path: identityPath, identity });
+  }
+  return evidence;
+}
+
 function requireAbsoluteExistingFile(name) {
   const value = process.env[name];
   if (!value) throw new Error(`BLOCKED_RELEASE_IDENTITY_MISSING: ${name}`);
@@ -359,11 +398,10 @@ async function main() {
   }
 
   let runtimeIdentity = null;
+  let runtimeIdentityEvidence = [];
   try {
-    runtimeIdentity = validateElectronRuntimeIdentity(
-      JSON.parse(await readFile(runtimeIdentityPath, 'utf8')),
-      mode,
-    );
+    runtimeIdentityEvidence = await readElectronRuntimeIdentityEvidence(runtimeIdentityPath, mode);
+    runtimeIdentity = runtimeIdentityEvidence[0]?.identity ?? null;
   } catch (error) {
     hardFailures.push(
       `BLOCKED_ELECTRON_RUNTIME_IDENTITY: ${error instanceof Error ? error.message : String(error)}`,
@@ -391,6 +429,8 @@ async function main() {
     os: process.platform,
     arch: process.arch,
     runtimeIdentity,
+    runtimeIdentityEvidence,
+    runtimeIdentityCount: runtimeIdentityEvidence.length,
     playwrightReportPath: jsonReportPath,
     counts,
     startedAt,
