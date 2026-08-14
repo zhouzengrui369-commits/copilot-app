@@ -1,6 +1,6 @@
 schema_version: 8
 project: copilot-app
-updated_at: "2026-08-10"
+updated_at: "2026-08-14"
 status:
   verdict: BLOCKED
   mvp: MVP_NOT_COMPLETE
@@ -14,6 +14,32 @@ source:
   product_source_branch: chatgpt/mvp-source-finalization
   exact_final_commit: "resolve from final PR #20 head after this R67 authority-alignment commit and complete source gate"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
+web_first_ui_r1:
+  authority_path: design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html
+  authority_sha256: 231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205
+  branch: codex/demo-ui-web-first-r1
+  pr: 54
+  previous_source_commit: b8b04819ac25629b0f2a5135858532902567b794
+  previous_source_gate:
+    run: 31751463041
+    job: 94617911618
+    status: PASS
+  browser_typecheck_build: PASS
+  focused_ui_tests: 21/21_PASS
+  browser_journey: PASS
+  browser_console: 0_ERRORS_0_WARNINGS
+  parent_pm_web_acceptance: PASS
+  local_packaged_acceptance: PENDING
+  human_owner_milestone_gate: PENDING
+  immutable_predecessors:
+    r1: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    r2: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    r3: BLOCKED_SOURCE_CONTRACT_WATCHDOG_ASSERTION
+  watchdog_contract_repair:
+    production_code_changed: false
+    focused_repeat: 300/300_PASS
+    complete_source_contract: 111/111_PASS
+    new_exact_pr_head: PENDING_PUSH_AND_SOURCE_GATE
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer
@@ -157,5 +183,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Pass the complete source gate on the resulting exact PR #20 head after this authority alignment, freeze that 40-character SHA with no later tracked source change, then issue MiniMax R68 with a new RUN_STAMP and six fresh local paths."
+next_single_action: "Push the deterministic watchdog contract repair to Draft PR #54, pass the complete source gate on its new exact head, then issue the existing local deployment executor a new independent successor with all-new paths and identities."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

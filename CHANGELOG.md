@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-14 — Deterministic native-cache watchdog contract
+
+- Replaced the watchdog unit test's fixed 80ms wall-clock wait with injected manual timeout/grace timers.
+- Added a regression proving `SIGKILL` is cancelled when the child closes during the grace window.
+- Preserved production watchdog implementation and all timeout, process-group, signal, audit, and no-retry semantics.
+- Focused contract passed 100 consecutive runs; the complete Candidate source contract passed `111/111` outside the nested Codex sandbox.
+- Recorded local deployment R1/R2/R3 as immutable evidence bound only to `b8b04819ac25629b0f2a5135858532902567b794`; no Candidate, artifact, E2E, performance, signing, notarization, release, or Human Owner PASS was created.
+
 ## 2026-08-14 — Web-first UI verification receipt
 
 - Added source/implementation 1440x900 comparison evidence and `design-qa.md` with `final result: passed`.

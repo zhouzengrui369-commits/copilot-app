@@ -43,6 +43,12 @@ Settings
 
 Wiki Studio is a secondary organizer tool entered from Knowledge, not a fifth top-level destination. Electron main/preload integration, native staging, packaging, signing, notarization, and deployment are downstream gates and remain blocked until explicit Owner web acceptance.
 
+The browser evidence may close the Parent PM web technical gate, but it cannot close packaged runtime or Human Owner milestone gates. Every downstream executor must fetch and prove the exact source-gated PR head; a failed predecessor run, cache, worktree, receipt, artifact, or runtime identity is immutable and cannot be resumed or reused.
+
+### Native hydration watchdog timing
+
+Hydration child commands run in detached process groups under a bounded watchdog. Timeout sends `SIGTERM`; a still-open child group receives `SIGKILL` only after the configured grace period; close during grace cancels hard kill. Unit contracts inject and advance timers directly so scheduler latency cannot turn the timeout-plus-grace sequence into a flaky source gate. Durable production audit events remain the runtime authority.
+
 ### Electron main process
 
 The main process owns:

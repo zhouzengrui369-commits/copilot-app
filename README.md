@@ -4,7 +4,7 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
-> 2026-08-13 UI 纠偏：Owner 已授权 [`design/COPILOT_DEMO_UI_AUTHORITY_R3.md`](design/COPILOT_DEMO_UI_AUTHORITY_R3.md) 绑定的 Demo HTML 为唯一 UI 源码依据。当前只允许网页开发、浏览器测试与网页验收；`OWNER_WEB_UI_ACCEPTANCE=PENDING`，Electron 集成、打包和本地部署通知均被阻塞。
+> 2026-08-14 UI 纠偏进展：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 已完成网页 typecheck/build、聚焦 `21/21`、1440x900 浏览器旅程、零 console 错误及 GitHub source gate，`PARENT_PM_WEB_ACCEPTANCE=PASS`。本地 R1/R2/R3 均在 Candidate 创建前 fail-closed 且不可复用；当前正在为 watchdog 测试确定性修复建立新的精确 SHA。`LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`。
 
 ## 权威与当前工作分工
 
@@ -21,7 +21,7 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 Owner 批准的执行边界：
 
 1. **ChatGPT**：只通过 GitHub 分支/PR 开发和审查源码；不在本地执行候选。
-2. **MiniMax Code**：先获取并校验外部报告的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。
+2. **本地部署执行官**：先获取并校验 Parent PM 签发的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。任何失败 successor 的目录、缓存、回执、候选、产物和 runtime identity 均不可复用。
 3. **Codex**：收到 MiniMax 完整回执后，独立操作真实电脑、执行体验验收和 Release Gate；不在验收通道修源码。
 
 完整流程见 [`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。MiniMax 的可执行手册见 [`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`](docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md)。

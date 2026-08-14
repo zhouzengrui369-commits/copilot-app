@@ -1,5 +1,23 @@
 # DECISIONS
 
+## D-2026-08-14-01: Watchdog Contracts Use Injected Deterministic Time
+
+### Background
+
+Local deployment R3 ran the Candidate source contract once and stopped before hydration because the watchdog test expected `SIGTERM` and `SIGKILL` after a fixed 80ms wait but observed only `SIGTERM`. The production implementation schedules the 20ms hard-kill grace timer only when the 40ms timeout callback executes, so event-loop delay can make an 80ms wall-clock assertion premature.
+
+### Decision
+
+1. Preserve production process-group termination, timeout, grace, signals, audit events, and no-retry policy unchanged.
+2. Inject manual timers into the unit contract and explicitly advance timeout then grace.
+3. Add a separate contract proving that a child closing during grace cancels the hard kill.
+4. Require repeated focused runs, the full Candidate source contract, and a fresh GitHub source gate before any new local deployment authority.
+5. Keep R1/R2/R3 and source `b8b04819ac25629b0f2a5135858532902567b794` immutable and ineligible for reuse.
+
+### Impact
+
+The source gate becomes deterministic under scheduler load without weakening fail-closed hydration. Every future local deployment successor must bind the new exact PR #54 head and create entirely fresh evidence and Candidate identities.
+
 ## D-2026-08-13-01: Owner Demo HTML Is The UI Authority And Web Acceptance Precedes Packaging
 
 ### Background

@@ -10,11 +10,13 @@
 - Active branch: `codex/demo-ui-web-first-r1`.
 - Sole UI authority: `design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html`, `52046` bytes, SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.
 - Objective: align and accept the browser renderer at 1440x900 before any Electron integration or package work.
-- Completed: exact authority copied byte-for-byte; primary navigation corrected to four Demo destinations; Wiki Studio retained as a secondary Knowledge action.
-- In progress: focused web tests and browser visual QA.
-- Next step: publish the web-only Draft PR and wait for explicit NJX Owner web acceptance.
-- Risks: browser fixture is not runtime proof; the Demo contains deferred fixture-only surfaces; no package/deployment authority is active.
-- Latest important change: `UI_SOURCE_AUTHORITY=OWNER_GRANTED / OWNER_WEB_UI_ACCEPTANCE=PENDING`.
+- Completed: exact authority copied byte-for-byte; primary navigation corrected to four Demo destinations; Wiki Studio retained as a secondary Knowledge action; web-only typecheck/build, focused `21/21` UI tests, 1440x900 browser journey, zero console errors, `design-qa.md`, Draft PR #54, and GitHub source gate run `31751463041` job `94617911618` all passed.
+- Parent PM technical decision: `PARENT_PM_WEB_ACCEPTANCE=PASS`; `HUMAN_OWNER_MILESTONE_GATE=PENDING` remains separate.
+- Local deployment R1/R2 stopped during one-shot hydration on allowed-host transport failures; R3 stopped before hydration on a wall-clock watchdog test race. All three evidence roots are immutable and bound only to `b8b04819ac25629b0f2a5135858532902567b794`.
+- In progress: publish the deterministic watchdog test repair as a new exact PR #54 head and rerun the complete source gate.
+- Next step: only after that new head passes GitHub source gate, issue an all-new local deployment successor bound to the new exact SHA.
+- Risks: browser fixture is not runtime proof; R1/R2/R3 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
+- Latest important change: `PARENT_PM_WEB_ACCEPTANCE=PASS / LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`.
 
 R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
 
@@ -114,8 +116,8 @@ local material
 
 ## Next single action
 
-Finish browser-only tests and source-bound visual QA, then submit the web-only Draft PR for NJX Owner acceptance. Do not issue MiniMax, Electron, package, or deployment authority before `OWNER_WEB_UI_ACCEPTANCE=PASS`.
+Push the deterministic watchdog-contract repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive a new independent successor identity; R1/R2/R3 remain immutable reference-only.
 
 Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
 
-Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. No native or package repair is authorized in this gate.
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. See `reports/watchdog-contract-r1/TEST_RECEIPT.md`.

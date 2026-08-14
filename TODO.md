@@ -10,11 +10,24 @@
 - [x] Keep Wiki Studio reachable from Knowledge without making it a fifth primary destination.
 - [x] Pass focused renderer typecheck and web tests.
 - [x] Capture source and implementation at the same 1440x900 viewport and finish `design-qa.md` with `final result: passed`.
-- [ ] Publish a web-only Draft PR.
-- [ ] Obtain explicit `OWNER_WEB_UI_ACCEPTANCE=PASS` from NJX.
-- [ ] Only after Owner PASS, issue a separate Electron integration/package successor.
+- [x] Publish web-only Draft PR #54 and pass source gate run `31751463041`.
+- [x] Record `PARENT_PM_WEB_ACCEPTANCE=PASS` from source-bound browser evidence.
+- [x] Issue separate local successors R1/R2/R3 only after the web technical gate; retain every failed identity as immutable reference-only.
+- [ ] Keep `HUMAN_OWNER_MILESTONE_GATE=PENDING` until an exact packaged Candidate passes independent acceptance.
 
 Exact unlock condition: NJX explicitly accepts the live web page derived from the bound source. A screenshot, browser test, commit, PR, CI result, worker report, or local app launch does not unlock packaging.
+
+## P0 — PR #54 watchdog contract reproducibility
+
+- [x] Preserve R3 evidence root `b8b04819ac25629b0f2a5135858532902567b794-20260814T003315Z` unchanged.
+- [x] Classify R3 as a source-test timing race: fixed `await 80ms` could observe the 40ms timeout callback before its subsequently scheduled 20ms grace callback.
+- [x] Replace the wall-clock assertion with injected manual timers; do not change production timeout, process-group, signal, audit, or retry behavior.
+- [x] Add the inverse contract: a child closing during grace cancels `SIGKILL`.
+- [x] Pass the focused contract 100 consecutive runs (`300/300`) and the complete Candidate source contract `111/111` in a non-nested macOS sandbox environment.
+- [ ] Push a new exact PR #54 head and require complete GitHub source gate PASS.
+- [ ] Create a new local successor with a new run stamp, evidence root, worktree, native cache, receipt, candidate identity, artifact identity, and runtime identity.
+
+Exact unlock condition: the new 40-character PR #54 head, not `b8b04819...`, must pass the complete GitHub source gate. R1/R2/R3 may never be retried, resumed, mutated, or reused.
 
 R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is integrated into Draft PR #20. R66 consumed source `beb951b95695233911da0a17543ef342acc6df93` after one real hydrator completed 50 registry-prefetch batches and stopped fail-closed on the invalid registry spec `string-width-cjs@4.2.3`. R67 repairs npm alias/install-path identity without changing package/lockfile bytes. No Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
