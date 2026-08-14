@@ -2,6 +2,23 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
+## P0 — R6 Electron release-asset reset / R7 unlock
+
+- [x] Accept R6 evidence root `35b3c54059900528e33d79bbb15788479763a58d-20260814T043156Z` as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`.
+- [x] Preserve R6 counts: exact source gate `17/17 PASS`; source `117/117 PASS` once; hydration once; dry-run/Candidate/package/App/E2E/performance all zero; final process clean.
+- [x] Classify the exact failure as Electron `38.8.6` postinstall on `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes, `1195994ms`; the R5 graceful-control exception correctly did not apply.
+- [x] Add an exact official Electron Range-prefetch implementation for reviewed `38.8.6` and `33.4.11` macOS arm64 ZIPs with 1 MiB segments, concurrency 4 and at most 3 attempts per segment.
+- [x] Require package-embedded SHA-256 before cache admission and bind URL/version/file/hash/bytes/range/request/retry/proxy-index evidence into hydration schema v2.
+- [x] Restrict recoverable asset errors to the exact proxy phase, reviewed hosts/codes and encrypted-byte ceiling; preserve fail-closed protocol/range/length/checksum behavior, whole-hydration no-retry and partial-cache nonreuse.
+- [x] Bind `electron_config_cache` to the receipt-owned Electron cache in hydration and Candidate environments.
+- [x] Pass focused contracts `33/33` and complete non-nested macOS source contracts `122/122`.
+- [x] Obtain explicit Owner authorization to migrate the legacy strict receipt audit from online registry lifecycle expectations to the existing metadata-complete prefetch + deny-network closure + registry-offline lifecycle contract.
+- [x] Require the migrated audit to reject the legacy online command and prove zero post-closure registry requests plus the checksum-gated Electron artifact receipt; focused contracts pass `44/44`.
+- [x] Rerun the complete non-nested macOS Candidate source contract: `124/124 PASS`, zero failures/skips/cancellations.
+- [ ] Commit/push the documentation-bearing repair, pass the complete GitHub source gate on the same exact PR #54 SHA/tree, and only then create all-new R7 paths/identities.
+
+Exact unlock condition: the authorized migration must pass the complete source contract and same-SHA GitHub source gate. R6 and its partial cache remain ineligible for retry, resume, copy or reuse.
+
 ## P0 — Web-first Demo UI gate
 
 - [x] Bind the Owner Demo HTML by exact path, `52046` bytes, and SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.

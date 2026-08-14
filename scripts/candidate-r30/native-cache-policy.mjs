@@ -4,12 +4,30 @@ import { open, readFile, readdir, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { computeCacheIdentity, inspectLockfileDocument } from './npm-cache-hydrate.mjs';
 import { NPM_CACHE_KEY_ALIGNMENT_FLAG } from './contract.mjs';
+import {
+  ELECTRON_ARTIFACT_MAX_BYTES,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
+  ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+  ELECTRON_ARTIFACT_RANGE_BYTES,
+  ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+  ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+  ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
+} from './electron-artifact-prefetch.mjs';
+export {
+  ELECTRON_ARTIFACT_MAX_BYTES,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
+  ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+  ELECTRON_ARTIFACT_RANGE_BYTES,
+  ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+  ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+  ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
+};
 
-export const NATIVE_CACHE_HYDRATION_SCHEMA_VERSION = 1;
+export const NATIVE_CACHE_HYDRATION_SCHEMA_VERSION = 2;
 export const OWNER_NATIVE_CACHE_AUTHORITY =
   'OWNER_APPROVAL_FOR_BOUNDED_NATIVE_TOOLCHAIN_CACHE_HYDRATION';
 export const NPM_REGISTRY = 'https://registry.npmjs.org/';
-export const NATIVE_TOOLCHAIN_PROFILE = 'macos-arm64-node24-electron38-v1';
+export const NATIVE_TOOLCHAIN_PROFILE = 'macos-arm64-node24-electron38-v2';
 export const NATIVE_BUILD_MODE = 'build-from-source-with-receipt-bound-headers';
 export const NATIVE_PROXY_KEEPALIVE_MS = 30_000;
 export const NATIVE_PROXY_IDLE_TIMEOUT_MS = 20 * 60 * 1_000;
@@ -20,6 +38,20 @@ export const NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES = 64 * 1_024;
 export const NATIVE_NPM_FETCH_RETRIES = 0;
 export const NATIVE_NPM_FETCH_TIMEOUT_MS = 15 * 60 * 1_000;
 export const NATIVE_NPM_MAX_SOCKETS = 4;
+export const NATIVE_ELECTRON_ASSET_HOSTS = Object.freeze([
+  'artifacts.electronjs.org',
+  'github-releases.githubusercontent.com',
+  'objects.githubusercontent.com',
+  'release-assets.githubusercontent.com',
+]);
+export const NATIVE_ELECTRON_ASSET_RECOVERABLE_ERRORS = Object.freeze([
+  'ECONNABORTED',
+  'ECONNRESET',
+  'EPIPE',
+  'ETIMEDOUT',
+]);
+export const NATIVE_ELECTRON_ASSET_MAX_TUNNEL_BYTES =
+  ELECTRON_ARTIFACT_RANGE_BYTES + 512 * 1_024;
 export const NATIVE_PARTIAL_CACHE_MARKER = 'HYDRATION-FAILED.json';
 export const NATIVE_HYDRATION_HOSTS = Object.freeze([
   'artifacts.electronjs.org',
@@ -82,6 +114,16 @@ export function nativeHydrationTransportPolicy() {
     proxyGracefulControlHost: NATIVE_PROXY_GRACEFUL_CONTROL_HOST,
     proxyGracefulControlError: NATIVE_PROXY_GRACEFUL_CONTROL_ERROR,
     proxyGracefulControlMaxBytes: NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES,
+    electronArtifactPrefetchPhase: ELECTRON_ARTIFACT_PREFETCH_PHASE,
+    electronArtifactPrefetchStrategy: ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+    electronArtifactRangeBytes: ELECTRON_ARTIFACT_RANGE_BYTES,
+    electronArtifactRangeConcurrency: ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+    electronArtifactRangeMaxAttempts: ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+    electronArtifactRangeTimeoutMs: ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
+    electronArtifactMaxBytes: ELECTRON_ARTIFACT_MAX_BYTES,
+    electronArtifactHosts: [...NATIVE_ELECTRON_ASSET_HOSTS],
+    electronArtifactRecoverableErrors: [...NATIVE_ELECTRON_ASSET_RECOVERABLE_ERRORS],
+    electronArtifactMaxTunnelBytes: NATIVE_ELECTRON_ASSET_MAX_TUNNEL_BYTES,
     partialCacheReuse: false,
   };
 }
@@ -187,6 +229,7 @@ export function candidateNativeCacheEnvironment(validated) {
     HOME: path.join(checked.root, 'home'),
     XDG_CACHE_HOME: path.join(checked.root, 'xdg-cache'),
     ELECTRON_CACHE: checked.electron,
+    electron_config_cache: checked.electron,
     ELECTRON_BUILDER_CACHE: checked.electronBuilder,
     PREBUILD_INSTALL_CACHE: checked.prebuild,
     COPILOT_NATIVE_NPM_CACHE: checked.npm,
@@ -362,6 +405,79 @@ export function nativeRebuildArgs({ npmExecutable, electronVersion, arch }) {
   ];
 }
 
+function validElectronArtifactPrefetch(receipt, layout) {
+  const value = receipt?.electronArtifactPrefetch;
+  const artifacts = value?.artifacts;
+  const expectedPackages = EXPECTED_LIFECYCLE_PACKAGES
+    .filter(([packagePath]) => packagePath.endsWith('/electron') || packagePath === 'node_modules/electron')
+    .map(([packagePath, version]) => ({ packagePath, version }));
+  const command = value?.command;
+  const requests = receipt?.onlineHydration?.proxy?.requests;
+  const start = value?.proxyRequestStartIndex;
+  const end = value?.proxyRequestEndIndex;
+  if (
+    value?.schemaVersion !== 1
+    || value?.status !== 'PASS'
+    || value?.strategy !== ELECTRON_ARTIFACT_PREFETCH_STRATEGY
+    || value?.platform !== 'darwin'
+    || value?.arch !== 'arm64'
+    || value?.rangeBytes !== ELECTRON_ARTIFACT_RANGE_BYTES
+    || value?.concurrency !== ELECTRON_ARTIFACT_RANGE_CONCURRENCY
+    || value?.maxAttemptsPerRange !== ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+    || value?.requestTimeoutMs !== ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS
+    || value?.automaticHydrationRetry !== false
+    || value?.partialCacheReuse !== false
+    || !Array.isArray(artifacts)
+    || artifacts.length !== expectedPackages.length
+    || command?.name !== 'bounded-electron-artifact-range-prefetch'
+    || command?.exitCode !== 0
+    || command?.signal !== null
+    || typeof command?.command !== 'string'
+    || !command.command.includes('electron-artifact-prefetch.mjs')
+    || !path.isAbsolute(command?.stdoutPath ?? '')
+    || !path.isAbsolute(command?.stderrPath ?? '')
+    || !Array.isArray(requests)
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end <= start
+    || end > requests.length
+    || requests.slice(start, end).some((request) => request?.phase !== ELECTRON_ARTIFACT_PREFETCH_PHASE)
+    || requests.some((request, index) => request?.phase === ELECTRON_ARTIFACT_PREFETCH_PHASE
+      && (index < start || index >= end))
+  ) return false;
+  let retryCount = 0;
+  for (let index = 0; index < artifacts.length; index += 1) {
+    const artifact = artifacts[index];
+    const expected = expectedPackages[index];
+    const expectedFile = `electron-v${expected.version}-darwin-arm64.zip`;
+    const expectedUrl =
+      `https://github.com/electron/electron/releases/download/v${expected.version}/${expectedFile}`;
+    const relation = path.relative(layout.electron, artifact?.cachePath ?? '');
+    const baseRequests = Number(artifact?.rangeCount) + 1;
+    if (
+      artifact?.packagePath !== expected.packagePath
+      || artifact?.version !== expected.version
+      || artifact?.fileName !== expectedFile
+      || artifact?.sourceUrl !== expectedUrl
+      || relation === ''
+      || relation.startsWith('..')
+      || path.isAbsolute(relation)
+      || !Number.isSafeInteger(artifact?.bytes)
+      || artifact.bytes < 1
+      || !SHA256.test(artifact?.sha256 ?? '')
+      || !Number.isSafeInteger(artifact?.rangeCount)
+      || artifact.rangeCount !== Math.ceil(artifact.bytes / ELECTRON_ARTIFACT_RANGE_BYTES)
+      || !Number.isSafeInteger(artifact?.requestCount)
+      || artifact.requestCount < baseRequests
+      || artifact.requestCount > baseRequests * ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+      || artifact?.retryCount !== artifact.requestCount - baseRequests
+    ) return false;
+    retryCount += artifact.retryCount;
+  }
+  return receipt?.onlineHydration?.proxy?.transportSummary?.boundedRangeRetryCount === retryCount;
+}
+
 export async function validateNativeHydrationReceipt({
   repository,
   sourceCommit,
@@ -431,6 +547,7 @@ export async function validateNativeHydrationReceipt({
     || receipt?.registryCacheClosure?.strategy !== EXPECTED_REGISTRY_CLOSURE_STRATEGY
     || receipt?.registryCacheClosure?.networkAuthority !== 'deny-network'
     || receipt?.registryCacheClosure?.lifecycleScriptsEnabled !== false
+    || !validElectronArtifactPrefetch(receipt, layout)
     || receipt?.onlineHydration?.status !== 'PASS'
     || receipt?.onlineHydration?.registryMode !== EXPECTED_REGISTRY_MODE
     || receipt?.onlineHydration?.registryRequestCountAfterClosure !== 0

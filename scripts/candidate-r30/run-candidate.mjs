@@ -148,6 +148,8 @@ export function staticPlan({
           'scripts/candidate-r30/native-cache-policy.mjs',
           'scripts/candidate-r30/native-cache-runtime.mjs',
           'scripts/candidate-r30/npm-native-cache-hydrate.mjs',
+          'scripts/candidate-r30/electron-artifact-prefetch.mjs',
+          'scripts/candidate-r30/native-cache-receipt-audit.mjs',
         ],
         digest: '64 lower-case hex per file plus aggregate SHA256',
       },

@@ -4,6 +4,19 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
+## 2026-08-14 R6 Electron release-asset transport repair preparation
+
+- R6 consumed PR #54 exact source `35b3c54059900528e33d79bbb15788479763a58d`, tree `8e931876dc705c33e743a554a69e5bd2640f68d6`, after source gate run `31769650208`, job `94672767727`, `17/17 PASS`.
+- R6 ran the source contract once (`117/117 PASS`) and hydration once. It stopped immutable with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET` during Electron `38.8.6` postinstall: `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes after `1195994ms`.
+- R6 correctly did not apply the R5 `github.com + ETIMEDOUT + 1..65536` control-tunnel exception. Dry-run, Candidate, package, App, E2E and performance counts remained zero; the failed cache is non-reusable.
+- The bounded repair under test prefetches only Electron `38.8.6` and `33.4.11` macOS arm64 ZIPs from their exact official release URLs in 1 MiB Range segments, concurrency 4, at most 3 attempts per segment, then requires each npm package's embedded SHA-256 before cache admission.
+- Recoverable asset resets are eligible only in the explicit `electron-artifact-range-prefetch` proxy phase; other phases, hosts, codes, oversized transfers, protocol/range/length failures and final checksum mismatches remain fail-closed. Whole-hydration retry and partial-cache reuse remain false.
+- Modern Electron's exact `electron_config_cache` variable is now bound to the receipt-owned cache for hydration and Candidate environments.
+- Before the audit migration, focused contracts passed `33/33` and the complete non-nested macOS source contract passed `122/122`.
+- Owner explicitly authorized the strict receipt-audit migration on 2026-08-14. The audit now rejects the superseded `npm ci --prefer-online --registry` lifecycle command and requires metadata-complete registry prefetch, deny-network offline closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated Electron artifact receipt, and the final deny-network proofs.
+- The migrated focused contract passes `44/44`; the complete non-nested macOS Candidate source contract passes `124/124`, with zero failures, skips or cancellations. The same-SHA GitHub source gate remains pending; these remain source evidence only and R7 has not been created.
+- Current state: `SOURCE_REPAIR_LOCAL_VALIDATION_PASS / OWNER_AUDIT_MIGRATION_AUTHORIZED / GITHUB_SOURCE_GATE_PENDING / R7_NOT_CREATED / APP_LAUNCHES=0`.
+
 ## 2026-08-14 R5 Electron control-tunnel repair
 
 - R5 exact authority was PR #54 SHA `6d609d9c989a16e143d38e7a33b2d69d01f1d442`, tree `1b2ffaf673617393f42234f7a54bc1ded801687d`, source gate run `31761937329`, job `94649962981`, `17/17 PASS`.
@@ -131,8 +144,8 @@ local material
 
 ## Next single action
 
-Push the receipt-bound GitHub control-tunnel graceful-EOF repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive R6; R1/R2/R3/R4/R5 remain immutable reference-only.
+Commit/push the authorization-bearing repair to a new exact PR #54 SHA/tree and require the complete GitHub source gate. Only that new green exact source may authorize an all-new R7; R1–R6 remain immutable reference-only.
 
 Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
 
-Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`; the R5 control-tunnel repair is documented in `reports/native-proxy-graceful-control-r1/TEST_RECEIPT.md`.
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`; the R5 control-tunnel repair is documented in `reports/native-proxy-graceful-control-r1/TEST_RECEIPT.md`; the R6 range-prefetch source preparation is documented in `reports/native-electron-range-prefetch-r1/TEST_RECEIPT.md`.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-14 — R6 Electron artifact bounded Range-prefetch preparation
+
+- Sealed R6 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: exact source `35b3c54059900528e33d79bbb15788479763a58d`, source gate `17/17`, source contract `117/117` once, hydration once, and zero Candidate/package/App/E2E/performance executions.
+- Classified the failure as Electron `38.8.6` postinstall on `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes after `1195994ms`; no R5 graceful-control exception applied.
+- Added exact Electron `38.8.6` and `33.4.11` macOS arm64 ZIP prefetch using 1 MiB Range segments, concurrency 4 and at most 3 attempts per segment.
+- Required exact official URLs and npm-package-embedded SHA-256 before a complete ZIP can enter the new receipt-owned cache; bound all segment and proxy evidence into hydration schema v2.
+- Restricted any recoverable reset to the exact prefetch proxy phase and reviewed asset boundaries; preserved whole-hydration no-retry, partial-cache nonreuse and Candidate deny-network.
+- Bound modern Electron's `electron_config_cache` to the receipt-owned cache.
+- Passed pre-authorization focused contracts `33/33` and complete non-nested macOS source contracts `122/122`.
+- Recorded explicit Owner authorization for the legacy audit migration; the strict audit now requires registry prefetch, deny-network closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated Electron receipt and final deny-network proofs, while rejecting the superseded online-registry command.
+- Passed the migrated focused contract `44/44` and complete non-nested macOS Candidate source contract `124/124`; kept R7 creation and App launch forbidden until the same-SHA GitHub source gate passes.
+
 ## 2026-08-14 — Demo Studio CI selector precision
 
 - Retained source gate run `31768811097`, job `94670211578`, as failed evidence: Step 14 found two legitimate `Current note` nodes and the broad `getByText` query failed before coverage JSON generation.

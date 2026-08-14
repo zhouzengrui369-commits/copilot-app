@@ -60,6 +60,26 @@ test('native transport policy keeps retries disabled and bounds concurrency', ()
     proxyGracefulControlHost: 'github.com',
     proxyGracefulControlError: 'ETIMEDOUT',
     proxyGracefulControlMaxBytes: 64 * 1024,
+    electronArtifactPrefetchPhase: 'electron-artifact-range-prefetch',
+    electronArtifactPrefetchStrategy: 'official-electron-embedded-sha256-bounded-range-v1',
+    electronArtifactRangeBytes: 1024 * 1024,
+    electronArtifactRangeConcurrency: 4,
+    electronArtifactRangeMaxAttempts: 3,
+    electronArtifactRangeTimeoutMs: 10 * 60 * 1000,
+    electronArtifactMaxBytes: 512 * 1024 * 1024,
+    electronArtifactHosts: [
+      'artifacts.electronjs.org',
+      'github-releases.githubusercontent.com',
+      'objects.githubusercontent.com',
+      'release-assets.githubusercontent.com',
+    ],
+    electronArtifactRecoverableErrors: [
+      'ECONNABORTED',
+      'ECONNRESET',
+      'EPIPE',
+      'ETIMEDOUT',
+    ],
+    electronArtifactMaxTunnelBytes: 1024 * 1024 + 512 * 1024,
     partialCacheReuse: false,
   });
 });
@@ -94,6 +114,25 @@ test('asset, zero-byte, oversized and non-timeout upstream errors remain fail-cl
       downstreamValidationRequired: false,
     });
   }
+});
+
+test('only the explicit Electron range phase can classify a bounded asset reset for checksum-gated retry', () => {
+  assert.deepEqual(nativeHydrationUpstreamErrorDisposition({
+    host: 'release-assets.githubusercontent.com',
+    errorCode: 'ECONNRESET',
+    bytesUpstreamToClient: 503_434,
+    phase: 'electron-artifact-range-prefetch',
+  }), {
+    action: 'bounded-range-retry',
+    fatal: false,
+    reason: 'integrity-verified-electron-range-retry',
+    downstreamValidationRequired: true,
+  });
+  assert.equal(nativeHydrationUpstreamErrorDisposition({
+    host: 'release-assets.githubusercontent.com',
+    errorCode: 'ECONNRESET',
+    bytesUpstreamToClient: 503_434,
+  }).fatal, true);
 });
 
 test('native proxy uses one receipt-bound IPv4 upstream connection without hydration retry', () => {
@@ -170,6 +209,8 @@ test('proxy summary preserves request counts, bytes and fatal transport errors',
     deniedCount: 0,
     completedCount: 2,
     transportErrorCount: 1,
+    recoverableTransportErrorCount: 0,
+    boundedRangeRetryCount: 0,
     bytesClientToUpstream: 160,
     bytesUpstreamToClient: 320,
     socketPolicy: proxy.socketPolicy,

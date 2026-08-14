@@ -40,6 +40,7 @@ function nativeProof(name, command) {
 }
 
 function proxyRequest(host, {
+  phase = 'native-hydration',
   bytesClientToUpstream = 100,
   bytesUpstreamToClient = 200,
   fatal = false,
@@ -52,6 +53,7 @@ function proxyRequest(host, {
     host,
     port: 443,
     allowed: true,
+    phase,
     transport: {
       startedAt: NOW,
       endedAt: NOW,
@@ -80,6 +82,12 @@ function proxySummary(requests) {
     deniedCount: requests.filter((request) => !request.allowed).length,
     completedCount: requests.filter((request) => request.transport.endedAt).length,
     transportErrorCount: requests.filter((request) => request.transport.fatal).length,
+    recoverableTransportErrorCount: requests.filter(
+      (request) => request.transport.fatal === false && request.transport.error,
+    ).length,
+    boundedRangeRetryCount: requests.filter(
+      (request) => request.transport.errorDisposition?.action === 'bounded-range-retry',
+    ).length,
     bytesClientToUpstream: requests.reduce(
       (sum, request) => sum + request.transport.bytesClientToUpstream,
       0,
@@ -101,16 +109,21 @@ function proxySummary(requests) {
 function canonicalReceipt() {
   const hosts = [...NATIVE_HYDRATION_HOSTS].sort();
   const npm = '/opt/homebrew/bin/npm';
-  const installOnline = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --prefer-online --registry https://registry.npmjs.org/`;
+  const installLifecycle = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline`;
   const installOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline`;
   const rebuildOnline = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
   const rebuildOffline = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} rebuild --runtime=electron --target=${ELECTRON_VERSION} --arch=arm64 --dist-url=https://electronjs.org/headers --build-from-source`;
+  const registryClosure = `/usr/bin/sandbox-exec -p ${OFFLINE_PROFILE} ${npm} ci --cache /tmp/cache/npm --replace-registry-host=always --no-audit --no-fund --offline --ignore-scripts`;
+  const electronPrefetch = `/usr/bin/sandbox-exec -p ${ONLINE_PROFILE} /usr/local/bin/node /repo/scripts/candidate-r30/electron-artifact-prefetch.mjs --repository /repo --cache-root /tmp/cache/electron`;
   const requests = [
     proxyRequest('registry.npmjs.org'),
-    proxyRequest('nodejs.org'),
+    proxyRequest('release-assets.githubusercontent.com', {
+      phase: 'electron-artifact-range-prefetch',
+    }),
     proxyRequest('electronjs.org'),
   ];
   return {
+    schemaVersion: 2,
     status: 'PASS',
     ownerAuthority: OWNER_NATIVE_CACHE_AUTHORITY,
     authorityScope: 'single-exact-commit-bounded-native-toolchain-cache-hydration',
@@ -125,9 +138,70 @@ function canonicalReceipt() {
       electronVersion: ELECTRON_VERSION,
       lifecyclePackages: EXPECTED_LIFECYCLE_PACKAGES,
     },
+    registryPrefetch: {
+      status: 'PASS',
+      strategy: 'lockfile-batched-name-version-npm-pack-v2',
+      metadataMode: 'name-version-packument-and-tarball',
+      automaticRetry: false,
+      batchSize: 24,
+      entryCount: 24,
+      batchCount: 1,
+      manifestSha256: SHA,
+    },
+    registryCacheClosure: {
+      status: 'PASS',
+      strategy: 'deny-network-offline-ci-ignore-scripts-v1',
+      networkAuthority: 'deny-network',
+      lifecycleScriptsEnabled: false,
+      ...commandReceipt('deny-network-registry-cache-closure-proof', registryClosure),
+    },
+    electronArtifactPrefetch: {
+      schemaVersion: 1,
+      status: 'PASS',
+      strategy: 'official-electron-embedded-sha256-bounded-range-v1',
+      platform: 'darwin',
+      arch: 'arm64',
+      rangeBytes: 1024 * 1024,
+      concurrency: 4,
+      maxAttemptsPerRange: 3,
+      requestTimeoutMs: 10 * 60 * 1000,
+      automaticHydrationRetry: false,
+      partialCacheReuse: false,
+      artifacts: [
+        {
+          packagePath: 'apps/copilot-desktop/node_modules/electron',
+          version: '38.8.6',
+          fileName: 'electron-v38.8.6-darwin-arm64.zip',
+          sourceUrl: 'https://github.com/electron/electron/releases/download/v38.8.6/electron-v38.8.6-darwin-arm64.zip',
+          cachePath: '/tmp/cache/electron/38/electron-v38.8.6-darwin-arm64.zip',
+          bytes: 1,
+          sha256: SHA,
+          rangeCount: 1,
+          requestCount: 2,
+          retryCount: 0,
+        },
+        {
+          packagePath: 'node_modules/electron',
+          version: '33.4.11',
+          fileName: 'electron-v33.4.11-darwin-arm64.zip',
+          sourceUrl: 'https://github.com/electron/electron/releases/download/v33.4.11/electron-v33.4.11-darwin-arm64.zip',
+          cachePath: '/tmp/cache/electron/33/electron-v33.4.11-darwin-arm64.zip',
+          bytes: 1,
+          sha256: SHA,
+          rangeCount: 1,
+          requestCount: 2,
+          retryCount: 0,
+        },
+      ],
+      command: commandReceipt('bounded-electron-artifact-range-prefetch', electronPrefetch),
+      proxyRequestStartIndex: 1,
+      proxyRequestEndIndex: 2,
+    },
     onlineHydration: {
       status: 'PASS',
-      install: commandReceipt('bounded-native-toolchain-install', installOnline),
+      registryMode: 'lockfile-name-version-prefetch-closure-then-offline-ci',
+      registryRequestCountAfterClosure: 0,
+      install: commandReceipt('bounded-native-toolchain-lifecycle-install', installLifecycle),
       nativeArm64: nativeProof('bounded-electron-native-arm64-hydration', rebuildOnline),
       proxy: {
         allowedHosts: hosts,
@@ -196,6 +270,30 @@ test('strict receipt audit accepts only the receipt-bound graceful GitHub contro
   assert.equal(audit(receipt).status, 'PASS');
 });
 
+test('strict receipt audit accepts a bounded asset retry only inside the checksum-gated range phase', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.proxy.requests[1] = proxyRequest(
+    'release-assets.githubusercontent.com',
+    {
+      phase: 'electron-artifact-range-prefetch',
+      bytesUpstreamToClient: 503_434,
+      error: { side: 'upstream', code: 'ECONNRESET', message: 'read ECONNRESET' },
+      errorDisposition: {
+        action: 'bounded-range-retry',
+        fatal: false,
+        reason: 'integrity-verified-electron-range-retry',
+        downstreamValidationRequired: true,
+      },
+    },
+  );
+  receipt.electronArtifactPrefetch.artifacts[0].requestCount = 3;
+  receipt.electronArtifactPrefetch.artifacts[0].retryCount = 1;
+  receipt.onlineHydration.proxy.transportSummary = proxySummary(
+    receipt.onlineHydration.proxy.requests,
+  );
+  assert.equal(audit(receipt).status, 'PASS');
+});
+
 test('strict receipt audit rejects graceful-close claims outside the exact control bound', () => {
   const receipt = canonicalReceipt();
   receipt.onlineHydration.proxy.requests.push(proxyRequest('release-assets.githubusercontent.com', {
@@ -243,6 +341,26 @@ test('strict receipt audit rejects online work outside the localhost sandbox', (
     .replace('/usr/bin/sandbox-exec -p ', '')
     .replace(ONLINE_PROFILE, '');
   expectInvalid(receipt, 'onlineHydration.install.command');
+});
+
+test('strict receipt audit rejects the superseded online-registry lifecycle command', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.install.name = 'bounded-native-toolchain-install';
+  receipt.onlineHydration.install.command = receipt.onlineHydration.install.command
+    .replace('--offline', '--prefer-online --registry https://registry.npmjs.org/');
+  assert.throws(
+    () => audit(receipt),
+    (error) => error instanceof NativeCacheHydrationBlocked
+      && error.code === 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID'
+      && error.context.failures.includes('onlineHydration.install')
+      && error.context.failures.includes('onlineHydration.install.command'),
+  );
+});
+
+test('strict receipt audit rejects any registry request after closure', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.registryRequestCountAfterClosure = 1;
+  expectInvalid(receipt, 'registryCacheClosure');
 });
 
 test('strict receipt audit rejects a failed offline install hidden behind PASS', () => {

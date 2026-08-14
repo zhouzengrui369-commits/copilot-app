@@ -19,6 +19,12 @@ import {
   validateNativeHydrationReceipt,
   candidateNativeBuildEnvironment,
   candidateNativeCacheEnvironment,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
+  ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+  ELECTRON_ARTIFACT_RANGE_BYTES,
+  ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+  ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+  ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
 } from './native-cache-policy.mjs';
 import {
   NATIVE_REGISTRY_CLOSURE_STRATEGY,
@@ -74,6 +80,12 @@ export {
   nativeHydrationTransportPolicy,
   parseNativeHydrationArgs,
   validateNativeHydrationReceipt,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
+  ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+  ELECTRON_ARTIFACT_RANGE_BYTES,
+  ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+  ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+  ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
 } from './native-cache-policy.mjs';
 export { nativeRebuildArgs } from './native-cache-policy.mjs';
 export {
@@ -153,6 +165,69 @@ async function commandOutput(receipt) {
     readFile(receipt.stderrPath, 'utf8').catch(() => ''),
   ]);
   return `${stdout}\n${stderr}`;
+}
+
+async function parseElectronArtifactPrefetchReport(stage, layout) {
+  let report;
+  try {
+    report = JSON.parse(await readFile(stage.stdoutPath, 'utf8'));
+  } catch (error) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_ELECTRON_ARTIFACT_PREFETCH_RECEIPT',
+      'Electron artifact prefetch did not emit one valid JSON report',
+      { stage, error: error?.message ?? String(error) },
+    );
+  }
+  const expectedPackages = [
+    'apps/copilot-desktop/node_modules/electron',
+    'node_modules/electron',
+  ];
+  const artifacts = report?.artifacts;
+  const shapeValid = report?.schemaVersion === 1
+    && report?.status === 'PASS'
+    && report?.strategy === ELECTRON_ARTIFACT_PREFETCH_STRATEGY
+    && report?.platform === 'darwin'
+    && report?.arch === 'arm64'
+    && report?.rangeBytes === ELECTRON_ARTIFACT_RANGE_BYTES
+    && report?.concurrency === ELECTRON_ARTIFACT_RANGE_CONCURRENCY
+    && report?.maxAttemptsPerRange === ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+    && report?.requestTimeoutMs === ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS
+    && report?.automaticHydrationRetry === false
+    && report?.partialCacheReuse === false
+    && Array.isArray(artifacts)
+    && JSON.stringify(artifacts.map((artifact) => artifact.packagePath))
+      === JSON.stringify(expectedPackages)
+    && artifacts.every((artifact) => {
+      const expectedFile = `electron-v${artifact.version}-darwin-arm64.zip`;
+      const expectedUrl =
+        `https://github.com/electron/electron/releases/download/v${artifact.version}/${expectedFile}`;
+      const relativeCachePath = path.relative(layout.electron, artifact.cachePath ?? '');
+      const baseRequests = Number(artifact.rangeCount) + 1;
+      return /^\d+\.\d+\.\d+$/u.test(artifact.version ?? '')
+        && artifact.fileName === expectedFile
+        && artifact.sourceUrl === expectedUrl
+        && typeof relativeCachePath === 'string'
+        && relativeCachePath !== ''
+        && !relativeCachePath.startsWith('..')
+        && !path.isAbsolute(relativeCachePath)
+        && Number.isSafeInteger(artifact.bytes)
+        && artifact.bytes > 0
+        && /^[0-9a-f]{64}$/u.test(artifact.sha256 ?? '')
+        && Number.isSafeInteger(artifact.rangeCount)
+        && artifact.rangeCount === Math.ceil(artifact.bytes / ELECTRON_ARTIFACT_RANGE_BYTES)
+        && Number.isSafeInteger(artifact.requestCount)
+        && artifact.requestCount >= baseRequests
+        && artifact.requestCount <= baseRequests * ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+        && artifact.retryCount === artifact.requestCount - baseRequests;
+    });
+  if (!shapeValid) {
+    blockNativeCache(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_ELECTRON_ARTIFACT_PREFETCH_RECEIPT',
+      'Electron artifact prefetch report violates the exact bounded checksum contract',
+      { report },
+    );
+  }
+  return report;
 }
 
 async function writeTransportFailureMarker({
@@ -409,6 +484,7 @@ export async function hydrateNativeToolchainCache(options) {
   };
   let registryPrefetch;
   let registryCacheClosure;
+  let electronArtifactPrefetch;
   let onlineInstall;
   let onlineNative;
   let registryRequestsAfterClosure = [];
@@ -466,6 +542,48 @@ export async function hydrateNativeToolchainCache(options) {
         },
       );
     }
+
+    const electronPrefetchRequestStart = proxy.requests.length;
+    let electronPrefetchStage;
+    proxy.setPhase(ELECTRON_ARTIFACT_PREFETCH_PHASE);
+    try {
+      electronPrefetchStage = await runAsyncRecordedNative({
+        name: 'bounded-electron-artifact-range-prefetch',
+        command: '/usr/bin/sandbox-exec',
+        args: [
+          '-p',
+          nativeHydrationProxyProfile(proxy.port),
+          process.execPath,
+          path.join(path.dirname(fileURLToPath(import.meta.url)), 'electron-artifact-prefetch.mjs'),
+          '--repository',
+          repository,
+          '--cache-root',
+          layout.electron,
+        ],
+        cwd: repository,
+        env: onlineEnv,
+        logRoot,
+      });
+    } finally {
+      proxy.setPhase('native-hydration');
+    }
+    if (electronPrefetchStage.exitCode !== 0) {
+      await failOnlineStage({
+        layout,
+        sourceCommit: options.sourceCommit,
+        proxy,
+        stage: electronPrefetchStage,
+        fallbackCode: 'BLOCKED_NATIVE_CACHE_HYDRATION_ELECTRON_ARTIFACT_PREFETCH',
+        detail: 'bounded official Electron artifact range prefetch failed',
+        requestStartIndex: electronPrefetchRequestStart,
+      });
+    }
+    electronArtifactPrefetch = {
+      ...(await parseElectronArtifactPrefetchReport(electronPrefetchStage, layout)),
+      command: electronPrefetchStage,
+      proxyRequestStartIndex: electronPrefetchRequestStart,
+      proxyRequestEndIndex: proxy.requests.length,
+    };
     await removeInstallTrees(repository);
 
     const postClosureRequestStart = proxy.requests.length;
@@ -639,6 +757,7 @@ export async function hydrateNativeToolchainCache(options) {
       lifecycleScriptsEnabled: false,
       ...registryCacheClosure,
     },
+    electronArtifactPrefetch,
     cacheLayout: layout,
     electronNodedir,
     cacheIdentity,

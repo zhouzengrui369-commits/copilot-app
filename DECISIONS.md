@@ -1,5 +1,27 @@
 # DECISIONS
 
+## D-2026-08-14-04: Prefetch Exact Electron Assets In Checksum-Gated Bounded Ranges
+
+### Background
+
+R6 consumed exact source `35b3c54059900528e33d79bbb15788479763a58d` after a complete GitHub source gate. Its sole hydration stopped during Electron `38.8.6` postinstall when the release-asset tunnel reset after `503434` bytes and approximately 20 minutes. The failure was not eligible for the R5 GitHub control-tunnel completion rule, and no Candidate or App was created.
+
+### Decision
+
+1. Do not treat a partial release-asset transfer as successful EOF and do not reuse R6 bytes.
+2. After metadata-complete registry closure, resolve only the two reviewed Electron lifecycle packages (`38.8.6` and `33.4.11`) and their exact macOS arm64 filenames/checksums from the installed npm packages.
+3. Fetch only exact official Electron GitHub release URLs in 1 MiB Range segments, concurrency 4, with at most 3 attempts per segment and no whole-hydration retry.
+4. Retry only transport reset/timeout/pipe/abort codes. HTTP status, Content-Range, Content-Length, total-size and other protocol failures stop immediately.
+5. Admit a ZIP to the fresh Electron cache only after the package-embedded SHA-256 matches; bind all identities/counts and the proxy request interval into hydration schema v2.
+6. Make the proxy's recoverable asset disposition available only in the explicit prefetch phase and reviewed host/code/byte bounds. Every other use remains fatal.
+7. Set modern Electron's `electron_config_cache` to the receipt-owned cache in both hydration and Candidate environments.
+8. Preserve Candidate deny-network, official host set, port 443, IPv4, partial-cache nonreuse, source cleanliness and all release/Human Owner gates.
+9. The Owner explicitly authorized migration of the legacy strict audit's stale online-registry lifecycle expectation on 2026-08-14. Require registry prefetch, deny-network closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated artifact receipt and final deny-network proofs; reject the old online-registry command. Do not authorize R7 until the resulting same-SHA source gate is green.
+
+### Impact
+
+Long Electron downloads no longer depend on one opaque 20-minute asset tunnel. A transient segment failure can make bounded forward progress, but only a complete exact-checksum ZIP can become cache authority. This is still source preparation, not hydration, Candidate, packaged runtime or milestone proof.
+
 ## D-2026-08-14-03: Gracefully Close Only A Completed-Enough GitHub Control Tunnel
 
 ### Background

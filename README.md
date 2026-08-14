@@ -4,7 +4,7 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
-> 2026-08-14 UI 纠偏进展：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 已完成网页 typecheck/build、聚焦 `21/21`、1440x900 浏览器旅程、零 console 错误及网页技术验收，`PARENT_PM_WEB_ACCEPTANCE=PASS`。本地 R1–R5 均在 Candidate 创建前 fail-closed 且不可复用。R5 的窄范围 control-tunnel source repair 已通过 `117/117`；其首个新 source gate 在一个歧义测试选择器上失败，随后已在不改变 UI/门槛的前提下收紧定位并通过 critical coverage `1113/1113`。最终 documentation-bearing PR head/CI 与 R6 仍待完成。`LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`。
+> 2026-08-14 UI 纠偏进展：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 已完成网页 typecheck/build、聚焦 `21/21`、1440x900 浏览器旅程、零 console 错误及网页技术验收，`PARENT_PM_WEB_ACCEPTANCE=PASS`。R6 使用 source-gated exact SHA `35b3c540...`，但在 Candidate 创建前因 Electron release-asset `ECONNRESET` fail-closed；Candidate/package/App/E2E/performance 均为 0。Owner 已明确授权把旧在线生命周期收据审计迁移到 registry 预取 → deny-network 闭包 → offline 生命周期 → 闭包后 registry 请求为 0 → Electron Range+SHA256 合同；迁移后的聚焦合同 `44/44 PASS`、完整 Candidate 源码合同 `124/124 PASS`，GitHub source gate 尚待提交后验证，R7 尚未创建。`LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`。
 
 ## 权威与当前工作分工
 

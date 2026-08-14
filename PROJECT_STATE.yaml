@@ -1,4 +1,4 @@
-schema_version: 8
+schema_version: 9
 project: copilot-app
 updated_at: "2026-08-14"
 status:
@@ -37,6 +37,7 @@ web_first_ui_r1:
     r3: BLOCKED_SOURCE_CONTRACT_WATCHDOG_ASSERTION
     r4: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
     r5: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    r6: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
   watchdog_contract_repair:
     production_code_changed: false
     focused_repeat: 300/300_PASS
@@ -97,6 +98,52 @@ web_first_ui_r1:
     test_selector_repair_commit: a4801a78
     critical_coverage: 101/101_FILES_1113/1113_TESTS_PASS
     final_pr_head: PENDING_DOCUMENTATION_COMMIT_PUSH_AND_SOURCE_GATE
+  local_deployment_r6:
+    evidence_root: /Users/njx/copilot-evidence/35b3c54059900528e33d79bbb15788479763a58d-20260814T043156Z
+    source_commit: 35b3c54059900528e33d79bbb15788479763a58d
+    source_tree: 8e931876dc705c33e743a554a69e5bd2640f68d6
+    source_gate: 31769650208_94672767727_17/17_PASS
+    source_contract: 117/117_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    phase: bounded-native-toolchain-lifecycle-install
+    electron_version: 38.8.6
+    failing_endpoint: release-assets.githubusercontent.com:443
+    upstream_error: ECONNRESET
+    bytes_upstream_to_client: 503434
+    duration_ms: 1195994
+    dry_run_executions: 0
+    candidate_executions: 0
+    package_executions: 0
+    app_launches: 0
+    e2e_executions: 0
+    performance_runs: 0
+    cache_reusable: false
+    final_process_clean: PASS
+    immutable: true
+  electron_artifact_range_prefetch_repair:
+    status: SOURCE_REPAIR_LOCAL_VALIDATION_PASS
+    strategy: official-electron-embedded-sha256-bounded-range-v1
+    reviewed_versions:
+      - 38.8.6
+      - 33.4.11
+    platform: darwin
+    arch: arm64
+    range_bytes: 1048576
+    concurrency: 4
+    max_attempts_per_range: 3
+    automatic_hydration_retry: false
+    partial_cache_reuse: false
+    embedded_sha256_required: true
+    electron_config_cache_receipt_bound: true
+    pre_authorization_focused_source_contract: 33/33_PASS
+    pre_authorization_complete_source_contract: 122/122_PASS
+    focused_source_contract: 44/44_PASS
+    complete_source_contract: 124/124_PASS
+    owner_audit_migration: AUTHORIZED_AND_IMPLEMENTED_2026-08-14
+    github_source_gate: PENDING_COMMIT_PUSH
+    r7_created: false
+    app_launches: 0
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer

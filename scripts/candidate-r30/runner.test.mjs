@@ -117,6 +117,8 @@ test('static plan binds canonical packaging, exact Electron and three-run perfor
   assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/native-cache-policy.mjs'));
   assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/native-cache-runtime.mjs'));
   assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/npm-native-cache-hydrate.mjs'));
+  assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/electron-artifact-prefetch.mjs'));
+  assert.ok(ledger.criticalControlFiles.includes('scripts/candidate-r30/native-cache-receipt-audit.mjs'));
   assert.match(plan.gates.find((gate) => gate.id === 4).name, /source-contracts/u);
   assert.match(plan.gates.find((gate) => gate.id === 5).name, /source-quality/u);
   assert.equal(

@@ -59,6 +59,16 @@ Electron's downloader uses an initial `github.com` HTTPS control/redirect tunnel
 
 The proxy now has one narrow completion rule: `github.com`, `ETIMEDOUT`, and `1..65536` already received bytes may end downstream with graceful EOF. The request remains receipt-visible and requires downstream command success plus Electron's embedded checksum validation. Any release-asset error, zero-byte response, response above 64 KiB, other error code or other host still destroys the tunnel and fails hydration. The rule does not retry, resume, reuse partial cache, add a mirror, or grant Candidate network access.
 
+### Checksum-gated Electron artifact Range prefetch
+
+R6 proved that a release-asset tunnel can reset after only `503434` bytes and approximately 20 minutes. The successor source design does not broaden the GitHub control-tunnel exception. Instead, after the deny-network registry-cache closure proof has installed the exact dependency graph without lifecycle scripts, a dedicated source-owned phase discovers only the reviewed Electron packages (`38.8.6` and `33.4.11`) and reads their embedded checksum maps.
+
+Each exact official macOS arm64 release ZIP is transferred as 1 MiB HTTP Range segments with concurrency 4 and at most 3 attempts per segment. Status, Content-Range, Content-Length, total-size and final-size checks are exact. A transport retry is receipt-eligible only during `electron-artifact-range-prefetch`, on reviewed Electron asset hosts/codes and below the bounded encrypted-byte ceiling. The complete ZIP must match the npm package's embedded SHA-256 before cache admission.
+
+The hydration receipt binds package path, version, filename, source URL, bytes, SHA-256, segment/request/retry counts, the command receipt and the exact proxy-request interval. `electron_config_cache` points both lifecycle install and Candidate offline install to that receipt-owned cache. Candidate networking remains denied and a failed hydration cache remains non-reusable.
+
+The Owner explicitly authorized migration of the legacy strict audit to the already-established registry-prefetch → deny-network closure → registry-offline lifecycle design. The audit now rejects the superseded online-registry command and requires zero post-closure registry requests, the checksum-gated artifact receipt, and the final deny-network install/native proofs. R7 remains blocked until this exact source passes the complete GitHub source gate.
+
 ### Electron main process
 
 The main process owns:
