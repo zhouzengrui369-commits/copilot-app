@@ -54,9 +54,17 @@ cancelled=0
 
 The same command inside the nested Codex sandbox produced `116/117 PASS`; its only failure was the existing real `/usr/bin/sandbox-exec` grammar smoke with `sandbox_apply: Operation not permitted`. The non-nested run passed that exact smoke test.
 
+## GitHub source-gate follow-up
+
+- Production repair commit: `3e1d742c5e76829e01c0a8c77bd0353fc301a268`, tree `94c520fd59191c863c8e6cf42449c6fb24ddec5e`.
+- Initial gate: run `31768811097`, job `94670211578`; Steps 1–13 passed and Step 14 failed because `knowledge-studio-mvp.test.tsx` used an unscoped `getByText('Current note')` while the Demo UI intentionally renders that title in the source rail and document heading.
+- Test repair commit: `a4801a78`; both queries are scoped to `studio-source-rail`. Production UI, transport policy, coverage config and thresholds are unchanged.
+- Local focused result: `2/2 PASS`.
+- Local exact `npm run test:coverage:critical --workspace @copilot/desktop`: `101/101` files and `1113/1113` tests PASS; statements `96.02%`, branches `91.89%`, functions `95.55%`, lines `96.02%`.
+
 ## Remaining gates
 
-- Commit/push exact PR #54 head: pending.
+- Final documentation-bearing exact PR #54 head push: pending.
 - GitHub source gate on new exact head: pending.
 - R6 hydration/Candidate/package/App/E2E/performance: not run.
 - Parent PM packaged acceptance: pending.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-14 — Demo Studio CI selector precision
+
+- Retained source gate run `31768811097`, job `94670211578`, as failed evidence: Step 14 found two legitimate `Current note` nodes and the broad `getByText` query failed before coverage JSON generation.
+- Scoped both Studio assertions to the existing `studio-source-rail` boundary; no product UI, Demo authority, production behavior or coverage threshold changed.
+- Passed focused Studio tests `2/2` and the exact critical coverage command at `101/101` files and `1113/1113` tests, with `96.02%` statements and `91.89%` branches.
+- R6 remains blocked until the final documentation-bearing PR #54 SHA/tree completes the full GitHub source gate.
+
 ## 2026-08-14 — R5 GitHub control-tunnel graceful EOF
 
 - Sealed R5 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: source `112/112 PASS`, one hydration, zero dry-run/Candidate/package/App/E2E/performance.

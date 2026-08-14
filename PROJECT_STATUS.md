@@ -12,8 +12,10 @@
 - The source repair allows graceful EOF only for `github.com + ETIMEDOUT + 1..65536 received bytes`. It remains fail-closed for release-assets, zero-byte, oversized, non-timeout and other-host errors. Downstream command success and the Electron package's embedded checksum remain mandatory.
 - `automaticRetry=false`, `npmFetchRetries=0`, IPv4, allowlist, port, cache nonreuse and Candidate deny-network boundaries are unchanged.
 - Complete source contract: `117/117 PASS` in the non-nested macOS environment. Nested execution produced the expected environment-only `sandbox_apply: Operation not permitted` on the existing Darwin grammar smoke while all other `116/117` passed.
-- Current state: source repair tested locally; commit/push/new GitHub source gate pending. R5 and all predecessor paths are immutable and ineligible for R6 reuse.
-- Next step: commit and push the repair to Draft PR #54, require a complete GitHub source gate on the new exact SHA/tree, then issue all-new R6 authority. Packaged runtime and Human Owner milestone gates remain pending.
+- The source repair was committed and pushed as `3e1d742c5e76829e01c0a8c77bd0353fc301a268`, tree `94c520fd59191c863c8e6cf42449c6fb24ddec5e`. Its first GitHub source gate run `31768811097`, job `94670211578`, reached Step 14 and failed on one ambiguous test query: two legitimate Demo UI nodes contained `Current note`.
+- Test-only commit `a4801a78` scopes both assertions to `studio-source-rail`; it changes no UI, production code, coverage threshold, transport policy or runtime behavior. Focused Studio tests pass `2/2`; the exact critical coverage command passes `101/101` files, `1113/1113` tests, `96.02%` statements and `91.89%` branches.
+- Current state: durable handoff update and a new complete GitHub source gate are pending. R5 and all predecessor paths are immutable and ineligible for R6 reuse.
+- Next step: push the final documentation-bearing PR #54 head, require the complete GitHub source gate on that exact SHA/tree, then issue all-new R6 authority. Packaged runtime and Human Owner milestone gates remain pending.
 
 ## 2026-08-13 web-first UI correction
 

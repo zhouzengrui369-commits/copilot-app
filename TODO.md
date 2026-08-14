@@ -51,7 +51,9 @@ Exact unlock condition: the repaired PR head must pass the complete GitHub sourc
 - [x] Require strict receipt validation for the exact graceful disposition; reject fabricated disposition on error-free or out-of-bound tunnels.
 - [x] Preserve IPv4, official-host allowlist, port 443, zero retry, no mirror change, partial-cache nonreuse and Candidate deny-network.
 - [x] Pass the complete non-nested macOS source contract `117/117`.
-- [ ] Commit/push a new exact PR #54 head and pass the complete GitHub source gate.
+- [x] Commit/push the production repair as `3e1d742c5e76829e01c0a8c77bd0353fc301a268`; retain source gate run `31768811097`, job `94670211578`, as failed evidence rather than hiding its Step 14 test-selector defect.
+- [x] Scope the Studio test query to `studio-source-rail` in test-only commit `a4801a78`; pass focused `2/2` and critical coverage `101/101` files, `1113/1113` tests without changing UI or thresholds.
+- [ ] Push the final documentation-bearing exact PR #54 head and pass the complete GitHub source gate on that same SHA/tree.
 - [ ] Issue R6 with all-new authority, cache, worktree, evidence, Candidate, artifact, app-data and runtime identities; R1–R5 remain ineligible for reuse.
 
 Exact unlock condition: only the new source-gated PR #54 SHA/tree may authorize R6. Local unit PASS and R5's partial cache are not deployment authority.

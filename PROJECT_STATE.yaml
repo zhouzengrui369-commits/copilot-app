@@ -91,7 +91,12 @@ web_first_ui_r1:
     npm_fetch_retries: 0
     mirror_changed: false
     complete_source_contract: 117/117_PASS
-    final_pr_head: PENDING_COMMIT_PUSH_AND_SOURCE_GATE
+    production_repair_commit: 3e1d742c5e76829e01c0a8c77bd0353fc301a268
+    initial_source_gate: 31768811097_94670211578_STEP14_FAIL
+    initial_source_gate_failure: AMBIGUOUS_CURRENT_NOTE_TEST_QUERY
+    test_selector_repair_commit: a4801a78
+    critical_coverage: 101/101_FILES_1113/1113_TESTS_PASS
+    final_pr_head: PENDING_DOCUMENTATION_COMMIT_PUSH_AND_SOURCE_GATE
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer
@@ -235,5 +240,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Commit and push the receipt-bound GitHub control-tunnel graceful-EOF repair to Draft PR #54, pass the source gate on its new exact head, then issue R6 with all-new paths and identities."
+next_single_action: "Push the final documentation-bearing Draft PR #54 head, pass the complete source gate on that exact SHA/tree, then issue R6 with all-new paths and identities."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"
