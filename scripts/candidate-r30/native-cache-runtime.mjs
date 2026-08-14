@@ -23,6 +23,9 @@ import {
   NATIVE_NPM_MAX_SOCKETS,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_GRACEFUL_CONTROL_ERROR,
+  NATIVE_PROXY_GRACEFUL_CONTROL_HOST,
+  NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES,
   NATIVE_PROXY_UPSTREAM_FAMILY,
   NATIVE_TOOLCHAIN_PROFILE,
   NATIVE_BUILD_MODE,
@@ -245,6 +248,32 @@ export function nativeHydrationUpstreamConnectOptions(host) {
   };
 }
 
+export function nativeHydrationUpstreamErrorDisposition({
+  host,
+  errorCode,
+  bytesUpstreamToClient,
+} = {}) {
+  const bytes = Number(bytesUpstreamToClient ?? 0);
+  const graceful = String(host ?? '').toLowerCase() === NATIVE_PROXY_GRACEFUL_CONTROL_HOST
+    && errorCode === NATIVE_PROXY_GRACEFUL_CONTROL_ERROR
+    && Number.isSafeInteger(bytes)
+    && bytes > 0
+    && bytes <= NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES;
+  return graceful
+    ? {
+      action: 'graceful-eof',
+      fatal: false,
+      reason: 'late-github-control-response-timeout',
+      downstreamValidationRequired: true,
+    }
+    : {
+      action: 'fail-closed-destroy',
+      fatal: true,
+      reason: 'untrusted-or-incomplete-upstream-termination',
+      downstreamValidationRequired: false,
+    };
+}
+
 export function classifyNativeTransportFailure(output) {
   const text = String(output ?? '');
   const cases = [
@@ -337,7 +366,7 @@ export async function startAllowlistedConnectProxy(
       request.transport.upstreamDestroyed = upstream?.destroyed ?? true;
     };
 
-    const recordError = (side, error) => {
+    const recordError = (side, error, disposition = null) => {
       if (!request || closing || finalized) return;
       if (!request.transport.error) {
         request.transport.error = {
@@ -345,7 +374,8 @@ export async function startAllowlistedConnectProxy(
           code: error?.code ?? 'UNKNOWN',
           message: error instanceof Error ? error.message : String(error),
         };
-        request.transport.fatal = true;
+        request.transport.errorDisposition = disposition;
+        request.transport.fatal = disposition?.fatal ?? true;
       }
     };
 
@@ -418,10 +448,17 @@ export async function startAllowlistedConnectProxy(
         finish();
       });
       upstream.on('error', (error) => {
-        recordError('upstream', error);
+        const disposition = nativeHydrationUpstreamErrorDisposition({
+          host,
+          errorCode: error?.code ?? 'UNKNOWN',
+          bytesUpstreamToClient: request.transport.bytesUpstreamToClient,
+        });
+        recordError('upstream', error, disposition);
         if (!client.destroyed) {
           if (request.transport.bytesUpstreamToClient === 0) {
             client.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+          } else if (disposition.action === 'graceful-eof') {
+            client.end();
           } else {
             client.destroy(error);
           }

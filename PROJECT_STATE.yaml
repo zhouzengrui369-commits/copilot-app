@@ -35,6 +35,8 @@ web_first_ui_r1:
     r1: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
     r2: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
     r3: BLOCKED_SOURCE_CONTRACT_WATCHDOG_ASSERTION
+    r4: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    r5: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
   watchdog_contract_repair:
     production_code_changed: false
     focused_repeat: 300/300_PASS
@@ -62,7 +64,34 @@ web_first_ui_r1:
     npm_fetch_retries: 0
     official_host_allowlist_changed: false
     partial_cache_reuse: false
-    final_pr_head: PENDING_PUSH_AND_SOURCE_GATE
+    final_pr_head: 6d609d9c989a16e143d38e7a33b2d69d01f1d442
+    final_pr_tree: 1b2ffaf673617393f42234f7a54bc1ded801687d
+    final_source_gate: 31761937329_94649962981_17/17_PASS
+  local_deployment_r5:
+    evidence_root: /Users/njx/copilot-evidence/6d609d9c989a16e143d38e7a33b2d69d01f1d442-20260814T020338Z
+    source_contract: 112/112_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    failing_endpoint: github.com:443
+    upstream_error: ETIMEDOUT
+    failing_endpoint_bytes_upstream_to_client: 3088
+    total_bytes_upstream_to_client: 121555082
+    dry_run_executions: 0
+    candidate_executions: 0
+    app_launches: 0
+    final_process_clean: PASS
+    immutable: true
+  github_control_tunnel_repair:
+    graceful_host: github.com
+    graceful_error: ETIMEDOUT
+    graceful_received_bytes: 1..65536
+    downstream_validation_required: true
+    release_asset_errors_fail_closed: true
+    automatic_retry: false
+    npm_fetch_retries: 0
+    mirror_changed: false
+    complete_source_contract: 117/117_PASS
+    final_pr_head: PENDING_COMMIT_PUSH_AND_SOURCE_GATE
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer
@@ -206,5 +235,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Pass the complete source contracts, push the receipt-bound IPv4 CONNECT repair to Draft PR #54, pass the source gate on its new exact head, then issue R5 with all-new paths and identities."
+next_single_action: "Commit and push the receipt-bound GitHub control-tunnel graceful-EOF repair to Draft PR #54, pass the source gate on its new exact head, then issue R6 with all-new paths and identities."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

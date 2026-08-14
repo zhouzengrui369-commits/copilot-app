@@ -6,6 +6,9 @@ import {
   NATIVE_NPM_MAX_SOCKETS,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_GRACEFUL_CONTROL_ERROR,
+  NATIVE_PROXY_GRACEFUL_CONTROL_HOST,
+  NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES,
   NATIVE_PROXY_UPSTREAM_FAMILY,
   nativeHydrationTransportPolicy,
   partialHydrationFailureDocument,
@@ -13,6 +16,7 @@ import {
 import {
   classifyNativeTransportFailure,
   configureNativeTunnelSocket,
+  nativeHydrationUpstreamErrorDisposition,
   nativeHydrationUpstreamConnectOptions,
   proxyTransportSummary,
 } from './native-cache-runtime.mjs';
@@ -53,8 +57,43 @@ test('native transport policy keeps retries disabled and bounds concurrency', ()
     proxyKeepAliveMs: 30_000,
     proxyIdleTimeoutMs: 20 * 60 * 1000,
     proxyUpstreamFamily: 4,
+    proxyGracefulControlHost: 'github.com',
+    proxyGracefulControlError: 'ETIMEDOUT',
+    proxyGracefulControlMaxBytes: 64 * 1024,
     partialCacheReuse: false,
   });
+});
+
+test('only a late GitHub control-response timeout receives graceful EOF', () => {
+  assert.equal(NATIVE_PROXY_GRACEFUL_CONTROL_HOST, 'github.com');
+  assert.equal(NATIVE_PROXY_GRACEFUL_CONTROL_ERROR, 'ETIMEDOUT');
+  assert.equal(NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES, 64 * 1024);
+  assert.deepEqual(nativeHydrationUpstreamErrorDisposition({
+    host: 'github.com',
+    errorCode: 'ETIMEDOUT',
+    bytesUpstreamToClient: 3_088,
+  }), {
+    action: 'graceful-eof',
+    fatal: false,
+    reason: 'late-github-control-response-timeout',
+    downstreamValidationRequired: true,
+  });
+});
+
+test('asset, zero-byte, oversized and non-timeout upstream errors remain fail-closed', () => {
+  for (const input of [
+    { host: 'release-assets.githubusercontent.com', errorCode: 'ETIMEDOUT', bytesUpstreamToClient: 121_555_082 },
+    { host: 'github.com', errorCode: 'ETIMEDOUT', bytesUpstreamToClient: 0 },
+    { host: 'github.com', errorCode: 'ETIMEDOUT', bytesUpstreamToClient: 64 * 1024 + 1 },
+    { host: 'github.com', errorCode: 'ECONNRESET', bytesUpstreamToClient: 3_088 },
+  ]) {
+    assert.deepEqual(nativeHydrationUpstreamErrorDisposition(input), {
+      action: 'fail-closed-destroy',
+      fatal: true,
+      reason: 'untrusted-or-incomplete-upstream-termination',
+      downstreamValidationRequired: false,
+    });
+  }
 });
 
 test('native proxy uses one receipt-bound IPv4 upstream connection without hydration retry', () => {

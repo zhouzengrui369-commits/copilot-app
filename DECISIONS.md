@@ -1,5 +1,23 @@
 # DECISIONS
 
+## D-2026-08-14-03: Gracefully Close Only A Completed-Enough GitHub Control Tunnel
+
+### Background
+
+R5 consumed exact source `6d609d9c989a16e143d38e7a33b2d69d01f1d442` once. Source contracts passed `112/112`; Candidate creation stayed at zero. Hydration transferred `121555082` bytes upstream-to-client, but the final fatal request was `github.com:443` with only `3088` response bytes and upstream `ETIMEDOUT`. The proxy then destroyed the downstream socket, and Electron `install.js` failed with `RequestError: socket hang up`.
+
+### Decision
+
+1. Treat only `github.com + ETIMEDOUT + 1..65536 received bytes` as a late control-response close eligible for graceful downstream EOF.
+2. Record the error and exact disposition in the proxy receipt; receipt audit accepts it only when all bounds match and downstream lifecycle success proves protocol/content validation.
+3. Keep release-assets, zero-byte, oversized, non-timeout and other-host errors fatal and fail-closed.
+4. Preserve IPv4, allowlist, port 443, `automaticRetry=false`, `npmFetchRetries=0`, no mirror change, partial-cache nonreuse and Candidate deny-network.
+5. Require a new exact source-gated PR head and all-new R6 identity; R5 cannot be resumed or reused.
+
+### Impact
+
+The proxy no longer manufactures a downstream `socket hang up` for the exact late GitHub redirect/control timeout seen in R5, while asset integrity and every broader transport failure remain fail-closed. This is source readiness only; it does not prove hydration, Candidate, packaged runtime, release or Human Owner acceptance.
+
 ## D-2026-08-14-02: Bind Native Hydration CONNECT To IPv4 In This macOS Authority
 
 ### Background

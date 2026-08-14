@@ -53,6 +53,12 @@ Hydration child commands run in detached process groups under a bounded watchdog
 
 The owner-authorized macOS native hydration proxy accepts only CONNECT requests for the exact official-host allowlist on port `443`. Its one upstream socket is receipt-bound to IPv4 (`proxyUpstreamFamily=4`). This avoids Node 24 auto-family attempt windows that were shorter than observed owner-environment IPv4 connect latency. It does not add a request retry, alternate mirror, host, port, or Candidate network permission; every failed hydration remains terminal and its partial cache remains non-reusable.
 
+### Native hydration GitHub control-tunnel completion
+
+Electron's downloader uses an initial `github.com` HTTPS control/redirect tunnel and a separate `release-assets.githubusercontent.com` asset tunnel. R5 transferred approximately 121.6 MB through the bounded proxy, then the control tunnel reported a late upstream `ETIMEDOUT` after 3,088 received bytes. Destroying the downstream socket converted that late control error into Electron `install.js` `socket hang up` even though the large asset tunnel had already progressed.
+
+The proxy now has one narrow completion rule: `github.com`, `ETIMEDOUT`, and `1..65536` already received bytes may end downstream with graceful EOF. The request remains receipt-visible and requires downstream command success plus Electron's embedded checksum validation. Any release-asset error, zero-byte response, response above 64 KiB, other error code or other host still destroys the tunnel and fails hydration. The rule does not retry, resume, reuse partial cache, add a mirror, or grant Candidate network access.
+
 ### Electron main process
 
 The main process owns:

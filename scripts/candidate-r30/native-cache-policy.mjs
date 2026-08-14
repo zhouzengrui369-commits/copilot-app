@@ -14,6 +14,9 @@ export const NATIVE_BUILD_MODE = 'build-from-source-with-receipt-bound-headers';
 export const NATIVE_PROXY_KEEPALIVE_MS = 30_000;
 export const NATIVE_PROXY_IDLE_TIMEOUT_MS = 20 * 60 * 1_000;
 export const NATIVE_PROXY_UPSTREAM_FAMILY = 4;
+export const NATIVE_PROXY_GRACEFUL_CONTROL_HOST = 'github.com';
+export const NATIVE_PROXY_GRACEFUL_CONTROL_ERROR = 'ETIMEDOUT';
+export const NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES = 64 * 1_024;
 export const NATIVE_NPM_FETCH_RETRIES = 0;
 export const NATIVE_NPM_FETCH_TIMEOUT_MS = 15 * 60 * 1_000;
 export const NATIVE_NPM_MAX_SOCKETS = 4;
@@ -76,6 +79,9 @@ export function nativeHydrationTransportPolicy() {
     proxyKeepAliveMs: NATIVE_PROXY_KEEPALIVE_MS,
     proxyIdleTimeoutMs: NATIVE_PROXY_IDLE_TIMEOUT_MS,
     proxyUpstreamFamily: NATIVE_PROXY_UPSTREAM_FAMILY,
+    proxyGracefulControlHost: NATIVE_PROXY_GRACEFUL_CONTROL_HOST,
+    proxyGracefulControlError: NATIVE_PROXY_GRACEFUL_CONTROL_ERROR,
+    proxyGracefulControlMaxBytes: NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES,
     partialCacheReuse: false,
   };
 }

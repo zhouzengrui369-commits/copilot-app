@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-14 — R5 GitHub control-tunnel graceful EOF
+
+- Sealed R5 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: source `112/112 PASS`, one hydration, zero dry-run/Candidate/package/App/E2E/performance.
+- Classified the failure as a late `github.com` control/redirect tunnel `ETIMEDOUT` after 3,088 bytes; the bounded proxy had transferred 121,555,082 upstream-to-client bytes in total before forced downstream destruction surfaced as Electron `socket hang up`.
+- Added a narrow graceful-EOF disposition only for `github.com + ETIMEDOUT + 1..65536 bytes` and made it receipt-bound.
+- Kept release-assets, zero-byte, oversized, non-timeout and other-host errors fail-closed; preserved IPv4, no retry, no mirror change, partial-cache nonreuse and Candidate deny-network.
+- Added transport and receipt-audit regressions, including rejection of fabricated/out-of-bound graceful claims.
+- Passed the complete source contract `117/117` in the non-nested macOS environment. R6 remains blocked until the new PR #54 head passes GitHub source gate.
+
 ## 2026-08-14 — Receipt-bound IPv4 native hydration proxy
 
 - Recorded R4 as immutable transport-blocked after exact authority and `111/111` source contracts passed; hydration ran once, while Candidate and App execution counts stayed zero.

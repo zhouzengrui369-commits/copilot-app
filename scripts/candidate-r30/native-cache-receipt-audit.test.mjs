@@ -44,6 +44,7 @@ function proxyRequest(host, {
   bytesUpstreamToClient = 200,
   fatal = false,
   error = null,
+  errorDisposition = null,
 } = {}) {
   const policy = nativeHydrationTransportPolicy();
   return {
@@ -59,6 +60,7 @@ function proxyRequest(host, {
       bytesUpstreamToClient,
       fatal,
       error,
+      errorDisposition,
       socketPolicy: {
         keepAlive: true,
         keepAliveMs: policy.proxyKeepAliveMs,
@@ -174,6 +176,53 @@ test('strict receipt audit accepts the complete transport and hydrator proof sha
   assert.equal(result.proxyRequestCount, 3);
   assert.equal(result.transportPolicy.automaticRetry, false);
   assert.equal(result.offlineNativeExitCode, 0);
+});
+
+test('strict receipt audit accepts only the receipt-bound graceful GitHub control close', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.proxy.requests.push(proxyRequest('github.com', {
+    bytesUpstreamToClient: 3_088,
+    error: { side: 'upstream', code: 'ETIMEDOUT', message: 'read ETIMEDOUT' },
+    errorDisposition: {
+      action: 'graceful-eof',
+      fatal: false,
+      reason: 'late-github-control-response-timeout',
+      downstreamValidationRequired: true,
+    },
+  }));
+  receipt.onlineHydration.proxy.transportSummary = proxySummary(
+    receipt.onlineHydration.proxy.requests,
+  );
+  assert.equal(audit(receipt).status, 'PASS');
+});
+
+test('strict receipt audit rejects graceful-close claims outside the exact control bound', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.proxy.requests.push(proxyRequest('release-assets.githubusercontent.com', {
+    bytesUpstreamToClient: 121_555_082,
+    error: { side: 'upstream', code: 'ETIMEDOUT', message: 'read ETIMEDOUT' },
+    errorDisposition: {
+      action: 'graceful-eof',
+      fatal: false,
+      reason: 'late-github-control-response-timeout',
+      downstreamValidationRequired: true,
+    },
+  }));
+  receipt.onlineHydration.proxy.transportSummary = proxySummary(
+    receipt.onlineHydration.proxy.requests,
+  );
+  expectInvalid(receipt, 'onlineHydration.proxy');
+});
+
+test('strict receipt audit rejects an unexplained disposition on an error-free tunnel', () => {
+  const receipt = canonicalReceipt();
+  receipt.onlineHydration.proxy.requests[0].transport.errorDisposition = {
+    action: 'graceful-eof',
+    fatal: false,
+    reason: 'late-github-control-response-timeout',
+    downstreamValidationRequired: true,
+  };
+  expectInvalid(receipt, 'onlineHydration.proxy');
 });
 
 test('strict receipt audit rejects a claimed proxy PASS without request evidence', () => {

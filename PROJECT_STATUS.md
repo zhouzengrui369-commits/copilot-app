@@ -4,6 +4,17 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
+## 2026-08-14 R5 Electron control-tunnel repair
+
+- R5 exact authority was PR #54 SHA `6d609d9c989a16e143d38e7a33b2d69d01f1d442`, tree `1b2ffaf673617393f42234f7a54bc1ded801687d`, source gate run `31761937329`, job `94649962981`, `17/17 PASS`.
+- R5 ran the source contract once (`112/112 PASS`) and hydration once. It stopped immutable with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`; dry-run, Candidate, package, App, E2E and performance counts remained zero.
+- Receipt evidence shows the large Electron release transfer reached `121555082` upstream-to-client bytes, while the fatal tunnel was the separate `github.com` control/redirect connection after `3088` bytes with upstream `ETIMEDOUT`; forced downstream destruction surfaced as Electron `install.js` `socket hang up`.
+- The source repair allows graceful EOF only for `github.com + ETIMEDOUT + 1..65536 received bytes`. It remains fail-closed for release-assets, zero-byte, oversized, non-timeout and other-host errors. Downstream command success and the Electron package's embedded checksum remain mandatory.
+- `automaticRetry=false`, `npmFetchRetries=0`, IPv4, allowlist, port, cache nonreuse and Candidate deny-network boundaries are unchanged.
+- Complete source contract: `117/117 PASS` in the non-nested macOS environment. Nested execution produced the expected environment-only `sandbox_apply: Operation not permitted` on the existing Darwin grammar smoke while all other `116/117` passed.
+- Current state: source repair tested locally; commit/push/new GitHub source gate pending. R5 and all predecessor paths are immutable and ineligible for R6 reuse.
+- Next step: commit and push the repair to Draft PR #54, require a complete GitHub source gate on the new exact SHA/tree, then issue all-new R6 authority. Packaged runtime and Human Owner milestone gates remain pending.
+
 ## 2026-08-13 web-first UI correction
 
 - Exact base: Draft PR #20 `d450badfc85b65d3eef20f05eeb0607c1bf6a912`.
@@ -15,9 +26,9 @@
 - Local deployment R1/R2 stopped during one-shot hydration on allowed-host transport failures; R3 exposed and stopped on a wall-clock watchdog test race. The deterministic test repair became source `c9ed8b346e60b580860e58dde459372a2f8384c4`, tree `a69b39aead99fc88b4b11de3e9598e650ddcd12b`, and passed source gate run `31758923541`, job `94640840476`, `17/17`.
 - R4 proved exact authority and `111/111` source contracts, then its sole hydration stopped on `registry.npmjs.org:443` upstream `ETIMEDOUT`; Candidate and App executions remained zero.
 - Transport diagnosis reproduced Node 24's default-family instability at `1/3` proxy success while direct curl IPv4 passed `3/3`. A diagnostic-only `family:4` proxy passed `3/3`, all nine allowlisted hosts exposed A records, and its audit was requests `3`, allowed `3`, denied `0`, errors `0`.
-- In progress: bind IPv4 upstream selection into source transport policy and receipts without changing allowlist, timeout, concurrency, mirror, automatic retry, or partial-cache nonreuse.
-- Next step: push the repair as a new exact PR #54 head, pass its complete source gate, then issue R5 with all-new identities.
-- Risks: browser fixture is not runtime proof; R1/R2/R3/R4 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
+- Completed after that checkpoint: IPv4 source `6d609d9c989a16e143d38e7a33b2d69d01f1d442` passed source gate; R5 consumed it once and stopped on the later GitHub control-tunnel error described above.
+- In progress: commit and source-gate the narrow graceful-control-close repair before any R6 authorization.
+- Risks: browser fixture is not runtime proof; R1/R2/R3/R4/R5 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
 - Latest important change: `PARENT_PM_WEB_ACCEPTANCE=PASS / LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`.
 
 R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
@@ -118,8 +129,8 @@ local material
 
 ## Next single action
 
-Push the receipt-bound IPv4 CONNECT repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive R5; R1/R2/R3/R4 remain immutable reference-only.
+Push the receipt-bound GitHub control-tunnel graceful-EOF repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive R6; R1/R2/R3/R4/R5 remain immutable reference-only.
 
 Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
 
-Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`.
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`; the R5 control-tunnel repair is documented in `reports/native-proxy-graceful-control-r1/TEST_RECEIPT.md`.

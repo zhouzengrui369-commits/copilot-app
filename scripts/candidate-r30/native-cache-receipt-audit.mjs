@@ -59,7 +59,18 @@ function expectedSocketPolicy(transportPolicy) {
   };
 }
 
-function validTransportReceipt(transport, socketPolicy) {
+function validTransportReceipt(request, socketPolicy, transportPolicy) {
+  const transport = request?.transport;
+  const gracefulControlClose = request?.host === transportPolicy.proxyGracefulControlHost
+    && transport?.error?.side === 'upstream'
+    && transport?.error?.code === transportPolicy.proxyGracefulControlError
+    && transport?.errorDisposition?.action === 'graceful-eof'
+    && transport?.errorDisposition?.fatal === false
+    && transport?.errorDisposition?.reason === 'late-github-control-response-timeout'
+    && transport?.errorDisposition?.downstreamValidationRequired === true
+    && Number.isSafeInteger(transport?.bytesUpstreamToClient)
+    && transport.bytesUpstreamToClient > 0
+    && transport.bytesUpstreamToClient <= transportPolicy.proxyGracefulControlMaxBytes;
   return validIso(transport?.startedAt)
     && validIso(transport?.endedAt)
     && Number.isSafeInteger(transport?.durationMs)
@@ -69,7 +80,13 @@ function validTransportReceipt(transport, socketPolicy) {
     && Number.isSafeInteger(transport?.bytesUpstreamToClient)
     && transport.bytesUpstreamToClient >= 0
     && transport?.fatal === false
-    && transport?.error === null
+    && (
+      (
+        transport?.error === null
+        && (transport?.errorDisposition === null || transport?.errorDisposition === undefined)
+      )
+      || gracefulControlClose
+    )
     && sameJson(transport?.socketPolicy, socketPolicy);
 }
 
@@ -85,7 +102,7 @@ function auditedProxy(proxy, expectedHosts, transportPolicy) {
       && request?.allowed === true
       && request?.port === 443
       && expectedHosts.includes(request?.host)
-      && validTransportReceipt(request.transport, socketPolicy))
+      && validTransportReceipt(request, socketPolicy, transportPolicy))
   ) return false;
 
   const summary = proxy?.transportSummary;

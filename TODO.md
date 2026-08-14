@@ -37,10 +37,24 @@ Exact unlock condition: the new 40-character PR #54 head, not `b8b04819...`, mus
 - [x] Bind `proxyUpstreamFamily=4` into transport policy, proxy audit receipts, validation, and source contracts.
 - [x] Preserve one request per CONNECT, automatic retry `false`, npm retries `0`, official-host allowlist, port `443`, mirror, timeouts, concurrency, and partial-cache nonreuse.
 - [x] Pass focused transport/receipt/hydrator and governance contracts `30/30`; pass complete Candidate source contracts `112/112` in a non-nested macOS sandbox environment.
-- [ ] Push the new exact PR #54 head and require complete GitHub source gate PASS.
-- [ ] Issue R5 only from that new SHA/tree with all-new paths; R1/R2/R3/R4 and all preflight assets remain ineligible for reuse.
+- [x] Push exact PR #54 head `6d609d9c989a16e143d38e7a33b2d69d01f1d442` and pass source gate run `31761937329`, job `94649962981`, `17/17`.
+- [x] Issue R5 only from that new SHA/tree with all-new paths; R1/R2/R3/R4 and all preflight assets remained ineligible for reuse.
 
 Exact unlock condition: the repaired PR head must pass the complete GitHub source gate. A diagnostic-only temporary proxy PASS is not deployment authority.
+
+## P0 — R5 GitHub control-tunnel repair / R6 unlock
+
+- [x] Accept R5 evidence root `6d609d9c989a16e143d38e7a33b2d69d01f1d442-20260814T020338Z` as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`.
+- [x] Preserve R5 counts: source `112/112 PASS` once; hydration once; dry-run/Candidate/package/App/E2E/performance all zero; final process clean.
+- [x] Classify the exact terminal tunnel: `github.com:443`, upstream `ETIMEDOUT`, `3088` received bytes, while total proxy transfer reached `121555082` bytes and Electron reported `socket hang up` after forced downstream destruction.
+- [x] Add an auditable graceful EOF only for `github.com + ETIMEDOUT + 1..65536 bytes` and keep all asset/zero-byte/oversized/non-timeout/other-host terminations fail-closed.
+- [x] Require strict receipt validation for the exact graceful disposition; reject fabricated disposition on error-free or out-of-bound tunnels.
+- [x] Preserve IPv4, official-host allowlist, port 443, zero retry, no mirror change, partial-cache nonreuse and Candidate deny-network.
+- [x] Pass the complete non-nested macOS source contract `117/117`.
+- [ ] Commit/push a new exact PR #54 head and pass the complete GitHub source gate.
+- [ ] Issue R6 with all-new authority, cache, worktree, evidence, Candidate, artifact, app-data and runtime identities; R1–R5 remain ineligible for reuse.
+
+Exact unlock condition: only the new source-gated PR #54 SHA/tree may authorize R6. Local unit PASS and R5's partial cache are not deployment authority.
 
 R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is integrated into Draft PR #20. R66 consumed source `beb951b95695233911da0a17543ef342acc6df93` after one real hydrator completed 50 registry-prefetch batches and stopped fail-closed on the invalid registry spec `string-width-cjs@4.2.3`. R67 repairs npm alias/install-path identity without changing package/lockfile bytes. No Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
