@@ -64,6 +64,7 @@ function proxyRequest(host, {
         keepAliveMs: policy.proxyKeepAliveMs,
         noDelay: true,
         idleTimeoutMs: policy.proxyIdleTimeoutMs,
+        upstreamFamily: policy.proxyUpstreamFamily,
       },
     },
   };
@@ -90,6 +91,7 @@ function proxySummary(requests) {
       keepAliveMs: policy.proxyKeepAliveMs,
       noDelay: true,
       idleTimeoutMs: policy.proxyIdleTimeoutMs,
+      upstreamFamily: policy.proxyUpstreamFamily,
     },
   };
 }

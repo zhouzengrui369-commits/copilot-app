@@ -12,10 +12,12 @@
 - Objective: align and accept the browser renderer at 1440x900 before any Electron integration or package work.
 - Completed: exact authority copied byte-for-byte; primary navigation corrected to four Demo destinations; Wiki Studio retained as a secondary Knowledge action; web-only typecheck/build, focused `21/21` UI tests, 1440x900 browser journey, zero console errors, `design-qa.md`, Draft PR #54, and GitHub source gate run `31751463041` job `94617911618` all passed.
 - Parent PM technical decision: `PARENT_PM_WEB_ACCEPTANCE=PASS`; `HUMAN_OWNER_MILESTONE_GATE=PENDING` remains separate.
-- Local deployment R1/R2 stopped during one-shot hydration on allowed-host transport failures; R3 stopped before hydration on a wall-clock watchdog test race. All three evidence roots are immutable and bound only to `b8b04819ac25629b0f2a5135858532902567b794`.
-- In progress: publish the deterministic watchdog test repair as a new exact PR #54 head and rerun the complete source gate.
-- Next step: only after that new head passes GitHub source gate, issue an all-new local deployment successor bound to the new exact SHA.
-- Risks: browser fixture is not runtime proof; R1/R2/R3 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
+- Local deployment R1/R2 stopped during one-shot hydration on allowed-host transport failures; R3 exposed and stopped on a wall-clock watchdog test race. The deterministic test repair became source `c9ed8b346e60b580860e58dde459372a2f8384c4`, tree `a69b39aead99fc88b4b11de3e9598e650ddcd12b`, and passed source gate run `31758923541`, job `94640840476`, `17/17`.
+- R4 proved exact authority and `111/111` source contracts, then its sole hydration stopped on `registry.npmjs.org:443` upstream `ETIMEDOUT`; Candidate and App executions remained zero.
+- Transport diagnosis reproduced Node 24's default-family instability at `1/3` proxy success while direct curl IPv4 passed `3/3`. A diagnostic-only `family:4` proxy passed `3/3`, all nine allowlisted hosts exposed A records, and its audit was requests `3`, allowed `3`, denied `0`, errors `0`.
+- In progress: bind IPv4 upstream selection into source transport policy and receipts without changing allowlist, timeout, concurrency, mirror, automatic retry, or partial-cache nonreuse.
+- Next step: push the repair as a new exact PR #54 head, pass its complete source gate, then issue R5 with all-new identities.
+- Risks: browser fixture is not runtime proof; R1/R2/R3/R4 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
 - Latest important change: `PARENT_PM_WEB_ACCEPTANCE=PASS / LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`.
 
 R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
@@ -116,8 +118,8 @@ local material
 
 ## Next single action
 
-Push the deterministic watchdog-contract repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive a new independent successor identity; R1/R2/R3 remain immutable reference-only.
+Push the receipt-bound IPv4 CONNECT repair to Draft PR #54 and require the complete GitHub source gate on its new exact head. Only then may the existing local deployment executor receive R5; R1/R2/R3/R4 remain immutable reference-only.
 
 Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
 
-Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. See `reports/watchdog-contract-r1/TEST_RECEIPT.md`.
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`.

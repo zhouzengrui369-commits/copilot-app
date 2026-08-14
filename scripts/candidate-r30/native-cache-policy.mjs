@@ -13,6 +13,7 @@ export const NATIVE_TOOLCHAIN_PROFILE = 'macos-arm64-node24-electron38-v1';
 export const NATIVE_BUILD_MODE = 'build-from-source-with-receipt-bound-headers';
 export const NATIVE_PROXY_KEEPALIVE_MS = 30_000;
 export const NATIVE_PROXY_IDLE_TIMEOUT_MS = 20 * 60 * 1_000;
+export const NATIVE_PROXY_UPSTREAM_FAMILY = 4;
 export const NATIVE_NPM_FETCH_RETRIES = 0;
 export const NATIVE_NPM_FETCH_TIMEOUT_MS = 15 * 60 * 1_000;
 export const NATIVE_NPM_MAX_SOCKETS = 4;
@@ -74,6 +75,7 @@ export function nativeHydrationTransportPolicy() {
     npmMaxSockets: NATIVE_NPM_MAX_SOCKETS,
     proxyKeepAliveMs: NATIVE_PROXY_KEEPALIVE_MS,
     proxyIdleTimeoutMs: NATIVE_PROXY_IDLE_TIMEOUT_MS,
+    proxyUpstreamFamily: NATIVE_PROXY_UPSTREAM_FAMILY,
     partialCacheReuse: false,
   };
 }

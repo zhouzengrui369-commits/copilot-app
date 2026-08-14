@@ -23,6 +23,7 @@ import {
   NATIVE_NPM_MAX_SOCKETS,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_UPSTREAM_FAMILY,
   NATIVE_TOOLCHAIN_PROFILE,
   NATIVE_BUILD_MODE,
   OWNER_NATIVE_CACHE_AUTHORITY,
@@ -232,6 +233,18 @@ export function configureNativeTunnelSocket(
   };
 }
 
+export function nativeHydrationUpstreamConnectOptions(host) {
+  if (typeof host !== 'string' || host.length === 0) {
+    throw new TypeError('native hydration upstream host is required');
+  }
+  return {
+    host,
+    port: 443,
+    allowHalfOpen: true,
+    family: NATIVE_PROXY_UPSTREAM_FAMILY,
+  };
+}
+
 export function classifyNativeTransportFailure(output) {
   const text = String(output ?? '');
   const cases = [
@@ -302,6 +315,7 @@ export async function startAllowlistedConnectProxy(
     keepAliveMs,
     noDelay: true,
     idleTimeoutMs,
+    upstreamFamily: NATIVE_PROXY_UPSTREAM_FAMILY,
   };
   let closing = false;
   const server = createServer({ allowHalfOpen: true }, (client) => {
@@ -396,7 +410,7 @@ export async function startAllowlistedConnectProxy(
         return;
       }
 
-      upstream = connect({ host, port: 443, allowHalfOpen: true });
+      upstream = connect(nativeHydrationUpstreamConnectOptions(host));
       configureNativeTunnelSocket(upstream, { keepAliveMs, idleTimeoutMs });
       sockets.add(upstream);
       upstream.once('close', () => {

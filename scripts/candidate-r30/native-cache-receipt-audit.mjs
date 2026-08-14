@@ -55,6 +55,7 @@ function expectedSocketPolicy(transportPolicy) {
     keepAliveMs: transportPolicy.proxyKeepAliveMs,
     noDelay: true,
     idleTimeoutMs: transportPolicy.proxyIdleTimeoutMs,
+    upstreamFamily: transportPolicy.proxyUpstreamFamily,
   };
 }
 

@@ -4,7 +4,7 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
-> 2026-08-14 UI 纠偏进展：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 已完成网页 typecheck/build、聚焦 `21/21`、1440x900 浏览器旅程、零 console 错误及 GitHub source gate，`PARENT_PM_WEB_ACCEPTANCE=PASS`。本地 R1/R2/R3 均在 Candidate 创建前 fail-closed 且不可复用；当前正在为 watchdog 测试确定性修复建立新的精确 SHA。`LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`。
+> 2026-08-14 UI 纠偏进展：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 已完成网页 typecheck/build、聚焦 `21/21`、1440x900 浏览器旅程、零 console 错误及 GitHub source gate，`PARENT_PM_WEB_ACCEPTANCE=PASS`。本地 R1–R4 均在 Candidate 创建前 fail-closed 且不可复用；当前根据有效 `1/3` 默认 CONNECT 对 `3/3` IPv4 CONNECT 对照证据，建立 receipt-bound IPv4 proxy 的新精确 SHA。`LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`。
 
 ## 权威与当前工作分工
 

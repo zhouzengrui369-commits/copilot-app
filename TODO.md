@@ -24,10 +24,23 @@ Exact unlock condition: NJX explicitly accepts the live web page derived from th
 - [x] Replace the wall-clock assertion with injected manual timers; do not change production timeout, process-group, signal, audit, or retry behavior.
 - [x] Add the inverse contract: a child closing during grace cancels `SIGKILL`.
 - [x] Pass the focused contract 100 consecutive runs (`300/300`) and the complete Candidate source contract `111/111` in a non-nested macOS sandbox environment.
-- [ ] Push a new exact PR #54 head and require complete GitHub source gate PASS.
+- [x] Push exact PR #54 head `c9ed8b346e60b580860e58dde459372a2f8384c4` and pass source gate run `31758923541`, job `94640840476`, `17/17`.
 - [ ] Create a new local successor with a new run stamp, evidence root, worktree, native cache, receipt, candidate identity, artifact identity, and runtime identity.
 
 Exact unlock condition: the new 40-character PR #54 head, not `b8b04819...`, must pass the complete GitHub source gate. R1/R2/R3 may never be retried, resumed, mutated, or reused.
+
+## P0 — R4 proxy upstream family repair / R5 unlock
+
+- [x] Accept R4 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT`: exact source/tree and `111/111` source contracts PASS; hydration executions `1`; Candidate/App/artifact/E2E/performance executions `0`; final process clean.
+- [x] Prove direct registry IPv4 metadata access `3/3 PASS` and exact default-family proxy access only `1/3 PASS` with two approximately three-second upstream `ETIMEDOUT` events.
+- [x] Prove a diagnostic-only `family:4` CONNECT proxy passes `3/3` with requests `3`, allowed `3`, denied `0`, transport errors `0`, positive bidirectional bytes, and all nine allowlisted hosts exposing A records.
+- [x] Bind `proxyUpstreamFamily=4` into transport policy, proxy audit receipts, validation, and source contracts.
+- [x] Preserve one request per CONNECT, automatic retry `false`, npm retries `0`, official-host allowlist, port `443`, mirror, timeouts, concurrency, and partial-cache nonreuse.
+- [x] Pass focused transport/receipt/hydrator and governance contracts `30/30`; pass complete Candidate source contracts `112/112` in a non-nested macOS sandbox environment.
+- [ ] Push the new exact PR #54 head and require complete GitHub source gate PASS.
+- [ ] Issue R5 only from that new SHA/tree with all-new paths; R1/R2/R3/R4 and all preflight assets remain ineligible for reuse.
+
+Exact unlock condition: the repaired PR head must pass the complete GitHub source gate. A diagnostic-only temporary proxy PASS is not deployment authority.
 
 R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is integrated into Draft PR #20. R66 consumed source `beb951b95695233911da0a17543ef342acc6df93` after one real hydrator completed 50 registry-prefetch batches and stopped fail-closed on the invalid registry spec `string-width-cjs@4.2.3`. R67 repairs npm alias/install-path identity without changing package/lockfile bytes. No Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 

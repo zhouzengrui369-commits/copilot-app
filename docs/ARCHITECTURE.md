@@ -49,6 +49,10 @@ The browser evidence may close the Parent PM web technical gate, but it cannot c
 
 Hydration child commands run in detached process groups under a bounded watchdog. Timeout sends `SIGTERM`; a still-open child group receives `SIGKILL` only after the configured grace period; close during grace cancels hard kill. Unit contracts inject and advance timers directly so scheduler latency cannot turn the timeout-plus-grace sequence into a flaky source gate. Durable production audit events remain the runtime authority.
 
+### Native hydration upstream address family
+
+The owner-authorized macOS native hydration proxy accepts only CONNECT requests for the exact official-host allowlist on port `443`. Its one upstream socket is receipt-bound to IPv4 (`proxyUpstreamFamily=4`). This avoids Node 24 auto-family attempt windows that were shorter than observed owner-environment IPv4 connect latency. It does not add a request retry, alternate mirror, host, port, or Candidate network permission; every failed hydration remains terminal and its partial cache remains non-reusable.
+
 ### Electron main process
 
 The main process owns:

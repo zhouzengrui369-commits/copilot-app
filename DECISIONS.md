@@ -1,5 +1,22 @@
 # DECISIONS
 
+## D-2026-08-14-02: Bind Native Hydration CONNECT To IPv4 In This macOS Authority
+
+### Background
+
+R4's sole hydration stopped at the first registry batch after an approximately 3.7-second Node upstream `ETIMEDOUT`, despite source policy allowing 15-minute npm fetches and 20-minute proxy idle time. A valid persistent-proxy preflight reproduced the default Node 24 path at only `1/3` success with two approximately three-second timeouts. Direct curl selected IPv4 and passed `3/3`; a temporary proxy differing only by `family:4` also passed `3/3`, with all nine allowlisted hosts proving A records.
+
+### Decision
+
+1. Bind the native hydration CONNECT proxy's single upstream socket to address family `4` and include `proxyUpstreamFamily=4` in the receipt-validated transport policy and proxy audit.
+2. Preserve the exact official-host allowlist, destination port `443`, registry/mirror, npm fetch timeout, proxy idle timeout, keepalive, concurrency, command watchdog, and partial-cache nonreuse.
+3. Preserve `automaticRetry=false` and `npmFetchRetries=0`; IPv4 selection is one deterministic upstream connection, not a hydration retry.
+4. Require a new PR head and complete source gate before R5; no R4 or diagnostic asset is reusable.
+
+### Impact
+
+The owner macOS hydration path no longer depends on Node 24's 250ms auto-family address-attempt window, which was shorter than observed local IPv4 connect latency. IPv6 is not claimed or tested by this decision. Candidate, packaged runtime, release, and Human Owner gates remain pending.
+
 ## D-2026-08-14-01: Watchdog Contracts Use Injected Deterministic Time
 
 ### Background

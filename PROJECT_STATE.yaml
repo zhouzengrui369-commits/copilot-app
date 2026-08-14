@@ -39,7 +39,30 @@ web_first_ui_r1:
     production_code_changed: false
     focused_repeat: 300/300_PASS
     complete_source_contract: 111/111_PASS
-    new_exact_pr_head: PENDING_PUSH_AND_SOURCE_GATE
+    new_exact_pr_head: c9ed8b346e60b580860e58dde459372a2f8384c4
+    new_source_tree: a69b39aead99fc88b4b11de3e9598e650ddcd12b
+    new_source_gate: 31758923541_94640840476_17/17_PASS
+  local_deployment_r4:
+    source_contract: 111/111_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    phase: bounded-registry-prefetch-0001
+    upstream: registry.npmjs.org:443
+    dry_run_executions: 0
+    candidate_executions: 0
+    app_launches: 0
+    final_process_clean: PASS
+    immutable: true
+  proxy_upstream_family_repair:
+    default_family_proxy_preflight: 1/3_PASS_2_ETIMEDOUT
+    diagnostic_family4_proxy_preflight: 3/3_PASS
+    allowlist_a_records: 9/9_PASS
+    proxy_upstream_family: 4
+    automatic_retry: false
+    npm_fetch_retries: 0
+    official_host_allowlist_changed: false
+    partial_cache_reuse: false
+    final_pr_head: PENDING_PUSH_AND_SOURCE_GATE
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer
@@ -183,5 +206,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Push the deterministic watchdog contract repair to Draft PR #54, pass the complete source gate on its new exact head, then issue the existing local deployment executor a new independent successor with all-new paths and identities."
+next_single_action: "Pass the complete source contracts, push the receipt-bound IPv4 CONNECT repair to Draft PR #54, pass the source gate on its new exact head, then issue R5 with all-new paths and identities."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

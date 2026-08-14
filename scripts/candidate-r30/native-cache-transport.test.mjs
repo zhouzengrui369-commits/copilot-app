@@ -6,12 +6,14 @@ import {
   NATIVE_NPM_MAX_SOCKETS,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_UPSTREAM_FAMILY,
   nativeHydrationTransportPolicy,
   partialHydrationFailureDocument,
 } from './npm-native-cache-hydrate.mjs';
 import {
   classifyNativeTransportFailure,
   configureNativeTunnelSocket,
+  nativeHydrationUpstreamConnectOptions,
   proxyTransportSummary,
 } from './native-cache-runtime.mjs';
 
@@ -34,6 +36,7 @@ function transport({
       keepAliveMs: NATIVE_PROXY_KEEPALIVE_MS,
       noDelay: true,
       idleTimeoutMs: NATIVE_PROXY_IDLE_TIMEOUT_MS,
+      upstreamFamily: NATIVE_PROXY_UPSTREAM_FAMILY,
     },
   };
 }
@@ -49,8 +52,25 @@ test('native transport policy keeps retries disabled and bounds concurrency', ()
     npmMaxSockets: 4,
     proxyKeepAliveMs: 30_000,
     proxyIdleTimeoutMs: 20 * 60 * 1000,
+    proxyUpstreamFamily: 4,
     partialCacheReuse: false,
   });
+});
+
+test('native proxy uses one receipt-bound IPv4 upstream connection without hydration retry', () => {
+  assert.equal(NATIVE_PROXY_UPSTREAM_FAMILY, 4);
+  assert.deepEqual(nativeHydrationUpstreamConnectOptions('registry.npmjs.org'), {
+    host: 'registry.npmjs.org',
+    port: 443,
+    allowHalfOpen: true,
+    family: 4,
+  });
+  assert.throws(
+    () => nativeHydrationUpstreamConnectOptions(''),
+    /native hydration upstream host is required/u,
+  );
+  assert.equal(nativeHydrationTransportPolicy().automaticRetry, false);
+  assert.equal(nativeHydrationTransportPolicy().npmFetchRetries, 0);
 });
 
 test('native tunnel sockets receive keepalive, no-delay and long idle timeout', () => {

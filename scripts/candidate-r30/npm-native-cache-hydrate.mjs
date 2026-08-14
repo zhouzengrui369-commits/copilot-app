@@ -60,6 +60,7 @@ export {
   NATIVE_PARTIAL_CACHE_MARKER,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_UPSTREAM_FAMILY,
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
   NPM_REGISTRY,
@@ -75,6 +76,7 @@ export { nativeRebuildArgs } from './native-cache-policy.mjs';
 export {
   classifyNativeTransportFailure,
   configureNativeTunnelSocket,
+  nativeHydrationUpstreamConnectOptions,
   nativeHydrationProxyProfile,
   proxyTransportSummary,
 } from './native-cache-runtime.mjs';

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-14 — Receipt-bound IPv4 native hydration proxy
+
+- Recorded R4 as immutable transport-blocked after exact authority and `111/111` source contracts passed; hydration ran once, while Candidate and App execution counts stayed zero.
+- Reproduced the exact default-family CONNECT proxy at `1/3` registry success with two upstream `ETIMEDOUT` events, while direct IPv4 and a diagnostic-only `family:4` proxy each passed `3/3`.
+- Bound the production proxy's single upstream connection to IPv4 and added `proxyUpstreamFamily=4` to transport policy and receipt audit validation.
+- Preserved official-host allowlist, port `443`, registry/mirror, timeouts, concurrency, no retry, partial-cache nonreuse, Candidate network denial, and all release gates.
+
 ## 2026-08-14 — Deterministic native-cache watchdog contract
 
 - Replaced the watchdog unit test's fixed 80ms wall-clock wait with injected manual timeout/grace timers.
