@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -35,6 +36,7 @@ function fixture(t) {
   return {
     root,
     repository,
+    canonicalRepository: realpathSync(repository),
     cacheDir: path.join(root, 'cache'),
     receiptOutput: path.join(root, 'receipt', 'native-cache.json'),
     terminalReceipt: path.join(root, 'evidence', 'hydrator.terminal.json'),
@@ -136,7 +138,7 @@ test('detached terminal supervisor writes PASS only after existing validator acc
   const run = superviseNativeCacheHydration(options(paths), {
     spawnImpl: (command, args, settings) => {
       assert.equal(command, process.execPath);
-      assert.equal(settings.cwd, paths.repository);
+      assert.equal(settings.cwd, paths.canonicalRepository);
       assert.equal(settings.detached, false);
       assert.equal(settings.shell, false);
       assert.ok(settings.env.NODE_OPTIONS.includes('native-cache-command-watchdog.mjs'));
@@ -147,7 +149,7 @@ test('detached terminal supervisor writes PASS only after existing validator acc
     },
     validateReceiptImpl: async (input) => {
       validateCalls += 1;
-      assert.equal(input.repository, paths.repository);
+      assert.equal(input.repository, paths.canonicalRepository);
       assert.equal(input.sourceCommit, SOURCE_COMMIT);
       assert.equal(input.cacheDir, paths.cacheDir);
       assert.equal(input.receiptPath, paths.receiptOutput);
