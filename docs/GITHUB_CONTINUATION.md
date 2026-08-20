@@ -16,7 +16,7 @@
 - 唯一 Demo UI authority：`design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html`
 - Demo authority：`52046` bytes，SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`
 
-本交接提交会使 PR head 前进。因此任何后续部署必须从 GitHub 实时解析 PR #54 head，并要求该**同一精确 head** 的完整 source gate 为 PASS；不得把上述 pre-handoff SHA 当作自动 successor 授权。
+本交接与后续 Source Repair 会使 PR head 前进。因此任何后续部署必须从 GitHub 实时解析 PR #54 head，并要求该**同一精确 head** 的完整 source gate 为 PASS；不得把上述 pre-handoff SHA 当作自动 successor 授权。
 
 ## 2. R7 真实终态边界
 
@@ -51,12 +51,13 @@ Local Deployment Agent 可以是 MiniMax、Codex 本地任务或其他明确指�
    - Parent PM 从 PR #54 实时 head 开始；
    - Demo HTML 继续作为 UI authority；
    - 完成源码、测试、文档、focused/full checks；
-   - 推送 Draft PR；
+   - 保持 Draft PR；
    - 冻结精确 SHA/tree，并要求该 SHA 的完整 GitHub source gate PASS。
 2. **Local-deployment gate**
    - Owner/Parent PM 单独签发新 successor；
    - 所有 worktree/cache/receipt/evidence/Candidate/artifact/runtime/data 路径必须全新且事前不存在；
-   - 先 exact-object authority，再一次 source contract、一次 hydration；只有 hydration PASS 才能进入 Candidate；
+   - 先 exact-object authority，再一次 source contract、一次 hydration；只有 source-owned terminal hydration receipt 为 PASS 才能进入 Candidate；
+   - launch receipt 仅表示 `LAUNCHED`，永远不能替代 terminal PASS；
    - 首个 terminal blocker 立即 fail-closed，后续全部 `NOT_RUN`。
 3. **Codex experience gate**
    - 只有完整 packaged `.app`、一致的 manifests/hashes、E2E 与 performance 收据才可启动；
@@ -66,13 +67,51 @@ Local Deployment Agent 可以是 MiniMax、Codex 本地任务或其他明确指�
    - Codex 完成体验审核后，由 NJX 进行里程碑验收；
    - signing、notarization、merge、release 仍需独立授权与证据。
 
-## 5. Parent PM 必须解决的当前问题
+## 5. R7 terminal receipt 根因与 Source Repair
 
-Parent PM 首先判断 R7 为什么没有 terminal receipt，并在 GitHub 远程开发通道中完成必要的、可测试的 fail-closed 改进。不得在 R7 本地目录中热修。若无需源码变更，也必须给出基于当前 PR head/CI 的明确判断，并签发一个全新 successor 合同；不能恢复 R7。
+GitHub exact-source 审计确认 R7 暴露的是一个真实控制面缺口，而不是可通过恢复 R7 解决的本地问题：
 
-Successor 合同至少包含：目标、精确 PR/SHA/tree/source gate、允许文件或本地路径、禁止事项、唯一执行次数、网络与 retry 边界、必跑检查、证据根、交付物、验收标准和首个 blocker 行为。
+- `native-cache-background-launch.mjs` 原先直接以 `detached:true` 启动 hydrator，随后 `unref()` 并只写 `LAUNCHED` receipt；launcher 不拥有 hydrator 的 terminal state。
+- `npm-native-cache-hydrate.mjs` 成功时会写正式 hydration PASS receipt，部分已知失败会留下 partial marker，但普通/未知 blocker 只保证 stderr + 非零退出；如果外层执行任务消失，现有架构没有独立 source-owned 进程负责把 hydrator 的最终 exit/signal 收口成 durable terminal receipt。
+- R7 正好落入该缺口：上层任务因用量上限终止，之后也没有残留 hydrator；最终缺少 terminal PASS/blocker receipt，不能审计闭环。
 
-## 6. Copy-ready ChatGPT Parent PM prompt
+因此 PR #54 当前 Source Repair 引入 `scripts/candidate-r30/native-cache-terminal-supervisor.mjs`，并修改 background launcher：
+
+```text
+Local Deployment Agent
+  -> native-cache-background-launch.mjs
+      -> detached source-owned terminal supervisor
+          -> non-detached exact-source hydrator
+              -> per-command watchdog
+```
+
+新协议：
+
+1. launcher receipt 仍只允许 `status=LAUNCHED`，并明确 `launchReceiptIsTerminal=false`；
+2. launcher 派生一个事前不存在的 `*.terminal.json` 路径，launcher 本身不得创建该文件；
+3. detached supervisor 持有 hydrator PID，等待真实 `close/error/signal`；
+4. hydrator 非零 exit、signal、spawn/runtime error 均只能写 terminal `BLOCKED`；
+5. 即使 hydrator exit `0`，也必须调用现有 `validateNativeHydrationReceipt()` 对 exact source/cache/PASS receipt 做完整校验；缺失或无效仍只能 `BLOCKED`；
+6. terminal receipt 使用 exclusive create (`wx`) + file fsync，不允许覆盖或把缺证据升级成 PASS；
+7. 只有 terminal `PASS` 才能授权 Candidate；terminal receipt 缺失本身仍是 blocker，禁止人工补写；
+8. supervisor 收到 `SIGTERM/SIGHUP/SIGINT` 时会尝试终止 hydrator并先写 fail-closed terminal `BLOCKED`。`SIGKILL`、机器掉电等不可捕获故障仍可能造成 terminal receipt 缺失，此时仍必须按 evidence deficiency/blocker 处理，不得推定 PASS。
+
+回归测试覆盖 launcher 不创建 terminal receipt、source-owned supervisor ownership、exit/signal/无效 PASS receipt 的 BLOCKED 语义、有效 PASS receipt 的唯一升级路径以及 terminal receipt 不可覆盖。
+
+**注意：以上源码变更本身不构成本地 successor 授权。必须等待 PR #54 的最终 current head 在 GitHub 上通过完整 same-SHA `copilot-source-gate` 后，由 Parent PM 另行冻结 exact SHA/tree/run/job。**
+
+## 6. Parent PM 当前动作
+
+1. 保持 PR #54 为 Draft。
+2. 只接受最终 current head 的完整 `copilot-source-gate`；中间 commit、旧 gate、R7 source gate 都不能替代。
+3. Source Gate PASS 后签发一个新的 Local Deployment Agent successor（R1-R7 全部 forbidden reference-only）。
+4. 新 successor 的 hydration success authority 是 `terminal receipt PASS + underlying validated hydration PASS receipt`，不是 launcher PID、LAUNCHED receipt、partial cache 或日志尾部。
+5. 新 successor 只有 hydration terminal PASS 后才能创建 Candidate；之后必须完成完整 package、artifact/runtime/test-data identity、packaged Electron E2E、performance 与进程完整性证据，才可交给 Codex。
+6. 任一本地体验或 Codex 审核发现 source defect，都返回本 GitHub 通道，新 commit 使旧 Candidate 自动失效。
+
+Successor 合同至少包含：目标、精确 PR/SHA/tree/source gate、允许文件或本地路径、禁止事项、唯一执行次数、网络与 retry 边界、必跑检查、terminal receipt 规则、证据根、交付物、验收标准和首个 blocker 行为。
+
+## 7. Copy-ready ChatGPT Parent PM prompt
 
 ```text
 你现在是 Copilot App 的 ChatGPT Parent PM，负责通过 GitHub 远程开发继续接管，禁止在本地执行或打开 packaged App。
@@ -87,28 +126,28 @@ Demo SHA256: 231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205
 请先通过 GitHub 实时读取 PR #54 当前 head、tree、Draft 状态、完整 source gate 和最新 diff；不要只信聊天内旧 SHA。读取并遵守根目录 AGENTS.md、goal.md、plan.md、rules.md、delivery.md、PROJECT_STATE.yaml、PROJECT_STATUS.md、TODO.md、DECISIONS.md、CHANGELOG.md，以及 docs/ARCHITECTURE.md、docs/DEVELOPMENT_WORKFLOW.md、docs/GITHUB_CONTINUATION.md。
 
 已知边界：
-- pre-handoff source 491da2fce157585367c3a551130a2f03634c900b / tree d4a01648bdbc855d9be2d087597317e44fae9d02 曾通过 source gate run 31779009577、job 94700478799、17/17。
-- R7 只证明 exact authority、124/124 source contract 与 hydration 启动一次；执行任务因用量上限失败，没有 terminal hydration PASS/blocker receipt、Candidate、package、App、E2E 或 performance 终态。
+- R7 只证明 exact authority、一次 source contract 与 hydration 启动一次；执行任务因用量上限失败，没有 terminal hydration PASS/blocker receipt、Candidate、package、App、E2E 或 performance 终态。
 - 2026-08-20 未发现 R7 运行进程；其 partial cache/worktree/log 均不可恢复或复用。
 - http://127.0.0.1:41744/?prototype=ready#today 仅为 PROTOTYPE / NOT_RUNTIME_PROOF。
+- PR #54 已针对 R7 durable terminal-state ownership gap 引入 source-owned detached terminal supervisor；必须以 GitHub 当前 exact head 和该 head 的完整 source gate 为准，不得使用本段文本中的旧 SHA。
 
 你的任务：
 1. 仅在 GitHub 分支/PR 中审查并完成后续源码开发、测试和治理文档；Demo HTML 仍是 UI 权威。
-2. 对 R7 缺少 terminal receipt 的失败模式做 fail-closed 设计判断；如需修复，只通过新的 GitHub commit 实现并加回归测试，禁止修改 R7 本地资产。
-3. 保持 PR 为 Draft；在最终 head 上运行完整 source gate，输出精确 40 位 SHA、tree、run/job 与测试结果。
-4. source gate PASS 后，写出新的、独立身份的 Local Deployment Agent successor 合同。所有 worktree/cache/receipt/evidence/Candidate/artifact/runtime/data 路径必须全新，R1-R7 禁止复用；一旦首个 blocker 出现立即停止。
+2. 保持 PR 为 Draft；在最终 head 上运行完整 source gate，输出精确 40 位 SHA、tree、run/job 与测试结果。
+3. source gate PASS 后，写出新的、独立身份的 Local Deployment Agent successor 合同。所有 worktree/cache/receipt/evidence/Candidate/artifact/runtime/data 路径必须全新，R1-R7 禁止复用；一旦首个 blocker 出现立即停止。
+4. hydration 只有 source-owned terminal receipt 为 PASS 且底层 hydration PASS receipt 经验证后才算 PASS；`LAUNCHED` 永远不是 terminal success。
 5. 本地 Agent 只有在 hydration PASS 后才能创建 Candidate；只有完整 packaged Candidate、E2E、performance 与 identity 收据才能交给 Codex。
 6. Codex 只负责真实 packaged App 的体验审核；任何源码修复返回本 GitHub 通道。最终 Human Owner 验收、签名、公证、merge、release 均保持独立门禁。
 
 交付：PR URL、最终 SHA/tree、source gate、变更摘要、测试证据、新 successor 合同、未关闭风险。不得宣布本地部署、体验验收、MVP 或 Release 已完成。
 ```
 
-## 7. 下游提示词模板
+## 8. 下游提示词模板
 
 ### Local Deployment Agent
 
 ```text
-仅在 Parent PM 给出 PR #54 当前精确 40 位 SHA/tree 和同 SHA 完整 source-gate PASS 后执行。使用新的 successor identity 和所有全新路径；先验证 FETCH_HEAD==SOURCE_SHA、exact-object authority、clean detached worktree，再按 exact-source runner 执行。禁止源码修改、前代资产复用、整体 retry、签名、公证、merge、release。首个 terminal blocker 立即停止并封存；只有 hydration PASS 才能进入 Candidate。返回 FINAL_RECEIPT、HANDOFF、全部 counts、source/artifact/runtime/test-data identity、E2E/performance 和最终进程完整性。
+仅在 Parent PM 给出 PR #54 当前精确 40 位 SHA/tree 和同 SHA 完整 source-gate PASS 后执行。使用新的 successor identity 和所有全新路径；先验证 FETCH_HEAD==SOURCE_SHA、exact-object authority、clean detached worktree，再按 exact-source runner 执行。禁止源码修改、前代资产复用、整体 retry、签名、公证、merge、release。hydration launcher 只证明 LAUNCHED；必须等待 source-owned terminal receipt，且只有 terminal PASS + validated underlying hydration PASS receipt 才能进入 Candidate。terminal BLOCKED 或 terminal receipt 缺失均立即停止。返回 FINAL_RECEIPT、HANDOFF、全部 counts、source/artifact/runtime/test-data identity、E2E/performance 和最终进程完整性。
 ```
 
 ### Codex Experience Reviewer
