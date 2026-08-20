@@ -2,6 +2,20 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
+## P0 — 2026-08-20 three-role continuation
+
+- [x] Record PR #54 pre-handoff source `491da2fce157585367c3a551130a2f03634c900b`, tree `d4a01648bdbc855d9be2d087597317e44fae9d02`, source gate `17/17 PASS`, and source contract `124/124 PASS`.
+- [x] Record R7 as incomplete: exact authority PASS, one source contract, one hydration launched, no terminal receipt/evidence root, and no auditable Candidate/package/App/E2E/performance completion.
+- [x] Confirm by read-only process check that no R7 hydrator/Candidate process remains; mark every R7 partial asset non-reusable.
+- [x] Publish the durable role/gate/prompt contract in `docs/GITHUB_CONTINUATION.md`.
+- [ ] ChatGPT Parent PM resolves the live PR #54 head, reviews the missing-terminal-receipt failure mode, and performs any required GitHub-only repair plus tests.
+- [ ] Require the complete GitHub source gate on the final exact head after all source/docs changes.
+- [ ] Only after that gate, issue a new independently named Local Deployment Agent successor with all-new paths and no R1-R7 reuse.
+- [ ] Start Codex experience review only after complete packaged Candidate, E2E, performance and identity receipts exist.
+- [ ] Keep `HUMAN_OWNER_MILESTONE_GATE=PENDING` until NJX reviews the Codex-tested milestone.
+
+Exact unlock condition: live PR #54 exact SHA/tree plus same-SHA full source-gate PASS and a new successor contract. `41744` prototype state and R7 partial assets cannot unlock local deployment or Codex acceptance.
+
 ## P0 — R6 Electron release-asset reset / R7 unlock
 
 - [x] Accept R6 evidence root `35b3c54059900528e33d79bbb15788479763a58d-20260814T043156Z` as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`.
@@ -15,7 +29,8 @@
 - [x] Obtain explicit Owner authorization to migrate the legacy strict receipt audit from online registry lifecycle expectations to the existing metadata-complete prefetch + deny-network closure + registry-offline lifecycle contract.
 - [x] Require the migrated audit to reject the legacy online command and prove zero post-closure registry requests plus the checksum-gated Electron artifact receipt; focused contracts pass `44/44`.
 - [x] Rerun the complete non-nested macOS Candidate source contract: `124/124 PASS`, zero failures/skips/cancellations.
-- [ ] Commit/push the documentation-bearing repair, pass the complete GitHub source gate on the same exact PR #54 SHA/tree, and only then create all-new R7 paths/identities.
+- [x] Commit/push the repair as `491da2fce157585367c3a551130a2f03634c900b`, pass source gate run `31779009577` / job `94700478799` at `17/17`, and create all-new R7 paths/identities.
+- [x] Record R7 as incomplete and non-reusable after its executor task ended without a terminal hydration receipt; Candidate/package/App/E2E/performance remained `NOT_RUN`.
 
 Exact unlock condition: the authorized migration must pass the complete source contract and same-SHA GitHub source gate. R6 and its partial cache remain ineligible for retry, resume, copy or reuse.
 

@@ -4,6 +4,19 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
+## 2026-08-20 ChatGPT Parent PM → Local Agent → Codex handoff
+
+- Active source surface remains Draft PR #54, branch `codex/demo-ui-web-first-r1`.
+- The pre-handoff source authority `491da2fce157585367c3a551130a2f03634c900b`, tree `d4a01648bdbc855d9be2d087597317e44fae9d02`, passed source gate run `31779009577`, job `94700478799`, `17/17`; source contracts passed `124/124`.
+- R7 completed exact-object authority and one source-contract execution, then launched one hydration. The executor task failed on a Codex usage limit before producing a terminal hydration receipt or complete evidence root.
+- A 2026-08-20 read-only process check found no R7 hydrator/Candidate process. R7 partial cache/worktree/logs are incomplete and non-reusable; Candidate/package/App/E2E/performance remained `NOT_RUN` at the last auditable state.
+- `LOCAL_DEPLOYMENT_COMPLETE=false`; `CODEX_EXPERIENCE_ACCEPTANCE=NOT_STARTED`; `HUMAN_OWNER_MILESTONE_GATE=PENDING`.
+- `http://127.0.0.1:41744/?prototype=ready#today` remains `PROTOTYPE / NOT_RUNTIME_PROOF`.
+- Durable continuation contract: `docs/GITHUB_CONTINUATION.md`. ChatGPT Parent PM owns GitHub-only development; a separately authorized Local Deployment Agent owns a fresh exact-SHA successor; Codex starts only from a complete packaged Candidate and owns independent experience review.
+- The handoff document commit supersedes the embedded pre-handoff SHA. The next executor must resolve the live PR #54 head and require a complete source gate on that exact head before any new local successor.
+
+Next step: Parent PM reviews the live PR #54 head and R7 terminal-receipt gap through GitHub, finishes any source/test repair, obtains a green same-SHA source gate, then signs a new all-paths-fresh local successor. No R7 resume or reuse is allowed.
+
 ## 2026-08-14 R6 Electron release-asset transport repair preparation
 
 - R6 consumed PR #54 exact source `35b3c54059900528e33d79bbb15788479763a58d`, tree `8e931876dc705c33e743a554a69e5bd2640f68d6`, after source gate run `31769650208`, job `94672767727`, `17/17 PASS`.
@@ -14,8 +27,9 @@
 - Modern Electron's exact `electron_config_cache` variable is now bound to the receipt-owned cache for hydration and Candidate environments.
 - Before the audit migration, focused contracts passed `33/33` and the complete non-nested macOS source contract passed `122/122`.
 - Owner explicitly authorized the strict receipt-audit migration on 2026-08-14. The audit now rejects the superseded `npm ci --prefer-online --registry` lifecycle command and requires metadata-complete registry prefetch, deny-network offline closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated Electron artifact receipt, and the final deny-network proofs.
-- The migrated focused contract passes `44/44`; the complete non-nested macOS Candidate source contract passes `124/124`, with zero failures, skips or cancellations. The same-SHA GitHub source gate remains pending; these remain source evidence only and R7 has not been created.
-- Current state: `SOURCE_REPAIR_LOCAL_VALIDATION_PASS / OWNER_AUDIT_MIGRATION_AUTHORIZED / GITHUB_SOURCE_GATE_PENDING / R7_NOT_CREATED / APP_LAUNCHES=0`.
+- The migrated focused contract passed `44/44`; the complete non-nested macOS Candidate source contract passed `124/124`, and PR #54 source `491da2fce157585367c3a551130a2f03634c900b` passed source gate run `31779009577`, job `94700478799`, `17/17`.
+- R7 was then created from that exact source, but it ended incomplete without a terminal hydration receipt. Candidate/package/App/E2E/performance remained `NOT_RUN`; its partial assets are non-reusable.
+- Current state: `SOURCE_GATE_PASS_AT_PRE_HANDOFF_SHA / R7_INCOMPLETE_NON_REUSABLE / APP_LAUNCHES=0`.
 
 ## 2026-08-14 R5 Electron control-tunnel repair
 

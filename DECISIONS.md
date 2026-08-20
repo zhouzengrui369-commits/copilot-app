@@ -1,5 +1,24 @@
 # DECISIONS
 
+## D-2026-08-20-01: Separate GitHub Development, Local Deployment, Experience Review, And Owner Acceptance
+
+### Background
+
+PR #54 pre-handoff source `491da2f...` was source-green, but R7 lost its executor task to a usage-limit failure while the sole hydration was active. It produced no terminal hydration receipt or complete evidence root. The browser-visible `41744` surface is still a prototype and cannot close the packaged-runtime lane.
+
+### Decision
+
+1. ChatGPT Parent PM owns only GitHub remote source development, tests, Draft PR, exact-head freeze, source gate and successor contract.
+2. A separately authorized Local Deployment Agent owns a fresh exact-SHA hydration/Candidate/package run; executor implementation may vary, but permissions and evidence requirements do not.
+3. R7 is incomplete and non-reusable. No process remains, and no successor may resume its cache, worktree, logs, receipt paths or identities.
+4. Codex starts only after a complete packaged Candidate and independently reviews product experience on the real App; it does not repair source in that lane.
+5. Human Owner milestone acceptance, signing, notarization, merge and release remain independent gates.
+6. A tracked handoff document cannot self-authorize its containing commit. The downstream executor must resolve the live PR #54 head and prove a complete source gate on that exact head.
+
+### Impact
+
+Source, deployment, runtime experience and final acceptance remain independently auditable. A green source check, partial hydration, browser prototype or worker narrative cannot inflate project status. The durable copy-ready contract is `docs/GITHUB_CONTINUATION.md`.
+
 ## D-2026-08-14-04: Prefetch Exact Electron Assets In Checksum-Gated Bounded Ranges
 
 ### Background

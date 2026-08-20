@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-20 — Three-role GitHub continuation handoff
+
+- Added a durable copy-ready handoff for ChatGPT Parent PM GitHub development, Local Deployment Agent exact-SHA deployment, Codex packaged-App experience review and Human Owner milestone acceptance.
+- Recorded PR #54 pre-handoff source `491da2f...` / tree `d4a0164...`, source gate `17/17 PASS`, and source contract `124/124 PASS` as source evidence only.
+- Recorded R7 accurately as incomplete: one hydration launched, no terminal receipt or complete evidence root, no remaining R7 process, and no auditable Candidate/package/App/E2E/performance completion.
+- Marked all R7 partial assets non-reusable and required a new successor with all-new paths after a green live PR #54 exact head.
+- Kept `41744` browser state labeled `PROTOTYPE / NOT_RUNTIME_PROOF`; no local deployment, Codex experience acceptance, MVP, signing, notarization, merge or Release PASS was claimed.
+
 ## 2026-08-14 — R6 Electron artifact bounded Range-prefetch preparation
 
 - Sealed R6 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: exact source `35b3c54059900528e33d79bbb15788479763a58d`, source gate `17/17`, source contract `117/117` once, hydration once, and zero Candidate/package/App/E2E/performance executions.

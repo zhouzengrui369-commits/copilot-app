@@ -4,6 +4,22 @@
 >
 > Status: `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`. The remote macOS MVP source is complete enough for another candidate attempt, but no current candidate, artifact identity, runtime ID, independent Electron acceptance, signing, notarization, or Human Owner Gate exists.
 
+## 0. 2026-08-20 Handoff Control Plane
+
+The delivery control plane has four sequential evidence owners:
+
+```text
+ChatGPT Parent PM / GitHub exact source + CI
+        ↓ exact SHA/tree + same-SHA source gate
+Local Deployment Agent / fresh hydration + Candidate + package evidence
+        ↓ source/artifact/runtime/test-data identity
+Codex / independent real packaged-App experience review
+        ↓ P0/P1/P2 and focused retest
+Human Owner / milestone and release decision
+```
+
+The local executor may be MiniMax, a local Codex task or another explicitly named agent; the role contract is invariant. R7 did not create a terminal hydration receipt and is non-reusable. The `41744` browser prototype remains outside the packaged-runtime trust chain. Full continuation rules and copy-ready prompts are maintained in [`GITHUB_CONTINUATION.md`](GITHUB_CONTINUATION.md).
+
 ## 1. Local-First Product Authority
 
 Copilot App is a single-user macOS Electron desktop product. Its core truth remains on the Owner computer:
@@ -67,7 +83,7 @@ Each exact official macOS arm64 release ZIP is transferred as 1 MiB HTTP Range s
 
 The hydration receipt binds package path, version, filename, source URL, bytes, SHA-256, segment/request/retry counts, the command receipt and the exact proxy-request interval. `electron_config_cache` points both lifecycle install and Candidate offline install to that receipt-owned cache. Candidate networking remains denied and a failed hydration cache remains non-reusable.
 
-The Owner explicitly authorized migration of the legacy strict audit to the already-established registry-prefetch → deny-network closure → registry-offline lifecycle design. The audit now rejects the superseded online-registry command and requires zero post-closure registry requests, the checksum-gated artifact receipt, and the final deny-network install/native proofs. R7 remains blocked until this exact source passes the complete GitHub source gate.
+The Owner explicitly authorized migration of the legacy strict audit to the already-established registry-prefetch → deny-network closure → registry-offline lifecycle design. The audit now rejects the superseded online-registry command and requires zero post-closure registry requests, the checksum-gated artifact receipt, and the final deny-network install/native proofs. Source `491da2f...` passed the complete GitHub source gate and R7 consumed it, but R7 produced no terminal hydration receipt; it is incomplete, non-reusable and not runtime proof.
 
 ### Electron main process
 

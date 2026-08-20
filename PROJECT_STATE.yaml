@@ -1,6 +1,6 @@
 schema_version: 9
 project: copilot-app
-updated_at: "2026-08-14"
+updated_at: "2026-08-20"
 status:
   verdict: BLOCKED
   mvp: MVP_NOT_COMPLETE
@@ -31,6 +31,30 @@ web_first_ui_r1:
   parent_pm_web_acceptance: PASS
   local_packaged_acceptance: PENDING
   human_owner_milestone_gate: PENDING
+  three_role_handoff:
+    document: docs/GITHUB_CONTINUATION.md
+    chatgpt_parent_pm: GITHUB_REMOTE_DEVELOPMENT_ONLY
+    local_deployment_agent: WAITING_FOR_NEW_EXACT_SHA_SUCCESSOR
+    codex_experience_review: NOT_STARTED
+    human_owner_milestone_gate: PENDING
+    browser_41744: PROTOTYPE_NOT_RUNTIME_PROOF
+  local_deployment_r7:
+    source_commit: 491da2fce157585367c3a551130a2f03634c900b
+    source_tree: d4a01648bdbc855d9be2d087597317e44fae9d02
+    source_gate: 31779009577_94700478799_17/17_PASS
+    source_contract: 124/124_PASS
+    source_contract_executions: 1
+    hydration_executions: 1
+    terminal_hydration_receipt: MISSING
+    complete_evidence_root: MISSING
+    candidate_executions: 0
+    package_executions: 0
+    app_launches: 0
+    e2e_executions: 0
+    performance_runs: 0
+    process_remains_2026_08_20: false
+    assets_reusable: false
+    status: INCOMPLETE_NON_REUSABLE
   immutable_predecessors:
     r1: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
     r2: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
@@ -141,8 +165,9 @@ web_first_ui_r1:
     focused_source_contract: 44/44_PASS
     complete_source_contract: 124/124_PASS
     owner_audit_migration: AUTHORIZED_AND_IMPLEMENTED_2026-08-14
-    github_source_gate: PENDING_COMMIT_PUSH
-    r7_created: false
+    github_source_gate: 31779009577_94700478799_17/17_PASS_AT_491da2fce157
+    r7_created: true
+    r7_status: INCOMPLETE_NON_REUSABLE
     app_launches: 0
 workflow:
   chatgpt:
