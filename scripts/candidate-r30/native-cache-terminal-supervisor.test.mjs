@@ -142,6 +142,7 @@ test('detached terminal supervisor writes PASS only after existing validator acc
       assert.ok(settings.env.NODE_OPTIONS.includes('native-cache-command-watchdog.mjs'));
       assert.equal(settings.env.COPILOT_NATIVE_COMMAND_WATCHDOG_LOG, paths.watchdogLog);
       assert.ok(args.includes(paths.receiptOutput));
+      setImmediate(() => child.emit('close', 0, null));
       return child;
     },
     validateReceiptImpl: async (input) => {
@@ -156,7 +157,6 @@ test('detached terminal supervisor writes PASS only after existing validator acc
       };
     },
   });
-  queueMicrotask(() => child.emit('close', 0, null));
   const receipt = await run;
   assert.equal(validateCalls, 1);
   assert.equal(receipt.status, 'PASS');
@@ -175,13 +175,15 @@ test('non-zero hydrator exit is durably BLOCKED and never invokes PASS validator
   const child = fakeChild(7201);
   let validateCalls = 0;
   const run = superviseNativeCacheHydration(options(paths), {
-    spawnImpl: () => child,
+    spawnImpl: () => {
+      setImmediate(() => child.emit('close', 2, null));
+      return child;
+    },
     validateReceiptImpl: async () => {
       validateCalls += 1;
       throw new Error('must not validate a failed hydrator');
     },
   });
-  queueMicrotask(() => child.emit('close', 2, null));
   const receipt = await run;
   assert.equal(validateCalls, 0);
   assert.equal(receipt.status, 'BLOCKED');
@@ -195,14 +197,16 @@ test('zero exit with missing or invalid PASS receipt remains durably BLOCKED', a
   const paths = fixture(t);
   const child = fakeChild(7301);
   const run = superviseNativeCacheHydration(options(paths), {
-    spawnImpl: () => child,
+    spawnImpl: () => {
+      setImmediate(() => child.emit('close', 0, null));
+      return child;
+    },
     validateReceiptImpl: async () => {
       const error = new Error('receipt missing');
       error.code = 'BLOCKED_NATIVE_CACHE_RECEIPT_INVALID';
       throw error;
     },
   });
-  queueMicrotask(() => child.emit('close', 0, null));
   const receipt = await run;
   assert.equal(receipt.status, 'BLOCKED');
   assert.equal(receipt.blockerCode, 'BLOCKED_NATIVE_CACHE_TERMINAL_PASS_RECEIPT_INVALID');
