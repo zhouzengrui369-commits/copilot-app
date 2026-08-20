@@ -4,6 +4,8 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 
 > 当前状态：`BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY`。GitHub Phase 1 产品源码已在 Draft PR #14 收口，等待 MiniMax Code 对**精确最终提交**执行本地十二门候选流程。当前没有本地候选、artifact SHA256、runtime ID、候选性能回执、独立 Codex 结论、Developer ID 签名、Apple 公证或 Human Owner Gate。
 
+> 2026-08-20 交接状态：Owner 授权的 Demo HTML 仍是唯一 UI 源码依据。PR #54 的 pre-handoff head `491da2f...` 已通过完整 source gate `17/17`，Candidate source contract `124/124 PASS`。R7 只完成 exact authority、一次 source contract 与一次 hydration 启动；执行任务因用量上限失败，没有 terminal hydration receipt、Candidate、package、App、E2E 或 performance 终态，且 2026-08-20 已无 R7 运行进程。R7 partial assets 不可恢复或复用。当前 `41744` 页面仍是 `PROTOTYPE / NOT_RUNTIME_PROOF`。后续按 [三方 GitHub 交接](docs/GITHUB_CONTINUATION.md) 执行：ChatGPT Parent PM 远程开发 → Local Deployment Agent 全新 successor → Codex packaged-App 体验审核 → Human Owner 里程碑验收。
+
 ## 权威与当前工作分工
 
 唯一项目基线是根目录：
@@ -19,10 +21,11 @@ Copilot App 是严格 local-first 的 Electron 个人知识助理：笔记、知
 Owner 批准的执行边界：
 
 1. **ChatGPT**：只通过 GitHub 分支/PR 开发和审查源码；不在本地执行候选。
-2. **MiniMax Code**：先获取并校验外部报告的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。
+2. **本地部署执行官**：先获取并校验 Parent PM 签发的精确 40 位 GitHub 提交，再部署该提交；不静默修源码；返回完整候选绑定证据。任何失败 successor 的目录、缓存、回执、候选、产物和 runtime identity 均不可复用。
 3. **Codex**：收到 MiniMax 完整回执后，独立操作真实电脑、执行体验验收和 Release Gate；不在验收通道修源码。
 
 完整流程见 [`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)。MiniMax 的可执行手册见 [`docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md`](docs/MINIMAX_LOCAL_DEPLOYMENT_R31.md)。
+当前可复制的三方续跑合同见 [`docs/GITHUB_CONTINUATION.md`](docs/GITHUB_CONTINUATION.md)。
 
 ## 当前源码链
 
@@ -130,6 +133,12 @@ node scripts/candidate-r30/run-candidate.mjs \
 ```bash
 npm install
 npm run dev:copilot-desktop
+```
+
+网页 UI 验收先运行同源 browser prototype；只有 NJX 明确接受网页结果后，才能进入 Electron/打包 successor：
+
+```bash
+npm run preview:browser --workspace @copilot/desktop
 ```
 
 常用源码验证：

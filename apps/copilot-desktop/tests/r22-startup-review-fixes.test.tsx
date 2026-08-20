@@ -73,6 +73,7 @@ describe('r22 independent startup review fixes', () => {
     }
 
     expect(screen.queryByTestId('startup-nav-voice')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('startup-nav-studio')).not.toBeInTheDocument();
     fireEvent.keyDown(screen.getByTestId('startup-nav-settings'), { key: 'Enter' });
     expect(screen.getByTestId('startup-nav-settings')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('startup-view-settings')).toBeInTheDocument();

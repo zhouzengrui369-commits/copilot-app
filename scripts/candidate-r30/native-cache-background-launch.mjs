@@ -71,6 +71,12 @@ function watchdogLogPath(launchReceipt) {
     : `${launchReceipt}.command-watchdog.jsonl`;
 }
 
+export function terminalReceiptPath(launchReceipt) {
+  return launchReceipt.endsWith('.json')
+    ? `${launchReceipt.slice(0, -'.json'.length)}.terminal.json`
+    : `${launchReceipt}.terminal.json`;
+}
+
 export function parseNativeCacheBackgroundLaunchArgs(argv) {
   const parsed = {
     repository: null,
@@ -136,6 +142,25 @@ export function parseNativeCacheBackgroundLaunchArgs(argv) {
   };
 }
 
+function requireSourceScript(label, script) {
+  let value;
+  try {
+    value = lstatSync(script);
+  } catch (error) {
+    block('BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_SCRIPT', `exact-source ${label} is missing`, {
+      script,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  if (!value.isFile() || value.isSymbolicLink()) {
+    block(
+      'BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_SCRIPT',
+      `exact-source ${label} must be a regular non-symlink file`,
+      { script },
+    );
+  }
+}
+
 export function nativeCacheBackgroundLaunchPlan(options) {
   const repository = requireAbsolute('repository', options.repository);
   const cacheDir = requireAbsolute('cache dir', options.cacheDir);
@@ -144,9 +169,14 @@ export function nativeCacheBackgroundLaunchPlan(options) {
   const stderr = requireAbsolute('stderr', options.stderr);
   const launchReceipt = requireAbsolute('launch receipt', options.launchReceipt);
   const watchdogLog = watchdogLogPath(launchReceipt);
+  const terminalReceipt = terminalReceiptPath(launchReceipt);
   const hydratorScript = path.join(
     repository,
     'scripts/candidate-r30/npm-native-cache-hydrate.mjs',
+  );
+  const supervisorScript = path.join(
+    repository,
+    'scripts/candidate-r30/native-cache-terminal-supervisor.mjs',
   );
   const watchdogScript = path.join(
     repository,
@@ -159,6 +189,7 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     ['stdout', stdout],
     ['stderr', stderr],
     ['launch receipt', launchReceipt],
+    ['terminal receipt', terminalReceipt],
     ['command watchdog log', watchdogLog],
   ]) requireAbsent(label, target);
 
@@ -166,6 +197,7 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     ['stdout', stdout],
     ['stderr', stderr],
     ['launch receipt', launchReceipt],
+    ['terminal receipt', terminalReceipt],
     ['command watchdog log', watchdogLog],
   ]) {
     if (inside(cacheDir, target)) {
@@ -177,22 +209,9 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     }
   }
 
-  let hydratorStat;
-  try {
-    hydratorStat = lstatSync(hydratorScript);
-  } catch (error) {
-    block('BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_SCRIPT', 'exact-source hydrator is missing', {
-      hydratorScript,
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-  if (!hydratorStat.isFile() || hydratorStat.isSymbolicLink()) {
-    block(
-      'BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_SCRIPT',
-      'exact-source hydrator must be a regular non-symlink file',
-      { hydratorScript },
-    );
-  }
+  requireSourceScript('hydrator', hydratorScript);
+  requireSourceScript('terminal supervisor', supervisorScript);
+  requireSourceScript('command watchdog', watchdogScript);
 
   const hydratorArgs = [
     hydratorScript,
@@ -202,6 +221,18 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     '--receipt-output', receiptOutput,
     '--owner-authority', options.ownerAuthority,
   ];
+  const supervisorArgs = [
+    supervisorScript,
+    '--repository', repository,
+    '--source-commit', options.sourceCommit,
+    '--cache-dir', cacheDir,
+    '--receipt-output', receiptOutput,
+    '--owner-authority', options.ownerAuthority,
+    '--terminal-receipt', terminalReceipt,
+    '--hydrator-script', hydratorScript,
+    '--watchdog-script', watchdogScript,
+    '--watchdog-log', watchdogLog,
+  ];
   return {
     repository,
     cacheDir,
@@ -209,13 +240,16 @@ export function nativeCacheBackgroundLaunchPlan(options) {
     stdout,
     stderr,
     launchReceipt,
+    terminalReceipt,
     watchdogLog,
     hydratorScript,
+    supervisorScript,
     watchdogScript,
     watchdogTimeoutMs: NATIVE_COMMAND_WATCHDOG_TIMEOUT_MS,
     watchdogKillGraceMs: NATIVE_COMMAND_WATCHDOG_KILL_GRACE_MS,
     command: process.execPath,
     hydratorArgs,
+    supervisorArgs,
   };
 }
 
@@ -224,12 +258,27 @@ function writeLaunchDocument(fd, document) {
   fsyncSync(fd);
 }
 
+function supervisorEnvironment() {
+  const {
+    NODE_OPTIONS: _nodeOptions,
+    COPILOT_NATIVE_COMMAND_WATCHDOG_LOG: _watchdogLog,
+    ...environment
+  } = process.env;
+  return environment;
+}
+
 export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
   const plan = nativeCacheBackgroundLaunchPlan(options);
 
   // Only evidence/log parent directories may be created by the launcher.
-  // The cache target and native-cache PASS receipt MUST remain absent for the hydrator itself.
-  for (const file of [plan.stdout, plan.stderr, plan.launchReceipt, plan.watchdogLog]) {
+  // The cache target, hydration PASS receipt, and terminal receipt MUST remain absent.
+  for (const file of [
+    plan.stdout,
+    plan.stderr,
+    plan.launchReceipt,
+    plan.terminalReceipt,
+    plan.watchdogLog,
+  ]) {
     mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   }
 
@@ -239,21 +288,17 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
   const launchedAt = new Date().toISOString();
   let child;
   try {
-    child = spawnImpl(plan.command, plan.hydratorArgs, {
+    child = spawnImpl(plan.command, plan.supervisorArgs, {
       cwd: plan.repository,
       detached: true,
-      env: {
-        ...process.env,
-        NODE_OPTIONS: `--import=${pathToFileURL(plan.watchdogScript).href}`,
-        COPILOT_NATIVE_COMMAND_WATCHDOG_LOG: plan.watchdogLog,
-      },
+      env: supervisorEnvironment(),
       stdio: ['ignore', stdoutFd, stderrFd],
       shell: false,
     });
     if (!Number.isInteger(child?.pid) || child.pid <= 0 || typeof child.unref !== 'function') {
       block(
         'BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_PROCESS',
-        'background hydrator did not return one durable process identity',
+        'background terminal supervisor did not return one durable process identity',
       );
     }
     child.unref();
@@ -264,6 +309,11 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
       repository: plan.repository,
       cacheDir: plan.cacheDir,
       receiptOutput: plan.receiptOutput,
+      terminalReceipt: plan.terminalReceipt,
+      terminalReceiptRequired: true,
+      launchReceiptIsTerminal: false,
+      terminalStateOwnedBy: 'source-owned-detached-supervisor',
+      supervisorScript: plan.supervisorScript,
       hydratorScript: plan.hydratorScript,
       watchdogScript: plan.watchdogScript,
       watchdogLog: plan.watchdogLog,
@@ -271,14 +321,18 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
       watchdogKillGraceMs: plan.watchdogKillGraceMs,
       inheritedNodeOptionsStripped: true,
       processId: child.pid,
+      terminalSupervisorPid: child.pid,
+      processRole: 'native-cache-terminal-supervisor',
       detached: true,
       shell: false,
       stdout: plan.stdout,
       stderr: plan.stderr,
       launcherDidCreateCacheDir: false,
       launcherDidCreateReceiptOutput: false,
+      launcherDidCreateTerminalReceipt: false,
       automaticRetry: false,
       replacementProcessAllowed: false,
+      candidateMayStartBeforeTerminalPass: false,
       launchedAt,
     };
     writeLaunchDocument(launchFd, receipt);
@@ -291,12 +345,15 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
       repository: plan.repository,
       cacheDir: plan.cacheDir,
       receiptOutput: plan.receiptOutput,
+      terminalReceipt: plan.terminalReceipt,
+      supervisorScript: plan.supervisorScript,
       watchdogScript: plan.watchdogScript,
       watchdogLog: plan.watchdogLog,
       watchdogTimeoutMs: plan.watchdogTimeoutMs,
       watchdogKillGraceMs: plan.watchdogKillGraceMs,
       launcherDidCreateCacheDir: false,
       launcherDidCreateReceiptOutput: false,
+      launcherDidCreateTerminalReceipt: false,
       automaticRetry: false,
       error: error instanceof Error ? error.message : String(error),
       launchedAt,
@@ -310,7 +367,7 @@ export function launchNativeCacheHydrator(options, { spawnImpl = spawn } = {}) {
     if (error instanceof NativeCacheBackgroundLaunchBlocked) throw error;
     block(
       'BLOCKED_NATIVE_CACHE_HYDRATION_LAUNCH_PROCESS',
-      'failed to start the exact-source background hydrator',
+      'failed to start the exact-source detached terminal supervisor',
       { error: error instanceof Error ? error.message : String(error) },
     );
   } finally {

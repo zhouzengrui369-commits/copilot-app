@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Copilot Demo UI · source / implementation comparison</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#172033;background:#eef1f5}
+    *{box-sizing:border-box}body{margin:0;padding:16px}header{max-width:1880px;margin:0 auto 12px}h1{margin:0 0 6px;font-size:20px}p{margin:0;color:#5c6677}
+    main{max-width:1880px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}.panel{margin:0;padding:10px;border:1px solid #dce1e8;border-radius:12px;background:#fff;box-shadow:0 12px 34px rgb(25 35 52/8%)}figcaption{display:flex;justify-content:space-between;gap:8px;margin:0 0 8px;font-size:12px;font-weight:700}small{font-weight:500;color:#687486}img{display:block;width:100%;height:auto;border:1px solid #dce1e8;border-radius:8px;background:#fff}
+    @media(max-width:1100px){main{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header><h1>Copilot Demo UI · 同视口视觉对照</h1><p>1440×900 · DPR 1 · Today · 左为权威 HTML，右为同源 browser renderer。</p></header>
+  <main>
+    <figure class="panel"><figcaption><span>权威 Demo 源码</span><small>SHA256 231cbef9…</small></figcaption><img src="screenshots/source-today-final-1440x900-normalized.png" alt="权威 Demo Today 1440×900" /></figure>
+    <figure class="panel"><figcaption><span>网页实现</span><small>PROTOTYPE · NOT_RUNTIME_PROOF</small></figcaption><img src="screenshots/implementation-today-final-1440x900.png" alt="网页实现 Today 1440×900" /></figure>
+  </main>
+</body>
+</html>

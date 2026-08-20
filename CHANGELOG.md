@@ -1,5 +1,71 @@
 # Changelog
 
+## 2026-08-20 — Three-role GitHub continuation handoff
+
+- Added a durable copy-ready handoff for ChatGPT Parent PM GitHub development, Local Deployment Agent exact-SHA deployment, Codex packaged-App experience review and Human Owner milestone acceptance.
+- Recorded PR #54 pre-handoff source `491da2f...` / tree `d4a0164...`, source gate `17/17 PASS`, and source contract `124/124 PASS` as source evidence only.
+- Recorded R7 accurately as incomplete: one hydration launched, no terminal receipt or complete evidence root, no remaining R7 process, and no auditable Candidate/package/App/E2E/performance completion.
+- Marked all R7 partial assets non-reusable and required a new successor with all-new paths after a green live PR #54 exact head.
+- Kept `41744` browser state labeled `PROTOTYPE / NOT_RUNTIME_PROOF`; no local deployment, Codex experience acceptance, MVP, signing, notarization, merge or Release PASS was claimed.
+
+## 2026-08-14 — R6 Electron artifact bounded Range-prefetch preparation
+
+- Sealed R6 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: exact source `35b3c54059900528e33d79bbb15788479763a58d`, source gate `17/17`, source contract `117/117` once, hydration once, and zero Candidate/package/App/E2E/performance executions.
+- Classified the failure as Electron `38.8.6` postinstall on `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes after `1195994ms`; no R5 graceful-control exception applied.
+- Added exact Electron `38.8.6` and `33.4.11` macOS arm64 ZIP prefetch using 1 MiB Range segments, concurrency 4 and at most 3 attempts per segment.
+- Required exact official URLs and npm-package-embedded SHA-256 before a complete ZIP can enter the new receipt-owned cache; bound all segment and proxy evidence into hydration schema v2.
+- Restricted any recoverable reset to the exact prefetch proxy phase and reviewed asset boundaries; preserved whole-hydration no-retry, partial-cache nonreuse and Candidate deny-network.
+- Bound modern Electron's `electron_config_cache` to the receipt-owned cache.
+- Passed pre-authorization focused contracts `33/33` and complete non-nested macOS source contracts `122/122`.
+- Recorded explicit Owner authorization for the legacy audit migration; the strict audit now requires registry prefetch, deny-network closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated Electron receipt and final deny-network proofs, while rejecting the superseded online-registry command.
+- Passed the migrated focused contract `44/44` and complete non-nested macOS Candidate source contract `124/124`; kept R7 creation and App launch forbidden until the same-SHA GitHub source gate passes.
+
+## 2026-08-14 — Demo Studio CI selector precision
+
+- Retained source gate run `31768811097`, job `94670211578`, as failed evidence: Step 14 found two legitimate `Current note` nodes and the broad `getByText` query failed before coverage JSON generation.
+- Scoped both Studio assertions to the existing `studio-source-rail` boundary; no product UI, Demo authority, production behavior or coverage threshold changed.
+- Passed focused Studio tests `2/2` and the exact critical coverage command at `101/101` files and `1113/1113` tests, with `96.02%` statements and `91.89%` branches.
+- R6 remains blocked until the final documentation-bearing PR #54 SHA/tree completes the full GitHub source gate.
+
+## 2026-08-14 — R5 GitHub control-tunnel graceful EOF
+
+- Sealed R5 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`: source `112/112 PASS`, one hydration, zero dry-run/Candidate/package/App/E2E/performance.
+- Classified the failure as a late `github.com` control/redirect tunnel `ETIMEDOUT` after 3,088 bytes; the bounded proxy had transferred 121,555,082 upstream-to-client bytes in total before forced downstream destruction surfaced as Electron `socket hang up`.
+- Added a narrow graceful-EOF disposition only for `github.com + ETIMEDOUT + 1..65536 bytes` and made it receipt-bound.
+- Kept release-assets, zero-byte, oversized, non-timeout and other-host errors fail-closed; preserved IPv4, no retry, no mirror change, partial-cache nonreuse and Candidate deny-network.
+- Added transport and receipt-audit regressions, including rejection of fabricated/out-of-bound graceful claims.
+- Passed the complete source contract `117/117` in the non-nested macOS environment. R6 remains blocked until the new PR #54 head passes GitHub source gate.
+
+## 2026-08-14 — Receipt-bound IPv4 native hydration proxy
+
+- Recorded R4 as immutable transport-blocked after exact authority and `111/111` source contracts passed; hydration ran once, while Candidate and App execution counts stayed zero.
+- Reproduced the exact default-family CONNECT proxy at `1/3` registry success with two upstream `ETIMEDOUT` events, while direct IPv4 and a diagnostic-only `family:4` proxy each passed `3/3`.
+- Bound the production proxy's single upstream connection to IPv4 and added `proxyUpstreamFamily=4` to transport policy and receipt audit validation.
+- Preserved official-host allowlist, port `443`, registry/mirror, timeouts, concurrency, no retry, partial-cache nonreuse, Candidate network denial, and all release gates.
+
+## 2026-08-14 — Deterministic native-cache watchdog contract
+
+- Replaced the watchdog unit test's fixed 80ms wall-clock wait with injected manual timeout/grace timers.
+- Added a regression proving `SIGKILL` is cancelled when the child closes during the grace window.
+- Preserved production watchdog implementation and all timeout, process-group, signal, audit, and no-retry semantics.
+- Focused contract passed 100 consecutive runs; the complete Candidate source contract passed `111/111` outside the nested Codex sandbox.
+- Recorded local deployment R1/R2/R3 as immutable evidence bound only to `b8b04819ac25629b0f2a5135858532902567b794`; no Candidate, artifact, E2E, performance, signing, notarization, release, or Human Owner PASS was created.
+
+## 2026-08-14 — Web-first UI verification receipt
+
+- Added source/implementation 1440x900 comparison evidence and `design-qa.md` with `final result: passed`.
+- Recorded the passing browser-only typecheck, build, focused `21/21` UI tests, four-destination journey, and zero browser console errors.
+- Recorded the broad Desktop suite as `NOT PASS` rather than hiding or upgrading unrelated native/Electron and historical-fixture failures.
+- Kept Electron launch, native staging, packaging, signing, deployment, and deployment-executor notification blocked pending explicit Owner web acceptance.
+
+## 2026-08-13 — Demo-source web-first UI correction
+
+- Added the exact Owner-pinned Demo HTML as an immutable repository authority copy (`52046` bytes, SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`).
+- Corrected the renderer and startup shell from five primary destinations to the Demo's four: Today, Knowledge, Conversations, Settings.
+- Kept Wiki Studio available through a secondary action inside Knowledge.
+- Added the explicit sequencing gate: browser development/test/Owner acceptance first; Electron integration, packaging, and local deployment notification later under separate successor authority.
+- Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / OWNER_WEB_UI_ACCEPTANCE=PENDING`.
+
 ## 2026-08-10 — R67 npm alias registry identity repair
 
 Status remains `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`.

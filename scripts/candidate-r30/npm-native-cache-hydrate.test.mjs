@@ -237,6 +237,7 @@ test('candidate environment is receipt-bound and separates host and Electron hea
   assert.equal(install.npm_config_devdir, '/tmp/native-cache/node-gyp');
   assert.equal(install.npm_config_nodedir, undefined);
   assert.equal(install.ELECTRON_CACHE, '/tmp/native-cache/electron');
+  assert.equal(install.electron_config_cache, '/tmp/native-cache/electron');
   assert.equal(install.ELECTRON_BUILDER_CACHE, '/tmp/native-cache/electron-builder');
   assert.equal(install.PREBUILD_INSTALL_CACHE, '/tmp/native-cache/prebuild');
   assert.equal(install.ELECTRON_GET_USE_PROXY, undefined);
@@ -320,6 +321,55 @@ test('receipt validation requires metadata-complete registry closure and canonic
         networkAuthority: 'deny-network',
         lifecycleScriptsEnabled: false,
       },
+      electronArtifactPrefetch: {
+        schemaVersion: 1,
+        status: 'PASS',
+        strategy: 'official-electron-embedded-sha256-bounded-range-v1',
+        platform: 'darwin',
+        arch: 'arm64',
+        rangeBytes: 1024 * 1024,
+        concurrency: 4,
+        maxAttemptsPerRange: 3,
+        requestTimeoutMs: 10 * 60 * 1000,
+        automaticHydrationRetry: false,
+        partialCacheReuse: false,
+        artifacts: [
+          {
+            packagePath: 'apps/copilot-desktop/node_modules/electron',
+            version: '38.8.6',
+            fileName: 'electron-v38.8.6-darwin-arm64.zip',
+            sourceUrl: 'https://github.com/electron/electron/releases/download/v38.8.6/electron-v38.8.6-darwin-arm64.zip',
+            cachePath: path.join(layout.electron, '38/electron-v38.8.6-darwin-arm64.zip'),
+            bytes: 1,
+            sha256: '8'.repeat(64),
+            rangeCount: 1,
+            requestCount: 2,
+            retryCount: 0,
+          },
+          {
+            packagePath: 'node_modules/electron',
+            version: '33.4.11',
+            fileName: 'electron-v33.4.11-darwin-arm64.zip',
+            sourceUrl: 'https://github.com/electron/electron/releases/download/v33.4.11/electron-v33.4.11-darwin-arm64.zip',
+            cachePath: path.join(layout.electron, '33/electron-v33.4.11-darwin-arm64.zip'),
+            bytes: 1,
+            sha256: '9'.repeat(64),
+            rangeCount: 1,
+            requestCount: 2,
+            retryCount: 0,
+          },
+        ],
+        command: {
+          name: 'bounded-electron-artifact-range-prefetch',
+          command: '/usr/bin/sandbox-exec node electron-artifact-prefetch.mjs',
+          exitCode: 0,
+          signal: null,
+          stdoutPath: path.join(root, 'prefetch.stdout.log'),
+          stderrPath: path.join(root, 'prefetch.stderr.log'),
+        },
+        proxyRequestStartIndex: 0,
+        proxyRequestEndIndex: 1,
+      },
       cacheLayout: layout,
       electronNodedir,
       cacheIdentity,
@@ -334,7 +384,8 @@ test('receipt validation requires metadata-complete registry closure and canonic
         proxy: {
           allowedHosts: [...NATIVE_HYDRATION_HOSTS].sort(),
           allRequestsAllowed: true,
-          transportSummary: { transportErrorCount: 0 },
+          requests: [{ phase: 'electron-artifact-range-prefetch' }],
+          transportSummary: { transportErrorCount: 0, boundedRangeRetryCount: 0 },
         },
       },
       offlineInstallProof: { status: 'PASS', networkAuthority: 'deny-network' },

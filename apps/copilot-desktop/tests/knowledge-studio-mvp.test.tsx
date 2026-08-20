@@ -141,7 +141,9 @@ describe('KnowledgeStudioWorkspace', () => {
     render(<KnowledgeStudioWorkspace api={api} />);
 
     await waitFor(() => expect(screen.getByTestId('knowledge-studio')).toBeInTheDocument());
-    expect(await screen.findByText('Current note')).toBeInTheDocument();
+    await waitFor(() => expect(
+      within(screen.getByTestId('studio-source-rail')).getByText('Current note'),
+    ).toBeInTheDocument());
     expect(screen.getByText(/4-Signal Connections/)).toBeInTheDocument();
     expect(screen.getByText(/整理摘要 notes\/current\.md/)).toBeInTheDocument();
 
@@ -155,7 +157,9 @@ describe('KnowledgeStudioWorkspace', () => {
   it('keeps review decisions local and retries failed knowledge explicitly', async () => {
     const { api, reindexNote } = productApi();
     render(<KnowledgeStudioWorkspace api={api} />);
-    await screen.findByText('Current note');
+    await waitFor(() => expect(
+      within(screen.getByTestId('studio-source-rail')).getByText('Current note'),
+    ).toBeInTheDocument());
     fireEvent.click(screen.getByRole('tab', { name: /Review/ }));
 
     const accept = screen.getByRole('button', { name: '确认已读' });

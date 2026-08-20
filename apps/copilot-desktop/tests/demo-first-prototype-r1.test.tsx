@@ -158,6 +158,7 @@ describe('Demo-first prototype IA and truth boundaries', () => {
     expect(screen.getByTestId('nav-knowledge')).toHaveTextContent('知识');
     expect(screen.getByTestId('nav-ask')).toHaveTextContent('对话');
     expect(screen.getByTestId('nav-settings')).toHaveTextContent('设置');
+    expect(screen.queryByTestId('nav-studio')).not.toBeInTheDocument();
     expect(screen.queryByTestId('nav-voice')).not.toBeInTheDocument();
     expect(screen.getByTestId('current-candidate-identity')).toHaveTextContent('CURRENT SOURCE PREVIEW');
     expect(screen.getByTestId('current-candidate-identity')).toHaveTextContent('njx-copilot-v6 · 0.1.0-test · darwin');
@@ -202,15 +203,13 @@ describe('Demo-first prototype IA and truth boundaries', () => {
     const api = makeApi();
     render(<CaptureHarness api={api} />);
     await waitFor(() => expect(api.todos.list).toHaveBeenCalled());
-    for (const className of ['today-grid', 'calendar-rail', 'day-workbench', 'capture', 'timeline', 'todo-list', 'floating-ai']) {
+    for (const className of ['today-grid', 'calendar-rail', 'day-workbench', 'capture', 'timeline', 'todo-list']) {
       expect(document.querySelector('.' + className)).not.toBeNull();
     }
     expect(screen.getByTestId('today-capture-composition')).toHaveClass('capture-grid');
     expect(screen.getByTestId('today-transcript-stream')).toHaveClass('transcript-stream');
     expect(screen.getByTestId('today-capture-enrichment')).toHaveClass('capture-enrichment');
     expect((await screen.findAllByText('真实本地待办')).length).toBeGreaterThan(0);
-    expect(screen.getByTestId('today-context-ai')).toHaveTextContent('NOT_PROBED');
-    expect(screen.getByTestId('today-context-ai')).toHaveTextContent('NO_SOURCE');
     expect(screen.getByTestId('schedule-workspace')).not.toHaveTextContent(/DEMO FIXTURE|SIMULATED|录音中|3D 星辰大海/u);
   });
 
@@ -252,6 +251,7 @@ describe('Demo-first prototype IA and truth boundaries', () => {
 
     fireEvent.change(screen.getByTestId('today-capture-draft'), { target: { value: '将取消的真实草稿' } });
     fireEvent.click(screen.getByRole('button', { name: '取消草稿' }));
+    fireEvent.click(screen.getByRole('button', { name: '放弃草稿' }));
     expect(api.notes.create).not.toHaveBeenCalled();
     expect(api.kg.reindexNote).not.toHaveBeenCalled();
 

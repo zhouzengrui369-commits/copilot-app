@@ -1,6 +1,6 @@
-schema_version: 8
+schema_version: 9
 project: copilot-app
-updated_at: "2026-08-10"
+updated_at: "2026-08-20"
 status:
   verdict: BLOCKED
   mvp: MVP_NOT_COMPLETE
@@ -14,6 +14,161 @@ source:
   product_source_branch: chatgpt/mvp-source-finalization
   exact_final_commit: "resolve from final PR #20 head after this R67 authority-alignment commit and complete source gate"
   final_commit_binding: "FETCH_HEAD == SOURCE_COMMIT == detached hydration HEAD == detached candidate HEAD"
+web_first_ui_r1:
+  authority_path: design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html
+  authority_sha256: 231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205
+  branch: codex/demo-ui-web-first-r1
+  pr: 54
+  previous_source_commit: b8b04819ac25629b0f2a5135858532902567b794
+  previous_source_gate:
+    run: 31751463041
+    job: 94617911618
+    status: PASS
+  browser_typecheck_build: PASS
+  focused_ui_tests: 21/21_PASS
+  browser_journey: PASS
+  browser_console: 0_ERRORS_0_WARNINGS
+  parent_pm_web_acceptance: PASS
+  local_packaged_acceptance: PENDING
+  human_owner_milestone_gate: PENDING
+  three_role_handoff:
+    document: docs/GITHUB_CONTINUATION.md
+    chatgpt_parent_pm: GITHUB_REMOTE_DEVELOPMENT_ONLY
+    local_deployment_agent: WAITING_FOR_NEW_EXACT_SHA_SUCCESSOR
+    codex_experience_review: NOT_STARTED
+    human_owner_milestone_gate: PENDING
+    browser_41744: PROTOTYPE_NOT_RUNTIME_PROOF
+  local_deployment_r7:
+    source_commit: 491da2fce157585367c3a551130a2f03634c900b
+    source_tree: d4a01648bdbc855d9be2d087597317e44fae9d02
+    source_gate: 31779009577_94700478799_17/17_PASS
+    source_contract: 124/124_PASS
+    source_contract_executions: 1
+    hydration_executions: 1
+    terminal_hydration_receipt: MISSING
+    complete_evidence_root: MISSING
+    candidate_executions: 0
+    package_executions: 0
+    app_launches: 0
+    e2e_executions: 0
+    performance_runs: 0
+    process_remains_2026_08_20: false
+    assets_reusable: false
+    status: INCOMPLETE_NON_REUSABLE
+  immutable_predecessors:
+    r1: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    r2: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    r3: BLOCKED_SOURCE_CONTRACT_WATCHDOG_ASSERTION
+    r4: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    r5: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    r6: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+  watchdog_contract_repair:
+    production_code_changed: false
+    focused_repeat: 300/300_PASS
+    complete_source_contract: 111/111_PASS
+    new_exact_pr_head: c9ed8b346e60b580860e58dde459372a2f8384c4
+    new_source_tree: a69b39aead99fc88b4b11de3e9598e650ddcd12b
+    new_source_gate: 31758923541_94640840476_17/17_PASS
+  local_deployment_r4:
+    source_contract: 111/111_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT
+    phase: bounded-registry-prefetch-0001
+    upstream: registry.npmjs.org:443
+    dry_run_executions: 0
+    candidate_executions: 0
+    app_launches: 0
+    final_process_clean: PASS
+    immutable: true
+  proxy_upstream_family_repair:
+    default_family_proxy_preflight: 1/3_PASS_2_ETIMEDOUT
+    diagnostic_family4_proxy_preflight: 3/3_PASS
+    allowlist_a_records: 9/9_PASS
+    proxy_upstream_family: 4
+    automatic_retry: false
+    npm_fetch_retries: 0
+    official_host_allowlist_changed: false
+    partial_cache_reuse: false
+    final_pr_head: 6d609d9c989a16e143d38e7a33b2d69d01f1d442
+    final_pr_tree: 1b2ffaf673617393f42234f7a54bc1ded801687d
+    final_source_gate: 31761937329_94649962981_17/17_PASS
+  local_deployment_r5:
+    evidence_root: /Users/njx/copilot-evidence/6d609d9c989a16e143d38e7a33b2d69d01f1d442-20260814T020338Z
+    source_contract: 112/112_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    failing_endpoint: github.com:443
+    upstream_error: ETIMEDOUT
+    failing_endpoint_bytes_upstream_to_client: 3088
+    total_bytes_upstream_to_client: 121555082
+    dry_run_executions: 0
+    candidate_executions: 0
+    app_launches: 0
+    final_process_clean: PASS
+    immutable: true
+  github_control_tunnel_repair:
+    graceful_host: github.com
+    graceful_error: ETIMEDOUT
+    graceful_received_bytes: 1..65536
+    downstream_validation_required: true
+    release_asset_errors_fail_closed: true
+    automatic_retry: false
+    npm_fetch_retries: 0
+    mirror_changed: false
+    complete_source_contract: 117/117_PASS
+    production_repair_commit: 3e1d742c5e76829e01c0a8c77bd0353fc301a268
+    initial_source_gate: 31768811097_94670211578_STEP14_FAIL
+    initial_source_gate_failure: AMBIGUOUS_CURRENT_NOTE_TEST_QUERY
+    test_selector_repair_commit: a4801a78
+    critical_coverage: 101/101_FILES_1113/1113_TESTS_PASS
+    final_pr_head: PENDING_DOCUMENTATION_COMMIT_PUSH_AND_SOURCE_GATE
+  local_deployment_r6:
+    evidence_root: /Users/njx/copilot-evidence/35b3c54059900528e33d79bbb15788479763a58d-20260814T043156Z
+    source_commit: 35b3c54059900528e33d79bbb15788479763a58d
+    source_tree: 8e931876dc705c33e743a554a69e5bd2640f68d6
+    source_gate: 31769650208_94672767727_17/17_PASS
+    source_contract: 117/117_PASS
+    hydration_executions: 1
+    blocker: BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET
+    phase: bounded-native-toolchain-lifecycle-install
+    electron_version: 38.8.6
+    failing_endpoint: release-assets.githubusercontent.com:443
+    upstream_error: ECONNRESET
+    bytes_upstream_to_client: 503434
+    duration_ms: 1195994
+    dry_run_executions: 0
+    candidate_executions: 0
+    package_executions: 0
+    app_launches: 0
+    e2e_executions: 0
+    performance_runs: 0
+    cache_reusable: false
+    final_process_clean: PASS
+    immutable: true
+  electron_artifact_range_prefetch_repair:
+    status: SOURCE_REPAIR_LOCAL_VALIDATION_PASS
+    strategy: official-electron-embedded-sha256-bounded-range-v1
+    reviewed_versions:
+      - 38.8.6
+      - 33.4.11
+    platform: darwin
+    arch: arm64
+    range_bytes: 1048576
+    concurrency: 4
+    max_attempts_per_range: 3
+    automatic_hydration_retry: false
+    partial_cache_reuse: false
+    embedded_sha256_required: true
+    electron_config_cache_receipt_bound: true
+    pre_authorization_focused_source_contract: 33/33_PASS
+    pre_authorization_complete_source_contract: 122/122_PASS
+    focused_source_contract: 44/44_PASS
+    complete_source_contract: 124/124_PASS
+    owner_audit_migration: AUTHORIZED_AND_IMPLEMENTED_2026-08-14
+    github_source_gate: 31779009577_94700478799_17/17_PASS_AT_491da2fce157
+    r7_created: true
+    r7_status: INCOMPLETE_NON_REUSABLE
+    app_launches: 0
 workflow:
   chatgpt:
     role: Parent PM and GitHub remote source developer
@@ -157,5 +312,5 @@ candidate:
 independent_acceptance:
   minimax_candidate_receipt: NOT_RECEIVED
   codex_focused_retest: NOT_RUN
-next_single_action: "Pass the complete source gate on the resulting exact PR #20 head after this authority alignment, freeze that 40-character SHA with no later tracked source change, then issue MiniMax R68 with a new RUN_STAMP and six fresh local paths."
+next_single_action: "Push the final documentation-bearing Draft PR #54 head, pass the complete source gate on that exact SHA/tree, then issue R6 with all-new paths and identities."
 conclusion: "BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF"

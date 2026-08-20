@@ -2,6 +2,94 @@
 
 **Current verdict: `BLOCKED / MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF`.**
 
+## P0 — 2026-08-20 three-role continuation
+
+- [x] Record PR #54 pre-handoff source `491da2fce157585367c3a551130a2f03634c900b`, tree `d4a01648bdbc855d9be2d087597317e44fae9d02`, source gate `17/17 PASS`, and source contract `124/124 PASS`.
+- [x] Record R7 as incomplete: exact authority PASS, one source contract, one hydration launched, no terminal receipt/evidence root, and no auditable Candidate/package/App/E2E/performance completion.
+- [x] Confirm by read-only process check that no R7 hydrator/Candidate process remains; mark every R7 partial asset non-reusable.
+- [x] Publish the durable role/gate/prompt contract in `docs/GITHUB_CONTINUATION.md`.
+- [ ] ChatGPT Parent PM resolves the live PR #54 head, reviews the missing-terminal-receipt failure mode, and performs any required GitHub-only repair plus tests.
+- [ ] Require the complete GitHub source gate on the final exact head after all source/docs changes.
+- [ ] Only after that gate, issue a new independently named Local Deployment Agent successor with all-new paths and no R1-R7 reuse.
+- [ ] Start Codex experience review only after complete packaged Candidate, E2E, performance and identity receipts exist.
+- [ ] Keep `HUMAN_OWNER_MILESTONE_GATE=PENDING` until NJX reviews the Codex-tested milestone.
+
+Exact unlock condition: live PR #54 exact SHA/tree plus same-SHA full source-gate PASS and a new successor contract. `41744` prototype state and R7 partial assets cannot unlock local deployment or Codex acceptance.
+
+## P0 — R6 Electron release-asset reset / R7 unlock
+
+- [x] Accept R6 evidence root `35b3c54059900528e33d79bbb15788479763a58d-20260814T043156Z` as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`.
+- [x] Preserve R6 counts: exact source gate `17/17 PASS`; source `117/117 PASS` once; hydration once; dry-run/Candidate/package/App/E2E/performance all zero; final process clean.
+- [x] Classify the exact failure as Electron `38.8.6` postinstall on `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes, `1195994ms`; the R5 graceful-control exception correctly did not apply.
+- [x] Add an exact official Electron Range-prefetch implementation for reviewed `38.8.6` and `33.4.11` macOS arm64 ZIPs with 1 MiB segments, concurrency 4 and at most 3 attempts per segment.
+- [x] Require package-embedded SHA-256 before cache admission and bind URL/version/file/hash/bytes/range/request/retry/proxy-index evidence into hydration schema v2.
+- [x] Restrict recoverable asset errors to the exact proxy phase, reviewed hosts/codes and encrypted-byte ceiling; preserve fail-closed protocol/range/length/checksum behavior, whole-hydration no-retry and partial-cache nonreuse.
+- [x] Bind `electron_config_cache` to the receipt-owned Electron cache in hydration and Candidate environments.
+- [x] Pass focused contracts `33/33` and complete non-nested macOS source contracts `122/122`.
+- [x] Obtain explicit Owner authorization to migrate the legacy strict receipt audit from online registry lifecycle expectations to the existing metadata-complete prefetch + deny-network closure + registry-offline lifecycle contract.
+- [x] Require the migrated audit to reject the legacy online command and prove zero post-closure registry requests plus the checksum-gated Electron artifact receipt; focused contracts pass `44/44`.
+- [x] Rerun the complete non-nested macOS Candidate source contract: `124/124 PASS`, zero failures/skips/cancellations.
+- [x] Commit/push the repair as `491da2fce157585367c3a551130a2f03634c900b`, pass source gate run `31779009577` / job `94700478799` at `17/17`, and create all-new R7 paths/identities.
+- [x] Record R7 as incomplete and non-reusable after its executor task ended without a terminal hydration receipt; Candidate/package/App/E2E/performance remained `NOT_RUN`.
+
+Exact unlock condition: the authorized migration must pass the complete source contract and same-SHA GitHub source gate. R6 and its partial cache remain ineligible for retry, resume, copy or reuse.
+
+## P0 — Web-first Demo UI gate
+
+- [x] Bind the Owner Demo HTML by exact path, `52046` bytes, and SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.
+- [x] Start from Draft PR #20 exact head `d450badfc85b65d3eef20f05eeb0607c1bf6a912` in isolated branch `codex/demo-ui-web-first-r1`.
+- [x] Restore the Demo's four primary destinations: Today, Knowledge, Conversations, Settings.
+- [x] Keep Wiki Studio reachable from Knowledge without making it a fifth primary destination.
+- [x] Pass focused renderer typecheck and web tests.
+- [x] Capture source and implementation at the same 1440x900 viewport and finish `design-qa.md` with `final result: passed`.
+- [x] Publish web-only Draft PR #54 and pass source gate run `31751463041`.
+- [x] Record `PARENT_PM_WEB_ACCEPTANCE=PASS` from source-bound browser evidence.
+- [x] Issue separate local successors R1/R2/R3 only after the web technical gate; retain every failed identity as immutable reference-only.
+- [ ] Keep `HUMAN_OWNER_MILESTONE_GATE=PENDING` until an exact packaged Candidate passes independent acceptance.
+
+Exact unlock condition: NJX explicitly accepts the live web page derived from the bound source. A screenshot, browser test, commit, PR, CI result, worker report, or local app launch does not unlock packaging.
+
+## P0 — PR #54 watchdog contract reproducibility
+
+- [x] Preserve R3 evidence root `b8b04819ac25629b0f2a5135858532902567b794-20260814T003315Z` unchanged.
+- [x] Classify R3 as a source-test timing race: fixed `await 80ms` could observe the 40ms timeout callback before its subsequently scheduled 20ms grace callback.
+- [x] Replace the wall-clock assertion with injected manual timers; do not change production timeout, process-group, signal, audit, or retry behavior.
+- [x] Add the inverse contract: a child closing during grace cancels `SIGKILL`.
+- [x] Pass the focused contract 100 consecutive runs (`300/300`) and the complete Candidate source contract `111/111` in a non-nested macOS sandbox environment.
+- [x] Push exact PR #54 head `c9ed8b346e60b580860e58dde459372a2f8384c4` and pass source gate run `31758923541`, job `94640840476`, `17/17`.
+- [ ] Create a new local successor with a new run stamp, evidence root, worktree, native cache, receipt, candidate identity, artifact identity, and runtime identity.
+
+Exact unlock condition: the new 40-character PR #54 head, not `b8b04819...`, must pass the complete GitHub source gate. R1/R2/R3 may never be retried, resumed, mutated, or reused.
+
+## P0 — R4 proxy upstream family repair / R5 unlock
+
+- [x] Accept R4 as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_TIMEOUT`: exact source/tree and `111/111` source contracts PASS; hydration executions `1`; Candidate/App/artifact/E2E/performance executions `0`; final process clean.
+- [x] Prove direct registry IPv4 metadata access `3/3 PASS` and exact default-family proxy access only `1/3 PASS` with two approximately three-second upstream `ETIMEDOUT` events.
+- [x] Prove a diagnostic-only `family:4` CONNECT proxy passes `3/3` with requests `3`, allowed `3`, denied `0`, transport errors `0`, positive bidirectional bytes, and all nine allowlisted hosts exposing A records.
+- [x] Bind `proxyUpstreamFamily=4` into transport policy, proxy audit receipts, validation, and source contracts.
+- [x] Preserve one request per CONNECT, automatic retry `false`, npm retries `0`, official-host allowlist, port `443`, mirror, timeouts, concurrency, and partial-cache nonreuse.
+- [x] Pass focused transport/receipt/hydrator and governance contracts `30/30`; pass complete Candidate source contracts `112/112` in a non-nested macOS sandbox environment.
+- [x] Push exact PR #54 head `6d609d9c989a16e143d38e7a33b2d69d01f1d442` and pass source gate run `31761937329`, job `94649962981`, `17/17`.
+- [x] Issue R5 only from that new SHA/tree with all-new paths; R1/R2/R3/R4 and all preflight assets remained ineligible for reuse.
+
+Exact unlock condition: the repaired PR head must pass the complete GitHub source gate. A diagnostic-only temporary proxy PASS is not deployment authority.
+
+## P0 — R5 GitHub control-tunnel repair / R6 unlock
+
+- [x] Accept R5 evidence root `6d609d9c989a16e143d38e7a33b2d69d01f1d442-20260814T020338Z` as immutable `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`.
+- [x] Preserve R5 counts: source `112/112 PASS` once; hydration once; dry-run/Candidate/package/App/E2E/performance all zero; final process clean.
+- [x] Classify the exact terminal tunnel: `github.com:443`, upstream `ETIMEDOUT`, `3088` received bytes, while total proxy transfer reached `121555082` bytes and Electron reported `socket hang up` after forced downstream destruction.
+- [x] Add an auditable graceful EOF only for `github.com + ETIMEDOUT + 1..65536 bytes` and keep all asset/zero-byte/oversized/non-timeout/other-host terminations fail-closed.
+- [x] Require strict receipt validation for the exact graceful disposition; reject fabricated disposition on error-free or out-of-bound tunnels.
+- [x] Preserve IPv4, official-host allowlist, port 443, zero retry, no mirror change, partial-cache nonreuse and Candidate deny-network.
+- [x] Pass the complete non-nested macOS source contract `117/117`.
+- [x] Commit/push the production repair as `3e1d742c5e76829e01c0a8c77bd0353fc301a268`; retain source gate run `31768811097`, job `94670211578`, as failed evidence rather than hiding its Step 14 test-selector defect.
+- [x] Scope the Studio test query to `studio-source-rail` in test-only commit `a4801a78`; pass focused `2/2` and critical coverage `101/101` files, `1113/1113` tests without changing UI or thresholds.
+- [ ] Push the final documentation-bearing exact PR #54 head and pass the complete GitHub source gate on that same SHA/tree.
+- [ ] Issue R6 with all-new authority, cache, worktree, evidence, Candidate, artifact, app-data and runtime identities; R1–R5 remain ineligible for reuse.
+
+Exact unlock condition: only the new source-gated PR #54 SHA/tree may authorize R6. Local unit PASS and R5's partial cache are not deployment authority.
+
 R31 remains the macOS-first source lineage. R47 clean-room llm_wiki + Demo UI is integrated into Draft PR #20. R66 consumed source `beb951b95695233911da0a17543ef342acc6df93` after one real hydrator completed 50 registry-prefetch batches and stopped fail-closed on the invalid registry spec `string-width-cjs@4.2.3`. R67 repairs npm alias/install-path identity without changing package/lockfile bytes. No Candidate, artifact SHA-256, runtime ID, Codex acceptance, Release, or Human Owner Gate exists.
 
 ## P0 — Product source

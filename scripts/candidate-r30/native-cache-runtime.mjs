@@ -23,6 +23,14 @@ import {
   NATIVE_NPM_MAX_SOCKETS,
   NATIVE_PROXY_IDLE_TIMEOUT_MS,
   NATIVE_PROXY_KEEPALIVE_MS,
+  NATIVE_PROXY_GRACEFUL_CONTROL_ERROR,
+  NATIVE_PROXY_GRACEFUL_CONTROL_HOST,
+  NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES,
+  NATIVE_PROXY_UPSTREAM_FAMILY,
+  NATIVE_ELECTRON_ASSET_HOSTS,
+  NATIVE_ELECTRON_ASSET_MAX_TUNNEL_BYTES,
+  NATIVE_ELECTRON_ASSET_RECOVERABLE_ERRORS,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
   NATIVE_TOOLCHAIN_PROFILE,
   NATIVE_BUILD_MODE,
   OWNER_NATIVE_CACHE_AUTHORITY,
@@ -40,6 +48,7 @@ const NATIVE_STRIPPED_ENV_KEYS = Object.freeze([
   'ELECTRON_CUSTOM_DIR',
   'ELECTRON_CUSTOM_FILENAME',
   'ELECTRON_GET_USE_PROXY',
+  'electron_config_cache',
   'GITHUB_TOKEN',
   'GH_TOKEN',
   'NODE_PRE_GYP_GITHUB_TOKEN',
@@ -232,6 +241,60 @@ export function configureNativeTunnelSocket(
   };
 }
 
+export function nativeHydrationUpstreamConnectOptions(host) {
+  if (typeof host !== 'string' || host.length === 0) {
+    throw new TypeError('native hydration upstream host is required');
+  }
+  return {
+    host,
+    port: 443,
+    allowHalfOpen: true,
+    family: NATIVE_PROXY_UPSTREAM_FAMILY,
+  };
+}
+
+export function nativeHydrationUpstreamErrorDisposition({
+  host,
+  errorCode,
+  bytesUpstreamToClient,
+  phase = 'native-hydration',
+} = {}) {
+  const bytes = Number(bytesUpstreamToClient ?? 0);
+  const graceful = String(host ?? '').toLowerCase() === NATIVE_PROXY_GRACEFUL_CONTROL_HOST
+    && errorCode === NATIVE_PROXY_GRACEFUL_CONTROL_ERROR
+    && Number.isSafeInteger(bytes)
+    && bytes > 0
+    && bytes <= NATIVE_PROXY_GRACEFUL_CONTROL_MAX_BYTES;
+  if (graceful) {
+    return {
+      action: 'graceful-eof',
+      fatal: false,
+      reason: 'late-github-control-response-timeout',
+      downstreamValidationRequired: true,
+    };
+  }
+  const boundedAssetRetry = phase === ELECTRON_ARTIFACT_PREFETCH_PHASE
+    && NATIVE_ELECTRON_ASSET_HOSTS.includes(String(host ?? '').toLowerCase())
+    && NATIVE_ELECTRON_ASSET_RECOVERABLE_ERRORS.includes(errorCode)
+    && Number.isSafeInteger(bytes)
+    && bytes >= 0
+    && bytes <= NATIVE_ELECTRON_ASSET_MAX_TUNNEL_BYTES;
+  if (boundedAssetRetry) {
+    return {
+      action: 'bounded-range-retry',
+      fatal: false,
+      reason: 'integrity-verified-electron-range-retry',
+      downstreamValidationRequired: true,
+    };
+  }
+  return {
+    action: 'fail-closed-destroy',
+    fatal: true,
+    reason: 'untrusted-or-incomplete-upstream-termination',
+    downstreamValidationRequired: false,
+  };
+}
+
 export function classifyNativeTransportFailure(output) {
   const text = String(output ?? '');
   const cases = [
@@ -275,6 +338,12 @@ export function proxyTransportSummary(proxy) {
     deniedCount: requests.filter((request) => request.allowed !== true).length,
     completedCount: requests.filter((request) => request.transport?.endedAt).length,
     transportErrorCount: requests.filter((request) => request.transport?.fatal === true).length,
+    recoverableTransportErrorCount: requests.filter(
+      (request) => request.transport?.fatal === false && request.transport?.error,
+    ).length,
+    boundedRangeRetryCount: requests.filter(
+      (request) => request.transport?.errorDisposition?.action === 'bounded-range-retry',
+    ).length,
     bytesClientToUpstream: requests.reduce(
       (sum, request) => sum + Number(request.transport?.bytesClientToUpstream ?? 0),
       0,
@@ -302,8 +371,10 @@ export async function startAllowlistedConnectProxy(
     keepAliveMs,
     noDelay: true,
     idleTimeoutMs,
+    upstreamFamily: NATIVE_PROXY_UPSTREAM_FAMILY,
   };
   let closing = false;
+  let currentPhase = 'native-hydration';
   const server = createServer({ allowHalfOpen: true }, (client) => {
     sockets.add(client);
     configureNativeTunnelSocket(client, { keepAliveMs, idleTimeoutMs });
@@ -323,7 +394,7 @@ export async function startAllowlistedConnectProxy(
       request.transport.upstreamDestroyed = upstream?.destroyed ?? true;
     };
 
-    const recordError = (side, error) => {
+    const recordError = (side, error, disposition = null) => {
       if (!request || closing || finalized) return;
       if (!request.transport.error) {
         request.transport.error = {
@@ -331,19 +402,30 @@ export async function startAllowlistedConnectProxy(
           code: error?.code ?? 'UNKNOWN',
           message: error instanceof Error ? error.message : String(error),
         };
-        request.transport.fatal = true;
+        request.transport.errorDisposition = disposition;
+        request.transport.fatal = disposition?.fatal ?? true;
       }
     };
 
     client.on('error', (error) => {
-      recordError('client', error);
+      recordError('client', error, nativeHydrationUpstreamErrorDisposition({
+        host: request?.host,
+        errorCode: error?.code ?? 'UNKNOWN',
+        bytesUpstreamToClient: request?.transport?.bytesUpstreamToClient ?? 0,
+        phase: request?.phase,
+      }));
       finish();
     });
     client.on('timeout', () => {
       const error = Object.assign(new Error('native hydration proxy client idle timeout'), {
         code: 'ETIMEDOUT',
       });
-      recordError('client', error);
+      recordError('client', error, nativeHydrationUpstreamErrorDisposition({
+        host: request?.host,
+        errorCode: error.code,
+        bytesUpstreamToClient: request?.transport?.bytesUpstreamToClient ?? 0,
+        phase: request?.phase,
+      }));
       client.destroy(error);
       upstream?.destroy(error);
     });
@@ -374,6 +456,7 @@ export async function startAllowlistedConnectProxy(
         host,
         port,
         allowed,
+        phase: currentPhase,
         transport: {
           startedAt: new Date().toISOString(),
           startedAtMs: Date.now(),
@@ -396,7 +479,7 @@ export async function startAllowlistedConnectProxy(
         return;
       }
 
-      upstream = connect({ host, port: 443, allowHalfOpen: true });
+      upstream = connect(nativeHydrationUpstreamConnectOptions(host));
       configureNativeTunnelSocket(upstream, { keepAliveMs, idleTimeoutMs });
       sockets.add(upstream);
       upstream.once('close', () => {
@@ -404,10 +487,21 @@ export async function startAllowlistedConnectProxy(
         finish();
       });
       upstream.on('error', (error) => {
-        recordError('upstream', error);
+        const disposition = nativeHydrationUpstreamErrorDisposition({
+          host,
+          errorCode: error?.code ?? 'UNKNOWN',
+          bytesUpstreamToClient: request.transport.bytesUpstreamToClient,
+          phase: request.phase,
+        });
+        recordError('upstream', error, disposition);
         if (!client.destroyed) {
-          if (request.transport.bytesUpstreamToClient === 0) {
+          if (
+            request.transport.bytesUpstreamToClient === 0
+            && disposition.action !== 'bounded-range-retry'
+          ) {
             client.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+          } else if (disposition.action === 'graceful-eof') {
+            client.end();
           } else {
             client.destroy(error);
           }
@@ -418,7 +512,12 @@ export async function startAllowlistedConnectProxy(
         const error = Object.assign(new Error('native hydration proxy upstream idle timeout'), {
           code: 'ETIMEDOUT',
         });
-        recordError('upstream', error);
+        recordError('upstream', error, nativeHydrationUpstreamErrorDisposition({
+          host,
+          errorCode: error.code,
+          bytesUpstreamToClient: request.transport.bytesUpstreamToClient,
+          phase: request.phase,
+        }));
         upstream.destroy(error);
         client.destroy(error);
       });
@@ -454,6 +553,12 @@ export async function startAllowlistedConnectProxy(
     requests,
     allowedHosts: [...allowedHosts].sort(),
     socketPolicy,
+    setPhase(phase) {
+      if (!['native-hydration', ELECTRON_ARTIFACT_PREFETCH_PHASE].includes(phase)) {
+        throw new TypeError(`unsupported native hydration proxy phase: ${String(phase)}`);
+      }
+      currentPhase = phase;
+    },
     async close() {
       closing = true;
       for (const socket of sockets) socket.destroy();
@@ -539,6 +644,7 @@ export function onlineNativeEnvironment({ layout, proxyUrl }) {
     XDG_CACHE_HOME: path.join(layout.root, 'xdg-cache'),
     npm_config_devdir: layout.nodeGyp,
     ELECTRON_CACHE: layout.electron,
+    electron_config_cache: layout.electron,
     ELECTRON_BUILDER_CACHE: layout.electronBuilder,
     PREBUILD_INSTALL_CACHE: layout.prebuild,
     COPILOT_NATIVE_CACHE_NETWORK_AUTHORITY: OWNER_NATIVE_CACHE_AUTHORITY,
@@ -558,6 +664,7 @@ export function offlineNativeEnvironment(layout, electronNodedir = null) {
     npm_config_devdir: layout.nodeGyp,
     ...(electronNodedir ? { npm_config_nodedir: electronNodedir } : {}),
     ELECTRON_CACHE: layout.electron,
+    electron_config_cache: layout.electron,
     ELECTRON_BUILDER_CACHE: layout.electronBuilder,
     PREBUILD_INSTALL_CACHE: layout.prebuild,
     COPILOT_NATIVE_CACHE_NETWORK_AUTHORITY: 'deny-network-offline-proof',

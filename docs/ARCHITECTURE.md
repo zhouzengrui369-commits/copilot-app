@@ -4,6 +4,22 @@
 >
 > Status: `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`. The remote macOS MVP source is complete enough for another candidate attempt, but no current candidate, artifact identity, runtime ID, independent Electron acceptance, signing, notarization, or Human Owner Gate exists.
 
+## 0. 2026-08-20 Handoff Control Plane
+
+The delivery control plane has four sequential evidence owners:
+
+```text
+ChatGPT Parent PM / GitHub exact source + CI
+        ↓ exact SHA/tree + same-SHA source gate
+Local Deployment Agent / fresh hydration + Candidate + package evidence
+        ↓ source/artifact/runtime/test-data identity
+Codex / independent real packaged-App experience review
+        ↓ P0/P1/P2 and focused retest
+Human Owner / milestone and release decision
+```
+
+The local executor may be MiniMax, a local Codex task or another explicitly named agent; the role contract is invariant. R7 did not create a terminal hydration receipt and is non-reusable. The `41744` browser prototype remains outside the packaged-runtime trust chain. Full continuation rules and copy-ready prompts are maintained in [`GITHUB_CONTINUATION.md`](GITHUB_CONTINUATION.md).
+
 ## 1. Local-First Product Authority
 
 Copilot App is a single-user macOS Electron desktop product. Its core truth remains on the Owner computer:
@@ -27,6 +43,47 @@ Notes, KB, WIKI, MOC, KG, RAG, Todo, and schedule records are not delegated to c
 The architecture does not add a Python resident service, a second database, a second knowledge base, or a second vector store. Existing TypeScript/Electron boundaries and local stores remain authoritative.
 
 ## 2. Product Process Boundaries
+
+### Web-first UI development gate
+
+The renderer must first run as a browser prototype from the same React source used by the desktop renderer. The Owner-pinned HTML and its SHA256 define the UI journey and information architecture. Browser fixture data must remain labeled `PROTOTYPE / NOT_RUNTIME_PROOF`.
+
+Primary information architecture is exactly:
+
+```text
+Today / Schedule
+Knowledge / default readable MOC
+Conversations / grounded Ask
+Settings
+```
+
+Wiki Studio is a secondary organizer tool entered from Knowledge, not a fifth top-level destination. Electron main/preload integration, native staging, packaging, signing, notarization, and deployment are downstream gates and remain blocked until explicit Owner web acceptance.
+
+The browser evidence may close the Parent PM web technical gate, but it cannot close packaged runtime or Human Owner milestone gates. Every downstream executor must fetch and prove the exact source-gated PR head; a failed predecessor run, cache, worktree, receipt, artifact, or runtime identity is immutable and cannot be resumed or reused.
+
+### Native hydration watchdog timing
+
+Hydration child commands run in detached process groups under a bounded watchdog. Timeout sends `SIGTERM`; a still-open child group receives `SIGKILL` only after the configured grace period; close during grace cancels hard kill. Unit contracts inject and advance timers directly so scheduler latency cannot turn the timeout-plus-grace sequence into a flaky source gate. Durable production audit events remain the runtime authority.
+
+### Native hydration upstream address family
+
+The owner-authorized macOS native hydration proxy accepts only CONNECT requests for the exact official-host allowlist on port `443`. Its one upstream socket is receipt-bound to IPv4 (`proxyUpstreamFamily=4`). This avoids Node 24 auto-family attempt windows that were shorter than observed owner-environment IPv4 connect latency. It does not add a request retry, alternate mirror, host, port, or Candidate network permission; every failed hydration remains terminal and its partial cache remains non-reusable.
+
+### Native hydration GitHub control-tunnel completion
+
+Electron's downloader uses an initial `github.com` HTTPS control/redirect tunnel and a separate `release-assets.githubusercontent.com` asset tunnel. R5 transferred approximately 121.6 MB through the bounded proxy, then the control tunnel reported a late upstream `ETIMEDOUT` after 3,088 received bytes. Destroying the downstream socket converted that late control error into Electron `install.js` `socket hang up` even though the large asset tunnel had already progressed.
+
+The proxy now has one narrow completion rule: `github.com`, `ETIMEDOUT`, and `1..65536` already received bytes may end downstream with graceful EOF. The request remains receipt-visible and requires downstream command success plus Electron's embedded checksum validation. Any release-asset error, zero-byte response, response above 64 KiB, other error code or other host still destroys the tunnel and fails hydration. The rule does not retry, resume, reuse partial cache, add a mirror, or grant Candidate network access.
+
+### Checksum-gated Electron artifact Range prefetch
+
+R6 proved that a release-asset tunnel can reset after only `503434` bytes and approximately 20 minutes. The successor source design does not broaden the GitHub control-tunnel exception. Instead, after the deny-network registry-cache closure proof has installed the exact dependency graph without lifecycle scripts, a dedicated source-owned phase discovers only the reviewed Electron packages (`38.8.6` and `33.4.11`) and reads their embedded checksum maps.
+
+Each exact official macOS arm64 release ZIP is transferred as 1 MiB HTTP Range segments with concurrency 4 and at most 3 attempts per segment. Status, Content-Range, Content-Length, total-size and final-size checks are exact. A transport retry is receipt-eligible only during `electron-artifact-range-prefetch`, on reviewed Electron asset hosts/codes and below the bounded encrypted-byte ceiling. The complete ZIP must match the npm package's embedded SHA-256 before cache admission.
+
+The hydration receipt binds package path, version, filename, source URL, bytes, SHA-256, segment/request/retry counts, the command receipt and the exact proxy-request interval. `electron_config_cache` points both lifecycle install and Candidate offline install to that receipt-owned cache. Candidate networking remains denied and a failed hydration cache remains non-reusable.
+
+The Owner explicitly authorized migration of the legacy strict audit to the already-established registry-prefetch → deny-network closure → registry-offline lifecycle design. The audit now rejects the superseded online-registry command and requires zero post-closure registry requests, the checksum-gated artifact receipt, and the final deny-network install/native proofs. Source `491da2f...` passed the complete GitHub source gate and R7 consumed it, but R7 produced no terminal hydration receipt; it is incomplete, non-reusable and not runtime proof.
 
 ### Electron main process
 

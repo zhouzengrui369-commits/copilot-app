@@ -1,5 +1,117 @@
 # DECISIONS
 
+## D-2026-08-20-01: Separate GitHub Development, Local Deployment, Experience Review, And Owner Acceptance
+
+### Background
+
+PR #54 pre-handoff source `491da2f...` was source-green, but R7 lost its executor task to a usage-limit failure while the sole hydration was active. It produced no terminal hydration receipt or complete evidence root. The browser-visible `41744` surface is still a prototype and cannot close the packaged-runtime lane.
+
+### Decision
+
+1. ChatGPT Parent PM owns only GitHub remote source development, tests, Draft PR, exact-head freeze, source gate and successor contract.
+2. A separately authorized Local Deployment Agent owns a fresh exact-SHA hydration/Candidate/package run; executor implementation may vary, but permissions and evidence requirements do not.
+3. R7 is incomplete and non-reusable. No process remains, and no successor may resume its cache, worktree, logs, receipt paths or identities.
+4. Codex starts only after a complete packaged Candidate and independently reviews product experience on the real App; it does not repair source in that lane.
+5. Human Owner milestone acceptance, signing, notarization, merge and release remain independent gates.
+6. A tracked handoff document cannot self-authorize its containing commit. The downstream executor must resolve the live PR #54 head and prove a complete source gate on that exact head.
+
+### Impact
+
+Source, deployment, runtime experience and final acceptance remain independently auditable. A green source check, partial hydration, browser prototype or worker narrative cannot inflate project status. The durable copy-ready contract is `docs/GITHUB_CONTINUATION.md`.
+
+## D-2026-08-14-04: Prefetch Exact Electron Assets In Checksum-Gated Bounded Ranges
+
+### Background
+
+R6 consumed exact source `35b3c54059900528e33d79bbb15788479763a58d` after a complete GitHub source gate. Its sole hydration stopped during Electron `38.8.6` postinstall when the release-asset tunnel reset after `503434` bytes and approximately 20 minutes. The failure was not eligible for the R5 GitHub control-tunnel completion rule, and no Candidate or App was created.
+
+### Decision
+
+1. Do not treat a partial release-asset transfer as successful EOF and do not reuse R6 bytes.
+2. After metadata-complete registry closure, resolve only the two reviewed Electron lifecycle packages (`38.8.6` and `33.4.11`) and their exact macOS arm64 filenames/checksums from the installed npm packages.
+3. Fetch only exact official Electron GitHub release URLs in 1 MiB Range segments, concurrency 4, with at most 3 attempts per segment and no whole-hydration retry.
+4. Retry only transport reset/timeout/pipe/abort codes. HTTP status, Content-Range, Content-Length, total-size and other protocol failures stop immediately.
+5. Admit a ZIP to the fresh Electron cache only after the package-embedded SHA-256 matches; bind all identities/counts and the proxy request interval into hydration schema v2.
+6. Make the proxy's recoverable asset disposition available only in the explicit prefetch phase and reviewed host/code/byte bounds. Every other use remains fatal.
+7. Set modern Electron's `electron_config_cache` to the receipt-owned cache in both hydration and Candidate environments.
+8. Preserve Candidate deny-network, official host set, port 443, IPv4, partial-cache nonreuse, source cleanliness and all release/Human Owner gates.
+9. The Owner explicitly authorized migration of the legacy strict audit's stale online-registry lifecycle expectation on 2026-08-14. Require registry prefetch, deny-network closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated artifact receipt and final deny-network proofs; reject the old online-registry command. Do not authorize R7 until the resulting same-SHA source gate is green.
+
+### Impact
+
+Long Electron downloads no longer depend on one opaque 20-minute asset tunnel. A transient segment failure can make bounded forward progress, but only a complete exact-checksum ZIP can become cache authority. This is still source preparation, not hydration, Candidate, packaged runtime or milestone proof.
+
+## D-2026-08-14-03: Gracefully Close Only A Completed-Enough GitHub Control Tunnel
+
+### Background
+
+R5 consumed exact source `6d609d9c989a16e143d38e7a33b2d69d01f1d442` once. Source contracts passed `112/112`; Candidate creation stayed at zero. Hydration transferred `121555082` bytes upstream-to-client, but the final fatal request was `github.com:443` with only `3088` response bytes and upstream `ETIMEDOUT`. The proxy then destroyed the downstream socket, and Electron `install.js` failed with `RequestError: socket hang up`.
+
+### Decision
+
+1. Treat only `github.com + ETIMEDOUT + 1..65536 received bytes` as a late control-response close eligible for graceful downstream EOF.
+2. Record the error and exact disposition in the proxy receipt; receipt audit accepts it only when all bounds match and downstream lifecycle success proves protocol/content validation.
+3. Keep release-assets, zero-byte, oversized, non-timeout and other-host errors fatal and fail-closed.
+4. Preserve IPv4, allowlist, port 443, `automaticRetry=false`, `npmFetchRetries=0`, no mirror change, partial-cache nonreuse and Candidate deny-network.
+5. Require a new exact source-gated PR head and all-new R6 identity; R5 cannot be resumed or reused.
+
+### Impact
+
+The proxy no longer manufactures a downstream `socket hang up` for the exact late GitHub redirect/control timeout seen in R5, while asset integrity and every broader transport failure remain fail-closed. This is source readiness only; it does not prove hydration, Candidate, packaged runtime, release or Human Owner acceptance.
+
+## D-2026-08-14-02: Bind Native Hydration CONNECT To IPv4 In This macOS Authority
+
+### Background
+
+R4's sole hydration stopped at the first registry batch after an approximately 3.7-second Node upstream `ETIMEDOUT`, despite source policy allowing 15-minute npm fetches and 20-minute proxy idle time. A valid persistent-proxy preflight reproduced the default Node 24 path at only `1/3` success with two approximately three-second timeouts. Direct curl selected IPv4 and passed `3/3`; a temporary proxy differing only by `family:4` also passed `3/3`, with all nine allowlisted hosts proving A records.
+
+### Decision
+
+1. Bind the native hydration CONNECT proxy's single upstream socket to address family `4` and include `proxyUpstreamFamily=4` in the receipt-validated transport policy and proxy audit.
+2. Preserve the exact official-host allowlist, destination port `443`, registry/mirror, npm fetch timeout, proxy idle timeout, keepalive, concurrency, command watchdog, and partial-cache nonreuse.
+3. Preserve `automaticRetry=false` and `npmFetchRetries=0`; IPv4 selection is one deterministic upstream connection, not a hydration retry.
+4. Require a new PR head and complete source gate before R5; no R4 or diagnostic asset is reusable.
+
+### Impact
+
+The owner macOS hydration path no longer depends on Node 24's 250ms auto-family address-attempt window, which was shorter than observed local IPv4 connect latency. IPv6 is not claimed or tested by this decision. Candidate, packaged runtime, release, and Human Owner gates remain pending.
+
+## D-2026-08-14-01: Watchdog Contracts Use Injected Deterministic Time
+
+### Background
+
+Local deployment R3 ran the Candidate source contract once and stopped before hydration because the watchdog test expected `SIGTERM` and `SIGKILL` after a fixed 80ms wait but observed only `SIGTERM`. The production implementation schedules the 20ms hard-kill grace timer only when the 40ms timeout callback executes, so event-loop delay can make an 80ms wall-clock assertion premature.
+
+### Decision
+
+1. Preserve production process-group termination, timeout, grace, signals, audit events, and no-retry policy unchanged.
+2. Inject manual timers into the unit contract and explicitly advance timeout then grace.
+3. Add a separate contract proving that a child closing during grace cancels the hard kill.
+4. Require repeated focused runs, the full Candidate source contract, and a fresh GitHub source gate before any new local deployment authority.
+5. Keep R1/R2/R3 and source `b8b04819ac25629b0f2a5135858532902567b794` immutable and ineligible for reuse.
+
+### Impact
+
+The source gate becomes deterministic under scheduler load without weakening fail-closed hydration. Every future local deployment successor must bind the new exact PR #54 head and create entirely fresh evidence and Candidate identities.
+
+## D-2026-08-13-01: Owner Demo HTML Is The UI Authority And Web Acceptance Precedes Packaging
+
+### Background
+
+An Electron app was opened before the HTML/browser UI had been revalidated, and its fifth primary `知识台` destination diverged from the Owner Demo's four-destination information architecture. The Owner explicitly required immediate correction and declared the Demo UI source authoritative.
+
+### Decision
+
+1. Bind `design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html` at `52046` bytes and SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205` as the sole UI source.
+2. Develop and verify the same-source browser renderer before Electron integration or package work.
+3. Keep the four primary destinations `今天 / 知识 / 对话 / 设置`.
+4. Keep Wiki Studio as a secondary Knowledge action, preserving its implementation without allowing IA drift.
+5. Require explicit NJX `OWNER_WEB_UI_ACCEPTANCE=PASS` before any successor may integrate Electron, package, or notify the local deployment executor.
+
+### Impact
+
+The browser prototype becomes the current product-experience acceptance surface but remains `NOT_RUNTIME_PROOF`. Existing candidate, signing, notarization, release, and Human Owner gates are unchanged and cannot be closed by this web work.
+
 ## D-2026-08-07-03: Prove Npm Registry Metadata Closure Before Lifecycle Hydration
 
 ### Background

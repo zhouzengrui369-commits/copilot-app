@@ -4,6 +4,62 @@
 
 `BLOCKED / MVP_NOT_COMPLETE / RELEASE_NOT_READY / EXPERIENCE_NOT_READY / NOT_RUNTIME_PROOF`
 
+## 2026-08-20 ChatGPT Parent PM → Local Agent → Codex handoff
+
+- Active source surface remains Draft PR #54, branch `codex/demo-ui-web-first-r1`.
+- The pre-handoff source authority `491da2fce157585367c3a551130a2f03634c900b`, tree `d4a01648bdbc855d9be2d087597317e44fae9d02`, passed source gate run `31779009577`, job `94700478799`, `17/17`; source contracts passed `124/124`.
+- R7 completed exact-object authority and one source-contract execution, then launched one hydration. The executor task failed on a Codex usage limit before producing a terminal hydration receipt or complete evidence root.
+- A 2026-08-20 read-only process check found no R7 hydrator/Candidate process. R7 partial cache/worktree/logs are incomplete and non-reusable; Candidate/package/App/E2E/performance remained `NOT_RUN` at the last auditable state.
+- `LOCAL_DEPLOYMENT_COMPLETE=false`; `CODEX_EXPERIENCE_ACCEPTANCE=NOT_STARTED`; `HUMAN_OWNER_MILESTONE_GATE=PENDING`.
+- `http://127.0.0.1:41744/?prototype=ready#today` remains `PROTOTYPE / NOT_RUNTIME_PROOF`.
+- Durable continuation contract: `docs/GITHUB_CONTINUATION.md`. ChatGPT Parent PM owns GitHub-only development; a separately authorized Local Deployment Agent owns a fresh exact-SHA successor; Codex starts only from a complete packaged Candidate and owns independent experience review.
+- The handoff document commit supersedes the embedded pre-handoff SHA. The next executor must resolve the live PR #54 head and require a complete source gate on that exact head before any new local successor.
+
+Next step: Parent PM reviews the live PR #54 head and R7 terminal-receipt gap through GitHub, finishes any source/test repair, obtains a green same-SHA source gate, then signs a new all-paths-fresh local successor. No R7 resume or reuse is allowed.
+
+## 2026-08-14 R6 Electron release-asset transport repair preparation
+
+- R6 consumed PR #54 exact source `35b3c54059900528e33d79bbb15788479763a58d`, tree `8e931876dc705c33e743a554a69e5bd2640f68d6`, after source gate run `31769650208`, job `94672767727`, `17/17 PASS`.
+- R6 ran the source contract once (`117/117 PASS`) and hydration once. It stopped immutable with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET` during Electron `38.8.6` postinstall: `release-assets.githubusercontent.com:443`, upstream `ECONNRESET`, `503434` received bytes after `1195994ms`.
+- R6 correctly did not apply the R5 `github.com + ETIMEDOUT + 1..65536` control-tunnel exception. Dry-run, Candidate, package, App, E2E and performance counts remained zero; the failed cache is non-reusable.
+- The bounded repair under test prefetches only Electron `38.8.6` and `33.4.11` macOS arm64 ZIPs from their exact official release URLs in 1 MiB Range segments, concurrency 4, at most 3 attempts per segment, then requires each npm package's embedded SHA-256 before cache admission.
+- Recoverable asset resets are eligible only in the explicit `electron-artifact-range-prefetch` proxy phase; other phases, hosts, codes, oversized transfers, protocol/range/length failures and final checksum mismatches remain fail-closed. Whole-hydration retry and partial-cache reuse remain false.
+- Modern Electron's exact `electron_config_cache` variable is now bound to the receipt-owned cache for hydration and Candidate environments.
+- Before the audit migration, focused contracts passed `33/33` and the complete non-nested macOS source contract passed `122/122`.
+- Owner explicitly authorized the strict receipt-audit migration on 2026-08-14. The audit now rejects the superseded `npm ci --prefer-online --registry` lifecycle command and requires metadata-complete registry prefetch, deny-network offline closure, registry-offline lifecycle scripts, zero post-closure registry requests, the checksum-gated Electron artifact receipt, and the final deny-network proofs.
+- The migrated focused contract passed `44/44`; the complete non-nested macOS Candidate source contract passed `124/124`, and PR #54 source `491da2fce157585367c3a551130a2f03634c900b` passed source gate run `31779009577`, job `94700478799`, `17/17`.
+- R7 was then created from that exact source, but it ended incomplete without a terminal hydration receipt. Candidate/package/App/E2E/performance remained `NOT_RUN`; its partial assets are non-reusable.
+- Current state: `SOURCE_GATE_PASS_AT_PRE_HANDOFF_SHA / R7_INCOMPLETE_NON_REUSABLE / APP_LAUNCHES=0`.
+
+## 2026-08-14 R5 Electron control-tunnel repair
+
+- R5 exact authority was PR #54 SHA `6d609d9c989a16e143d38e7a33b2d69d01f1d442`, tree `1b2ffaf673617393f42234f7a54bc1ded801687d`, source gate run `31761937329`, job `94649962981`, `17/17 PASS`.
+- R5 ran the source contract once (`112/112 PASS`) and hydration once. It stopped immutable with `BLOCKED_NATIVE_CACHE_NETWORK_TRANSPORT_RESET`; dry-run, Candidate, package, App, E2E and performance counts remained zero.
+- Receipt evidence shows the large Electron release transfer reached `121555082` upstream-to-client bytes, while the fatal tunnel was the separate `github.com` control/redirect connection after `3088` bytes with upstream `ETIMEDOUT`; forced downstream destruction surfaced as Electron `install.js` `socket hang up`.
+- The source repair allows graceful EOF only for `github.com + ETIMEDOUT + 1..65536 received bytes`. It remains fail-closed for release-assets, zero-byte, oversized, non-timeout and other-host errors. Downstream command success and the Electron package's embedded checksum remain mandatory.
+- `automaticRetry=false`, `npmFetchRetries=0`, IPv4, allowlist, port, cache nonreuse and Candidate deny-network boundaries are unchanged.
+- Complete source contract: `117/117 PASS` in the non-nested macOS environment. Nested execution produced the expected environment-only `sandbox_apply: Operation not permitted` on the existing Darwin grammar smoke while all other `116/117` passed.
+- The source repair was committed and pushed as `3e1d742c5e76829e01c0a8c77bd0353fc301a268`, tree `94c520fd59191c863c8e6cf42449c6fb24ddec5e`. Its first GitHub source gate run `31768811097`, job `94670211578`, reached Step 14 and failed on one ambiguous test query: two legitimate Demo UI nodes contained `Current note`.
+- Test-only commit `a4801a78` scopes both assertions to `studio-source-rail`; it changes no UI, production code, coverage threshold, transport policy or runtime behavior. Focused Studio tests pass `2/2`; the exact critical coverage command passes `101/101` files, `1113/1113` tests, `96.02%` statements and `91.89%` branches.
+- Current state: durable handoff update and a new complete GitHub source gate are pending. R5 and all predecessor paths are immutable and ineligible for R6 reuse.
+- Next step: push the final documentation-bearing PR #54 head, require the complete GitHub source gate on that exact SHA/tree, then issue all-new R6 authority. Packaged runtime and Human Owner milestone gates remain pending.
+
+## 2026-08-13 web-first UI correction
+
+- Exact base: Draft PR #20 `d450badfc85b65d3eef20f05eeb0607c1bf6a912`.
+- Active branch: `codex/demo-ui-web-first-r1`.
+- Sole UI authority: `design/authority/copilot-phase1-mvp-demo-v3-calendar-moc.html`, `52046` bytes, SHA256 `231cbef9985cedb697ba52be31d9c04df44ede49bdd9298c3081c8ec19ca4205`.
+- Objective: align and accept the browser renderer at 1440x900 before any Electron integration or package work.
+- Completed: exact authority copied byte-for-byte; primary navigation corrected to four Demo destinations; Wiki Studio retained as a secondary Knowledge action; web-only typecheck/build, focused `21/21` UI tests, 1440x900 browser journey, zero console errors, `design-qa.md`, Draft PR #54, and GitHub source gate run `31751463041` job `94617911618` all passed.
+- Parent PM technical decision: `PARENT_PM_WEB_ACCEPTANCE=PASS`; `HUMAN_OWNER_MILESTONE_GATE=PENDING` remains separate.
+- Local deployment R1/R2 stopped during one-shot hydration on allowed-host transport failures; R3 exposed and stopped on a wall-clock watchdog test race. The deterministic test repair became source `c9ed8b346e60b580860e58dde459372a2f8384c4`, tree `a69b39aead99fc88b4b11de3e9598e650ddcd12b`, and passed source gate run `31758923541`, job `94640840476`, `17/17`.
+- R4 proved exact authority and `111/111` source contracts, then its sole hydration stopped on `registry.npmjs.org:443` upstream `ETIMEDOUT`; Candidate and App executions remained zero.
+- Transport diagnosis reproduced Node 24's default-family instability at `1/3` proxy success while direct curl IPv4 passed `3/3`. A diagnostic-only `family:4` proxy passed `3/3`, all nine allowlisted hosts exposed A records, and its audit was requests `3`, allowed `3`, denied `0`, errors `0`.
+- Completed after that checkpoint: IPv4 source `6d609d9c989a16e143d38e7a33b2d69d01f1d442` passed source gate; R5 consumed it once and stopped on the later GitHub control-tunnel error described above.
+- In progress: commit and source-gate the narrow graceful-control-close repair before any R6 authorization.
+- Risks: browser fixture is not runtime proof; R1/R2/R3/R4/R5 are not Candidate evidence; no packaged Candidate, artifact identity, E2E, performance, signing, notarization, release, or Human Owner PASS exists.
+- Latest important change: `PARENT_PM_WEB_ACCEPTANCE=PASS / LOCAL_PACKAGED_ACCEPTANCE=PENDING / HUMAN_OWNER_MILESTONE_GATE=PENDING`.
+
 R31 remains the authoritative Phase 1 source-completion baseline, including the historical Desktop Phase 1 source suite `1107/1107 PASS`. The R47 clean-room llm_wiki + Demo UI Knowledge Studio remains integrated in Draft PR #20. No packaged Electron Candidate, artifact SHA-256, runtime ID, Codex acceptance, signing/notarization, Release readiness, Experience readiness, or Human Owner Gate exists.
 
 ## Current source chain
@@ -102,4 +158,8 @@ local material
 
 ## Next single action
 
-Run the complete source gate on the exact PR #20 head after this authority alignment. If `17/17 PASS`, freeze that SHA without further tracked changes and issue the MiniMax R68 local successor. Status remains `MVP_NOT_COMPLETE / NOT_RUNTIME_PROOF / NOT_RELEASE_READY / NOT_EXPERIENCE_READY` until independent packaged Electron evidence exists.
+Commit/push the authorization-bearing repair to a new exact PR #54 SHA/tree and require the complete GitHub source gate. Only that new green exact source may authorize an all-new R7; R1–R6 remain immutable reference-only.
+
+Tracked status documents describe the current branch HEAD but do not self-reference their own commit hash. The exact pushed commit and Draft PR URL are the external Git authority for this web-only change.
+
+Web-only typecheck, build, focused `21/21` UI tests, browser journey, zero browser console errors, and `design-qa.md` pass. The informational broad Desktop suite is explicitly `NOT PASS` (`112/142` files and `1208/1293` tests passed) because native/Electron lifecycle installation was intentionally excluded and the exact tree contains unrelated historical test blockers; see `reports/web-first-ui-r1/TEST_RECEIPT.md`. The watchdog repair changes only test timing determinism; production termination behavior is unchanged. The bounded IPv4 proxy repair is documented in `reports/native-proxy-family4-r1/TEST_RECEIPT.md`; the R5 control-tunnel repair is documented in `reports/native-proxy-graceful-control-r1/TEST_RECEIPT.md`; the R6 range-prefetch source preparation is documented in `reports/native-electron-range-prefetch-r1/TEST_RECEIPT.md`.

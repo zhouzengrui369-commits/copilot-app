@@ -26,6 +26,7 @@ test('Demo-first primary journey stays truthful and captures four real Electron 
   await expect(appPage.locator('.decision-strip')).toBeVisible();
   await expect(appPage.locator('.statusbar')).toBeVisible();
   await expect(appPage.locator('.nav a')).toHaveCount(4);
+  await expect(appPage.getByTestId('nav-studio')).toHaveCount(0);
   await expect(appPage.getByTestId('nav-voice')).toHaveCount(0);
   await expect(appPage.getByTestId('current-candidate-identity')).toContainText('CURRENT SOURCE PREVIEW');
   await expect(appPage.getByTestId('current-candidate-identity')).toContainText(/njx-copilot-v6 · [^·]+ · darwin/u);

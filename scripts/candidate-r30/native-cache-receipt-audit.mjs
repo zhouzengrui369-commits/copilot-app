@@ -5,10 +5,21 @@ import {
   NATIVE_HYDRATION_HOSTS,
   NATIVE_TOOLCHAIN_PROFILE,
   OWNER_NATIVE_CACHE_AUTHORITY,
+  ELECTRON_ARTIFACT_PREFETCH_PHASE,
+  ELECTRON_ARTIFACT_PREFETCH_STRATEGY,
+  ELECTRON_ARTIFACT_RANGE_BYTES,
+  ELECTRON_ARTIFACT_RANGE_CONCURRENCY,
+  ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS,
+  ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS,
   blockNativeCache,
   nativeHydrationTransportPolicy,
   validateNativeHydrationReceipt,
 } from './native-cache-policy.mjs';
+import {
+  NATIVE_REGISTRY_CLOSURE_STRATEGY,
+  NATIVE_REGISTRY_PREFETCH_BATCH_SIZE,
+  NATIVE_REGISTRY_PREFETCH_STRATEGY,
+} from './registry-prefetch.mjs';
 
 const SHA256 = /^[0-9a-f]{64}$/u;
 const SEMVER = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/u;
@@ -55,10 +66,33 @@ function expectedSocketPolicy(transportPolicy) {
     keepAliveMs: transportPolicy.proxyKeepAliveMs,
     noDelay: true,
     idleTimeoutMs: transportPolicy.proxyIdleTimeoutMs,
+    upstreamFamily: transportPolicy.proxyUpstreamFamily,
   };
 }
 
-function validTransportReceipt(transport, socketPolicy) {
+function validTransportReceipt(request, socketPolicy, transportPolicy) {
+  const transport = request?.transport;
+  const gracefulControlClose = request?.host === transportPolicy.proxyGracefulControlHost
+    && transport?.error?.side === 'upstream'
+    && transport?.error?.code === transportPolicy.proxyGracefulControlError
+    && transport?.errorDisposition?.action === 'graceful-eof'
+    && transport?.errorDisposition?.fatal === false
+    && transport?.errorDisposition?.reason === 'late-github-control-response-timeout'
+    && transport?.errorDisposition?.downstreamValidationRequired === true
+    && Number.isSafeInteger(transport?.bytesUpstreamToClient)
+    && transport.bytesUpstreamToClient > 0
+    && transport.bytesUpstreamToClient <= transportPolicy.proxyGracefulControlMaxBytes;
+  const boundedRangeRetry = request?.phase === transportPolicy.electronArtifactPrefetchPhase
+    && transportPolicy.electronArtifactHosts.includes(request?.host)
+    && ['client', 'upstream'].includes(transport?.error?.side)
+    && transportPolicy.electronArtifactRecoverableErrors.includes(transport?.error?.code)
+    && transport?.errorDisposition?.action === 'bounded-range-retry'
+    && transport?.errorDisposition?.fatal === false
+    && transport?.errorDisposition?.reason === 'integrity-verified-electron-range-retry'
+    && transport?.errorDisposition?.downstreamValidationRequired === true
+    && Number.isSafeInteger(transport?.bytesUpstreamToClient)
+    && transport.bytesUpstreamToClient >= 0
+    && transport.bytesUpstreamToClient <= transportPolicy.electronArtifactMaxTunnelBytes;
   return validIso(transport?.startedAt)
     && validIso(transport?.endedAt)
     && Number.isSafeInteger(transport?.durationMs)
@@ -68,7 +102,14 @@ function validTransportReceipt(transport, socketPolicy) {
     && Number.isSafeInteger(transport?.bytesUpstreamToClient)
     && transport.bytesUpstreamToClient >= 0
     && transport?.fatal === false
-    && transport?.error === null
+    && (
+      (
+        transport?.error === null
+        && (transport?.errorDisposition === null || transport?.errorDisposition === undefined)
+      )
+      || gracefulControlClose
+      || boundedRangeRetry
+    )
     && sameJson(transport?.socketPolicy, socketPolicy);
 }
 
@@ -83,8 +124,10 @@ function auditedProxy(proxy, expectedHosts, transportPolicy) {
     || !requests.every((request) => request?.method === 'CONNECT'
       && request?.allowed === true
       && request?.port === 443
+      && ['native-hydration', transportPolicy.electronArtifactPrefetchPhase]
+        .includes(request?.phase)
       && expectedHosts.includes(request?.host)
-      && validTransportReceipt(request.transport, socketPolicy))
+      && validTransportReceipt(request, socketPolicy, transportPolicy))
   ) return false;
 
   const summary = proxy?.transportSummary;
@@ -96,14 +139,125 @@ function auditedProxy(proxy, expectedHosts, transportPolicy) {
     (sum, request) => sum + request.transport.bytesUpstreamToClient,
     0,
   );
+  const recoverableTransportErrorCount = requests.filter(
+    (request) => request.transport?.fatal === false && request.transport?.error,
+  ).length;
+  const boundedRangeRetryCount = requests.filter(
+    (request) => request.transport?.errorDisposition?.action === 'bounded-range-retry',
+  ).length;
   return summary?.requestCount === requests.length
     && summary?.allowedCount === requests.length
     && summary?.deniedCount === 0
     && summary?.completedCount === requests.length
     && summary?.transportErrorCount === 0
+    && summary?.recoverableTransportErrorCount === recoverableTransportErrorCount
+    && summary?.boundedRangeRetryCount === boundedRangeRetryCount
     && summary?.bytesClientToUpstream === bytesClientToUpstream
     && summary?.bytesUpstreamToClient === bytesUpstreamToClient
     && sameJson(summary?.socketPolicy, socketPolicy);
+}
+
+function validRegistryClosureShape(receipt) {
+  const prefetch = receipt?.registryPrefetch;
+  const closure = receipt?.registryCacheClosure;
+  return prefetch?.status === 'PASS'
+    && prefetch?.strategy === NATIVE_REGISTRY_PREFETCH_STRATEGY
+    && prefetch?.metadataMode === 'name-version-packument-and-tarball'
+    && prefetch?.automaticRetry === false
+    && prefetch?.batchSize === NATIVE_REGISTRY_PREFETCH_BATCH_SIZE
+    && Number.isSafeInteger(prefetch?.entryCount)
+    && prefetch.entryCount > 0
+    && prefetch?.batchCount === Math.ceil(prefetch.entryCount / prefetch.batchSize)
+    && SHA256.test(prefetch?.manifestSha256 ?? '')
+    && closure?.status === 'PASS'
+    && closure?.strategy === NATIVE_REGISTRY_CLOSURE_STRATEGY
+    && closure?.networkAuthority === 'deny-network'
+    && closure?.lifecycleScriptsEnabled === false
+    && successfulCommand(closure, 'deny-network-registry-cache-closure-proof')
+    && commandShape(closure, [
+      '/usr/bin/sandbox-exec',
+      '(deny network*)',
+      'npm ci',
+      '--offline',
+      '--ignore-scripts',
+      '--no-audit',
+      '--no-fund',
+    ], ['--prefer-online'])
+    && receipt?.onlineHydration?.registryMode
+      === 'lockfile-name-version-prefetch-closure-then-offline-ci'
+    && receipt?.onlineHydration?.registryRequestCountAfterClosure === 0;
+}
+
+function validElectronArtifactPrefetchShape(value, proxy, lifecyclePackages) {
+  const expected = lifecyclePackages
+    .filter(([packagePath]) => packagePath.endsWith('/electron') || packagePath === 'node_modules/electron')
+    .map(([packagePath, version]) => ({ packagePath, version }));
+  const artifacts = value?.artifacts;
+  const start = value?.proxyRequestStartIndex;
+  const end = value?.proxyRequestEndIndex;
+  if (
+    value?.schemaVersion !== 1
+    || value?.status !== 'PASS'
+    || value?.strategy !== ELECTRON_ARTIFACT_PREFETCH_STRATEGY
+    || value?.platform !== 'darwin'
+    || value?.arch !== 'arm64'
+    || value?.rangeBytes !== ELECTRON_ARTIFACT_RANGE_BYTES
+    || value?.concurrency !== ELECTRON_ARTIFACT_RANGE_CONCURRENCY
+    || value?.maxAttemptsPerRange !== ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+    || value?.requestTimeoutMs !== ELECTRON_ARTIFACT_RANGE_TIMEOUT_MS
+    || value?.automaticHydrationRetry !== false
+    || value?.partialCacheReuse !== false
+    || !successfulCommand(value?.command, 'bounded-electron-artifact-range-prefetch')
+    || !commandShape(value?.command, [
+      '/usr/bin/sandbox-exec',
+      '(deny network*)',
+      'localhost:',
+      'electron-artifact-prefetch.mjs',
+      '--repository',
+      '--cache-root',
+    ])
+    || !Array.isArray(artifacts)
+    || artifacts.length !== expected.length
+    || !Array.isArray(proxy?.requests)
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end <= start
+    || end > proxy.requests.length
+    || proxy.requests.slice(start, end).some(
+      (request) => request?.phase !== ELECTRON_ARTIFACT_PREFETCH_PHASE,
+    )
+    || proxy.requests.some((request, index) => request?.phase === ELECTRON_ARTIFACT_PREFETCH_PHASE
+      && (index < start || index >= end))
+  ) return false;
+  let retries = 0;
+  for (let index = 0; index < artifacts.length; index += 1) {
+    const artifact = artifacts[index];
+    const item = expected[index];
+    const fileName = `electron-v${item.version}-darwin-arm64.zip`;
+    const sourceUrl =
+      `https://github.com/electron/electron/releases/download/v${item.version}/${fileName}`;
+    const baseRequests = Number(artifact?.rangeCount) + 1;
+    if (
+      artifact?.packagePath !== item.packagePath
+      || artifact?.version !== item.version
+      || artifact?.fileName !== fileName
+      || artifact?.sourceUrl !== sourceUrl
+      || !path.isAbsolute(artifact?.cachePath ?? '')
+      || path.basename(artifact.cachePath) !== fileName
+      || !Number.isSafeInteger(artifact?.bytes)
+      || artifact.bytes < 1
+      || !SHA256.test(artifact?.sha256 ?? '')
+      || !Number.isSafeInteger(artifact?.rangeCount)
+      || artifact.rangeCount !== Math.ceil(artifact.bytes / ELECTRON_ARTIFACT_RANGE_BYTES)
+      || !Number.isSafeInteger(artifact?.requestCount)
+      || artifact.requestCount < baseRequests
+      || artifact.requestCount > baseRequests * ELECTRON_ARTIFACT_RANGE_MAX_ATTEMPTS
+      || artifact?.retryCount !== artifact.requestCount - baseRequests
+    ) return false;
+    retries += artifact.retryCount;
+  }
+  return proxy?.transportSummary?.boundedRangeRetryCount === retries;
 }
 
 export function auditNativeHydrationReceiptShape({
@@ -152,10 +306,19 @@ export function auditNativeHydrationReceiptShape({
   );
   requireProof(SEMVER.test(receipt?.npmVersion ?? ''), 'npmVersion');
   requireProof(validIso(receipt?.endedAt), 'endedAt');
+  requireProof(validRegistryClosureShape(receipt), 'registryCacheClosure');
 
   requireProof(receipt?.onlineHydration?.status === 'PASS', 'onlineHydration.status');
   requireProof(
-    successfulCommand(onlineInstall, 'bounded-native-toolchain-install'),
+    validElectronArtifactPrefetchShape(
+      receipt?.electronArtifactPrefetch,
+      receipt?.onlineHydration?.proxy,
+      lifecyclePackages,
+    ),
+    'electronArtifactPrefetch',
+  );
+  requireProof(
+    successfulCommand(onlineInstall, 'bounded-native-toolchain-lifecycle-install'),
     'onlineHydration.install',
   );
   requireProof(
@@ -166,13 +329,12 @@ export function auditNativeHydrationReceiptShape({
         '(deny network*)',
         'localhost:',
         'npm ci',
-        '--prefer-online',
-        '--registry https://registry.npmjs.org/',
+        '--offline',
         '--replace-registry-host=always',
         '--no-audit',
         '--no-fund',
       ],
-      ['--offline', '--ignore-scripts'],
+      ['--prefer-online', '--registry', '--ignore-scripts'],
     ),
     'onlineHydration.install.command',
   );
