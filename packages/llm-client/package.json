@@ -48,7 +48,7 @@
   ],
   "license": "UNLICENSED",
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.13.3",
     "@vitest/coverage-v8": "^2.1.8",
     "playwright": "^1.61.1",
     "typescript": "^5.7.0",
